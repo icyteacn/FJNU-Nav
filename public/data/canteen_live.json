@@ -1,6 +1,3 @@
-// 食堂实时数据快照（福师大「食堂人流量分析」静态快照）
-// 由 crawler/canteen.py 定时抓取更新；纯静态部署时前端读取本文件展示。
-// 格式：items 为数组，每项 { name, people 在座人数, seats 座位数, daily 当日消费次数 }
 {
   "status": "snapshot",
   "updatedAt": "2026-08-20T00:00:00Z",

@@ -15,7 +15,7 @@ export const SITE = {
   /** 校训（欢迎页标语） */
   motto: '知明行笃 · 立诚致广',
   /** 当前版本号（页脚 / 关于面板 / README 同步标注，格式 x.y.z） */
-  version: '1.0.0',
+  version: '2.0.0',
   /** 网站开发者署名 */
   developer: 'FJNU-Nav 团队',
 
@@ -51,7 +51,7 @@ export const SITE = {
     title: '福师大 Wiki · 校园生活手册',
     desc: '在校生经验与校园信息整理（生活 / 校园 / 学习经验分享），与本站互补的维基仓库，欢迎补充贡献',
     links: {
-      site: 'http://fjnu.nekoark.com/',
+      site: 'https://fjnu.nekoark.com/',
       github: 'https://github.com/Xuuyuan/FJNU-Wiki',
       gitee: '',
       docs: 'https://docs.qq.com/aio/DVXVIV0V3SEZqd0Z3'

@@ -3,7 +3,7 @@ export const officialGroups = [
     name: '社区与资源',
     icon: '📚',
     sites: [
-      { name: '福师大 Wiki', url: 'http://fjnu.nekoark.com/', desc: '新生指南 / 生活攻略 / 校园百科（社区维护）' },
+      { name: '福师大 Wiki', url: 'https://fjnu.nekoark.com/', desc: '新生指南 / 生活攻略 / 校园百科（社区维护）' },
       { name: '福建师范大学吧', url: 'https://tieba.baidu.com/f?kw=%E7%A6%8F%E5%BB%BA%E5%B8%88%E8%8C%83%E5%A4%A7%E5%AD%A6', desc: '百度贴吧 · 学生社区交流' }
     ]
   },
@@ -21,7 +21,7 @@ export const officialGroups = [
     icon: '🏛️',
     sites: [
       { name: '福建师范大学官网', url: 'https://www.fjnu.edu.cn', desc: '学校主站，校情总览' },
-      { name: '师大要闻', url: 'https://www.fjnu.edu.cn', desc: '师大要闻 / 部处动态 / 学院动态' }
+      { name: '师大要闻', url: 'https://www.fjnu.edu.cn/xxgk/sdyw.htm', desc: '师大要闻 / 部处动态 / 学院动态' }
     ]
   },
   {
@@ -29,7 +29,7 @@ export const officialGroups = [
     icon: '📚',
     sites: [
       { name: '教务处', url: 'https://jwc.fjnu.edu.cn', desc: '通知公告 / 教学日历 / 培养方案' },
-      { name: '新版教务系统', url: 'https://jwc.fjnu.edu.cn', desc: '选课 / 成绩 / 课表查询' },
+      { name: '新版教务系统', url: 'https://jwglxt.fjnu.edu.cn', desc: '选课 / 成绩 / 课表查询（需登录）' },
       { name: '教学云平台', url: 'https://fjnu.zlgc2.chaoxing.com', desc: '在线课程 / 教学资源' }
     ]
   },
@@ -63,8 +63,8 @@ export const officialGroups = [
     icon: '🌳',
     sites: [
       { name: '附属中学', url: 'https://sdfz.fjnu.edu.cn', desc: '福建师大附中 · 省级示范校' },
-      { name: '附属小学', url: 'http://aps.fjnu.edu.cn', desc: '福建师大附小 · 省级示范校' },
-      { name: '实验幼儿园', url: 'http://kid.fjnu.edu.cn', desc: '福建师大实验幼儿园 · 省级示范园' }
+      { name: '附属小学', url: 'https://aps.fjnu.edu.cn', desc: '福建师大附小 · 省级示范校' },
+      { name: '实验幼儿园', url: 'https://kid.fjnu.edu.cn', desc: '福建师大实验幼儿园 · 省级示范园' }
     ]
   }
 ]

@@ -26,7 +26,7 @@ function applyTheme(t) {
   theme.value = t
   document.documentElement.setAttribute('data-theme', t)
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', t === 'dark' ? '#10141b' : '#e11d48')
+  if (meta) meta.setAttribute('content', t === 'dark' ? '#0f1419' : '#1a6b52')
   try {
     localStorage.setItem(THEME_KEY, t)
   } catch {
@@ -51,6 +51,34 @@ onMounted(() => {
 })
 
 const { current, currentComp, openApp, goHome } = useViewState()
+
+/* 公告系统 */
+const NOTICE_KEY = 'fjnu_notice_read'
+const showNotice = ref(false)
+const notices = ref([])
+const unreadCount = computed(() => {
+  try {
+    const read = JSON.parse(localStorage.getItem(NOTICE_KEY) || '[]')
+    return notices.value.filter(n => !read.includes(n.id)).length
+  } catch { return notices.value.length }
+})
+function markNoticeRead() {
+  try {
+    const read = JSON.parse(localStorage.getItem(NOTICE_KEY) || '[]')
+    const newRead = notices.value.map(n => n.id).filter(id => !read.includes(id))
+    localStorage.setItem(NOTICE_KEY, JSON.stringify([...read, ...newRead]))
+  } catch { /* noop */ }
+}
+async function loadNotices() {
+  try {
+    const res = await fetch(import.meta.env.BASE_URL + 'data/announcements.json')
+    if (res.ok) {
+      const data = await res.json()
+      notices.value = Array.isArray(data) ? data : (data.notices || [])
+    }
+  } catch { /* noop */ }
+}
+onMounted(loadNotices)
 </script>
 
 <template>
@@ -67,6 +95,10 @@ const { current, currentComp, openApp, goHome } = useViewState()
           </div>
         </div>
         <div class="header-right">
+          <button class="ghost-btn notice-bell" v-if="notices.length" @click="showNotice = true">
+            🔔
+            <span class="notice-dot" v-if="unreadCount">{{ unreadCount }}</span>
+          </button>
           <button class="ghost-btn" :title="theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'" @click="toggleTheme">{{ theme === 'dark' ? '☀️' : '🌙' }}</button>
           <button class="ghost-btn" @click="goHome">🏠 首页</button>
         </div>
@@ -102,5 +134,25 @@ const { current, currentComp, openApp, goHome } = useViewState()
         <span>{{ a.label }}</span>
       </button>
     </nav>
+
+    <!-- 公告弹窗 -->
+    <div v-if="showNotice" class="notice-mask" @click.self="showNotice = false; markNoticeRead()">
+      <div class="notice-modal">
+        <div class="notice-modal-head">
+          <span class="notice-modal-title">📢 站点公告</span>
+          <button class="notice-modal-close" @click="showNotice = false; markNoticeRead()">✕</button>
+        </div>
+        <div class="notice-modal-body">
+          <div v-for="n in notices" :key="n.id" class="notice-item">
+            <div class="notice-item-title">
+              <span>{{ n.title }}</span>
+              <span class="notice-item-date muted">{{ n.date }}</span>
+            </div>
+            <div class="notice-item-content">{{ n.content }}</div>
+          </div>
+          <div v-if="!notices.length" class="empty">暂无公告</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

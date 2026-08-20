@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+
+counter/data.json
+counter/.seed3
+
+# 本机账单样例（含个人隐私）与参考 apk，禁止入库
+example/

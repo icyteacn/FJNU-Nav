@@ -1,0 +1,26 @@
+// 食堂实时数据快照（福师大「食堂人流量分析」静态快照）
+// 由 crawler/canteen.py 定时抓取更新；纯静态部署时前端读取本文件展示。
+// 格式：items 为数组，每项 { name, people 在座人数, seats 座位数, daily 当日消费次数 }
+{
+  "status": "snapshot",
+  "updatedAt": "2026-08-20T00:00:00Z",
+  "items": [
+    { "name": "百草园餐厅", "people": 0, "seats": 805, "daily": 2256 },
+    { "name": "翠竹园餐厅", "people": 190, "seats": 800, "daily": 1539 },
+    { "name": "千叶园餐厅", "people": 0, "seats": 1000, "daily": 1230 },
+    { "name": "花香园餐厅", "people": 0, "seats": 800, "daily": 1177 },
+    { "name": "文化街美食餐厅", "people": 181, "seats": 950, "daily": 1059 },
+    { "name": "嘉树园餐厅", "people": 0, "seats": 800, "daily": 1028 },
+    { "name": "教工食堂", "people": 2, "seats": 312, "daily": 605 },
+    { "name": "随园餐厅", "people": 1, "seats": 950, "daily": 358 },
+    { "name": "溢香美食餐厅", "people": 0, "seats": 210, "daily": 271 },
+    { "name": "槿灿园美食餐厅", "people": 0, "seats": 500, "daily": 2 },
+    { "name": "桃李园餐厅", "people": 6, "seats": 800, "daily": 1 },
+    { "name": "展园餐厅", "people": 0, "seats": 650, "daily": 1 },
+    { "name": "聚星园餐厅", "people": 0, "seats": 1080, "daily": 196 },
+    { "name": "聚星园2楼（高区食堂）", "people": 8, "seats": 617, "daily": 136 },
+    { "name": "长安美食餐厅2楼", "people": 0, "seats": 220, "daily": 127 },
+    { "name": "长安美食餐厅1楼", "people": 0, "seats": 280, "daily": 40 },
+    { "name": "长安美食餐厅3楼", "people": 0, "seats": 120, "daily": 37 }
+  ]
+}

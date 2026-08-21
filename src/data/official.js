@@ -1,19 +1,22 @@
 export const officialGroups = [
   {
-    name: '社区与资源',
-    icon: '📚',
+    name: '研究生服务（重点）',
+    icon: '🎓',
     sites: [
-      { name: '福师大 Wiki', url: 'https://fjnu.nekoark.com/', desc: '新生指南 / 生活攻略 / 校园百科（社区维护）' },
-      { name: '福建师范大学吧', url: 'https://tieba.baidu.com/f?kw=%E7%A6%8F%E5%BB%BA%E5%B8%88%E8%8C%83%E5%A4%A7%E5%AD%A6', desc: '百度贴吧 · 学生社区交流' }
+      { name: '研究生信息管理系统', url: 'https://gedu.fjnu.edu.cn/cas/login?service=https://gedu.fjnu.edu.cn', desc: '研究生培养 / 选课 / 成绩 / 论文管理（需登录）', featured: true },
+      { name: '研究生院', url: 'https://yjsy.fjnu.edu.cn', desc: '研究生招生 / 培养 / 学位 / 管理制度' },
+      { name: '研究生招生', url: 'https://yjsy.fjnu.edu.cn/zs/list.htm', desc: '招生简章 / 专业目录 / 复试调剂' },
+      { name: '学位论文', url: 'https://yjsy.fjnu.edu.cn/xwgl/list.htm', desc: '论文开题 / 答辩 / 查重 / 学位申请' }
     ]
   },
   {
     name: '信息化与服务',
     icon: '🖥️',
     sites: [
-      { name: '福Star 智慧校园', url: 'https://fstar.fjnu.edu.cn', desc: '校园卡 / 食堂人流量 / 办事服务一站式入口，较重要的校园平台', featured: true },
+      { name: '福Star VPN 服务', url: 'https://vpn3.fjnu.edu.cn/auth/login?returnUrl=https://zhifu-cnki-net-s.vpn3.fjnu.edu.cn/', desc: '校园 VPN · 校外访问知网等学术资源', featured: true },
+      { name: '福Star 智慧校园', url: 'https://fstar.fjnu.edu.cn', desc: '校园卡 / 食堂人流量 / 办事服务一站式入口' },
       { name: '校园邮件系统', url: 'https://mail.fjnu.edu.cn', desc: '学生邮箱 Webmail · 账号：学号@fjnu.edu.cn' },
-      { name: '信息化建设与管理办公室', url: 'https://xxhb.fjnu.edu.cn/main.htm', desc: '网络 / 账号 / 智慧校园 / VPN' }
+      { name: '信息化建设与管理办公室', url: 'https://xxhb.fjnu.edu.cn/main.htm', desc: '网络 / 账号 / 智慧校园' }
     ]
   },
   {
@@ -34,19 +37,20 @@ export const officialGroups = [
     ]
   },
   {
-    name: '招生与研究生',
-    icon: '🎓',
+    name: '招生与继续教育',
+    icon: '📋',
     sites: [
       { name: '本科招生网', url: 'https://zsb.fjnu.edu.cn', desc: '招生简章 / 专业目录 / 录取查询' },
-      { name: '研究生院', url: 'https://yjsy.fjnu.edu.cn', desc: '研究生培养与管理' },
-      { name: '继续教育招生', url: 'https://wjzy.fjnu.edu.cn', desc: '成教 / 自考 / 同等学力招生' }
+      { name: '继续教育招生', url: 'https://wjzy.fjnu.edu.cn', desc: '成教 / 自考 / 同等学力招生' },
+      { name: '创新创业学院', url: 'https://cyxy.fjnu.edu.cn', desc: '创新创业教育 / 大赛 / 实践基地' }
     ]
   },
   {
     name: '图书馆与资源',
     icon: '📖',
     sites: [
-      { name: '图书馆', url: 'https://library.fjnu.edu.cn/main.htm', desc: '又玄图书馆 · 馆藏检索 / 数据库 / 自习座位预约' }
+      { name: '图书馆', url: 'https://library.fjnu.edu.cn/main.htm', desc: '又玄图书馆 · 馆藏检索 / 数据库 / 自习座位预约' },
+      { name: '中国知网（VPN）', url: 'https://vpn3.fjnu.edu.cn/auth/login?returnUrl=https://zhifu-cnki-net-s.vpn3.fjnu.edu.cn/', desc: '通过 VPN 校外访问知网学术资源' }
     ]
   },
   {
@@ -55,7 +59,7 @@ export const officialGroups = [
     sites: [
       { name: '福建师范大学官方微博', url: 'https://weibo.com/fjnu1907', desc: '官方微博 · 校园动态实时发布' },
       { name: '福建师范大学官方微信', url: 'https://mp.weixin.qq.com/s/ibNLp1NsS5Ku-go4WeH_oA', desc: '官方微信公众号 · 深度推文与通知' },
-      { name: '福建师范大学官方抖音', url: 'https://www.douyin.com/user/fjnu1907', desc: '官方抖音 · 校园短视频' }
+      { name: '共青团福建师范大学委员会抖音', url: 'https://www.douyin.com/user/MS4wLjABAAAA8gUpav6WigJEMTmHEVS2cq-_nBlU_ziOjmbG_KrVYVY?from_tab_name=main', desc: '共青团官方抖音 · 校园短视频' }
     ]
   },
   {

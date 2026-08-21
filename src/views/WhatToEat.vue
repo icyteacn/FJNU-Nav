@@ -12,7 +12,6 @@ const emit = defineEmits(['back'])
 
 const picks = ref([])
 const pickedCount = ref(0)
-const showAll = ref(false)
 const filter = ref('全部')
 const campusFilter = ref('全部')
 const mealFilter = ref('全部')
@@ -21,18 +20,12 @@ const tasteFilter = ref('全部')
 const selectedDish = ref(null)
 const showDetail = ref(false)
 const drawing = ref(false)
+const hallFilter = ref('')
 
 const CAMPUSES = ['全部', '旗山校区', '仓山校区']
 const MEALS = ['全部', '早餐', '正餐', '夜宵']
 const BUDGETS = ['全部', '8元以内', '8-15元', '15-25元', '25元以上']
 const TASTES = ['全部', '清淡', '微辣', '中辣', '重辣']
-
-const mealTypeMap = {
-  '全部': null,
-  '早餐': '早餐',
-  '正餐': '正餐',
-  '夜宵': '夜宵'
-}
 
 const budgetMap = {
   '全部': null,
@@ -72,12 +65,21 @@ const filteredPool = computed(() => {
       return dishes.some(d => d.spicy === targetSpice)
     })
   }
+  if (hallFilter.value) {
+    pool = pool.filter(f => f.hall === hallFilter.value)
+  }
   return pool
 })
 
 const filtered = computed(() => {
-  if (filter.value === '全部') return foods
-  return foods.filter(f => f.tag === filter.value)
+  let pool = foods
+  if (filter.value !== '全部') {
+    pool = pool.filter(f => f.tag === filter.value)
+  }
+  if (hallFilter.value) {
+    pool = pool.filter(f => f.hall === hallFilter.value)
+  }
+  return pool
 })
 
 function pickFrom(pool, count) {
@@ -103,8 +105,10 @@ async function roll() {
 }
 
 function pickOne() {
-  const single = pickFrom(filteredPool.value, 1)
-  picks.value = single
+  if (picks.value.length === 0) return
+  const i = Math.floor(Math.random() * picks.value.length)
+  selectedDish.value = picks.value[i]
+  showDetail.value = true
   pickedCount.value += 1
   sessionStorage.setItem('fjnu_food_picked', String(pickedCount.value))
 }
@@ -119,21 +123,33 @@ function setCampus(c) {
   roll()
 }
 
+function selectHall(hallName) {
+  if (hallFilter.value === hallName) {
+    hallFilter.value = ''
+  } else {
+    hallFilter.value = hallName
+  }
+}
+
 function spiceIcon(level) {
-  return '🌶️'.repeat(level) || '🍽️'
+  if (!level || level === 0) return '🍽️'
+  return '🌶️'.repeat(level)
 }
 
 function priceOf(f) {
-  if (f.dish) return f.dish.price
+  if (f.dish && f.dish.price > 0) return f.dish.price
   const dishes = menu[f.name] || []
-  return dishes.length ? dishes[0].price : 0
+  const d = dishes.find(d => d.price > 0)
+  return d ? d.price : null
 }
 
 function descOf(f) {
-  if (f.dish) return f.dish.desc
+  if (f.dish && f.dish.desc) return f.dish.desc
   const dishes = menu[f.name] || []
   return dishes.length ? dishes[0].desc : ''
 }
+
+const dishesOf = (f) => menu[f.name] || []
 
 onMounted(() => {
   pickedCount.value = Number(sessionStorage.getItem('fjnu_food_picked')) || 0
@@ -168,12 +184,6 @@ onMounted(() => {
           <button v-for="b in BUDGETS" :key="b" class="chip" :class="{ active: budgetFilter === b }" @click="budgetFilter = b; roll()">{{ b }}</button>
         </div>
       </div>
-      <div class="filter-row">
-        <span class="filter-label">口味</span>
-        <div class="filter-chips">
-          <button v-for="t in TASTES" :key="t" class="chip" :class="{ active: tasteFilter === t }" @click="tasteFilter = t; roll()">{{ t }}</button>
-        </div>
-      </div>
     </div>
 
     <div v-if="drawing" class="drawing-state">
@@ -186,7 +196,8 @@ onMounted(() => {
         <div v-for="(f, i) in picks" :key="i" class="result-card" @click="openDetail(f)">
           <div class="card-header">
             <span class="card-emoji">{{ f.tag === '早餐' ? '🌅' : f.tag === '夜宵' ? '🌙' : '☀️' }}</span>
-            <span class="card-price">¥{{ priceOf(f) }}</span>
+            <span class="card-price" v-if="priceOf(f)">¥{{ priceOf(f) }}</span>
+            <span class="card-price muted" v-else>价格待定</span>
           </div>
           <div class="card-name">{{ f.name }}</div>
           <div class="card-dish" v-if="f.dish">{{ f.dish.name }}</div>
@@ -211,7 +222,7 @@ onMounted(() => {
 
     <div class="draw-actions">
       <button class="btn" @click="roll">🔄 换一个</button>
-      <button class="btn accent" @click="pickOne">🎯 就吃这个</button>
+      <button class="btn accent" @click="pickOne" :disabled="picks.length === 0">🎯 就吃这个</button>
     </div>
 
     <div class="muted" style="text-align:center;font-size:12px;margin-top:12px;">
@@ -220,17 +231,23 @@ onMounted(() => {
   </div>
 
   <div class="panel">
-    <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>档口库（<CountUp :value="foods.length" /> 个）</div>
+    <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>档口库（<CountUp :value="filtered.length" /> 个）</div>
     <div class="tab-row" style="flex-wrap:wrap;gap:6px;">
       <button v-for="t in ['全部', '早餐', '正餐', '夜宵']" :key="t" class="tab" :class="{ active: filter === t }" @click="filter = t">{{ t }}</button>
+      <button v-if="hallFilter" class="tab" @click="hallFilter = ''" style="background:var(--primary-soft);color:var(--primary);">✕ 清除食堂筛选</button>
     </div>
+    <div v-if="hallFilter" class="muted" style="font-size:12px;margin-bottom:8px;">当前筛选：{{ hallFilter }}</div>
     <div style="overflow-x:auto;">
       <table class="data">
-        <thead><tr><th>档口</th><th>参考价</th><th>餐厅</th><th>校区</th><th>口味</th></tr></thead>
+        <thead><tr><th>档口</th><th>菜品</th><th>参考价</th><th>餐厅</th><th>校区</th><th>口味</th></tr></thead>
         <tbody>
           <tr v-for="f in filtered" :key="f.hall + f.name" @click="openDetail(f)" style="cursor:pointer;">
             <td><b>{{ f.name }}</b></td>
-            <td>¥{{ priceOf(f) }}</td>
+            <td class="muted" style="font-size:12px;">{{ (dishesOf(f).slice(0,2).map(d=>d.name).join(' / ')) || '-' }}</td>
+            <td>
+              <template v-if="priceOf(f)">¥{{ priceOf(f) }}</template>
+              <span v-else class="muted">-</span>
+            </td>
             <td>{{ f.hall }}</td>
             <td>{{ f.campus }}</td>
             <td>{{ spiceIcon(f.spicy || 0) }}</td>
@@ -243,10 +260,13 @@ onMounted(() => {
   <div class="panel" style="margin-top:16px;">
     <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>食堂一览（<CountUp :value="halls.length" /> 家）</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
-      <div v-for="h in halls" :key="h.name" style="background:var(--soft-fg);border-radius:12px;padding:12px;">
+      <button v-for="h in halls" :key="h.name" class="hall-card" :class="{ active: hallFilter === h.name }" @click="selectHall(h.name)">
         <b>{{ h.name }}</b>
         <div class="muted" style="font-size:12px;margin-top:4px;">{{ h.campus }} · {{ h.zone }}</div>
-      </div>
+      </button>
+    </div>
+    <div v-if="hallFilter" class="muted" style="font-size:12px;margin-top:10px;text-align:center;">
+      已筛选「{{ hallFilter }}」的档口，点击食堂可取消筛选
     </div>
   </div>
 
@@ -256,13 +276,21 @@ onMounted(() => {
         <div class="detail-title">{{ selectedDish.name }}</div>
         <button class="overlay-close" @click="showDetail = false">✕</button>
       </div>
-      <div class="detail-price">¥{{ priceOf(selectedDish) }}</div>
+      <div class="detail-price" v-if="priceOf(selectedDish)">¥{{ priceOf(selectedDish) }}</div>
+      <div class="detail-price muted" v-else>价格待定</div>
       <div class="detail-desc">{{ descOf(selectedDish) || '暂无详细描述' }}</div>
       <div class="detail-row"><span>餐次</span><b>{{ selectedDish.tag }}</b></div>
       <div class="detail-row"><span>口味</span><b>{{ spiceIcon(selectedDish.spicy || 0) }}</b></div>
       <div class="detail-row"><span>餐厅</span><b>{{ selectedDish.hall }}</b></div>
       <div class="detail-row"><span>位置</span><b>{{ selectedDish.campus }} · {{ selectedDish.zone }}</b></div>
-      <div class="detail-row"><span>类型</span><b>{{ selectedDish.tag }}</b></div>
+      <div v-if="dishesOf(selectedDish).length > 1" class="detail-dishes">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px;">所有菜品</div>
+        <div v-for="d in dishesOf(selectedDish)" :key="d.name" class="dish-item">
+          <span>{{ d.name }}</span>
+          <span v-if="d.price > 0" style="color:var(--primary);font-weight:700;">¥{{ d.price }}</span>
+          <span v-else class="muted">-</span>
+        </div>
+      </div>
       <div v-if="selectedDish.tags?.length" class="detail-tags">
         <span v-for="t in selectedDish.tags" :key="t" class="detail-tag">{{ t }}</span>
       </div>
@@ -306,8 +334,20 @@ onMounted(() => {
 .card-detail-hint { font-size: 11px; color: var(--primary); margin-top: 8px; font-weight: 600; }
 .draw-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .empty-state { padding: 30px 0; }
+.hall-card {
+  background: var(--soft-fg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: 0.2s;
+}
+.hall-card:hover { border-color: var(--primary); }
+.hall-card.active { border-color: var(--primary); background: var(--primary-soft); }
 .overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 60; }
-.overlay-card { background: var(--card); border-radius: var(--radius-lg); padding: 18px; width: 100%; max-width: 420px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); }
+.overlay-card { background: var(--card); border-radius: var(--radius-lg); padding: 18px; width: 100%; max-width: 420px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); }
 .detail-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .detail-title { font-size: 18px; font-weight: 800; flex: 1; }
 .overlay-close { border: none; background: none; font-size: 16px; cursor: pointer; color: var(--text-sub); }
@@ -316,6 +356,9 @@ onMounted(() => {
 .detail-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 13px; }
 .detail-row span { flex: 0 0 52px; color: var(--text-sub); }
 .detail-row b { flex: 1; color: var(--text); font-weight: 600; }
+.detail-dishes { margin-top: 12px; padding: 10px; background: var(--soft-fg); border-radius: 8px; }
+.dish-item { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; border-bottom: 1px dashed var(--border); }
+.dish-item:last-child { border-bottom: none; }
 .detail-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
 .detail-tag { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--soft-gray); color: var(--text-sub); font-weight: 600; }
 </style>

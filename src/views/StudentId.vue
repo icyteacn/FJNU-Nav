@@ -1,65 +1,77 @@
 <script setup>
-import { ref } from 'vue'
-
 const emit = defineEmits(['back'])
-
-const form = ref({ kaoshenghao: '' })
-const error = ref('')
-
-function gotoOfficial() {
-  const ksh = form.value.kaoshenghao.trim()
-  if (ksh && !/^\d{14}$/.test(ksh)) {
-    error.value = '考生号应为 14 位数字（填错不影响前往，可清空后直接前往官方页面）'
-    return
-  }
-  error.value = ''
-  window.open('https://zsb.fjnu.edu.cn/lqcx/list.htm', '_blank', 'noopener')
-}
 </script>
 
 <template>
   <div class="view-top">
     <button class="back-btn" @click="emit('back')">← 返回首页</button>
-    <div class="view-title">新生学号查询</div>
-    <div class="view-sub">学号由教务系统统一分配，录取结果请以学校官方录取查询系统为准</div>
+    <div class="view-title">研究生服务</div>
+    <div class="view-sub">研究生信息管理系统 / 招生 / 学位论文等快捷入口</div>
   </div>
 
   <div class="panel" style="margin-bottom:16px;">
-    <div style="font-weight:700;margin-bottom:10px;">🎓 官方录取查询（真实入口）</div>
+    <div style="font-weight:700;margin-bottom:10px;">🎓 研究生信息管理系统</div>
     <div class="muted" style="font-size:12px;margin-bottom:10px;line-height:1.7;">
-      录取查询系统由学校统一开放（开放时间见招生官网公告），需使用考生号、身份证号与验证码查询，官方系统无法免登录对接，本站仅提供直达入口。
+      研究生培养全流程管理：选课 / 成绩查询 / 开题报告 / 中期考核 / 论文提交 / 学位申请。
     </div>
     <div class="cal-list">
-      <a class="cal-item" href="https://zsb.fjnu.edu.cn/lqcx/list.htm" target="_blank" rel="noopener">
-        <span class="cal-title">本科招生录取查询</span>
-        <span class="cal-go">招生官网 ↗</span>
-      </a>
-      <a class="cal-item" href="https://zsb.fjnu.edu.cn/yxzy/list.htm" target="_blank" rel="noopener">
-        <span class="cal-title">录取专业（学院巡礼）</span>
-        <span class="cal-go">招生官网 ↗</span>
-      </a>
-      <a class="cal-item" href="https://zsb.fjnu.edu.cn" target="_blank" rel="noopener">
-        <span class="cal-title">本科招生信息网</span>
-        <span class="cal-go">官网 ↗</span>
+      <a class="cal-item" href="https://gedu.fjnu.edu.cn/cas/login?service=https://gedu.fjnu.edu.cn" target="_blank" rel="noopener" style="background:var(--primary-soft);border-color:var(--primary);">
+        <span class="cal-title">🔑 研究生信息管理系统（登录）</span>
+        <span class="cal-go">前往登录 ↗</span>
       </a>
     </div>
   </div>
 
-  <div class="panel">
-    <div style="font-weight:700;margin-bottom:10px;">📌 查询流程</div>
-    <ol class="route-steps" style="margin:0 0 14px;padding-left:20px;">
-      <li>录取期间留意本科招生网通知，确认查询系统开放</li>
-      <li>在官方录取查询页输入考生号 + 身份证号 + 验证码</li>
-      <li>查询结果显示录取专业等信息</li>
-      <li>学号在正式报到、教务系统注册后分配，以录取通知书与学校通知为准</li>
-    </ol>
-    <div class="input-row">
-      <input class="input" v-model="form.kaoshenghao" placeholder="考生号（14 位，选填，不填可直接前往）" maxlength="14" />
-      <button class="btn" @click="gotoOfficial">前往官方查询 ↗</button>
+  <div class="panel" style="margin-bottom:16px;">
+    <div style="font-weight:700;margin-bottom:10px;">📋 招生与录取</div>
+    <div class="cal-list">
+      <a class="cal-item" href="https://yjsy.fjnu.edu.cn/zs/list.htm" target="_blank" rel="noopener">
+        <span class="cal-title">研究生招生信息</span>
+        <span class="cal-go">研究生院 ↗</span>
+      </a>
+      <a class="cal-item" href="https://zsb.fjnu.edu.cn/lqcx/list.htm" target="_blank" rel="noopener">
+        <span class="cal-title">录取查询（本科）</span>
+        <span class="cal-go">招生官网 ↗</span>
+      </a>
     </div>
-    <div v-if="error" class="result-box" style="background:var(--soft-red-bg);color:var(--soft-red-text);margin-top:10px;">{{ error }}</div>
-    <div class="muted" style="margin-top:14px;font-size:12px;line-height:1.8;">
-      提示：学号查询涉及个人隐私，须由本人凭录取信息在官方系统核验后获取，本站不做任何代查。
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div style="font-weight:700;margin-bottom:10px;">📝 学位论文</div>
+    <div class="cal-list">
+      <a class="cal-item" href="https://yjsy.fjnu.edu.cn/xwgl/list.htm" target="_blank" rel="noopener">
+        <span class="cal-title">论文开题 / 答辩 / 查重</span>
+        <span class="cal-go">研究生院 ↗</span>
+      </a>
+      <a class="cal-item" href="https://yjsy.fjnu.edu.cn/pygl/list.htm" target="_blank" rel="noopener">
+        <span class="cal-title">培养管理 / 课程管理</span>
+        <span class="cal-go">研究生院 ↗</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div style="font-weight:700;margin-bottom:10px;">🔗 常用平台</div>
+    <div class="cal-list">
+      <a class="cal-item" href="https://vpn3.fjnu.edu.cn/auth/login?returnUrl=https://zhifu-cnki-net-s.vpn3.fjnu.edu.cn/" target="_blank" rel="noopener">
+        <span class="cal-title">福Star VPN（访问知网）</span>
+        <span class="cal-go">VPN ↗</span>
+      </a>
+      <a class="cal-item" href="https://fjnu.zlgc2.chaoxing.com" target="_blank" rel="noopener">
+        <span class="cal-title">教学云平台（超星）</span>
+        <span class="cal-go">学习平台 ↗</span>
+      </a>
+      <a class="cal-item" href="https://library.fjnu.edu.cn/main.htm" target="_blank" rel="noopener">
+        <span class="cal-title">图书馆（数据库检索）</span>
+        <span class="cal-go">图书馆 ↗</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="panel" style="background:var(--notice-bg);border-color:var(--notice-border);">
+    <div style="font-weight:700;color:var(--notice-text);">💡 提示</div>
+    <div class="muted" style="font-size:13px;margin-top:6px;line-height:1.8;">
+      研究生信息管理系统需使用统一身份认证登录（学号 + 密码）。如有账号问题，请联系研究生院或信息化办公室。
     </div>
   </div>
 </template>

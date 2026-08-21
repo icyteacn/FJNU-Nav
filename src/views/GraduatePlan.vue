@@ -1,9 +1,14 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref } from 'vue'
+import ZcAccumulator from '../components/ZcAccumulator.vue'
+import { loadState, saveState } from '../stores/scholarship'
 
 const emit = defineEmits(['back'])
 
 const activeTab = ref('links')
+loadState()
+saveState()
+
 
 const graduateLinks = [
   { name: '研究生信息管理系统', url: 'https://gedu.fjnu.edu.cn/cas/login?service=https://gedu.fjnu.edu.cn', desc: '培养方案 / 选课 / 成绩 / 论文管理', icon: '🔑', featured: true },
@@ -66,41 +71,6 @@ const scholarshipGroups = [
   },
 ]
 
-const scoreRules = [
-  { title: '论文得分（权重最高）', icon: '📝', highlight: true,
-    rows: [
-      ['顶级学术期刊', '160 分/篇'], ['国际 A 类（含 CCF-A）', '80 分/篇'],
-      ['国际 B 类（含 CCF-B）', '40 分/篇'], ['国际 C 类 / 国内 A 类', '20 分/篇'],
-      ['国内 B 类', '10 分/篇'], ['国内 C 类', '5 分/篇'],
-    ],
-    note: '须研究生一作；导师一作时研究生须通讯/共同一作。外文论文须有 DOI 且在线时间在截止日前' },
-  { title: '专利 · 项目 · 转让', icon: '🔬',
-    rows: [
-      ['发明专利授权', '20 分/件'], ['实用新型专利授权', '5 分/件'],
-      ['国自然博士生项目', '60 分/项'], ['一流网安学院创新资助立项', '20 分/项'],
-      ['成果转让 / 技术服务', '1 分/万元（上限 40 分）'],
-    ],
-    note: '专利须导师一作、研究生二作；署名单位须为福建师大或本学院' },
-  { title: 'A 类竞赛（负责人满分）', icon: '🎯',
-    rows: [
-      ['国家级特等/一等/二等/三等', '80 / 54 / 36 / 24'], ['省级特等/一等/二等/三等', '20 / 16 / 12 / 9'],
-      ['校级一等/二等/三等', '5 / 3 / 2'], ['院级一等/二等/三等', '2 / 1 / 0.5'],
-    ],
-    note: '成员按系数折减：第 2-5 人 ×0.9，6-8 人 ×0.8，9-12 人 ×0.7，13-15 人 ×0.6；同项目多档次取最高' },
-  { title: 'B 类竞赛（全员同分）', icon: '🏅',
-    rows: [
-      ['国家级一等/二等/三等/优秀', '20 / 16 / 12 / 5'], ['省级一等/二等/三等/优秀', '10 / 8 / 6 / 2'],
-      ['校级一等/二等/三等', '3 / 2 / 1'], ['院级一等/二等/三等', '1.5 / 1 / 0.5'],
-    ],
-    note: '团队项目每位成员均获对应奖励分；清单见学院高水平创新创业竞赛实施办法' },
-  { title: '综合素质分（硕士满分 15 / 博士满分 10）', icon: '🌟',
-    rows: [
-      ['荣誉称号 国家级 / 省级 / 校级', '10 / 7 / 5'], ['研究生会主席等核心岗位', '8 分'],
-      ['部长 / 班长 / 团支书 / 党支书', '6 分'], ['志愿服务每 20 小时', '1 分（上限 4 分）'],
-      ['无偿献血', '1 分/次（上限 2 分）'],
-    ],
-    note: '含荣誉嘉奖、社会工作、体育美育劳育；处分与通报批评按档扣分' },
-]
 
 const scholarshipGuide = [
   { title: '评审时间', content: '每年 10-11 月申请，学院公示不少于 5 个工作日；对结果有异议可在公示期向学院评审委员会申诉。', icon: '📅', highlight: true },
@@ -118,35 +88,6 @@ const disqualifications = [
   '因违反实验室、宿舍管理规定被通报批评',
   '有必修课或专业选修课不合格应予重修',
 ]
-
-const calcProfiles = {
-  'master-2': { label: '硕士二年级', course: 50, research: 35, quality: 15, cap: 35, qCap: 15, gates: '一等需课程排名前 30% · 二等前 50%（或前 2 名）· 三等前 70%' },
-  'master-3': { label: '硕士三年级', course: 0, research: 85, quality: 15, cap: 85, qCap: 15, gates: '一等需开题合格 + 中期考核优秀 · 二等需开题合格 + 中期良好以上' },
-  'phd-2': { label: '博士二年级', course: 40, research: 50, quality: 10, cap: 50, qCap: 10, gates: '以综合成绩总分从高到低排序' },
-  'phd-3': { label: '博三四年级 / 五年级直博', course: 0, research: 90, quality: 10, cap: 90, qCap: 10, gates: '以综合成绩总分从高到低排序' },
-}
-
-const calcForm = reactive({ profile: 'master-2', course: 85, research: 20, quality: 8 })
-
-const calcResult = computed(() => {
-  const p = calcProfiles[calcForm.profile]
-  // 细则口径：科研分/综质分的满分已含权重（如硕三科研满分 85 = 占比 85%），
-  // 直接取封顶后的得分相加即可；课程学习成绩分 = 加权平均分 × 占比。
-  const research = Math.min(Number(calcForm.research) || 0, p.cap)
-  const quality = Math.min(Number(calcForm.quality) || 0, p.qCap)
-  const coursePart = (Math.min(Math.max(Number(calcForm.course) || 0, 0), 100)) * p.course / 100
-  const total = coursePart + research + quality
-  return {
-    total: total.toFixed(2),
-    parts: [
-      p.course ? { label: `课程(${p.course}%)`, value: coursePart.toFixed(2) } : null,
-      p.research ? { label: `科研(满分${p.cap})`, value: research.toFixed(2) } : null,
-      p.quality ? { label: `综质(满分${p.qCap})`, value: quality.toFixed(2) } : null,
-    ].filter(Boolean),
-    gates: p.gates,
-    capped: Number(calcForm.research) > p.cap || Number(calcForm.quality) > p.qCap,
-  }
-})
 
 const academicTools = [
   { name: 'Zotero', desc: '免费文献管理工具，支持PDF标注和引用', url: 'https://www.zotero.org', icon: '📚', category: '文献管理' },
@@ -226,6 +167,7 @@ function eventClass(type) {
     <button class="tab" :class="{ active: activeTab === 'links' }" @click="activeTab = 'links'">常用网站</button>
     <button class="tab" :class="{ active: activeTab === 'credit' }" @click="activeTab = 'credit'">学分要求</button>
     <button class="tab" :class="{ active: activeTab === 'scholarship' }" @click="activeTab = 'scholarship'">奖学金</button>
+    <button class="tab" :class="{ active: activeTab === 'zc' }" @click="activeTab = 'zc'">综测积累</button>
     <button class="tab" :class="{ active: activeTab === 'tools' }" @click="activeTab = 'tools'">学术工具</button>
     <button class="tab" :class="{ active: activeTab === 'calendar' }" @click="activeTab = 'calendar'">学术日历</button>
     <button class="tab" :class="{ active: activeTab === 'tips' }" @click="activeTab = 'tips'">研究生指南</button>
@@ -348,54 +290,12 @@ function eventClass(type) {
       </div>
     </div>
 
-    <div class="panel" style="margin-bottom:16px;">
-      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>🧮 科研分测算器</div>
-      <div class="calc-layout">
-        <div class="calc-form">
-          <label class="calc-field">
-            <span class="calc-label">我的身份</span>
-            <select v-model="calcForm.profile" class="calc-input">
-              <option v-for="(p, k) in calcProfiles" :key="k" :value="k">{{ p.label }}</option>
-            </select>
-          </label>
-          <label class="calc-field" v-if="calcProfiles[calcForm.profile].course > 0">
-            <span class="calc-label">课程加权平均分（仅必修课，0-100）</span>
-            <input type="number" min="0" max="100" v-model.number="calcForm.course" class="calc-input" />
-          </label>
-          <label class="calc-field">
-            <span class="calc-label">科研创新原始得分（论文+专利+竞赛…，满分 {{ calcProfiles[calcForm.profile].cap }}）</span>
-            <input type="number" min="0" v-model.number="calcForm.research" class="calc-input" />
-          </label>
-          <label class="calc-field">
-            <span class="calc-label">综合素质原始得分（满分 {{ calcProfiles[calcForm.profile].qCap }}）</span>
-            <input type="number" min="0" v-model.number="calcForm.quality" class="calc-input" />
-          </label>
-        </div>
-        <div class="calc-result">
-          <div class="calc-total-label">预计综合成绩总分</div>
-          <div class="calc-total">{{ calcResult.total }}</div>
-          <div class="calc-parts">
-            <div v-for="part in calcResult.parts" :key="part.label" class="calc-part">
-              <span>{{ part.label }}</span><b>{{ part.value }}</b>
-            </div>
-          </div>
-          <div v-if="calcResult.capped" class="calc-warn">⚠️ 得分超出满分上限，已按封顶值计算；若同年级有人超满分，全员按比例换算</div>
-          <div class="calc-gates">{{ calcResult.gates }}</div>
-        </div>
+    <div class="panel calc-entry" style="margin-bottom:16px;">
+      <div class="calc-entry-info">
+        <b>🧮 综合成绩测算 · 加分积累</b>
+        <span>课程加权平均（按专业预设目录）· 科研/综测快速选档累加 · 总分实时测算，已移至「综测积累」标签页</span>
       </div>
-    </div>
-
-    <div class="panel" style="margin-bottom:16px;">
-      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>📋 计分速查</div>
-      <div class="rules-grid">
-        <div v-for="r in scoreRules" :key="r.title" class="rule-card" :class="{ highlight: r.highlight }">
-          <div class="rule-header"><span class="rule-icon">{{ r.icon }}</span><span class="rule-title">{{ r.title }}</span></div>
-          <table class="rule-table">
-            <tr v-for="row in r.rows" :key="row[0]"><td>{{ row[0] }}</td><td class="rule-score">{{ row[1] }}</td></tr>
-          </table>
-          <div class="rule-note">{{ r.note }}</div>
-        </div>
-      </div>
+      <button class="calc-entry-btn" @click="activeTab = 'zc'">前往测算 →</button>
     </div>
 
     <div class="panel" style="margin-bottom:16px;">
@@ -418,6 +318,10 @@ function eventClass(type) {
       </ul>
       <p class="muted" style="font-size:12px;margin:10px 0 0;">细则全文以学院最新通知为准，本页内容仅供快速参考。</p>
     </div>
+  </template>
+
+  <template v-if="activeTab === 'zc'">
+    <ZcAccumulator @goto="activeTab = 'scholarship'" />
   </template>
 
   <template v-if="activeTab === 'tools'">
@@ -504,32 +408,11 @@ function eventClass(type) {
 .std-note { font-size: 12px; color: var(--text-sub); margin-top: 10px; line-height: 1.6; }
 .scholarship-extra { margin-top: 12px; padding: 10px 12px; background: var(--soft-yellow, #fff8e1); border: 1px dashed var(--accent, #b8860b); border-radius: var(--radius); font-size: 12px; color: var(--text-sub); }
 
-.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
-.rule-card { padding: 16px; background: var(--soft-fg); border: 1px solid var(--border); border-radius: var(--radius); }
-.rule-card.highlight { border-color: var(--accent, #b8860b); background: var(--soft-yellow, #fff8e1); }
-.rule-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.rule-icon { font-size: 18px; }
-.rule-title { font-weight: 700; font-size: 13px; }
-.rule-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.rule-table td { padding: 5px 0; border-bottom: 1px dashed var(--border); color: var(--text-sub); }
-.rule-table tr:last-child td { border-bottom: none; }
-.rule-score { text-align: right; font-weight: 700; color: var(--primary); white-space: nowrap; }
-.rule-note { font-size: 11px; color: var(--text-sub); margin-top: 8px; line-height: 1.6; opacity: 0.85; }
-
-.calc-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 640px) { .calc-layout { grid-template-columns: 1fr; } }
-.calc-form { display: flex; flex-direction: column; gap: 12px; }
-.calc-field { display: flex; flex-direction: column; gap: 4px; }
-.calc-label { font-size: 12px; color: var(--text-sub); }
-.calc-input { padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 14px; outline: none; }
-.calc-input:focus { border-color: var(--primary); }
-.calc-result { padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius-lg); color: #fff; display: flex; flex-direction: column; gap: 8px; }
-.calc-total-label { font-size: 12px; opacity: 0.9; }
-.calc-total { font-size: 40px; font-weight: 800; line-height: 1.1; }
-.calc-parts { display: flex; flex-wrap: wrap; gap: 6px; }
-.calc-part { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,0.18); display: flex; gap: 6px; }
-.calc-warn { font-size: 11px; background: rgba(255,255,255,0.15); padding: 6px 10px; border-radius: 8px; line-height: 1.5; }
-.calc-gates { font-size: 11px; opacity: 0.9; line-height: 1.6; }
+.calc-entry { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-color: var(--primary); background: linear-gradient(135deg, var(--primary-soft), transparent); }
+.calc-entry-info { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-sub); min-width: 200px; }
+.calc-entry-info b { font-size: 14px; color: var(--text); }
+.calc-entry-btn { padding: 10px 18px; border: none; border-radius: 999px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+.calc-entry-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
 .disqual-panel { border-color: #ef5350; }
 .disqual-list { margin: 0; padding-left: 20px; font-size: 13px; line-height: 2; color: var(--text); }

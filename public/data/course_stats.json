@@ -1,14 +1,210 @@
 {
-  "generatedAt": "2026-08-20T15:19:24.536Z",
+  "generatedAt": "2026-08-21T14:19:58.689Z",
   "source": "https://jwc.fjnu.edu.cn",
-  "periods": 0,
-  "terms": [],
-  "hotRooms": [],
-  "hotTeachers": [],
-  "topCourses": [],
-  "dayDist": [],
-  "periodDist": [],
-  "kindDist": [],
-  "campusDist": [],
+  "periods": 1659,
+  "terms": [
+    {
+      "semester": "2025-2026学年第二学期",
+      "count": 1659
+    }
+  ],
+  "hotRooms": [
+    {
+      "name": "在线教学",
+      "periods": 118
+    },
+    {
+      "name": "知明1-105",
+      "periods": 34
+    },
+    {
+      "name": "文405",
+      "periods": 28
+    },
+    {
+      "name": "文201",
+      "periods": 26
+    },
+    {
+      "name": "理工楼1＃308",
+      "periods": 26
+    },
+    {
+      "name": "文301",
+      "periods": 22
+    },
+    {
+      "name": "美院大楼110",
+      "periods": 21
+    },
+    {
+      "name": "文205",
+      "periods": 21
+    },
+    {
+      "name": "雕塑楼107",
+      "periods": 21
+    },
+    {
+      "name": "户外0001",
+      "periods": 19
+    }
+  ],
+  "hotTeachers": [
+    {
+      "name": "李劲松",
+      "periods": 18
+    },
+    {
+      "name": "陈新儒",
+      "periods": 18
+    },
+    {
+      "name": "吴子仪, 刘永冬, 大山口雅, 松浦哲仁",
+      "periods": 18
+    },
+    {
+      "name": "余岱宗",
+      "periods": 16
+    },
+    {
+      "name": "刘畅",
+      "periods": 15
+    },
+    {
+      "name": "贾翠红, 冯卓宏, 翁存程, 蒋丽钦",
+      "periods": 15
+    },
+    {
+      "name": "庄秋阳",
+      "periods": 15
+    },
+    {
+      "name": "王勇",
+      "periods": 13
+    }
+  ],
+  "topCourses": [
+    {
+      "name": "形势与政策",
+      "sections": 124
+    },
+    {
+      "name": "马克思主义基本原理",
+      "sections": 78
+    },
+    {
+      "name": "毛泽东思想和中国特色社会主义理论体系概论",
+      "sections": 73
+    },
+    {
+      "name": "数学建模",
+      "sections": 22
+    },
+    {
+      "name": "电工与电子技术（下）",
+      "sections": 22
+    },
+    {
+      "name": "发展与教育心理学",
+      "sections": 19
+    },
+    {
+      "name": "中国古代文学史Ⅳ",
+      "sections": 18
+    },
+    {
+      "name": "光学实验",
+      "sections": 18
+    },
+    {
+      "name": "概率论与数理统计",
+      "sections": 16
+    },
+    {
+      "name": "文学创作论",
+      "sections": 16
+    }
+  ],
+  "dayDist": [
+    {
+      "day": "周一",
+      "count": 319
+    },
+    {
+      "day": "周二",
+      "count": 288
+    },
+    {
+      "day": "周三",
+      "count": 306
+    },
+    {
+      "day": "周四",
+      "count": 337
+    },
+    {
+      "day": "周五",
+      "count": 308
+    },
+    {
+      "day": "周六",
+      "count": 40
+    },
+    {
+      "day": "周日",
+      "count": 61
+    }
+  ],
+  "periodDist": [
+    {
+      "start": 1,
+      "count": 409
+    },
+    {
+      "start": 2,
+      "count": 4
+    },
+    {
+      "start": 3,
+      "count": 340
+    },
+    {
+      "start": 5,
+      "count": 452
+    },
+    {
+      "start": 7,
+      "count": 254
+    },
+    {
+      "start": 8,
+      "count": 2
+    },
+    {
+      "start": 9,
+      "count": 149
+    },
+    {
+      "start": 10,
+      "count": 18
+    },
+    {
+      "start": 11,
+      "count": 31
+    }
+  ],
+  "kindDist": [
+    {
+      "name": "未标注",
+      "count": 1659
+    }
+  ],
+  "campusDist": [
+    {
+      "name": "未标注",
+      "count": 1659
+    }
+  ],
   "colDist": []
 }

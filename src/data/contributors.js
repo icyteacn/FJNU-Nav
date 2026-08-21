@@ -15,8 +15,8 @@ export const contributors = [
   },
   {
     name: 'iceoftea',
-    login: '',
-    url: '',
+    login: 'IceofTea',
+    url: 'https://github.com/IceofTea',
     role: '项目创建与整体维护',
     weight: 2,
     emoji: '🧑‍💻'

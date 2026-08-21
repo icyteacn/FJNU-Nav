@@ -13,6 +13,7 @@ const emit = defineEmits(['back'])
 const picks = ref([])
 const pickedCount = ref(0)
 const showAll = ref(false)
+const filter = ref('全部')
 const campusFilter = ref('全部')
 const mealFilter = ref('全部')
 const budgetFilter = ref('全部')
@@ -72,6 +73,11 @@ const filteredPool = computed(() => {
     })
   }
   return pool
+})
+
+const filtered = computed(() => {
+  if (filter.value === '全部') return foods
+  return foods.filter(f => f.tag === filter.value)
 })
 
 function pickFrom(pool, count) {

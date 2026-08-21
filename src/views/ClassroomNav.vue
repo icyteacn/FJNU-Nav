@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * 教室导航页面
+ * 灵感参考：https://nfs.pcdawn.cn/app/classroomNavigation（NextFStar 室内寻路系统）
+ * 本项目保留原有空教室查询 + 楼宇列表 + 高德地图导航，未完全复刻分步导航图片指引功能。
+ */
 import { ref, computed, onMounted } from 'vue'
 import { buildings, campusFilters, searchRooms } from '../data/classrooms'
 import { apiFetch } from '../api/index'

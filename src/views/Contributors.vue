@@ -84,6 +84,15 @@ function hueOf(i) {
       <a href="https://github.com/Xuuyuan/FJNU-Wiki" target="_blank" rel="noopener">FJNU 社区</a>
       提 Pull Request，被合入后你的名字就会出现在这里。
     </p>
+    <div style="margin-top:16px;padding:12px;background:var(--soft-fg);border-radius:var(--radius);border:1px solid var(--border);">
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px;">💡 灵感参考与致谢</div>
+      <div class="muted" style="font-size:12px;line-height:1.8;">
+        本项目的课程表、教室导航、今天吃什么等功能设计参考了
+        <a href="https://nfs.pcdawn.cn/" target="_blank" rel="noopener">NextFStar（nfs.pcdawn.cn）</a>
+        的交互设计，在此致谢。原项目采用 Vue 3 + Element Plus 实现，功能完整且体验优秀，
+        本项目在此基础上适配了福建师范大学的数据源。
+      </div>
+    </div>
   </div>
 </template>
 

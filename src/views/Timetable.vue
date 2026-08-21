@@ -1,6 +1,9 @@
 <script setup>
 /** 课程表：班级/教室/教师课表查询 + 官方课程总表入口
- *  数据来自本地快照（loadSnap），网关可用时用网关补充元信息 */
+ *  数据来自本地快照（loadSnap），网关可用时用网关补充元信息
+ *  灵感参考：https://nfs.pcdawn.cn/app/timetable（NextFStar 周视图网格 + 实时时间线）
+ *  本项目保留原有班级/教室/教师三维查询 + 周视图/列表视图切换，未完全复刻课程编辑器和分享功能。
+ */
 import { ref, shallowRef, computed, watch, onMounted } from 'vue'
 import { apiFetch } from '../api/index'
 import { loadSnap } from '../api/localCourse'

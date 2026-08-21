@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * 校历页面
+ * 灵感参考：https://nfs.pcdawn.cn/app/schoolCalendar（NextFStar 校历图片直出 + carousel 方案）
+ * 本项目保留原有下载链接 + 时间线展示方式，未完全复刻图片轮播功能。
+ */
 import { ref, onMounted } from 'vue'
 import { apiFetch } from '../api'
 

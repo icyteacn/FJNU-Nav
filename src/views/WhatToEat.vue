@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * 今天吃什么页面
+ * 灵感参考：https://nfs.pcdawn.cn/app/whatToEatToday（NextFStar 多维度筛选 + 抽取动画）
+ * 本项目复刻了校区/餐次/预算/口味筛选 + 菜品详情弹窗 + 抽取动画功能。
+ */
 import { ref, computed, onMounted } from 'vue'
 import { foods, halls, menu } from '../data/foods'
 import CountUp from '../components/CountUp.vue'

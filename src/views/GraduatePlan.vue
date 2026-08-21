@@ -41,9 +41,9 @@ const creditRequirements = [
 const scholarships = [
   { name: '硕士研究生国家奖学金', amount: 20000, type: '学业优秀', cycle: '每年', requirement: '成绩优异 + 科研成果突出', icon: '🏆' },
   { name: '博士研究生国家奖学金', amount: 30000, type: '学业优秀', cycle: '每年', requirement: '成绩优异 + 科研成果突出', icon: '🏆' },
-  { name: '学业奖学金（一等）', amount: 12000, type: '学业优秀', cycle: '每年', requirement: '综合排名前20%', icon: '🥇' },
-  { name: '学业奖学金（二等）', amount: 8000, type: '学业优秀', cycle: '每年', requirement: '综合排名前50%', icon: '🥈' },
-  { name: '学业奖学金（三等）', amount: 4000, type: '学业优秀', cycle: '每年', requirement: '综合排名前80%', icon: '🥉' },
+  { name: '学业奖学金（一等）', amount: 12000, type: '学业优秀', cycle: '每年', requirement: '综合排名前10%', icon: '🥇' },
+  { name: '学业奖学金（二等）', amount: 8000, type: '学业优秀', cycle: '每年', requirement: '综合排名10%-20%', icon: '🥈' },
+  { name: '学业奖学金（三等）', amount: 4000, type: '学业优秀', cycle: '每年', requirement: '综合排名20%-40%', icon: '🥉' },
   { name: '国家助学金（每月）', amount: 600, type: '基本保障', cycle: '每月', requirement: '所有全日制研究生', icon: '💰' },
   { name: '省政府奖学金', amount: 10000, type: '省级荣誉', cycle: '每年', requirement: '省级评选', icon: '🏅' },
   { name: '优秀研究生奖学金', amount: 5000, type: '学业优秀', cycle: '每年', requirement: '综合表现优秀', icon: '⭐' },
@@ -51,6 +51,17 @@ const scholarships = [
   { name: '竞赛奖学金（A类·国一）', amount: 5000, type: '竞赛奖励', cycle: '按项目', requirement: '国家级一等奖', icon: '🎖️' },
   { name: '博学奖学金（发明专利）', amount: 5000, type: '科研奖励', cycle: '按成果', requirement: '发明专利授权', icon: '📜' },
   { name: '研究生助研津贴', amount: 0, type: '岗位津贴', cycle: '每月', requirement: '导师课题组', icon: '🔬' },
+]
+
+const scholarshipGuide = [
+  { title: '评审标准', content: '满分100分 = 科研创新90% + 综合素质10%。科研成果是核心竞争力，决定能否获奖。', icon: '📊' },
+  { title: '论文得分（最关键）', content: '顶级期刊160分/篇，国际A类（CCFA）80分，B类40分，C类/国内A类20分，国内B类10分。须第一作者。', icon: '📝' },
+  { title: '专利得分', content: '发明专利授权20分/件。须导师一作、研究生二作。', icon: '📜' },
+  { title: '竞赛得分', content: 'A类：国特80分，国一54分，国二36分，国三24分。B类：国一20分，国二16分，国三12分。', icon: '🎯' },
+  { title: '项目得分', content: '国自然博士生项目60分，国家一流网安学院学生创新资助计划20分，成果转让1分/万元（上限40分）。', icon: '🔬' },
+  { title: '综合素质', content: '荣誉：国家级10分，省级7分，校级5分。社会工作：主席8分，部长6分，班委4分。满分10分。', icon: '🏅' },
+  { title: '课程成绩', content: '加权平均分 = Σ(课程成绩×学分) ÷ Σ学分。仅计算必修课，二年级成绩×40%（硕士）或×50%。', icon: '📚' },
+  { title: '申请流程', content: '每年9-10月申请 → 学院评审委员会量化打分 → 公示5个工作日 → 提交学校。成果不可重复申报。', icon: '📋' },
 ]
 
 const academicTools = [
@@ -189,7 +200,7 @@ function eventClass(type) {
   </template>
 
   <template v-if="activeTab === 'scholarship'">
-    <div class="panel">
+    <div class="panel" style="margin-bottom:16px;">
       <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>🏆 奖学金与资助</div>
       <div class="scholarship-grid">
         <div v-for="s in scholarships" :key="s.name" class="scholarship-card">
@@ -203,6 +214,27 @@ function eventClass(type) {
             <span class="scholarship-cycle">{{ s.cycle }}</span>
           </div>
           <div class="scholarship-req">{{ s.requirement }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>🎯 如何争取奖学金</div>
+      <div class="guide-grid">
+        <div v-for="g in scholarshipGuide" :key="g.title" class="guide-card">
+          <div class="guide-header">
+            <span class="guide-icon">{{ g.icon }}</span>
+            <span class="guide-title">{{ g.title }}</span>
+          </div>
+          <div class="guide-content">{{ g.content }}</div>
+        </div>
+      </div>
+      <div class="guide-summary">
+        <div class="guide-summary-title">💡 核心策略</div>
+        <div class="guide-summary-content">
+          <b>科研创新（90分）</b>是关键：优先发论文（A类80分/篇）> 专利（20分/件）> 竞赛（A类国特80分）<br>
+          <b>综合素质（10分）</b>是加分项：争取荣誉（国家级10分）+ 社会工作（主席8分）<br>
+          <b>时间规划</b>：9-10月申请，成果不可重复使用，提前准备材料
         </div>
       </div>
     </div>

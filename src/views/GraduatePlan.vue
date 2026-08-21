@@ -39,11 +39,11 @@ const creditRequirements = [
 ]
 
 const scholarships = [
-  { name: '国家奖学金', amount: 20000, type: '学业优秀', cycle: '每年', requirement: '成绩优异 + 科研成果', icon: '🏆' },
+  { name: '硕士研究生国家奖学金', amount: 20000, type: '学业优秀', cycle: '每年', requirement: '成绩优异 + 科研成果突出', icon: '🏆' },
+  { name: '博士研究生国家奖学金', amount: 30000, type: '学业优秀', cycle: '每年', requirement: '成绩优异 + 科研成果突出', icon: '🏆' },
   { name: '学业奖学金（一等）', amount: 12000, type: '学业优秀', cycle: '每年', requirement: '综合排名前20%', icon: '🥇' },
   { name: '学业奖学金（二等）', amount: 8000, type: '学业优秀', cycle: '每年', requirement: '综合排名前50%', icon: '🥈' },
   { name: '学业奖学金（三等）', amount: 4000, type: '学业优秀', cycle: '每年', requirement: '综合排名前80%', icon: '🥉' },
-  { name: '国家助学金', amount: 6000, type: '基本保障', cycle: '每年', requirement: '所有全日制研究生', icon: '💰' },
   { name: '国家助学金（每月）', amount: 600, type: '基本保障', cycle: '每月', requirement: '所有全日制研究生', icon: '💰' },
   { name: '省政府奖学金', amount: 10000, type: '省级荣誉', cycle: '每年', requirement: '省级评选', icon: '🏅' },
   { name: '优秀研究生奖学金', amount: 5000, type: '学业优秀', cycle: '每年', requirement: '综合表现优秀', icon: '⭐' },
@@ -69,7 +69,7 @@ const academicTools = [
 const tips = [
   { title: '选课建议', content: '研究生选课前请仔细阅读培养方案，必修课优先选修。选课系统开放时间有限，建议提前准备好课程列表。', icon: '💡' },
   { title: '论文进度', content: '学位论文有严格的时间节点，请提前规划好写作进度。开题报告、中期检查、答辩申请等材料需提前准备。', icon: '📅' },
-  { title: '奖学金申请', content: '国家奖学金、学业奖学金等有固定的申请时间，请关注研究生院通知。申请材料需提前准备。', icon: '🏆' },
+  { title: '奖学金申请', content: '国家奖学金每年9-10月申请，成果不可重复申报。学业成绩优异 + 科研成果突出是核心竞争力。', icon: '🏆' },
   { title: '学术资源', content: '通过VPN可校外访问知网、万方等学术数据库。建议收藏常用数据库入口。', icon: '📚' },
   { title: '导师沟通', content: '定期与导师沟通研究进展，参加导师组会。遇到问题及时寻求帮助。', icon: '👨‍🏫' },
   { title: '论文查重', content: '论文提交前务必进行查重检测。学校提供免费查重机会，请合理使用。', icon: '🔍' },
@@ -77,6 +77,8 @@ const tips = [
   { title: '学术会议', content: '积极参加学术会议，了解领域前沿。学校有会议资助政策，可申请报销。', icon: '🎤' },
   { title: '实习实践', content: '专业型研究生需要完成实习实践环节，建议提前联系实习单位。', icon: '💼' },
   { title: '档案管理', content: '研究生档案包含成绩单、获奖证书等重要材料，请妥善保管。', icon: '📁' },
+  { title: '国家奖学金评审', content: '评审标准：科研创新占90% + 综合素质占10%。评审时间：每年9-10月。可多次获奖但成果不可重复使用。', icon: '📊' },
+  { title: '科研成果要求', content: '论文须为第一作者（导师一作需为通讯/共同一作）；专利须导师一作、研究生二作；竞赛获奖可累加计分。', icon: '🔬' },
 ]
 
 const academicCalendar = [

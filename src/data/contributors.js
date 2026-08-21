@@ -14,7 +14,7 @@ export const contributors = [
     emoji: '📚'
   },
   {
-    name: 'FJNU-Nav 团队',
+    name: 'iceoftea',
     login: '',
     url: '',
     role: '项目创建与整体维护',

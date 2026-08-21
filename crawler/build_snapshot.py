@@ -88,6 +88,34 @@ def fetch_course_tables():
     return results
 
 
+def load_previous_courses():
+    """读取上一份快照中的课程数据（NextFStar 等来源），避免本次抓取失败时被清空。
+
+    同时做 schema 归一：rows 缺 term 时以当前学期补齐；courseTables 缺 title 时补默认值，
+    保证继承后的数据与教务处总表链路产出同构（validate / split_snapshot 可直接消费）。
+    """
+    try:
+        if config.OUT_FILE.exists():
+            prev = json.loads(config.OUT_FILE.read_text(encoding='utf-8'))
+            rows = prev.get('rows') or []
+            tables = prev.get('courseTables') or []
+            ct = prev.get('courseTable') or {}
+            if rows and tables and ct:
+                semester = ct.get('semester', '') or tables[0].get('semester', '')
+                for r in rows:
+                    if not r.get('term'):
+                        r['term'] = semester
+                for t in tables:
+                    if not t.get('title'):
+                        t['title'] = '福建师范大学课程总表'
+                    if not t.get('semester'):
+                        t['semester'] = semester
+                return rows, tables, ct
+    except Exception as exc:  # noqa: BLE001
+        print('skip 上一份快照课程数据: %s' % exc)
+    return [], [], {}
+
+
 def build():
     notices = parsers.fetch_notice_pages()
     news = parsers.parse_list(fetch_text(config.JWC + config.NEWS_LIST), config.JWC + config.NEWS_LIST)
@@ -97,6 +125,7 @@ def build():
     merged_rows = []
     all_rooms = 0
     latest = None
+    inherited = False
     if course_tables:
         latest = course_tables[0]
         for t in course_tables:
@@ -110,6 +139,17 @@ def build():
                     'credit': row.get('credit', ''), 'weeks': row.get('weeks', ''),
                 })
         all_rooms = len({norm_room(r['r']) for r in merged_rows if r['r']})
+    else:
+        # 教务处公开课程总表缺失：继承上一份快照的课程数据（如 NextFStar 抓取结果），
+        # 保证静态回退与课程表页面不因本次抓取失败而丢数据。
+        prev_rows, prev_tables, prev_ct = load_previous_courses()
+        if prev_rows:
+            merged_rows = prev_rows
+            course_tables = prev_tables
+            latest = prev_ct
+            inherited = True
+            all_rooms = len({norm_room(r['r']) for r in merged_rows if r['r']})
+            print('course data inherited from previous snapshot: %d rows' % len(merged_rows))
 
     snap = {
         'updatedAt': utcnow(),
@@ -126,7 +166,8 @@ def build():
             'rooms': all_rooms,
             'updatedAt': utcnow(),
             'cached': True,
-            'latestUrl': latest['url'] if latest else '',
+            'inherited': inherited,
+            'latestUrl': latest.get('url', '') if latest else '',
         },
         'rows': merged_rows,
     }

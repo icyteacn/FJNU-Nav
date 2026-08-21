@@ -71,11 +71,11 @@ function hueOf(i) {
   <div class="panel" style="margin-top:16px;">
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
-      <li><b>v1.2.2</b> 新增研究生服务 · 优化研究生奖学金 · 学术日历</li>
-      <li><b>v1.2.1</b> 文字头像美化 · 加载动画 · 热门应用预加载</li>
-      <li><b>v1.2.0</b> 课程表接入NextFStar API · 研究生服务优化 · 今天吃什么重写 · 食堂重新设计</li>
-      <li><b>v1.1.0</b> 公告系统 · 多维度筛选 · 路由懒加载 · 菜品数据增强</li>
-      <li><b>v1.0.0</b> 首版发布：17个应用全面移植</li>
+      <li><b>v1.2.4</b> 奖学金页按最新评审细则重写 · 新增科研分测算器</li>
+      <li><b>v1.2.2</b> 研究生服务 · 学术日历</li>
+      <li><b>v1.2.0</b> 课程表接入 NextFStar · 食堂重设计</li>
+      <li><b>v1.1.0</b> 公告系统 · 路由懒加载</li>
+      <li><b>v1.0.0</b> 首版发布</li>
     </ul>
     <p class="muted" style="font-size:12px;margin-top:10px;">
       每个版本的完整改动清单见 <a href="https://github.com/Xuuyuan/FJNU-Wiki" target="_blank" rel="noopener">FJNU 社区文档</a> 与仓库 README 版本历史。

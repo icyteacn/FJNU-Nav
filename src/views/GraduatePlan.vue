@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
 
 const emit = defineEmits(['back'])
 
@@ -38,32 +38,115 @@ const creditRequirements = [
   ]},
 ]
 
-const scholarships = [
-  { name: '硕士研究生国家奖学金', amount: 20000, type: '学业优秀', cycle: '每年', requirement: '成绩优异 + 科研成果突出', icon: '🏆', level: 'top' },
-  { name: '博士研究生国家奖学金', amount: 30000, type: '学业优秀', cycle: '每年', requirement: '成绩优异 + 科研成果突出', icon: '🏆', level: 'top' },
-  { name: '硕士学业奖学金（一等）', amount: 10000, type: '学业优秀', cycle: '每年', requirement: '综合排名前10%', icon: '🥇' },
-  { name: '硕士学业奖学金（二等）', amount: 6000, type: '学业优秀', cycle: '每年', requirement: '综合排名10%-20%', icon: '🥈' },
-  { name: '硕士学业奖学金（三等）', amount: 3000, type: '学业优秀', cycle: '每年', requirement: '综合排名20%-40%', icon: '🥉' },
-  { name: '博士学业奖学金（一等）', amount: 15000, type: '学业优秀', cycle: '每年', requirement: '综合排名前10%', icon: '🥇' },
-  { name: '博士学业奖学金（二等）', amount: 10000, type: '学业优秀', cycle: '每年', requirement: '综合排名10%-20%', icon: '🥈' },
-  { name: '博士学业奖学金（三等）', amount: 6000, type: '学业优秀', cycle: '每年', requirement: '综合排名20%-40%', icon: '🥉' },
-  { name: '国家助学金（每月）', amount: 600, type: '基本保障', cycle: '每月', requirement: '所有全日制研究生', icon: '💰' },
-  { name: '省政府奖学金', amount: 10000, type: '省级荣誉', cycle: '每年', requirement: '省级评选', icon: '🏅' },
-  { name: '博士新生宝琛创新奖学金', amount: 0, type: '新生专项', cycle: '每年', requirement: '博士新生专属', icon: '🎓' },
+const scholarshipGroups = [
+  {
+    key: 'phd', title: '博士研究生', icon: '🎓', base: '按全日制博士生总数',
+    tiers: [
+      { name: '一等', amount: 15000, ratio: '10%', icon: '🥇' },
+      { name: '二等', amount: 10000, ratio: '10%', icon: '🥈' },
+      { name: '三等', amount: 6000, ratio: '20%', icon: '🥉' },
+    ]
+  },
+  {
+    key: 'master-new', title: '硕士新生（统考生）', icon: '🌱', base: '按统考生总数',
+    tiers: [
+      { name: '一等', amount: 10000, ratio: '5%', icon: '🥇' },
+      { name: '二等', amount: 6000, ratio: '10%', icon: '🥈' },
+      { name: '三等', amount: 3000, ratio: '20%', icon: '🥉' },
+    ],
+    note: '推免生单列：所有推免生（含研究生支教团）直接获评一等奖学金'
+  },
+  {
+    key: 'master-senior', title: '硕士二年级及以上', icon: '📚', base: '按全日制硕士生总数',
+    tiers: [
+      { name: '一等', amount: 10000, ratio: '10%', icon: '🥇' },
+      { name: '二等', amount: 6000, ratio: '10%', icon: '🥈' },
+      { name: '三等', amount: 3000, ratio: '20%', icon: '🥉' },
+    ]
+  },
+]
+
+const scoreRules = [
+  { title: '论文得分（权重最高）', icon: '📝', highlight: true,
+    rows: [
+      ['顶级学术期刊', '160 分/篇'], ['国际 A 类（含 CCF-A）', '80 分/篇'],
+      ['国际 B 类（含 CCF-B）', '40 分/篇'], ['国际 C 类 / 国内 A 类', '20 分/篇'],
+      ['国内 B 类', '10 分/篇'], ['国内 C 类', '5 分/篇'],
+    ],
+    note: '须研究生一作；导师一作时研究生须通讯/共同一作。外文论文须有 DOI 且在线时间在截止日前' },
+  { title: '专利 · 项目 · 转让', icon: '🔬',
+    rows: [
+      ['发明专利授权', '20 分/件'], ['实用新型专利授权', '5 分/件'],
+      ['国自然博士生项目', '60 分/项'], ['一流网安学院创新资助立项', '20 分/项'],
+      ['成果转让 / 技术服务', '1 分/万元（上限 40 分）'],
+    ],
+    note: '专利须导师一作、研究生二作；署名单位须为福建师大或本学院' },
+  { title: 'A 类竞赛（负责人满分）', icon: '🎯',
+    rows: [
+      ['国家级特等/一等/二等/三等', '80 / 54 / 36 / 24'], ['省级特等/一等/二等/三等', '20 / 16 / 12 / 9'],
+      ['校级一等/二等/三等', '5 / 3 / 2'], ['院级一等/二等/三等', '2 / 1 / 0.5'],
+    ],
+    note: '成员按系数折减：第 2-5 人 ×0.9，6-8 人 ×0.8，9-12 人 ×0.7，13-15 人 ×0.6；同项目多档次取最高' },
+  { title: 'B 类竞赛（全员同分）', icon: '🏅',
+    rows: [
+      ['国家级一等/二等/三等/优秀', '20 / 16 / 12 / 5'], ['省级一等/二等/三等/优秀', '10 / 8 / 6 / 2'],
+      ['校级一等/二等/三等', '3 / 2 / 1'], ['院级一等/二等/三等', '1.5 / 1 / 0.5'],
+    ],
+    note: '团队项目每位成员均获对应奖励分；清单见学院高水平创新创业竞赛实施办法' },
+  { title: '综合素质分（硕士满分 15 / 博士满分 10）', icon: '🌟',
+    rows: [
+      ['荣誉称号 国家级 / 省级 / 校级', '10 / 7 / 5'], ['研究生会主席等核心岗位', '8 分'],
+      ['部长 / 班长 / 团支书 / 党支书', '6 分'], ['志愿服务每 20 小时', '1 分（上限 4 分）'],
+      ['无偿献血', '1 分/次（上限 2 分）'],
+    ],
+    note: '含荣誉嘉奖、社会工作、体育美育劳育；处分与通报批评按档扣分' },
 ]
 
 const scholarshipGuide = [
-  { title: '评审时间', content: '每年10-11月申请，公示不少于5个工作日。可多次获奖但成果不可重复使用。', icon: '📅', highlight: true },
-  { title: '综合成绩构成', content: '硕士二年级：课程50% + 科研35% + 综质15%；三年级：科研85% + 综质15%。博士二年级：课程40% + 科研50% + 综质10%；三四年级：科研90% + 综质10%。', icon: '📊', highlight: true },
-  { title: '论文得分（最关键）', content: '顶级期刊160分/篇，国际A类（CCFA）80分，B类40分，C类/国内A类20分，国内B类10分，国内C类5分。须第一作者。', icon: '📝' },
-  { title: '专利得分', content: '发明专利授权20分/件，实用新型5分/件。须导师一作、研究生二作。', icon: '📜' },
-  { title: '竞赛得分', content: 'A类：国特80分，国一54分，国二36分，国三24分。B类：国一20分，国二16分，国三12分。团队成员按系数0.9-0.5递减。', icon: '🎯' },
-  { title: '项目与成果转让', content: '国自然博士生项目60分，国家一流网安学院资助计划20分。成果转让1分/万元（上限40分）。', icon: '🔬' },
-  { title: '综合素质得分', content: '荣誉：国家级10分，省级7分，校级5分。社会工作：主席8分，部长6分，班委4分。满分硕士15分/博士10分。', icon: '🏅' },
-  { title: '课程成绩计算', content: '加权平均分 = Σ(课程成绩×学分) ÷ Σ学分。仅计算必修课。二年级成绩折算比例见综合成绩构成。', icon: '📚' },
-  { title: '申请条件限制', content: '休学/保留学籍/未按期完成培养进度/受处分/有不及格课程者不参评。', icon: '⚠️' },
-  { title: '成果有效期', content: '上一年9月1日至评选当年8月31日（毕业学年延长至通知落款时间）。', icon: '⏰' },
+  { title: '评审时间', content: '每年 10-11 月申请，学院公示不少于 5 个工作日；对结果有异议可在公示期向学院评审委员会申诉。', icon: '📅', highlight: true },
+  { title: '成果有效期', content: '上年 9 月 1 日 至 当年 8 月 31 日；毕业学年延长至评选通知落款时间。所有成果须在学制培养期限内取得。', icon: '⏰', highlight: true },
+  { title: '材料不重复使用', content: '学业奖学金可与国家奖学金、国家助学金兼得，但同一年度国奖与学业奖学金的参评材料不得重复使用。', icon: '📑' },
+  { title: '课程成绩口径', content: '仅计公共必修 + 专业必修（见学院计分课程目录），加权平均 = Σ(成绩×学分) ÷ Σ学分；选修课、补修课不计入。', icon: '📚' },
+  { title: '超满分换算', content: '科研分满分：硕二 35 / 博二 50 / 硕三 85 / 博三四及五年级直博 90。若同年级有人超满分，则全员按「个人得分 ÷ 最高分 × 满分」比例换算。', icon: '⚖️' },
+  { title: '身份界定', content: '硕博连读生注册为博士生前按硕士身份参评，注册后按博士身份参评；保留入学资格者复学后第一学年参评。', icon: '🔁' },
 ]
+
+const disqualifications = [
+  '保留入学资格 / 休学 / 保留学籍',
+  '未按期完成培养方案规定进度',
+  '受到学校纪律处分或仍在处分期',
+  '因违反实验室、宿舍管理规定被通报批评',
+  '有必修课或专业选修课不合格应予重修',
+]
+
+const calcProfiles = {
+  'master-2': { label: '硕士二年级', course: 50, research: 35, quality: 15, cap: 35, qCap: 15, gates: '一等需课程排名前 30% · 二等前 50%（或前 2 名）· 三等前 70%' },
+  'master-3': { label: '硕士三年级', course: 0, research: 85, quality: 15, cap: 85, qCap: 15, gates: '一等需开题合格 + 中期考核优秀 · 二等需开题合格 + 中期良好以上' },
+  'phd-2': { label: '博士二年级', course: 40, research: 50, quality: 10, cap: 50, qCap: 10, gates: '以综合成绩总分从高到低排序' },
+  'phd-3': { label: '博三四年级 / 五年级直博', course: 0, research: 90, quality: 10, cap: 90, qCap: 10, gates: '以综合成绩总分从高到低排序' },
+}
+
+const calcForm = reactive({ profile: 'master-2', course: 85, research: 20, quality: 8 })
+
+const calcResult = computed(() => {
+  const p = calcProfiles[calcForm.profile]
+  // 细则口径：科研分/综质分的满分已含权重（如硕三科研满分 85 = 占比 85%），
+  // 直接取封顶后的得分相加即可；课程学习成绩分 = 加权平均分 × 占比。
+  const research = Math.min(Number(calcForm.research) || 0, p.cap)
+  const quality = Math.min(Number(calcForm.quality) || 0, p.qCap)
+  const coursePart = (Math.min(Math.max(Number(calcForm.course) || 0, 0), 100)) * p.course / 100
+  const total = coursePart + research + quality
+  return {
+    total: total.toFixed(2),
+    parts: [
+      p.course ? { label: `课程(${p.course}%)`, value: coursePart.toFixed(2) } : null,
+      p.research ? { label: `科研(满分${p.cap})`, value: research.toFixed(2) } : null,
+      p.quality ? { label: `综质(满分${p.qCap})`, value: quality.toFixed(2) } : null,
+    ].filter(Boolean),
+    gates: p.gates,
+    capped: Number(calcForm.research) > p.cap || Number(calcForm.quality) > p.qCap,
+  }
+})
 
 const academicTools = [
   { name: 'Zotero', desc: '免费文献管理工具，支持PDF标注和引用', url: 'https://www.zotero.org', icon: '📚', category: '文献管理' },
@@ -81,7 +164,7 @@ const academicTools = [
 const tips = [
   { title: '选课建议', content: '研究生选课前请仔细阅读培养方案，必修课优先选修。选课系统开放时间有限，建议提前准备好课程列表。', icon: '💡' },
   { title: '论文进度', content: '学位论文有严格的时间节点，请提前规划好写作进度。开题报告、中期检查、答辩申请等材料需提前准备。', icon: '📅' },
-  { title: '奖学金申请', content: '国家奖学金每年9-10月申请，成果不可重复申报。学业成绩优异 + 科研成果突出是核心竞争力。', icon: '🏆' },
+  { title: '奖学金申请', content: '学业奖学金每年10-11月申请，国家奖学金每年9-10月申请；同一年度两者参评材料不可重复使用。科研成果是核心竞争力。', icon: '🏆' },
   { title: '学术资源', content: '通过VPN可校外访问知网、万方等学术数据库。建议收藏常用数据库入口。', icon: '📚' },
   { title: '导师沟通', content: '定期与导师沟通研究进展，参加导师组会。遇到问题及时寻求帮助。', icon: '👨‍🏫' },
   { title: '论文查重', content: '论文提交前务必进行查重检测。学校提供免费查重机会，请合理使用。', icon: '🔍' },
@@ -89,8 +172,7 @@ const tips = [
   { title: '学术会议', content: '积极参加学术会议，了解领域前沿。学校有会议资助政策，可申请报销。', icon: '🎤' },
   { title: '实习实践', content: '专业型研究生需要完成实习实践环节，建议提前联系实习单位。', icon: '💼' },
   { title: '档案管理', content: '研究生档案包含成绩单、获奖证书等重要材料，请妥善保管。', icon: '📁' },
-  { title: '国家奖学金评审', content: '评审标准：科研创新占90% + 综合素质占10%。评审时间：每年9-10月。可多次获奖但成果不可重复使用。', icon: '📊' },
-  { title: '科研成果要求', content: '论文须为第一作者（导师一作需为通讯/共同一作）；专利须导师一作、研究生二作；竞赛获奖可累加计分。', icon: '🔬' },
+  { title: '科研成果要求', content: '论文须为第一作者（导师一作需为通讯/共同一作）；专利须导师一作、研究生二作；署名单位须为福建师大或本学院。', icon: '🔬' },
 ]
 
 const academicCalendar = [
@@ -202,93 +284,122 @@ function eventClass(type) {
 
   <template v-if="activeTab === 'scholarship'">
     <div class="panel" style="margin-bottom:16px;">
-      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>🏆 奖学金体系总览</div>
-      
-      <div class="scholarship-overview">
-        <div class="overview-card top">
-          <div class="overview-icon">🏆</div>
-          <div class="overview-info">
-            <div class="overview-name">国家奖学金</div>
-            <div class="overview-amount">硕士 ¥20,000 / 博士 ¥30,000</div>
-            <div class="overview-desc">学业优秀 + 科研成果突出</div>
+      <div class="section-title" style="margin:0 0 6px;"><span class="bar"></span>🏆 学业奖学金 · 奖励标准与比例</div>
+      <p class="muted" style="font-size:12px;margin:0 0 14px;">依据《计算机与网络空间安全学院研究生学业奖学金评审细则（修订）》，每学年评审 1 次，金额单位：元/生·年</p>
+
+      <div v-for="g in scholarshipGroups" :key="g.key" class="std-group">
+        <div class="std-group-head">
+          <span class="std-group-title">{{ g.icon }} {{ g.title }}</span>
+          <span class="std-group-base">{{ g.base }}</span>
+        </div>
+        <div class="std-tiers">
+          <div v-for="t in g.tiers" :key="t.name" class="std-tier">
+            <div class="std-tier-icon">{{ t.icon }}</div>
+            <div class="std-tier-name">{{ t.name }}</div>
+            <div class="std-tier-amount">¥{{ t.amount.toLocaleString() }}</div>
+            <div class="std-tier-ratio">占 {{ t.ratio }}</div>
           </div>
         </div>
+        <div v-if="g.note" class="std-note">💡 {{ g.note }}</div>
       </div>
 
-      <div class="section-title" style="margin:20px 0 12px;"><span class="bar"></span>硕士学业奖学金</div>
-      <div class="scholarship-grid">
-        <div v-for="s in scholarships.filter(s => s.name.includes('硕士'))" :key="s.name" class="scholarship-card">
-          <div class="scholarship-header">
-            <span class="scholarship-icon">{{ s.icon }}</span>
-            <span class="scholarship-name">{{ s.name }}</span>
-          </div>
-          <div class="scholarship-amount">¥{{ s.amount.toLocaleString() }}</div>
-          <div class="scholarship-meta">
-            <span class="scholarship-type">{{ s.type }}</span>
-            <span class="scholarship-cycle">{{ s.cycle }}</span>
-          </div>
-          <div class="scholarship-req">{{ s.requirement }}</div>
-        </div>
-      </div>
-
-      <div class="section-title" style="margin:20px 0 12px;"><span class="bar"></span>博士学业奖学金</div>
-      <div class="scholarship-grid">
-        <div v-for="s in scholarships.filter(s => s.name.includes('博士'))" :key="s.name" class="scholarship-card">
-          <div class="scholarship-header">
-            <span class="scholarship-icon">{{ s.icon }}</span>
-            <span class="scholarship-name">{{ s.name }}</span>
-          </div>
-          <div class="scholarship-amount">{{ s.amount > 0 ? '¥' + s.amount.toLocaleString() : '按标准' }}</div>
-          <div class="scholarship-meta">
-            <span class="scholarship-type">{{ s.type }}</span>
-            <span class="scholarship-cycle">{{ s.cycle }}</span>
-          </div>
-          <div class="scholarship-req">{{ s.requirement }}</div>
-        </div>
+      <div class="scholarship-extra">
+        <span>另可兼得：国家奖学金（硕士 ¥20,000 / 博士 ¥30,000）· 国家助学金（¥600/月）· 省政府奖学金等</span>
       </div>
     </div>
 
     <div class="panel" style="margin-bottom:16px;">
-      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>📊 综合成绩构成</div>
-      
+      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>📊 综合成绩构成与门槛</div>
       <div class="score-composition">
         <div class="comp-card">
           <div class="comp-title">硕士二年级</div>
           <div class="comp-bars">
             <div class="comp-bar" style="width:50%"><span>课程 50%</span></div>
-            <div class="comp-bar" style="width:35%"><span>科研 35%</span></div>
-            <div class="comp-bar" style="width:15%"><span>综质 15%</span></div>
+            <div class="comp-bar alt" style="width:35%"><span>科研 35%</span></div>
+            <div class="comp-bar alt2" style="width:15%"><span>综质 15%</span></div>
           </div>
-          <div class="comp-note">申请一等需课程排名前30%</div>
+          <div class="comp-note">一等需课程排名前 30% · 二等前 50%（或前 2 名）· 三等前 70%</div>
         </div>
         <div class="comp-card">
           <div class="comp-title">硕士三年级</div>
           <div class="comp-bars">
-            <div class="comp-bar" style="width:85%"><span>科研 85%</span></div>
-            <div class="comp-bar" style="width:15%"><span>综质 15%</span></div>
+            <div class="comp-bar alt" style="width:85%"><span>科研 85%</span></div>
+            <div class="comp-bar alt2" style="width:15%"><span>综质 15%</span></div>
           </div>
-          <div class="comp-note">开题合格 + 中期考核优秀/良好</div>
+          <div class="comp-note">一等：开题合格 + 中期优秀 · 二等：开题合格 + 中期良好以上；开题/中期未按期通过不得申请</div>
         </div>
         <div class="comp-card">
           <div class="comp-title">博士二年级</div>
           <div class="comp-bars">
             <div class="comp-bar" style="width:40%"><span>课程 40%</span></div>
-            <div class="comp-bar" style="width:50%"><span>科研 50%</span></div>
-            <div class="comp-bar" style="width:10%"><span>综质 10%</span></div>
+            <div class="comp-bar alt" style="width:50%"><span>科研 50%</span></div>
+            <div class="comp-bar alt2" style="width:10%"><span>综质 10%</span></div>
           </div>
+          <div class="comp-note">综合成绩总分从高到低排序</div>
         </div>
         <div class="comp-card">
-          <div class="comp-title">博士三四年级</div>
+          <div class="comp-title">博三四年级 / 五年级直博</div>
           <div class="comp-bars">
-            <div class="comp-bar" style="width:90%"><span>科研 90%</span></div>
-            <div class="comp-bar" style="width:10%"><span>综质 10%</span></div>
+            <div class="comp-bar alt" style="width:90%"><span>科研 90%</span></div>
+            <div class="comp-bar alt2" style="width:10%"><span>综质 10%</span></div>
           </div>
+          <div class="comp-note">综合成绩总分从高到低排序</div>
         </div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>🎯 如何争取奖学金</div>
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>🧮 科研分测算器</div>
+      <div class="calc-layout">
+        <div class="calc-form">
+          <label class="calc-field">
+            <span class="calc-label">我的身份</span>
+            <select v-model="calcForm.profile" class="calc-input">
+              <option v-for="(p, k) in calcProfiles" :key="k" :value="k">{{ p.label }}</option>
+            </select>
+          </label>
+          <label class="calc-field" v-if="calcProfiles[calcForm.profile].course > 0">
+            <span class="calc-label">课程加权平均分（仅必修课，0-100）</span>
+            <input type="number" min="0" max="100" v-model.number="calcForm.course" class="calc-input" />
+          </label>
+          <label class="calc-field">
+            <span class="calc-label">科研创新原始得分（论文+专利+竞赛…，满分 {{ calcProfiles[calcForm.profile].cap }}）</span>
+            <input type="number" min="0" v-model.number="calcForm.research" class="calc-input" />
+          </label>
+          <label class="calc-field">
+            <span class="calc-label">综合素质原始得分（满分 {{ calcProfiles[calcForm.profile].qCap }}）</span>
+            <input type="number" min="0" v-model.number="calcForm.quality" class="calc-input" />
+          </label>
+        </div>
+        <div class="calc-result">
+          <div class="calc-total-label">预计综合成绩总分</div>
+          <div class="calc-total">{{ calcResult.total }}</div>
+          <div class="calc-parts">
+            <div v-for="part in calcResult.parts" :key="part.label" class="calc-part">
+              <span>{{ part.label }}</span><b>{{ part.value }}</b>
+            </div>
+          </div>
+          <div v-if="calcResult.capped" class="calc-warn">⚠️ 得分超出满分上限，已按封顶值计算；若同年级有人超满分，全员按比例换算</div>
+          <div class="calc-gates">{{ calcResult.gates }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>📋 计分速查</div>
+      <div class="rules-grid">
+        <div v-for="r in scoreRules" :key="r.title" class="rule-card" :class="{ highlight: r.highlight }">
+          <div class="rule-header"><span class="rule-icon">{{ r.icon }}</span><span class="rule-title">{{ r.title }}</span></div>
+          <table class="rule-table">
+            <tr v-for="row in r.rows" :key="row[0]"><td>{{ row[0] }}</td><td class="rule-score">{{ row[1] }}</td></tr>
+          </table>
+          <div class="rule-note">{{ r.note }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="section-title" style="margin:0 0 16px;"><span class="bar"></span>🎯 申请要点</div>
       <div class="guide-grid">
         <div v-for="g in scholarshipGuide" :key="g.title" class="guide-card" :class="{ highlight: g.highlight }">
           <div class="guide-header">
@@ -298,15 +409,14 @@ function eventClass(type) {
           <div class="guide-content">{{ g.content }}</div>
         </div>
       </div>
-      
-      <div class="guide-summary">
-        <div class="guide-summary-title">💡 核心策略</div>
-        <div class="guide-summary-content">
-          <div class="strategy-item"><span class="strategy-num">1</span><span><b>科研创新是关键</b>：优先发论文（A类80分/篇）> 专利（20分/件）> 竞赛（A类国特80分）</span></div>
-          <div class="strategy-item"><span class="strategy-num">2</span><span><b>综合素质是加分项</b>：争取荣誉（国家级10分）+ 社会工作（主席8分）</span></div>
-          <div class="strategy-item"><span class="strategy-num">3</span><span><b>时间规划</b>：10-11月申请，成果有效期为上年9月至当年8月，不可重复使用</span></div>
-        </div>
-      </div>
+    </div>
+
+    <div class="panel disqual-panel">
+      <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>⚠️ 这些情况不能参评</div>
+      <ul class="disqual-list">
+        <li v-for="d in disqualifications" :key="d">{{ d }}</li>
+      </ul>
+      <p class="muted" style="font-size:12px;margin:10px 0 0;">细则全文以学院最新通知为准，本页内容仅供快速参考。</p>
     </div>
   </template>
 
@@ -381,31 +491,56 @@ function eventClass(type) {
 .credit-detail-courses { display: flex; flex-wrap: wrap; gap: 6px; }
 .course-tag { font-size: 11px; padding: 4px 10px; border-radius: 999px; background: var(--soft-gray); color: var(--text-sub); }
 
-.scholarship-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-.scholarship-card { padding: 16px; background: var(--soft-fg); border: 1px solid var(--border); border-radius: var(--radius); transition: all 0.2s; }
-.scholarship-card:hover { border-color: var(--primary); box-shadow: var(--shadow-hover); }
-.scholarship-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.scholarship-icon { font-size: 20px; }
-.scholarship-name { font-weight: 700; font-size: 14px; }
-.scholarship-amount { font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
-.scholarship-meta { display: flex; gap: 8px; margin-bottom: 8px; }
-.scholarship-type, .scholarship-cycle { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--soft-gray); color: var(--text-sub); }
-.scholarship-req { font-size: 12px; color: var(--text-sub); }
+.std-group { padding: 14px; background: var(--soft-fg); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; }
+.std-group-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; flex-wrap: wrap; gap: 4px; }
+.std-group-title { font-weight: 700; font-size: 14px; }
+.std-group-base { font-size: 11px; color: var(--text-sub); }
+.std-tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.std-tier { text-align: center; padding: 12px 6px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+.std-tier-icon { font-size: 18px; }
+.std-tier-name { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+.std-tier-amount { font-size: 20px; font-weight: 800; color: var(--primary); margin: 2px 0; }
+.std-tier-ratio { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); display: inline-block; }
+.std-note { font-size: 12px; color: var(--text-sub); margin-top: 10px; line-height: 1.6; }
+.scholarship-extra { margin-top: 12px; padding: 10px 12px; background: var(--soft-yellow, #fff8e1); border: 1px dashed var(--accent, #b8860b); border-radius: var(--radius); font-size: 12px; color: var(--text-sub); }
 
-.scholarship-overview { margin-bottom: 16px; }
-.overview-card { display: flex; align-items: center; gap: 16px; padding: 20px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius-lg); color: #fff; }
-.overview-card.top { background: linear-gradient(135deg, #b8860b, #daa520); }
-.overview-icon { font-size: 36px; }
-.overview-info { flex: 1; }
-.overview-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-.overview-amount { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
-.overview-desc { font-size: 13px; opacity: 0.9; }
+.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.rule-card { padding: 16px; background: var(--soft-fg); border: 1px solid var(--border); border-radius: var(--radius); }
+.rule-card.highlight { border-color: var(--accent, #b8860b); background: var(--soft-yellow, #fff8e1); }
+.rule-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rule-icon { font-size: 18px; }
+.rule-title { font-weight: 700; font-size: 13px; }
+.rule-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rule-table td { padding: 5px 0; border-bottom: 1px dashed var(--border); color: var(--text-sub); }
+.rule-table tr:last-child td { border-bottom: none; }
+.rule-score { text-align: right; font-weight: 700; color: var(--primary); white-space: nowrap; }
+.rule-note { font-size: 11px; color: var(--text-sub); margin-top: 8px; line-height: 1.6; opacity: 0.85; }
+
+.calc-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .calc-layout { grid-template-columns: 1fr; } }
+.calc-form { display: flex; flex-direction: column; gap: 12px; }
+.calc-field { display: flex; flex-direction: column; gap: 4px; }
+.calc-label { font-size: 12px; color: var(--text-sub); }
+.calc-input { padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 14px; outline: none; }
+.calc-input:focus { border-color: var(--primary); }
+.calc-result { padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius-lg); color: #fff; display: flex; flex-direction: column; gap: 8px; }
+.calc-total-label { font-size: 12px; opacity: 0.9; }
+.calc-total { font-size: 40px; font-weight: 800; line-height: 1.1; }
+.calc-parts { display: flex; flex-wrap: wrap; gap: 6px; }
+.calc-part { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,0.18); display: flex; gap: 6px; }
+.calc-warn { font-size: 11px; background: rgba(255,255,255,0.15); padding: 6px 10px; border-radius: 8px; line-height: 1.5; }
+.calc-gates { font-size: 11px; opacity: 0.9; line-height: 1.6; }
+
+.disqual-panel { border-color: #ef5350; }
+.disqual-list { margin: 0; padding-left: 20px; font-size: 13px; line-height: 2; color: var(--text); }
 
 .score-composition { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 .comp-card { padding: 16px; background: var(--soft-fg); border: 1px solid var(--border); border-radius: var(--radius); }
 .comp-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
 .comp-bars { display: flex; gap: 4px; height: 32px; border-radius: 8px; overflow: hidden; }
 .comp-bar { display: flex; align-items: center; justify-content: center; background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; transition: all 0.3s; }
+.comp-bar.alt { background: var(--primary-dark, #8e0000); }
+.comp-bar.alt2 { background: #b8860b; }
 .comp-bar:hover { opacity: 0.9; transform: scaleY(1.1); }
 .comp-note { font-size: 11px; color: var(--text-sub); margin-top: 8px; }
 
@@ -417,12 +552,6 @@ function eventClass(type) {
 .guide-icon { font-size: 20px; }
 .guide-title { font-weight: 700; font-size: 14px; }
 .guide-content { font-size: 13px; color: var(--text-sub); line-height: 1.7; }
-
-.guide-summary { padding: 16px; background: linear-gradient(135deg, var(--primary-soft), #fff); border: 1px solid var(--primary); border-radius: var(--radius); }
-.guide-summary-title { font-weight: 800; font-size: 15px; margin-bottom: 12px; color: var(--primary); }
-.guide-summary-content { display: flex; flex-direction: column; gap: 10px; }
-.strategy-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.6; }
-.strategy-num { width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
 
 .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .tool-card { padding: 16px; background: var(--soft-fg); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: all 0.2s; }

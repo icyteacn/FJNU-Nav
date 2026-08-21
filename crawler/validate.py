@@ -24,6 +24,8 @@ sys.path.insert(0, str(ROOT))
 from crawler.build_snapshot import norm_room  # noqa: E402 复用同一教室归一化规则
 
 JWC_HOST = 'jwc.fjnu.edu.cn'
+# 课程总表允许的可信来源域名（教务处官方 + NextFStar 公开 API）
+TABLE_HOSTS = ('https://' + JWC_HOST, 'https://nfs.pcdawn.cn')
 DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
 MIN_NOTICES = 14
@@ -100,7 +102,7 @@ def validate_snapshot(snap):
             errors.append('课程总表字段不完整: %r' % (t.get('title') or '')[:30])
         if not TERM_RE.match(t.get('semester', '')):
             errors.append('课程总表学期格式异常: %r' % (t.get('semester') or '')[:30])
-        if t.get('url') and not str(t['url']).startswith('https://' + JWC_HOST):
+        if t.get('url') and not str(t['url']).startswith(TABLE_HOSTS):
             errors.append('课程总表 URL 域名异常: %s' % t['url'])
 
     # --- 排课明细 ---

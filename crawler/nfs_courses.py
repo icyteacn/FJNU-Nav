@@ -176,16 +176,37 @@ def main():
     print(f'\n  完成: 成功 {success} 个班级, 失败 {fail} 个, 共 {len(all_rows)} 条课程')
 
     print(f'\n[4/4] 保存数据...')
+    semester_label = current_term.get('label', term_id)
+
+    # 合并模式：保留现有快照中的通知/动态/校历等字段，只更新课程相关部分，
+    # 并为每行补 term 字段（与教务处总表链路产出同构，validate/split 可直接消费）。
+    out_path = os.path.join(DATA_DIR, 'snapshot.json')
+    merged = {}
+    if os.path.exists(out_path):
+        try:
+            with open(out_path, 'r', encoding='utf-8') as f:
+                merged = json.load(f)
+        except Exception:
+            merged = {}
+    for key in ('courses', 'notices', 'news', 'calendar'):
+        if key not in merged:
+            merged[key] = {'items': []}
+
+    for r in all_rows:
+        r['term'] = semester_label
+
     snapshot = {
+        **merged,
         'courseTable': {
-            'semester': current_term.get('label', term_id),
+            'semester': semester_label,
             'count': len(all_rows),
             'rooms': len(set(r.get('r', '') for r in all_rows if r.get('r'))),
             'teachers': len(set(r.get('t', '') for r in all_rows if r.get('t')))
         },
         'rows': all_rows,
         'courseTables': [{
-            'semester': current_term.get('label', term_id),
+            'semester': semester_label,
+            'title': '福建师范大学课程总表',
             'count': len(all_rows),
             'url': 'https://nfs.pcdawn.cn/app/timetable'
         }],
@@ -193,7 +214,6 @@ def main():
         'source': 'NextFStar API (nfs.pcdawn.cn)'
     }
 
-    out_path = os.path.join(DATA_DIR, 'snapshot.json')
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(snapshot, f, ensure_ascii=False, separators=(',', ':'))
     print(f'  已保存到 {out_path}')

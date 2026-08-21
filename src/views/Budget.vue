@@ -48,14 +48,17 @@ const CATS = {
 }
 
 /** 福师大研究生奖学金 / 助学金 / 竞赛奖励预设
- *  国家奖学金 20000(硕士)/30000(博士) ·学业奖学金 12000/8000/4000 ·国家助学金 600/月；
+ *  国家奖学金 20000(硕士)/30000(博士) · 学业奖学金 硕士 10000/6000/3000、博士 15000/10000/6000 · 国家助学金 600/月；
  *  实际发放以学校最新通知为准） */
 const SCHOLARS = [
   { name: '硕士研究生国家奖学金', amount: 20000 },
   { name: '博士研究生国家奖学金', amount: 30000 },
-  { name: '研究生学业奖学金（一等）', amount: 12000 },
-  { name: '研究生学业奖学金（二等）', amount: 8000 },
-  { name: '研究生学业奖学金（三等）', amount: 4000 },
+  { name: '硕士学业奖学金（一等）', amount: 10000 },
+  { name: '硕士学业奖学金（二等）', amount: 6000 },
+  { name: '硕士学业奖学金（三等）', amount: 3000 },
+  { name: '博士学业奖学金（一等）', amount: 15000 },
+  { name: '博士学业奖学金（二等）', amount: 10000 },
+  { name: '博士学业奖学金（三等）', amount: 6000 },
   { name: '国家助学金（每月）', amount: 600 },
   { name: '省政府奖学金', amount: 10000 },
   { name: '优秀研究生奖学金', amount: 5000 },
@@ -726,7 +729,7 @@ const monthLabel = computed(() => {
     <template v-if="mode === 'income' && cat === 'scholarship'">
       <div class="scholar-box">
         <div class="scholar-label">🏅 奖学金 / 助学金预设（点击自动带出金额）</div>
-        <div class="muted" style="font-size:11px;margin:2px 0 8px;">优秀奖学金 1000/600/400 ·每学期；国家助学金三档 2300/3300/4300 ·每学年；竞赛奖励参照博学奖学金办法。以学校最新通知为准。</div>
+        <div class="muted" style="font-size:11px;margin:2px 0 8px;">国家助学金 600/月 · 学业奖学金每学年评审一次（10-11月）；金额以学校最新通知为准。</div>
         <div class="scholar-grid">
           <button v-for="s in SCHOLARS" :key="s.name" class="scholar-chip" @click="pickScholar(s)">
             {{ s.name }} <b>¥{{ s.amount }}</b>

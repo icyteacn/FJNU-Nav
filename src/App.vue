@@ -56,7 +56,9 @@ const { current, currentComp, openApp, goHome } = useViewState()
 const NOTICE_KEY = 'fjnu_notice_read'
 const showNotice = ref(false)
 const notices = ref([])
+const readVersion = ref(0)
 const unreadCount = computed(() => {
+  readVersion.value
   try {
     const read = JSON.parse(localStorage.getItem(NOTICE_KEY) || '[]')
     return notices.value.filter(n => !read.includes(n.id)).length
@@ -67,6 +69,7 @@ function markNoticeRead() {
     const read = JSON.parse(localStorage.getItem(NOTICE_KEY) || '[]')
     const newRead = notices.value.map(n => n.id).filter(id => !read.includes(id))
     localStorage.setItem(NOTICE_KEY, JSON.stringify([...read, ...newRead]))
+    readVersion.value++
   } catch { /* noop */ }
 }
 async function loadNotices() {

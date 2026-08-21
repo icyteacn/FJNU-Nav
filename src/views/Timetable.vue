@@ -421,7 +421,8 @@ onMounted(loadCourses)
       <div style="font-weight:700;">📖 教务系统 · 个人课表</div>
       <div class="muted" style="font-size:12px;margin-top:2px;">个人课表需登录教务系统查询（需统一身份认证，无法免登录对接）。</div>
     </div>
-    <a class="btn" href="https://jwc.fjnu.edu.cn" target="_blank" rel="noopener" style="text-decoration:none;">前往教务系统 ↗</a>
+    <a class="btn" href="https://gedu.fjnu.edu.cn/cas/login?service=https://gedu.fjnu.edu.cn" target="_blank" rel="noopener" style="text-decoration:none;">研究生系统 ↗</a>
+    <a class="btn" href="https://jwglxt.fjnu.edu.cn" target="_blank" rel="noopener" style="text-decoration:none;background:var(--primary-soft);color:var(--primary);">教务系统 ↗</a>
   </div>
 
   <div class="panel" style="margin-bottom:16px;">
@@ -445,7 +446,19 @@ onMounted(loadCourses)
         <span class="cal-go">官方页 ↗</span>
       </a>
     </div>
-    <div v-else class="muted" style="padding:14px;text-align:center;">官方课程总表暂不可用，请稍后重试</div>
+    <div v-else style="padding:16px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:10px;">📚</div>
+      <div style="font-weight:700;margin-bottom:6px;">课程总表暂未在教务处公开发布</div>
+      <div class="muted" style="font-size:12px;line-height:1.8;max-width:400px;margin:0 auto;">
+        福建师范大学教务处公开网站不提供课程总表附件下载，排课数据存储在正方教务系统中（需统一身份认证登录）。
+        <br>以下方式可查看个人课表：
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
+        <a class="btn" href="https://gedu.fjnu.edu.cn/cas/login?service=https://gedu.fjnu.edu.cn" target="_blank" rel="noopener" style="text-decoration:none;">🎓 研究生信息管理系统</a>
+        <a class="btn" href="https://jwglxt.fjnu.edu.cn" target="_blank" rel="noopener" style="text-decoration:none;background:var(--primary-soft);color:var(--primary);">📋 本科教务系统</a>
+        <a class="btn" href="https://fjnu.zlgc2.chaoxing.com" target="_blank" rel="noopener" style="text-decoration:none;background:var(--soft-green-bg);color:var(--soft-green-text);">📱 超星学习通</a>
+      </div>
+    </div>
   </div>
 </template>
 

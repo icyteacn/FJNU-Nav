@@ -301,9 +301,11 @@ const initial = (name) => name.charAt(0)
   width: 86px; height: 86px; border-radius: 50%; flex: 0 0 auto;
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   border: 3px solid #fff; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  font-size: 36px; font-weight: 800; color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .portrait img { width: 100%; height: 100%; object-fit: cover; }
-.portrait-initial { font-size: 34px; font-weight: 800; color: #fff; }
+.portrait-initial { font-size: 36px; font-weight: 800; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
 .result-hero-txt { flex: 1; min-width: 0; }
 .result-name { font-size: 22px; font-weight: 800; line-height: 1.2; }
 .result-bio { font-size: 14px; font-weight: 700; color: var(--primary-dark); margin-top: 2px; }
@@ -322,7 +324,7 @@ const initial = (name) => name.charAt(0)
 .near-row:last-child { border-bottom: none; }
 .near-rank { flex: 0 0 22px; font-weight: 800; color: var(--text-sub); font-size: 13px; }
 .near-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex: none; }
-.near-avatar { width: 38px; height: 38px; border-radius: 50%; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: none; }
+.near-avatar { width: 38px; height: 38px; border-radius: 50%; color: #fff; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; flex: none; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); }
 .near-main { flex: 1; min-width: 0; }
 .near-name { font-size: 13px; font-weight: 700; }
 .share-box { margin-top: 16px; padding: 12px; border: 1px dashed var(--primary); border-radius: 12px; background: var(--primary-soft); }

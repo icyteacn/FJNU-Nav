@@ -118,3 +118,11 @@ export function useViewState() {
 
   return { current, currentComp, openApp, goHome, loadingView }
 }
+
+/** 预加载热门应用（首页加载完成后调用，减少首次点击延迟） */
+export function preloadPopular() {
+  const popular = ['campusNews', 'officialSites', 'canteen', 'timetable', 'whatToEat']
+  popular.forEach(id => {
+    if (VIEWS[id]) loadComponent(id)
+  })
+}

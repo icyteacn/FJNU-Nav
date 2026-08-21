@@ -8,7 +8,7 @@
 import { ref, computed, onMounted } from 'vue'
 import Welcome from './views/Welcome.vue'
 import { SITE } from './config/site'
-import { NAV_APPS, useViewState } from './router'
+import { NAV_APPS, useViewState, preloadPopular } from './router'
 
 /** 会话级初始页：每次新开浏览器先展示欢迎页，进入后本会话不再打扰 */
 const stage = ref(sessionStorage.getItem('fjnu_welcome_seen') ? 'main' : 'welcome')
@@ -50,7 +50,7 @@ onMounted(() => {
   applyTheme(t)
 })
 
-const { current, currentComp, openApp, goHome } = useViewState()
+const { current, currentComp, openApp, goHome, loadingView } = useViewState()
 
 /* 公告系统 */
 const NOTICE_KEY = 'fjnu_notice_read'
@@ -82,6 +82,11 @@ async function loadNotices() {
   } catch { /* noop */ }
 }
 onMounted(loadNotices)
+
+// 预加载热门应用（减少首次点击延迟）
+onMounted(() => {
+  setTimeout(preloadPopular, 1000)
+})
 </script>
 
 <template>
@@ -109,7 +114,11 @@ onMounted(loadNotices)
     </header>
 
     <main class="main">
-      <component :is="currentComp" @open="openApp" @back="goHome" />
+      <div v-if="loadingView" class="view-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">加载中...</div>
+      </div>
+      <component v-else :is="currentComp" @open="openApp" @back="goHome" />
     </main>
 
     <footer class="footer">

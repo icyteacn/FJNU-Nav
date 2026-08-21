@@ -1,95 +1,90 @@
 ﻿/* ==========================================================================
-   FJNU 校园导航 全局样式 v2.0
-   设计理念：「闽都书院」—— 以福建师范大学校训「知明行笃 立诚致广」为灵感，
-   采用沉稳的墨绿色调搭配暖金色点缀，营造书香气息与校园文化底蕴。
-   分区顺序：变量与基础 → 欢迎页 → 顶栏 → 首页 → 通用组件 → 各应用页 → 页脚 → 底部导航
+   FJNU 校园导航 全局样式 v1.1
+   保留闽都红主色调，优化布局与图标设计提升区分度。
    ========================================================================== */
 :root {
-  --primary: #1a6b52;
-  --primary-dark: #0d4a38;
-  --primary-soft: #e8f5ef;
-  --accent: #c89b3c;
-  --bg: #f8f6f0;
+  --primary: #c62828;
+  --primary-dark: #8e1e1e;
+  --primary-soft: #fdeaea;
+  --accent: #f59e0b;
+  --bg: #faf6f1;
   --card: #ffffff;
-  --text: #1c2430;
-  --text-sub: #5a6570;
-  --text-light: #94a0aa;
-  --border: #e2e8f0;
-  --shadow: 0 4px 20px rgba(26, 107, 82, 0.08);
-  --shadow-hover: 0 8px 30px rgba(26, 107, 82, 0.15);
-  --radius: 14px;
-  --radius-lg: 20px;
+  --text: #2b2622;
+  --text-sub: #6d655e;
+  --text-light: #a39b93;
+  --border: #eee5db;
+  --shadow: 0 4px 18px rgba(198, 40, 40, 0.08);
+  --shadow-hover: 0 8px 28px rgba(198, 40, 40, 0.14);
+  --radius: 12px;
+  --radius-lg: 18px;
   --nav-h: 60px;
-  --bar: #f0ebe3;
-  --soft: #faf9f6;
-  --soft-blue: #eef4f8;
-  --soft-yellow: #fdf8ec;
-  --soft-green: #ecf7f0;
-  --header-bg: rgba(248, 246, 240, 0.94);
-  --nav-bg: rgba(248, 246, 240, 0.97);
-  --soft-gray: #f2f0ea;
-  --soft-fg: #faf9f6;
-  --hover-bg: #e8f5ef;
-  --sk-a: #f2f0ea;
-  --sk-b: #e8e5de;
-  --notice-bg: #fdf8ec;
-  --notice-border: #e8d5a0;
-  --notice-text: #8b6914;
-  --welcome-motto-bg: rgba(255, 255, 255, 0.9);
-  --soft-green-bg: #ecf7f0;
-  --soft-green-border: #6db890;
-  --soft-green-text: #1a6b52;
+  --bar: #faf3ec;
+  --soft: #fffdf9;
+  --soft-blue: #f5ecff;
+  --soft-yellow: #fff8e6;
+  --soft-green: #edf7f0;
+  --header-bg: rgba(255, 252, 249, 0.94);
+  --nav-bg: rgba(255, 252, 249, 0.97);
+  --soft-gray: #f6efe8;
+  --soft-fg: #fffdf9;
+  --hover-bg: #fbe4e4;
+  --sk-a: #f6efe8;
+  --sk-b: #efe4da;
+  --notice-bg: #fdf6e7;
+  --notice-border: #f0dcb5;
+  --notice-text: #92400e;
+  --welcome-motto-bg: rgba(255, 255, 255, 0.85);
+  --soft-green-bg: #e8f6ee;
+  --soft-green-border: #7ec9a0;
+  --soft-green-text: #1e6b4a;
   --soft-red-bg: #fdf0f0;
   --soft-red-border: #e6a3a3;
   --soft-red-text: #b63a46;
-  --blue-bright: #eef4f8;
-  --dim-gray: #b0b8c0;
-  --bar-bright: #c8dbe8;
-  --gradient-hero: linear-gradient(135deg, #1a6b52 0%, #0d4a38 50%, #134e3a 100%);
-  --gradient-card: linear-gradient(135deg, rgba(26, 107, 82, 0.03), rgba(200, 155, 60, 0.03));
+  --blue-bright: #f5ecff;
+  --dim-gray: #c9c0b7;
+  --bar-bright: #f3c8c8;
+  --gradient-hero: linear-gradient(135deg, #c62828 0%, #8e1e1e 60%, #a62020 100%);
 }
 
-/* 深色模式 */
 [data-theme="dark"] {
-  --primary: #4ecdc4;
-  --primary-dark: #7eddd6;
-  --primary-soft: #1a3a35;
-  --accent: #f0c050;
-  --bg: #0f1419;
-  --card: #1a2332;
-  --text: #e8edf2;
-  --text-sub: #8899a8;
-  --text-light: #5a6a78;
-  --border: #2a3a48;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.45);
-  --bar: #1e2a38;
-  --soft: #151e2a;
-  --soft-blue: #1a2840;
-  --soft-yellow: #2a2510;
-  --soft-green: #0f2a20;
-  --header-bg: rgba(15, 20, 25, 0.94);
-  --nav-bg: rgba(15, 20, 25, 0.97);
-  --soft-gray: #1e2a38;
-  --soft-fg: #151e2a;
-  --hover-bg: #1a3a35;
-  --sk-a: #1e2a38;
-  --sk-b: #151e2a;
-  --notice-bg: #2a2510;
+  --primary: #e57373;
+  --primary-dark: #ffb4b4;
+  --primary-soft: #3a1f1f;
+  --accent: #fbbf24;
+  --bg: #171310;
+  --card: #211c18;
+  --text: #f0e9e2;
+  --text-sub: #b0a79d;
+  --text-light: #877d73;
+  --border: #372e26;
+  --shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --bar: #332a24;
+  --soft: #241e19;
+  --soft-blue: #2a1f3a;
+  --soft-yellow: #33290f;
+  --soft-green: #12291f;
+  --header-bg: rgba(33, 28, 24, 0.94);
+  --nav-bg: rgba(33, 28, 24, 0.97);
+  --soft-gray: #332a24;
+  --soft-fg: #241e19;
+  --hover-bg: #3a1f1f;
+  --sk-a: #2b241f;
+  --sk-b: #1e1915;
+  --notice-bg: #33290f;
   --notice-border: #4a3c18;
-  --notice-text: #f0d890;
-  --welcome-motto-bg: rgba(15, 20, 25, 0.92);
-  --soft-green-bg: #0f2a20;
-  --soft-green-border: #2a6050;
-  --soft-green-text: #4ecdc4;
+  --notice-text: #e7d8a8;
+  --welcome-motto-bg: rgba(33, 28, 24, 0.9);
+  --soft-green-bg: #12291f;
+  --soft-green-border: #1f5c43;
+  --soft-green-text: #6ee7b7;
   --soft-red-bg: #2a1418;
   --soft-red-border: #5c2a30;
   --soft-red-text: #f2a3ab;
-  --blue-bright: #1a2840;
-  --dim-gray: #5a6a78;
-  --bar-bright: #2a3a48;
-  --gradient-hero: linear-gradient(135deg, #0d4a38 0%, #1a6b52 50%, #0f5a42 100%);
-  --gradient-card: linear-gradient(135deg, rgba(78, 205, 196, 0.05), rgba(240, 192, 80, 0.03));
+  --blue-bright: #2a1f3a;
+  --dim-gray: #877d73;
+  --bar-bright: #372e26;
+  --gradient-hero: linear-gradient(135deg, #e57373 0%, #c95454 60%, #d45050 100%);
 }
 
 * { box-sizing: border-box; }
@@ -119,17 +114,17 @@ body {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(800px 600px at 20% 20%, rgba(26, 107, 82, 0.12), transparent),
-    radial-gradient(600px 500px at 80% 30%, rgba(200, 155, 60, 0.15), transparent),
-    radial-gradient(900px 700px at 50% 100%, rgba(13, 74, 56, 0.1), transparent),
-    linear-gradient(170deg, #f8f6f0 0%, #eae6dc 100%);
+    radial-gradient(700px 500px at 15% 10%, rgba(198, 40, 40, 0.15), transparent),
+    radial-gradient(500px 400px at 85% 20%, rgba(245, 158, 11, 0.18), transparent),
+    radial-gradient(800px 600px at 50% 100%, rgba(142, 30, 30, 0.12), transparent),
+    linear-gradient(160deg, #faf4ee 0%, #f3e9dd 100%);
 }
 [data-theme="dark"] .welcome-bg {
   background:
-    radial-gradient(800px 600px at 20% 20%, rgba(78, 205, 196, 0.08), transparent),
-    radial-gradient(600px 500px at 80% 30%, rgba(240, 192, 80, 0.06), transparent),
-    radial-gradient(900px 700px at 50% 100%, rgba(26, 107, 82, 0.08), transparent),
-    linear-gradient(170deg, #0f1419 0%, #1a2332 100%);
+    radial-gradient(700px 500px at 15% 10%, rgba(198, 40, 40, 0.1), transparent),
+    radial-gradient(500px 400px at 85% 20%, rgba(245, 158, 11, 0.08), transparent),
+    radial-gradient(800px 600px at 50% 100%, rgba(142, 30, 30, 0.08), transparent),
+    linear-gradient(160deg, #1c1714 0%, #171310 100%);
 }
 .welcome-inner {
   position: relative;
@@ -143,18 +138,18 @@ body {
   height: 88px;
   margin: 0 auto;
   padding: 0 26px;
-  border-radius: 20px;
+  border-radius: 22px;
   background: var(--gradient-hero);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 12px 32px rgba(26, 107, 82, 0.3);
+  box-shadow: 0 12px 30px rgba(198, 40, 40, 0.35);
 }
 .welcome-logo span {
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 1px;
-  background: linear-gradient(120deg, #ffffff 0%, #f0d890 55%, #c89b3c 100%);
+  background: linear-gradient(120deg, #ffffff 0%, #ffe9c9 50%, #ffc46b 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -193,10 +188,10 @@ body {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(26, 107, 82, 0.3);
+  box-shadow: 0 10px 24px rgba(198, 40, 40, 0.3);
   transition: transform .18s, box-shadow .18s;
 }
-.welcome-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(26, 107, 82, 0.4); }
+.welcome-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(198, 40, 40, 0.38); }
 .welcome-tip { margin-top: 18px; font-size: 11px; color: var(--text-sub); }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
@@ -226,14 +221,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(26, 107, 82, 0.2);
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.2);
 }
 .brand-logo span {
   white-space: nowrap;
   font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.5px;
-  background: linear-gradient(90deg, #ffffff 0%, #f0d890 50%, #c89b3c 100%);
+  background: linear-gradient(90deg, #ffffff 0%, #ffe9c9 50%, #ffc46b 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -322,7 +317,7 @@ body {
   border-radius: var(--radius-lg);
   padding: 18px 20px;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(26, 107, 82, 0.25);
+  box-shadow: 0 8px 24px rgba(198, 40, 40, 0.25);
 }
 .wiki-main { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 240px; }
 .wiki-emoji { font-size: 34px; }
@@ -515,12 +510,12 @@ body {
   border-radius: var(--radius-lg);
   padding: 18px 20px;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(26, 107, 82, 0.25);
+  box-shadow: 0 8px 24px rgba(198, 40, 40, 0.25);
 }
 .insight-main { flex: 1; min-width: 220px; }
 .insight-title { font-size: 16px; font-weight: 800; }
 .insight-desc { font-size: 12px; opacity: 0.9; margin-top: 6px; line-height: 1.7; }
-.insight-desc b { color: #f0d890; }
+.insight-desc b { color: #ffe9c9; }
 .insight-bars {
   display: flex;
   align-items: flex-end;
@@ -539,7 +534,7 @@ body {
 }
 .insight-bar-fill {
   width: 100%;
-  background: linear-gradient(180deg, #f0d890, #c89b3c);
+  background: linear-gradient(180deg, #ffe9c9, #f59e0b);
   border-radius: 6px;
 }
 .section-sub { font-size: 12px; color: var(--text-sub); }
@@ -723,7 +718,7 @@ body {
   transition: 0.2s;
   font-family: inherit;
 }
-.input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26, 107, 82, 0.1); }
+.input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1); }
 
 .btn {
   background: var(--primary);
@@ -904,7 +899,7 @@ table.data th { background: var(--primary-soft); color: var(--primary-dark); fon
 .score-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
 .score-name { width: 110px; flex-shrink: 0; color: var(--text); font-weight: 600; }
 .score-bar { flex: 1; height: 8px; background: var(--soft-gray); border-radius: 4px; overflow: hidden; }
-.score-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); border-radius: 4px; transition: width .3s; }
+.score-bar i { display: block; height: 100%; background: linear-gradient(90deg, #c62828, #e85d5d); border-radius: 4px; transition: width .3s; }
 .score-val { width: 70px; text-align: right; font-weight: 700; color: var(--primary); }
 .score-val.dim { color: var(--text-sub); font-weight: 400; }
 

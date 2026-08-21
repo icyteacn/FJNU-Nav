@@ -13,6 +13,7 @@ import Home from './views/Home.vue'
 
 /** 首页组件同步加载，其他页面懒加载（减少首屏 JS 体积） */
 const VIEWS = {
+  graduatePlan: () => import('./views/GraduatePlan.vue'),
   campusNews: () => import('./views/CampusNews.vue'),
   timetable: () => import('./views/Timetable.vue'),
   studentId: () => import('./views/StudentId.vue'),
@@ -121,7 +122,7 @@ export function useViewState() {
 
 /** 预加载热门应用（首页加载完成后调用，减少首次点击延迟） */
 export function preloadPopular() {
-  const popular = ['campusNews', 'officialSites', 'canteen', 'timetable', 'whatToEat']
+  const popular = ['graduatePlan', 'campusNews', 'officialSites', 'canteen', 'timetable', 'whatToEat']
   popular.forEach(id => {
     if (VIEWS[id]) loadComponent(id)
   })

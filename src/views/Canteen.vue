@@ -205,7 +205,17 @@ function toggleFood(name) {
           </div>
         </div>
       </div>
-      <div v-if="live && live.updatedAt" class="muted" style="font-size: 11px; margin-top: 8px; text-align: center;">最近更新：{{ live.updatedAt }}</div>
+      <div v-if="live && live.updatedAt" class="update-info">
+        <div class="update-time">
+          <span class="update-label">数据更新：</span>
+          <span class="update-value">{{ live.updatedAt }}</span>
+        </div>
+        <div class="update-hint">
+          <span v-if="mealTag.open" class="update-status live">实时数据</span>
+          <span v-else class="update-status snapshot">快照数据</span>
+          <span class="muted">建议在早(7-9点)、中(11-13点)、晚(17-19点)餐时段查看最新数据</span>
+        </div>
+      </div>
     </div>
 
     <div class="source-bar" style="margin-top: 14px">
@@ -222,6 +232,14 @@ function toggleFood(name) {
 .status-dot.off { background: #d1d5db; }
 .status-info { flex: 1; }
 .status-title { font-weight: 800; font-size: 16px; }
+.update-info { margin-top: 12px; padding: 12px; background: var(--soft-fg); border-radius: var(--radius); border: 1px solid var(--border); }
+.update-time { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.update-label { font-size: 12px; color: var(--text-sub); }
+.update-value { font-size: 12px; font-weight: 600; color: var(--text); }
+.update-hint { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.update-status { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+.update-status.live { background: #dcfce7; color: #166534; }
+.update-status.snapshot { background: #fef3c7; color: #92400e; }
 .stat-grid { display: flex; gap: 10px; margin-top: 12px; }
 .stat-pill {
   flex: 1;

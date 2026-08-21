@@ -15,6 +15,7 @@ export const officialGroups = [
     sites: [
       { name: '福Star VPN 服务', url: 'https://vpn3.fjnu.edu.cn/auth/login?returnUrl=https://zhifu-cnki-net-s.vpn3.fjnu.edu.cn/', desc: '校园 VPN · 校外访问知网等学术资源', featured: true },
       { name: '福Star 智慧校园', url: 'https://fstar.fjnu.edu.cn', desc: '校园卡 / 食堂人流量 / 办事服务一站式入口' },
+      { name: 'NextFStar 导航', url: 'https://nfs.pcdawn.cn', desc: '校园服务聚合 · 课程表 / 食堂 / 教室导航' },
       { name: '校园邮件系统', url: 'https://mail.fjnu.edu.cn', desc: '学生邮箱 Webmail · 账号：学号@fjnu.edu.cn' },
       { name: '信息化建设与管理办公室', url: 'https://xxhb.fjnu.edu.cn/main.htm', desc: '网络 / 账号 / 智慧校园' }
     ]

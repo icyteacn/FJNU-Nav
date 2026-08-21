@@ -2,10 +2,10 @@
 """
 从 NextFStar 公开API获取福建师范大学课程表数据
 API端点：https://nfs.pcdawn.cn/api/app/timetable/public/*
-无需登录，公开可访问
 """
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -19,40 +19,56 @@ HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 }
 
-def post(path, data=None, timeout=30):
+def post(path, data=None, timeout=30, retries=3):
     url = BASE_URL + path
     body = json.dumps(data or {}).encode()
-    req = urllib.request.Request(url, data=body, headers=HEADERS, method='POST')
-    try:
-        resp = urllib.request.urlopen(req, timeout=timeout)
-        return json.loads(resp.read().decode('utf-8'))
-    except Exception as e:
-        print(f'  [error] {path}: {e}')
-        return None
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(url, data=body, headers=HEADERS, method='POST')
+            resp = urllib.request.urlopen(req, timeout=timeout)
+            return json.loads(resp.read().decode('utf-8'))
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                wait = (attempt + 1) * 3
+                time.sleep(wait)
+            else:
+                return None
+        except Exception as e:
+            if attempt < retries - 1:
+                time.sleep(1)
+            else:
+                return None
+    return None
 
 def fetch_semesters():
-    """获取学期列表"""
     r = post('/app/timetable/public/semester/list')
     if r and r.get('code') == 200:
         return r['data']
     return None
 
 def fetch_classes(term_id):
-    """获取班级列表"""
     r = post('/app/timetable/public/class/index', {'termId': term_id})
     if r and r.get('code') == 200:
         return r['data'].get('classes', [])
     return []
 
 def fetch_class_detail(class_id, term_id):
-    """获取班级课程详情"""
     r = post('/app/timetable/public/class/detail', {'classId': class_id, 'termId': term_id})
     if r and r.get('code') == 200:
         return r['data']
     return None
 
-def normalize_course(course, class_name):
-    """将NextFStar格式转换为我们需要的格式"""
+def parse_class_name(name):
+    """解析班级名：2022级小学教育6班（公费师范）-> year=22, major=小学教育, class=6"""
+    m = re.match(r'(\d{4})级(.+?)(\d+)班', name)
+    if m:
+        year = m.group(1)[:2]
+        major = m.group(2).strip()
+        cls_num = m.group(3)
+        return {'year': year, 'major': major, 'class': cls_num, 'full': name}
+    return {'year': '', 'major': name, 'class': '', 'full': name}
+
+def normalize_course(course, class_name, class_info):
     rows = []
     for meeting in course.get('meetings', []):
         weekday = meeting.get('weekday', 0)
@@ -61,7 +77,6 @@ def normalize_course(course, class_name):
         location = meeting.get('location', '')
         week_rules = meeting.get('weekRules', [])
 
-        # 展开周次
         weeks = []
         for rule in week_rules:
             start = rule.get('start', 1)
@@ -76,6 +91,12 @@ def normalize_course(course, class_name):
                     weeks.append(w)
 
         if periods:
+            campus = ''
+            if '旗山' in location or '长安' in location or '知明' in location or '笃行' in location:
+                campus = '旗山校区'
+            elif '仓山' in location:
+                campus = '仓山校区'
+
             rows.append({
                 'c': course.get('title', ''),
                 'cls': class_name,
@@ -87,14 +108,15 @@ def normalize_course(course, class_name):
                 'w': ','.join(map(str, sorted(weeks))) if weeks else '1-20',
                 'credit': course.get('credit', 0),
                 'cat': '',
-                'campus': '旗山校区' if '旗山' in location or '长安' in location else ('仓山校区' if '仓山' in location else '')
+                'campus': campus,
+                'year': class_info.get('year', ''),
+                'major': class_info.get('major', ''),
             })
     return rows
 
 def main():
     print('=== NextFStar 课程数据抓取 ===\n')
 
-    # 1. 获取学期列表
     print('[1/4] 获取学期列表...')
     semester_data = fetch_semesters()
     if not semester_data:
@@ -104,7 +126,6 @@ def main():
     terms = semester_data.get('terms', [])
     print(f'  找到 {len(terms)} 个学期')
 
-    # 找到当前学期
     current_term = None
     for t in terms:
         if t.get('role') == 'current':
@@ -120,7 +141,6 @@ def main():
     term_id = current_term['id']
     print(f'  当前学期: {current_term.get("label", term_id)}')
 
-    # 2. 获取班级列表
     print(f'\n[2/4] 获取班级列表 (学期: {term_id})...')
     classes = fetch_classes(term_id)
     print(f'  找到 {len(classes)} 个班级')
@@ -129,8 +149,7 @@ def main():
         print('  班级列表为空')
         return False
 
-    # 3. 抓取课程数据（抓取全部班级）
-    print(f'\n[3/4] 抓取课程数据（全部 {len(classes)} 个班级）...')
+    print(f'\n[3/4] 抓取课程数据（全部 {len(classes)} 个班级，每请求间隔1秒）...')
     all_rows = []
     success = 0
     fail = 0
@@ -138,24 +157,24 @@ def main():
     for i, cls in enumerate(classes):
         class_id = cls.get('id')
         class_name = cls.get('name', f'班级{i+1}')
+        class_info = parse_class_name(class_name)
 
         detail = fetch_class_detail(class_id, term_id)
         if detail and detail.get('courses'):
             for course in detail['courses']:
-                rows = normalize_course(course, class_name)
+                rows = normalize_course(course, class_name, class_info)
                 all_rows.extend(rows)
             success += 1
         else:
             fail += 1
 
-        # 进度显示
-        if (i + 1) % 50 == 0:
+        if (i + 1) % 20 == 0:
             print(f'  进度: {i+1}/{len(classes)} (成功: {success}, 失败: {fail}, 课程数: {len(all_rows)})')
-            time.sleep(0.3)
+
+        time.sleep(1.0)
 
     print(f'\n  完成: 成功 {success} 个班级, 失败 {fail} 个, 共 {len(all_rows)} 条课程')
 
-    # 4. 保存数据
     print(f'\n[4/4] 保存数据...')
     snapshot = {
         'courseTable': {
@@ -168,7 +187,7 @@ def main():
         'courseTables': [{
             'semester': current_term.get('label', term_id),
             'count': len(all_rows),
-            'url': f'https://nfs.pcdawn.cn/app/timetable'
+            'url': 'https://nfs.pcdawn.cn/app/timetable'
         }],
         'updatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'source': 'NextFStar API (nfs.pcdawn.cn)'

@@ -8,7 +8,7 @@ import { ref, shallowRef, computed, watch, onMounted } from 'vue'
 import { apiFetch } from '../api/index'
 import { loadSnap } from '../api/localCourse'
 import { loadTimetableMeta, loadTermRows } from '../api/termTimetable'
-import { normRoom, clsSplit, profOf, parseWeeks } from '../utils/course'
+import { normRoom, clsSplit, profOf, gradeOf, parseWeeks } from '../utils/course'
 import { fmtTime } from '../utils/format'
 
 const emit = defineEmits(['back'])
@@ -66,7 +66,7 @@ const singleClasses = computed(() => {
     return y(b) - y(a) || a.localeCompare(b, 'zh')
   })
 })
-const years = computed(() => [...new Set(singleClasses.value.map((c) => (c.match(/^2\d/) || [])[0]).filter(Boolean))].sort().reverse())
+const years = computed(() => [...new Set(singleClasses.value.map((c) => gradeOf(c)).filter(Boolean))].sort().reverse())
 const profs = computed(() => {
   const m = {}
   for (const c of singleClasses.value) {
@@ -82,7 +82,7 @@ const result = computed(() => {
   const k = kw.value.trim()
   if (tab.value === 'class') {
     let list = singleClasses.value
-    if (gradeFilter.value) list = list.filter((c) => c.startsWith(gradeFilter.value))
+    if (gradeFilter.value) list = list.filter((c) => gradeOf(c) === gradeFilter.value)
     if (profFilter.value) list = list.filter((c) => profOf(c) === profFilter.value)
     if (k) {
       const pre = list.filter((c) => c.startsWith(k))

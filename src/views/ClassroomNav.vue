@@ -7,6 +7,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { buildings, campusFilters, searchRooms } from '../data/classrooms'
 import { nfsRooms, nfsRoomGroups } from '../data/nfsClassrooms'
+import { guideOf } from '../data/buildingGuides'
 import { apiFetch } from '../api/index'
 
 const emit = defineEmits(['back'])
@@ -247,13 +248,23 @@ function fallbackRoute(b) {
             <span class="nfs-bldg-arrow">{{ openBldg === b ? '▾' : '▸' }}</span>
           </button>
           <div v-show="openBldg === b" class="nfs-bldg-body">
+            <div class="guide-card">
+              <div class="guide-zone">{{ guideOf(b, rooms[0]).zone }}</div>
+              <div class="guide-desc">{{ guideOf(b, rooms[0]).desc }}</div>
+              <ol class="guide-steps">
+                <li v-for="(s, i) in guideOf(b, rooms[0]).steps" :key="i">{{ s }}</li>
+              </ol>
+              <div class="guide-actions">
+                <a class="guide-btn primary" :href="guideOf(b, rooms[0]).mapUrl" target="_blank" rel="noopener">🗺️ 高德地图定位 ↗</a>
+                <button v-if="guideOf(b, rooms[0]).hasDetail" class="guide-btn" @click="gotoBuildingDetail(b)">📖 楼宇详细指引 ›</button>
+              </div>
+            </div>
             <div class="room-grid slim">
               <button v-for="r in rooms" :key="r" class="room-card" @click="pickAllRoom(r)">
                 <span class="room-card-name">{{ r }}</span>
                 <span class="room-card-kind" :data-kind="kindOfRoom(r)">{{ kindOfRoom(r) === '普通教室' ? '教室' : kindOfRoom(r) }}</span>
               </button>
             </div>
-            <button class="nfs-bldg-link" @click="gotoBuildingDetail(b)">🗺️ 查看楼宇指引与地图定位 ›</button>
           </div>
         </div>
         <div v-if="!buildingGroups.length" class="muted" style="padding:14px;text-align:center;font-size:13px;">没有匹配的教室，换个关键词试试</div>
@@ -358,6 +369,14 @@ function fallbackRoute(b) {
 .nfs-bldg-arrow { flex-shrink: 0; font-size: 11px; color: var(--text-sub); }
 .nfs-bldg-body { padding: 2px 12px 12px; animation: bldgIn .2s ease; }
 @keyframes bldgIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-.nfs-bldg-link { margin-top: 10px; width: 100%; padding: 8px; border-radius: 8px; border: 1px dashed var(--primary); background: var(--primary-soft); color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; transition: all .13s; }
-.nfs-bldg-link:hover { filter: brightness(1.04); }
+
+.guide-card { margin-top: 8px; padding: 11px 13px; border-radius: 9px; background: var(--primary-soft); border: 1px solid var(--border); }
+.guide-zone { font-size: 11px; font-weight: 800; color: var(--primary); letter-spacing: .3px; }
+.guide-desc { margin-top: 3px; font-size: 12px; line-height: 1.65; color: var(--text-sub); }
+.guide-steps { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.guide-steps li { font-size: 12px; line-height: 1.6; color: var(--text-sub); }
+.guide-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.guide-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--primary); background: none; color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; transition: all .13s; }
+.guide-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.guide-btn.primary { background: var(--primary); color: #fff; }
 </style>

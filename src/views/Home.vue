@@ -26,10 +26,10 @@ onMounted(async () => {
 function greeting() {
   const h = new Date().getHours()
   if (h < 6) return '夜深了，早点休息'
-  if (h < 12) return '早上好，福师大人'
-  if (h < 14) return '中午好，福师大人'
-  if (h < 18) return '下午好，福师大人'
-  return '晚上好，福师大人'
+  if (h < 12) return '早上好，福star人'
+  if (h < 14) return '中午好，福star人'
+  if (h < 18) return '下午好，福star人'
+  return '晚上好，福star人'
 }
 
 const filtered = computed(() => {

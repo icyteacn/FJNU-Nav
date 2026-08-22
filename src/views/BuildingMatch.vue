@@ -232,18 +232,18 @@ function restart() {
           <span class="card-label" :class="{ new: c.newName }">{{ c.label }}</span>
         </template>
         <template v-else>
-          <span class="card-badge">福师大</span>
+          <span class="card-badge">福star</span>
         </template>
       </button>
     </div>
-    <div class="muted" style="font-size:11px;margin-top:10px;">卡背为福师大校园实景 · 名称对应据校训「知明行笃 立诚致广」与校园地标整理</div>
+    <div class="muted" style="font-size:11px;margin-top:10px;">卡背为福star校园实景 · 名称对应据校训「知明行笃 立诚致广」与校园地标整理</div>
   </div>
 
   <div v-if="help" class="overlay" @click="help = false">
     <div class="overlay-card" @click.stop>
       <div style="font-weight:800;font-size:17px;margin-bottom:12px;">📖 玩法说明</div>
       <div style="font-size:14px;line-height:2;">
-        <p>1. 卡片背面是福师大校园实景照片，点击翻开看楼名 / 地标。</p>
+        <p>1. 卡片背面是福star校园实景照片，点击翻开看楼名 / 地标。</p>
         <p>2. 每次可同时翻开 <b>4 张</b> 记忆：若 4 张里没有配对会自动翻回；<b>若发现配对</b>，两张卡片会高亮，但你还需依次点击这两张确认才算配对成功。</p>
         <p>3. 目标是找出「楼名 / 地标 ⇄ 位置 / 特征」的全部配对，步数越少星级越高。</p>
         <p>4. 卡住了？点「✨ 开挂」会显示 3 秒全部配对答案。</p>

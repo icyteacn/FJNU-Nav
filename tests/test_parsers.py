@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """解析器单元测试：通知列表 / 首页动态 / 多页合并去重 / 教室与学期提取。
 
-福师大教务处为正方 Sudy 系统，列表结构为 column-news-item / notice-tit 样式。
+福star教务处为正方 Sudy 系统，列表结构为 column-news-item / notice-tit 样式。
 """
 import sys
 import unittest

@@ -1,5 +1,5 @@
 ﻿<script setup>
-/** 生活费模拟：在福州（福师大）一个月多少生活费合适
+/** 生活费模拟：在福州（福star）一个月多少生活费合适
  *  ① 预算估算：按「伙食/社交/购物」或「家庭收入」粗估区间；
  *  ② 预算分配器：输入月预算，拖动各项占比实时算金额，可保存方案到本机；
  *  ③ 账单校准：读取本机记账记录自动算出真实月均支出与构成，与参考区间对比。
@@ -237,7 +237,7 @@ const FUN_TIPS = [
   <div class="view-top">
     <button class="back-btn" @click="emit('back')">← 返回生活费计数器</button>
     <div class="view-title">生活费模拟</div>
-    <div class="view-sub">在福州（福师大）一个月多少生活费合适？估算、亲手分配、再拿真实账单校准</div>
+    <div class="view-sub">在福州（福star）一个月多少生活费合适？估算、亲手分配、再拿真实账单校准</div>
   </div>
 
   <div class="panel">

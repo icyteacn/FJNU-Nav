@@ -96,8 +96,8 @@ const verdict = computed(() => {
 
 const grade = computed(() => {
   const p = score.value / (QUESTIONS * PER_QUESTION)
-  if (p >= 0.9) return 'S · 福师大活地图！'
-  if (p >= 0.7) return 'A · 很了解福师大！'
+  if (p >= 0.9) return 'S · 福star活地图！'
+  if (p >= 0.7) return 'A · 很了解福star！'
   if (p >= 0.5) return 'B · 有一定了解'
   if (p >= 0.3) return 'C · 多逛逛校园吧'
   return 'D · 新生报到，常来逛逛！'
@@ -117,7 +117,7 @@ onMounted(() => {
 <template>
   <div class="view-top">
     <button class="back-btn" @click="emit('back')">← 返回首页</button>
-    <div class="view-title">福师大知多少</div>
+    <div class="view-title">福star知多少</div>
     <div class="view-sub">校园知识问答 · 已挑战 <CountUp :value="rounds" /> 次 · 历史最高 <CountUp :value="best" /> 分</div>
   </div>
 

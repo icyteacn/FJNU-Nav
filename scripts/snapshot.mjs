@@ -101,7 +101,7 @@ async function fetchNoticePages(pageCount = 4) {
 
 const normRoom = (r) => (r || '').replace(/[（(]智慧[)）]/g, '').trim()
 
-// 福师大教务系统需登录，公开课程总表可能缺失 → 尽力尝试，失败返回空
+// 福star教务系统需登录，公开课程总表可能缺失 → 尽力尝试，失败返回空
 async function getCourses() {
   const results = []
   for (const listPath of ['/xzzx/list.htm', '/xzzx/jxglk/list.htm', '/xzzx/jwglk/list.htm', '/xzzx/jczx/list.htm']) {

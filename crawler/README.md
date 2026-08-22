@@ -48,4 +48,4 @@ python crawler/fjnu_crawler.py --calendar
 
 ## 数据来源
 
-全部来自福建师范大学官网公开页面（`https://jwc.fjnu.edu.cn` 教务处、`https://zsb.fjnu.edu.cn` 招生网）。本站**不抓取任何需要账号的个人数据**；早期「正方教务模拟登录」示例因合规与安全原因已移除。福师大教务系统（`jwglxt.fjnu.edu.cn`）需统一身份登录，课程总表如无公开附件则如实降级为空态，绝不捏造。
+全部来自福建师范大学官网公开页面（`https://jwc.fjnu.edu.cn` 教务处、`https://zsb.fjnu.edu.cn` 招生网）。本站**不抓取任何需要账号的个人数据**；早期「正方教务模拟登录」示例因合规与安全原因已移除。福star教务系统（`jwglxt.fjnu.edu.cn`）需统一身份登录，课程总表如无公开附件则如实降级为空态，绝不捏造。

@@ -31,7 +31,7 @@ DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 MIN_NOTICES = 14
 MIN_NEWS = 1
 MIN_CALENDAR = 10
-MIN_ROWS = 0  # 福师大教务系统需登录，公开课程总表可能不可用，0 表示允许空（不做强制门槛）
+MIN_ROWS = 0  # 福star教务系统需登录，公开课程总表可能不可用，0 表示允许空（不做强制门槛）
 MIN_TABLES = 0
 # 学期格式：如「2026年春季学期」「2025-2026学年第一学期」（防止脏学期名进入产物）
 TERM_RE = re.compile(r'^(?:\d{4}年(?:春夏|秋|春|夏|冬)?|20\d{2}[-–]20\d{2}学年)')
@@ -93,7 +93,7 @@ def validate_snapshot(snap):
         if not it.get('title') or not DATE_RE.match(it.get('date', '')):
             errors.append('校历字段异常: %r' % (it.get('title') or '')[:30])
 
-    # --- 课程总表（福师大教务系统需登录，公开附件可能缺失，允许为空） ---
+    # --- 课程总表（福star教务系统需登录，公开附件可能缺失，允许为空） ---
     tables = snap['courseTables']
     if len(tables) < MIN_TABLES:
         errors.append('课程总表为空')
@@ -146,7 +146,7 @@ def validate_snapshot(snap):
         if not ct.get('semester'):
             errors.append('courseTable.semester 为空')
     else:
-        # 福师大公开课程总表可能缺失：允许空
+        # 福star公开课程总表可能缺失：允许空
         if ct.get('count') not in (0, None):
             errors.append('courseTable.count 与空的 courseTables 不一致')
 

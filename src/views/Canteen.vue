@@ -121,7 +121,7 @@ function toggleFood(name) {
     <div class="view-top">
       <button class="back-btn" @click="emit('back')">← 返回首页</button>
       <div class="view-title">食堂空座率</div>
-      <div class="view-sub">福师大食堂名单 · 实时空座监测 · 档口菜价一览</div>
+      <div class="view-sub">福star食堂名单 · 实时空座监测 · 档口菜价一览</div>
     </div>
 
     <div class="panel status-panel">
@@ -219,7 +219,7 @@ function toggleFood(name) {
     </div>
 
     <div class="source-bar" style="margin-top: 14px">
-      <span>📋 名单与菜价：福师大后勤服务集团 + 福师大Wiki《校园餐饮》 · 实时空座：福Star「食堂人流量分析」</span>
+      <span>📋 名单与菜价：福star后勤服务集团 + 福starWiki《校园餐饮》 · 实时空座：福Star「食堂人流量分析」</span>
     </div>
   </div>
 </template>

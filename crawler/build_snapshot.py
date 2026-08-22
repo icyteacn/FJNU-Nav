@@ -2,7 +2,7 @@
 """FJNU 校园导航 · 快照构建器（Python 版）
 
 从福建师范大学教务处公开网站抓取教务通知、工作动态、教学日历，
-尝试在下载中心抓取课程总表（xlsx 解析）；福师大教务系统（正方 jwglxt）需登录，
+尝试在下载中心抓取课程总表（xlsx 解析）；福star教务系统（正方 jwglxt）需登录，
 若无可公开课程总表附件则课程数据降级为空结构（前端如实空态），不阻塞整体。
 
 用法：
@@ -60,7 +60,7 @@ def parse_kcb_xlsx(data: bytes):
 
 
 def fetch_course_tables():
-    """尽力在教务处下载中心抓取课程总表（福师大教务系统需登录，可能没有公开附件）。"""
+    """尽力在教务处下载中心抓取课程总表（福star教务系统需登录，可能没有公开附件）。"""
     results = []
     for list_url in ['/xzzx/list.htm', '/xzzx/jxglk/list.htm', '/xzzx/jwglk/list.htm', '/xzzx/jczx/list.htm']:
         try:

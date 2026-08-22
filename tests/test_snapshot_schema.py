@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """快照 schema 测试：加载真实快照并断言结构 / 数量 / 一致性。
 
-福师大教务系统需登录，公开课程总表可能缺失：排课行数与课程总表一致性仅在有数据时断言；
-通知/动态/校历为真实抓取，数量下限按福师大基线设定（通知≥14、动态≥1、校历≥10）。
+福star教务系统需登录，公开课程总表可能缺失：排课行数与课程总表一致性仅在有数据时断言；
+通知/动态/校历为真实抓取，数量下限按福star基线设定（通知≥14、动态≥1、校历≥10）。
 """
 import json
 import sys
@@ -35,7 +35,7 @@ class TestSnapshotSchema(unittest.TestCase):
     def test_course_table_consistency(self):
         ct = self.snap['courseTable']
         if not self.snap['courseTables']:
-            # 福师大公开课程总表可能缺失：此时允许空，一致性校验跳过
+            # 福star公开课程总表可能缺失：此时允许空，一致性校验跳过
             self.assertEqual(ct['count'], 0)
             self.assertEqual(ct['rooms'], 0)
             return

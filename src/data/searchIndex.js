@@ -56,7 +56,7 @@ const EXTRA = {
   },
   quiz: {
     keywords: ['问答', '答题', '校史', '知识', '测试'],
-    content: ['福师大知识题库', '校史校情问答'],
+    content: ['福star知识题库', '校史校情问答'],
   },
   buildingMatch: {
     keywords: ['配对', '翻牌', '记忆', '新旧楼名', '游戏'],

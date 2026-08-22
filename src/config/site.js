@@ -48,7 +48,7 @@ export const SITE = {
 
   /** 首页 Wiki 社区卡片 */
   wiki: {
-    title: '福师大 Wiki · 校园生活手册',
+    title: '福star Wiki · 校园生活手册',
     desc: '在校生经验与校园信息整理（生活 / 校园 / 学习经验分享），与本站互补的维基仓库，欢迎补充贡献',
     links: {
       site: 'https://fjnu.nekoark.com/',

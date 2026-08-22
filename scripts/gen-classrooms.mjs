@@ -1,5 +1,5 @@
 // 生成 FJNU classrooms.js 的 buildings（楼层/房间）
-// 有真实 snapshot 排课数据时从 snapshot 派生；否则使用内置的福师大教学楼结构（知明/笃行/立诚/致广）
+// 有真实 snapshot 排课数据时从 snapshot 派生；否则使用内置的福star教学楼结构（知明/笃行/立诚/致广）
 // 运行：node scripts/gen-classrooms.mjs
 import fs from 'node:fs'
 
@@ -10,7 +10,7 @@ try {
   snap = null
 }
 
-// 楼名 -> 校区/区域 元信息（福师大旗山校区公共教学楼按校训「知明行笃 立诚致广」命名）
+// 楼名 -> 校区/区域 元信息（福star旗山校区公共教学楼按校训「知明行笃 立诚致广」命名）
 const META = {
   知明楼: { campus: '旗山校区', zone: '北区' },
   笃行楼: { campus: '旗山校区', zone: '北区' },
@@ -25,7 +25,7 @@ const META = {
   田家炳教育书院: { campus: '仓山校区', zone: '老校区' }
 }
 
-// 内置结构：福师大主要公共教学楼（据福师大Wiki校园导航/地图整理，楼层教室为社区整理）
+// 内置结构：福star主要公共教学楼（据福starWiki校园导航/地图整理，楼层教室为社区整理）
 const BUILTIN = [
   {
     name: '知明楼', campus: '旗山校区', zone: '北区',

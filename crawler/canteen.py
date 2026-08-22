@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT))
 
 OUT_FILE = ROOT / 'public' / 'data' / 'canteen_live.json'
 
-# 福师大食堂人流量分析接口（校园网环境）。形如福Star 服务域名，字段按
+# 福star食堂人流量分析接口（校园网环境）。形如福Star 服务域名，字段按
 # { name, people, seats, daily } 输出，与前端匹配。
 CANDIDATE_URLS = [
     'https://canteen.fjnu.edu.cn/api/live',

@@ -9,7 +9,7 @@ export const contributors = [
     name: 'Xuuyuan',
     login: 'Xuuyuan',
     url: 'https://github.com/Xuuyuan',
-    role: '福师大 Wiki 社区维护者 · 校园数据参考来源',
+    role: '福star Wiki 社区维护者 · 校园数据参考来源',
     weight: 1.4,
     emoji: '📚'
   },

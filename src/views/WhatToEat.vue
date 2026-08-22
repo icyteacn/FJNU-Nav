@@ -226,7 +226,7 @@ onMounted(() => {
     </div>
 
     <div class="muted" style="text-align:center;font-size:12px;margin-top:12px;">
-      菜品均为食堂真实档口（据福师大Wiki《校园餐饮》与公开信息），价格仅供参考
+      菜品均为食堂真实档口（据福starWiki《校园餐饮》与公开信息），价格仅供参考
     </div>
   </div>
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """通用抓取：文本/二进制，带超时与重试。
 
-福师大服务器对部分 TLS 握手较敏感（Python 标准库 urllib 偶发 SSL EOF），
+福star服务器对部分 TLS 握手较敏感（Python 标准库 urllib 偶发 SSL EOF），
 优先使用 requests 库（若环境已安装），否则回退 urllib.request。
 """
 import time

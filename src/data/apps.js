@@ -20,7 +20,7 @@ export const apps = [
   { id: 'canteen', title: '食堂空座率', desc: '各食堂实时空座人数与就餐高峰提示', icon: '🍚', color: '#d84315', group: '生活', },
   { id: 'whatToEat', title: '今天吃什么', desc: '是啊，吃什么', icon: '🍲', color: '#f4511e', group: '生活', },
   { id: 'foodWheel', title: '美食轮盘', desc: '食堂美食转盘，随机抽一个开吃', icon: '🎠', color: '#fb8c00', group: '游戏', },
-  { id: 'quiz', title: '福师大知多少', desc: '福师大知识问答小游戏，测测你的校史功底', icon: '🧠', color: '#5e35b1', group: '游戏', },
+  { id: 'quiz', title: '福star知多少', desc: '福star知识问答小游戏，测测你的校史功底', icon: '🧠', color: '#5e35b1', group: '游戏', },
   { id: 'buildingMatch', title: '教学楼速配', desc: '翻牌配对教学楼新旧名称，测测你的记忆', icon: '🃏', color: '#00897b', group: '游戏', },
   { id: 'leaderTest', title: '校领导测试', desc: '测出你像哪位福建师范大学校领导', icon: '👔', color: '#ad1457', group: '游戏', },
   { id: 'timetable', title: '课程表', desc: '查看班级、教室与教师课表，支持预览下学期', icon: '📚', color: '#1565c0', group: '学习', },

@@ -167,7 +167,7 @@ const clsSplit = (cls) => {
   return out
 }
 
-/** 福师大课程总表：教务系统需登录，暂无公开 xlsx 课程总表下载。
+/** 福star课程总表：教务系统需登录，暂无公开 xlsx 课程总表下载。
  *  尽力尝试教务处下载中心/教室使用栏目中的课程总表附件；抓不到时如实降级（返回 null），前端走静态快照空态。 */
 async function getCourseIndex(force) {
   if (courseIndex && Date.now() - courseIndex.time < COURSE_TTL && !force) return courseIndex
@@ -333,7 +333,7 @@ const routes = {
     const hits = idx.rows.filter((r) => clsSplit(r.cls).includes(kw) || r.c.includes(kw) || r.t.includes(kw))
     return { semester: idx.semester, q: kw, count: hits.length, rows: hits.slice(0, 200) }
   },
-  // 食堂空座率：尽力抓取福师大「食堂人流量分析」接口（校园网环境），否则返回静态快照数据
+  // 食堂空座率：尽力抓取福star「食堂人流量分析」接口（校园网环境），否则返回静态快照数据
   async '/api/canteen'(q) {
     // 校园网环境接口（如存在）：形如 https://canteen.fjnu.edu.cn/api/... ；抓不到时返回空由前端读快照
     try {

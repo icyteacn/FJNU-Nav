@@ -1,5 +1,5 @@
 // 福建师范大学食堂空座率抓取（Node 版，crawler/canteen.py 的回退实现）
-// 尽力抓取福师大「食堂人流量分析」接口（校园网环境），输出 public/data/canteen_live.json。
+// 尽力抓取福star「食堂人流量分析」接口（校园网环境），输出 public/data/canteen_live.json。
 // 失败不覆盖旧数据（尽力而为），以非零码退出。
 // 运行：node scripts/canteen.mjs
 import fs from 'node:fs'

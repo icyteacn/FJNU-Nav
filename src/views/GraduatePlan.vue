@@ -13,6 +13,7 @@ saveState()
 const graduateLinks = [
   { name: '研究生信息管理系统', url: 'https://gedu.fjnu.edu.cn/cas/login?service=https://gedu.fjnu.edu.cn', desc: '培养方案 / 选课 / 成绩 / 论文管理', icon: '🔑', featured: true },
   { name: '研究生院官网', url: 'https://yjsy.fjnu.edu.cn', desc: '招生 / 培养 / 学位 / 管理制度', icon: '🏛️' },
+  { name: '计网学院通知', url: 'https://ccs.fjnu.edu.cn/tzgg/list.htm', desc: '国奖评选 / 竞赛 / 博士招生等学院级通知', icon: '🏫' },
   { name: '学位论文管理', url: 'https://yjsy.fjnu.edu.cn/xwgl/list.htm', desc: '论文开题 / 答辩 / 查重 / 学位申请', icon: '📝' },
   { name: '培养方案查询', url: 'https://yjsy.fjnu.edu.cn/pygl/list.htm', desc: '培养计划 / 课程设置 / 学分要求', icon: '📋' },
   { name: '导师信息查询', url: 'https://yjsy.fjnu.edu.cn/dsxx/list.htm', desc: '导师简介 / 研究方向 / 联系方式', icon: '👨‍🏫' },

@@ -10,6 +10,7 @@ import {
   staticCourses,
   staticNotices,
   staticNews,
+  staticCseNews,
   staticCalendar,
   staticCourseTable,
   staticEmptyRooms,
@@ -38,6 +39,7 @@ async function staticFallback(path) {
   if (p === '/courses') return staticCourses()
   if (p === '/notices') return staticNotices(q.get('all') === '1')
   if (p === '/news') return staticNews()
+  if (p === '/cseNews') return staticCseNews()
   if (p === '/calendar') return staticCalendar()
   if (p === '/courseTable') return staticCourseTable()
   if (p === '/emptyRooms')

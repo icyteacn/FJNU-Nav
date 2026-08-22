@@ -26,6 +26,11 @@ from crawler import config, parsers  # noqa: E402
 from crawler.fetcher import fetch_bytes, fetch_text  # noqa: E402
 from crawler.util import utcnow  # noqa: E402
 
+try:
+    from crawler.fetch_cse import fetch_cse_news  # noqa: E402
+except Exception:  # noqa: BLE001
+    fetch_cse_news = None
+
 VERBOSE = '--verbose' in sys.argv
 
 _DL = re.compile(r'href="([^"]*(?:\.(?:xlsx|xls)|download)[^"]*)"', re.I)
@@ -171,6 +176,22 @@ def build():
         },
         'rows': merged_rows,
     }
+
+    # 计网学院动态（尽力而为，失败时继承上一份快照的 cseNews）
+    cse_items = []
+    if fetch_cse_news:
+        try:
+            cse_items = fetch_cse_news()
+        except Exception as exc:  # noqa: BLE001
+            print('skip 计网学院动态: %s' % exc)
+    if not cse_items and config.OUT_FILE.exists():
+        try:
+            prev = json.loads(config.OUT_FILE.read_text(encoding='utf-8'))
+            cse_items = (prev.get('cseNews') or {}).get('items') or []
+            print('cseNews inherited from previous snapshot: %d items' % len(cse_items))
+        except Exception:  # noqa: BLE001
+            pass
+    snap['cseNews'] = {'items': cse_items}
 
     config.OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     config.OUT_FILE.write_text(

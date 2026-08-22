@@ -67,6 +67,13 @@ export async function staticNews() {
   return d ? { items: d.news.items, source: d.source, fetchedAt: d.updatedAt, cached: true, static: true } : null
 }
 
+export async function staticCseNews() {
+  const d = await loadSnap()
+  const items = (d && (d.cseNews || {}).items) || []
+  if (!items.length) return null
+  return { items, source: 'https://ccs.fjnu.edu.cn', fetchedAt: d.updatedAt, cached: true, static: true }
+}
+
 export async function staticCalendar() {
   const d = await loadSnap()
   return d ? { items: d.calendar.items, source: d.source, fetchedAt: d.updatedAt, cached: true, static: true } : null

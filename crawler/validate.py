@@ -93,6 +93,17 @@ def validate_snapshot(snap):
         if not it.get('title') or not DATE_RE.match(it.get('date', '')):
             errors.append('校历字段异常: %r' % (it.get('title') or '')[:30])
 
+    # --- 计网学院动态（可选字段，存在时做轻量结构检查） ---
+    if 'cseNews' in snap:
+        cse = snap['cseNews']
+        if not _is_items(cse):
+            errors.append('cseNews 应为 {items: [...]} 结构')
+        else:
+            for it in cse['items']:
+                if not it.get('title') or not it.get('url'):
+                    errors.append('学院动态缺 title/url: %r' % (it.get('title') or '')[:30])
+                    break
+
     # --- 课程总表（福star教务系统需登录，公开附件可能缺失，允许为空） ---
     tables = snap['courseTables']
     if len(tables) < MIN_TABLES:

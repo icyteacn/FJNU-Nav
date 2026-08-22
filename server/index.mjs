@@ -21,6 +21,28 @@ const XJW = 'https://jwglxt.fjnu.edu.cn/jwglxt/xtgl/login_slogin.html'
 const NOTICE_LIST = '/tzgg_9107/list.htm'   // 通知公告列表
 const NEWS_LIST = '/430/list.htm'           // 工作动态列表
 const CALENDAR_LIST = '/jxrl/list.htm'      // 教学日历列表
+// 计算机与网络空间安全学院官网（同为 Sudy 系统）
+const CSE = 'https://ccs.fjnu.edu.cn'
+const CSE_LIST = '/tzgg/list.htm'
+
+/** 解析学院通知列表（news-slick 结构） */
+function parseCseList(html, base) {
+  const out = []
+  const seen = new Set()
+  const re =
+    /<a\s+href="([^"]+)"[^>]*class="clearfix">[\s\S]{0,400}?news-slick-date[^>]*>\s*<span>\s*(\d{1,2})\s*<\/span>\s*<br>\s*(\d{4}-\d{2})[\s\S]{0,600}?list-right-tt[^>]*>([\s\S]*?)<\/div>/g
+  let m
+  while ((m = re.exec(html))) {
+    const [, path, day, ym, rawTitle] = m
+    const title = rawTitle.replace(/<[^>]+>/g, '').trim()
+    if (!title) continue
+    const url = new URL(path, base).href
+    if (seen.has(url)) continue
+    seen.add(url)
+    out.push({ date: `${ym}-${String(Number(day)).padStart(2, '0')}`, title, url })
+  }
+  return out
+}
 
 const cache = new Map()
 const TTL = 5 * 60 * 1000
@@ -261,6 +283,23 @@ const routes = {
     const { text, cached, ageMs, costMs } = await fetchText(JWC + CALENDAR_LIST, force)
     return { source: JWC, fetchedAt: nowIso(), cached, ageMs, costMs, ttl: TTL, items: parseList(text, JWC + CALENDAR_LIST) }
   },
+  async '/api/cseNews'(q) {
+    const force = q.get('force') === '1'
+    const first = await fetchText(CSE + CSE_LIST, force)
+    const items = parseCseList(first.text, CSE + CSE_LIST)
+    let cached = first.cached
+    // 第二页（存在时）
+    if (items.length) {
+      try {
+        const res2 = await fetchText(CSE + '/tzgg/list2.htm', force)
+        cached = cached || res2.cached
+        for (const it of parseCseList(res2.text, CSE + '/tzgg/list2.htm')) {
+          if (!items.some((x) => x.url === it.url)) items.push(it)
+        }
+      } catch { /* 第二页可能不存在 */ }
+    }
+    return { source: CSE, fetchedAt: nowIso(), cached, ageMs: first.ageMs, costMs: first.costMs, ttl: TTL, items }
+  },
   async '/api/courses'(q) {
     const force = q.get('force') === '1'
     const { text, cached, ageMs, costMs } = await fetchText(JWC + '/xzzx/list.htm', force)
@@ -269,10 +308,11 @@ const routes = {
   async '/api/notice'(q) {
     const id = q.get('id')
     const force = q.get('force') === '1'
-    if (!id || !/^[a-z0-9\/_]+$/i.test(id)) return { ok: false, error: 'need valid id' }
-    const url = /^https?:/.test(id) ? id : JWC + '/' + id.replace(/^\//, '')
+    const host = q.get('host') === 'ccs' ? CSE : JWC
+    if (!id || !/^[a-z0-9/_.]+$/i.test(id)) return { ok: false, error: 'need valid id' }
+    const url = host + '/' + id.replace(/^\//, '')
     const { text, cached, ageMs, costMs } = await fetchText(url, force)
-    return { source: JWC, sourceUrl: url, fetchedAt: nowIso(), cached, ageMs, costMs, ttl: TTL, ...parseNoticeDetail(text) }
+    return { source: host, sourceUrl: url, fetchedAt: nowIso(), cached, ageMs, costMs, ttl: TTL, ...parseNoticeDetail(text) }
   },
   async '/api/systems'() {
     return {

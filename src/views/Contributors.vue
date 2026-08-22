@@ -71,6 +71,7 @@ function hueOf(i) {
   <div class="panel" style="margin-top:16px;">
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
+      <li><b>v1.2.8</b> 校园动态新增计网学院官网栏目 · 搜索过滤</li>
       <li><b>v1.2.7</b> 教室大全楼栋指引卡 · 分步导航与地图定位</li>
       <li><b>v1.2.6</b> 校历图片预览 · 搜索功能索引 · 教室大全</li>
       <li><b>v1.2.5</b> 综测积累模块 · 课程加权测算 · 科研/综测快速选档联动</li>

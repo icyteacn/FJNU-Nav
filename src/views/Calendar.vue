@@ -1,10 +1,10 @@
 <script setup>
 /**
  * 校历页面
- * 灵感参考：https://nfs.pcdawn.cn/app/schoolCalendar（NextFStar 校历图片直出 + carousel 方案）
- * 本项目保留原有下载链接 + 时间线展示方式，未完全复刻图片轮播功能。
+ * 预览模式参考：https://nfs.pcdawn.cn/app/schoolCalendar（NextFStar 学期切换 + 图片查看器）
+ * 同时保留原有「官方链接跳转」模式，两种方式并存。
  */
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { apiFetch } from '../api'
 
 const emit = defineEmits(['back'])
@@ -22,6 +22,78 @@ const online = ref(false)
 const fetchedAt = ref('')
 const costMs = ref(null)
 const cached = ref(false)
+
+/** 校历图片预览数据（图片来源与原文链接均来自 NextFStar 整理的教务处公开校历） */
+const previewTerms = [
+  { id: '2026-2027-1', label: '2026-2027学年第一学期', image: 'https://nfs.pcdawn.cn/assets/2026-2027-1-DMg4py-6.png', sourceUrl: 'https://jwc.fjnu.edu.cn/d3/25/c9109a447269/page.htm' },
+  { id: '2025-2026-2', label: '2025-2026学年第二学期', image: 'https://nfs.pcdawn.cn/assets/2025-2026-2-D2YRwW1r.png', sourceUrl: 'https://jwc.fjnu.edu.cn/9f/55/c9109a434005/page.htm' },
+  { id: '2025-2026-1', label: '2025-2026学年第一学期', image: 'https://nfs.pcdawn.cn/assets/2025-2026-1-CxYpXPEU.png', sourceUrl: 'https://jwc.fjnu.edu.cn/66/f9/c9109a419577/page.htm' },
+  { id: '2024-2025-2', label: '2024-2025学年第二学期', image: 'https://nfs.pcdawn.cn/assets/2024-2025-2-CKn1Tpgf.png', sourceUrl: 'https://jwc.fjnu.edu.cn/1b/3a/c9109a400186/page.htm' },
+  { id: '2024-2025-1', label: '2024-2025学年第一学期', image: 'https://nfs.pcdawn.cn/assets/2024-2025-1-Bcg4vOeb.png', sourceUrl: 'https://jwc.fjnu.edu.cn/07/d5/c9109a395221/page.htm' },
+]
+
+// 按当前日期默认选中最近的学期（8月及以后选秋季学期，否则选当年春季）
+function defaultTermIdx() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = now.getMonth() + 1
+  const startYear = m >= 8 ? y : y - 1
+  const id = m >= 8 ? startYear + '-' + (startYear + 1) + '-1' : startYear + '-' + (startYear + 1) + '-2'
+  const i = previewTerms.findIndex((t) => t.id === id)
+  return i >= 0 ? i : 0
+}
+
+const termIdx = ref(defaultTermIdx())
+const brokenImgs = ref(new Set())
+const currentTerm = computed(() => previewTerms[termIdx.value])
+
+const imgLoading = ref(true)
+const imgLoaded = ref(false)
+function onImgLoad() { imgLoading.value = false; imgLoaded.value = true }
+function onImgError() { imgLoading.value = false; imgLoaded.value = false; brokenImgs.value.add(currentTerm.value.id) }
+
+function switchTerm(i) {
+  termIdx.value = Math.max(0, Math.min(previewTerms.length - 1, Number(i)))
+  imgLoading.value = true
+  imgLoaded.value = false
+}
+
+/* 全屏预览模态（缩放 / 平移） */
+const showPreview = ref(false)
+const zoom = ref(1)
+const panX = ref(0)
+const panY = ref(0)
+let dragStart = null
+
+const previewStyle = computed(() => ({ transform: `translate(${panX.value}px, ${panY.value}px) scale(${zoom.value})` }))
+function openPreview() { showPreview.value = true; resetView() }
+function closePreview() { showPreview.value = false }
+function resetView() { zoom.value = 1; panX.value = 0; panY.value = 0 }
+function zoomIn() { zoom.value = Math.min(4, +(zoom.value + 0.5).toFixed(1)) }
+function zoomOut() {
+  zoom.value = Math.max(1, +(zoom.value - 0.5).toFixed(1))
+  if (zoom.value <= 1.01) resetView()
+}
+function onDragStart(e) {
+  if (zoom.value <= 1) return
+  dragStart = { x: e.clientX || e.touches?.[0]?.clientX, y: e.clientY || e.touches?.[0]?.clientY, ox: panX.value, oy: panY.value }
+}
+function onDragMove(e) {
+  if (!dragStart) return
+  const cx = e.clientX ?? e.touches?.[0]?.clientX
+  const cy = e.clientY ?? e.touches?.[0]?.clientY
+  panX.value = dragStart.ox + (cx - dragStart.x)
+  panY.value = dragStart.oy + (cy - dragStart.y)
+}
+function onDragEnd() { dragStart = null }
+function onKey(e) {
+  if (!showPreview.value) return
+  if (e.key === 'Escape') closePreview()
+  if (e.key === '+' || e.key === '=') zoomIn()
+  if (e.key === '-') zoomOut()
+}
+onMounted(() => window.addEventListener('keydown', onKey))
+onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 const terms = [
   {
@@ -67,7 +139,7 @@ onMounted(load)
   <div class="view-top">
     <button class="back-btn" @click="emit('back')">← 返回首页</button>
     <div class="view-title">校历</div>
-    <div class="view-sub">官方校历实时同步 · 校历正文以图片附件发布，可打开官方页面查看</div>
+    <div class="view-sub">校历原图预览 · 官方页面直达 · 放假安排一览</div>
   </div>
 
   <div v-if="!loading" class="source-bar">
@@ -82,6 +154,40 @@ onMounted(load)
       <span v-if="cached" class="sep">·</span><span v-if="cached">命中缓存</span>
     </template>
     <button class="refresh-btn" :disabled="refreshing" @click="load(true)">{{ refreshing ? '刷新中…' : '🔄 刷新' }}</button>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>🗓️ 校历预览</div>
+
+    <div class="cal-toolbar">
+      <button class="cal-nav-btn" :disabled="termIdx >= previewTerms.length - 1" title="上一学期" @click="switchTerm(termIdx + 1)">←</button>
+      <select class="cal-term-select" :value="termIdx" @change="switchTerm($event.target.value)">
+        <option v-for="(t, i) in previewTerms" :key="t.id" :value="i">{{ t.label }}</option>
+      </select>
+      <button class="cal-nav-btn" :disabled="termIdx <= 0" title="下一学期" @click="switchTerm(termIdx - 1)">→</button>
+    </div>
+
+    <div v-if="brokenImgs.has(currentTerm.id)" class="cal-error">
+      校历图片加载失败 ·
+      <a :href="currentTerm.sourceUrl" target="_blank" rel="noopener">打开教务处原文页 ↗</a>
+    </div>
+    <div v-else class="cal-shell" @click="imgLoaded && openPreview()">
+      <div v-if="imgLoading" class="cal-skeleton">校历加载中…</div>
+      <img
+        class="cal-img"
+        :src="currentTerm.image"
+        :alt="currentTerm.label"
+        loading="lazy"
+        @load="onImgLoad"
+        @error="onImgError"
+      />
+      <div class="cal-hint">🔍 点击图片全屏查看（支持缩放拖动）</div>
+    </div>
+    <div class="cal-src-line">
+      来源：
+      <a :href="currentTerm.sourceUrl" target="_blank" rel="noopener">教务处校历通知原文 ↗</a>
+      <span class="muted">（校历图片由 NextFStar 整理）</span>
+    </div>
   </div>
 
   <div class="panel" style="margin-bottom:16px;">
@@ -122,7 +228,61 @@ onMounted(load)
   <div class="panel" style="background:var(--notice-bg);border-color:var(--notice-border);">
     <div style="font-weight:700;color:var(--notice-text);">💡 提示</div>
     <div class="muted" style="font-size:13px;margin-top:6px;line-height:1.8;">
-      时间线为社区按往年规律整理，仅供参考；官方校历以图片/附件形式发布，请打开上方「官方校历」对应条目，在教务处页面查看并下载校历原图（附件下载需输入验证码）。具体教学周与放假安排请以教务处官网为准。
+      预览图为教务处公开发布的校历原图；具体教学周与放假安排请以教务处官网为准。附件下载需在官方页面输入验证码。
     </div>
   </div>
+
+  <!-- 全屏预览模态 -->
+  <teleport to="body">
+    <div v-if="showPreview" class="cal-modal" @click.self="closePreview">
+      <div class="cal-modal-toolbar" @click.stop>
+        <button class="cal-zoom-btn" @click="zoomOut">−</button>
+        <span class="cal-zoom-num">{{ Math.round(zoom * 100) }}%</span>
+        <button class="cal-zoom-btn" @click="zoomIn">＋</button>
+        <button class="cal-zoom-btn" @click="resetView">1:1</button>
+        <button class="cal-close-btn" @click="closePreview">✕ 关闭</button>
+      </div>
+      <div
+        class="cal-modal-body"
+        @click.self="closePreview"
+        @mousedown="onDragStart"
+        @mousemove="onDragMove"
+        @mouseup="onDragEnd"
+        @mouseleave="onDragEnd"
+        @touchstart.prevent="onDragStart"
+        @touchmove.prevent="onDragMove"
+        @touchend="onDragEnd"
+      >
+        <img class="cal-modal-img" :class="{ grab: zoom > 1 }" :src="currentTerm.image" :alt="currentTerm.label" :style="previewStyle" draggable="false" />
+      </div>
+    </div>
+  </teleport>
 </template>
+
+<style scoped>
+.cal-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.cal-nav-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 16px; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+.cal-nav-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.cal-nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+.cal-term-select { flex: 1; min-width: 0; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 13px; outline: none; }
+
+.cal-shell { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--soft-fg); cursor: zoom-in; min-height: 120px; display: flex; align-items: center; justify-content: center; }
+.cal-skeleton { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-sub); z-index: 1; }
+.cal-img { width: 100%; height: auto; max-height: 420px; object-fit: contain; display: block; }
+.cal-hint { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 11px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.55)); padding: 18px 0 8px; pointer-events: none; opacity: 0; transition: opacity .2s; }
+.cal-shell:hover .cal-hint { opacity: 1; }
+.cal-error { padding: 24px 12px; text-align: center; font-size: 13px; color: var(--text-sub); background: var(--soft-fg); border: 1px dashed var(--border); border-radius: var(--radius); }
+.cal-src-line { margin-top: 8px; font-size: 12px; color: var(--text-sub); }
+.cal-src-line a { color: var(--primary); }
+
+.cal-modal { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,.88); display: flex; flex-direction: column; }
+.cal-modal-toolbar { display: flex; align-items: center; gap: 10px; justify-content: center; padding: 12px; flex-wrap: wrap; }
+.cal-zoom-btn { min-width: 40px; height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.12); color: #fff; font-size: 15px; cursor: pointer; transition: all .15s; }
+.cal-zoom-btn:hover { background: rgba(255,255,255,.25); }
+.cal-zoom-num { color: #fff; font-size: 13px; min-width: 48px; text-align: center; }
+.cal-close-btn { height: 36px; padding: 0 16px; border-radius: 999px; border: none; background: var(--primary); color: #fff; font-size: 13px; cursor: pointer; }
+.cal-modal-body { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; }
+.cal-modal-img { max-width: 96%; max-height: 92%; object-fit: contain; user-select: none; box-shadow: 0 12px 48px rgba(0,0,0,.5); transition: transform .15s ease-out; }
+.cal-modal-img.grab { cursor: grab; transition: none; }
+.cal-modal-img.grab:active { cursor: grabbing; }
+</style>

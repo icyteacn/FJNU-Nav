@@ -6,6 +6,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { buildings, campusFilters, searchRooms } from '../data/classrooms'
+import { nfsRooms, nfsRoomGroups } from '../data/nfsClassrooms'
 import { apiFetch } from '../api/index'
 
 const emit = defineEmits(['back'])
@@ -13,6 +14,22 @@ const view = ref('main')
 const keyword = ref('')
 const campus = ref('全部')
 const expanded = ref(null)
+
+/* 全校教室大全（来源 NextFStar 教室导航公开接口） */
+const allKw = ref('')
+const allKind = ref('全部')
+const roomKinds = ['全部', ...Object.keys(nfsRoomGroups)]
+const allRooms = computed(() => {
+  const kw = allKw.value.trim().toLowerCase()
+  let list = nfsRooms
+  if (allKind.value !== '全部') list = nfsRoomGroups[allKind.value] || []
+  if (!kw) return list.slice(0, 60)
+  return list.filter((r) => r.toLowerCase().includes(kw)).slice(0, 120)
+})
+function pickAllRoom(r) {
+  emptyKw.value = ''
+  selectRoom(r)
+}
 
 const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 const emptyDay = ref(1)
@@ -89,6 +106,22 @@ function fallbackRoute(b) {
     <div class="view-sub">{{ view === 'empty' ? '点击教室可查看其一周占用安排' : '空教室实时查询 · 教室检索与导航指引' }}</div>
   </div>
 
+  <div v-if="roomSchedLoading" class="panel" style="margin-bottom:16px;"><div class="skeleton" style="height:60px"></div></div>
+  <div v-else-if="roomSched" class="panel" style="margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;font-weight:700;">🗓️ {{ roomSched.room }} 一周占用 <span class="muted" style="font-size:12px;font-weight:400;">（{{ roomSched.semester }} · {{ roomSched.count }} 节课）</span></div>
+      <button class="refresh-btn" @click="roomSched = null">收起</button>
+    </div>
+    <div class="cal-list" style="margin-top:8px;">
+      <div v-for="(x, i) in roomSched.schedule" :key="i" class="cal-item">
+        <span class="cal-title">{{ x.c }}</span>
+        <span class="cal-date">{{ dayNames[x.d - 1] }} 第{{ x.s }}-{{ x.e }}节 · 第{{ x.w }}周</span>
+        <span class="cal-go">{{ x.cls }} · {{ x.t }}</span>
+      </div>
+      <div v-if="!roomSched.count" class="muted" style="padding:12px;text-align:center;">该教室本学期暂无排课</div>
+    </div>
+  </div>
+
   <template v-if="view === 'empty'">
     <div class="panel" style="margin-bottom:16px;">
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
@@ -96,22 +129,6 @@ function fallbackRoute(b) {
         <div class="muted" style="font-size:13px;">空闲教室 {{ emptyResult.emptyCount }} / {{ emptyResult.total }} 间</div>
       </div>
       <div class="muted" style="font-size:12px;margin-top:4px;">数据源：{{ courseTable?.semester || '教务处' }}课程总表解析，点击教室查看一周占用</div>
-    </div>
-
-    <div v-if="roomSchedLoading" class="panel" style="margin-bottom:16px;"><div class="skeleton" style="height:60px"></div></div>
-    <div v-else-if="roomSched" class="panel" style="margin-bottom:16px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="flex:1;font-weight:700;">🗓️ {{ roomSched.room }} 一周占用 <span class="muted" style="font-size:12px;font-weight:400;">（{{ roomSched.semester }} · {{ roomSched.count }} 节课）</span></div>
-        <button class="refresh-btn" @click="roomSched = null">收起</button>
-      </div>
-      <div class="cal-list" style="margin-top:8px;">
-        <div v-for="(x, i) in roomSched.schedule" :key="i" class="cal-item">
-          <span class="cal-title">{{ x.c }}</span>
-          <span class="cal-date">{{ dayNames[x.d - 1] }} 第{{ x.s }}-{{ x.e }}节 · 第{{ x.w }}周</span>
-          <span class="cal-go">{{ x.cls }} · {{ x.t }}</span>
-        </div>
-        <div v-if="!roomSched.count" class="muted" style="padding:12px;text-align:center;">该教室本学期暂无排课</div>
-      </div>
     </div>
 
     <div class="panel">
@@ -140,6 +157,24 @@ function fallbackRoute(b) {
         <input class="input" v-model="emptyKw" placeholder="楼宇过滤，如：博学楼" />
         <button class="btn" :disabled="emptyLoading" @click="goEmpty">{{ emptyLoading ? '查询中…' : '查空教室' }}</button>
       </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <div style="font-weight:700;">🏫 全校教室大全</div>
+        <span class="muted" style="font-size:12px;">共 {{ nfsRooms.length }} 间（含实验室 / 体育场馆 · 来源 NextFStar）· 点击查看占用</span>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input v-model="allKw" class="search-input" placeholder="搜索全校任意教室，如：外语楼 / 篮球 / 305" />
+      </div>
+      <div class="chips">
+        <button v-for="k in roomKinds" :key="k" class="chip" :class="{ active: allKind === k }" @click="allKind = k">{{ k }}</button>
+      </div>
+      <div class="tags" style="margin-top:10px;">
+        <button v-for="r in allRooms" :key="r" class="tag tag-btn" @click="pickAllRoom(r)">{{ r }}</button>
+      </div>
+      <div v-if="allKw.trim() && !allRooms.length" class="muted" style="padding:14px;text-align:center;font-size:13px;">没有匹配的教室</div>
     </div>
 
     <div class="panel">

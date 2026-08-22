@@ -71,6 +71,7 @@ function hueOf(i) {
   <div class="panel" style="margin-top:16px;">
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
+      <li><b>v1.2.6</b> 校历图片预览 · 搜索功能索引 · 教室大全</li>
       <li><b>v1.2.5</b> 综测积累模块 · 课程加权测算 · 科研/综测快速选档联动</li>
       <li><b>v1.2.4</b> 奖学金页按最新评审细则重写 · 新增科研分测算器</li>
       <li><b>v1.2.3</b> 修正奖学金金额 · 更新官网链接 · 研究生指南完善</li>

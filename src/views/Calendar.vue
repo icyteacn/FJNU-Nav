@@ -58,39 +58,92 @@ function switchTerm(i) {
   imgLoaded.value = false
 }
 
-/* 全屏预览模态（缩放 / 平移） */
+/* 全屏预览模态（缩放 / 平移 / 左右滑动切换学期） */
 const showPreview = ref(false)
 const zoom = ref(1)
 const panX = ref(0)
 const panY = ref(0)
+const slideX = ref(0) // 1:1 下水平拖动换页偏移
+const sliding = ref(false)
 let dragStart = null
 
 const previewStyle = computed(() => ({ transform: `translate(${panX.value}px, ${panY.value}px) scale(${zoom.value})` }))
 function openPreview() { showPreview.value = true; resetView() }
 function closePreview() { showPreview.value = false }
-function resetView() { zoom.value = 1; panX.value = 0; panY.value = 0 }
+function resetView() { zoom.value = 1; panX.value = 0; panY.value = 0; slideX.value = 0 }
 function zoomIn() { zoom.value = Math.min(4, +(zoom.value + 0.5).toFixed(1)) }
 function zoomOut() {
   zoom.value = Math.max(1, +(zoom.value - 0.5).toFixed(1))
-  if (zoom.value <= 1.01) resetView()
+  if (zoom.value <= 1.01) { panX.value = 0; panY.value = 0 }
 }
-function onDragStart(e) {
-  if (zoom.value <= 1) return
-  dragStart = { x: e.clientX || e.touches?.[0]?.clientX, y: e.clientY || e.touches?.[0]?.clientY, ox: panX.value, oy: panY.value }
+function onDragStart(cx, cy) {
+  if (zoom.value > 1) dragStart = { mode: 'pan', x: cx, y: cy, ox: panX.value, oy: panY.value }
+  else dragStart = { mode: 'swipe', x: cx, y: cy }
 }
-function onDragMove(e) {
+function onDragMove(cx, cy) {
   if (!dragStart) return
-  const cx = e.clientX ?? e.touches?.[0]?.clientX
-  const cy = e.clientY ?? e.touches?.[0]?.clientY
-  panX.value = dragStart.ox + (cx - dragStart.x)
-  panY.value = dragStart.oy + (cy - dragStart.y)
+  if (dragStart.mode === 'pan') {
+    panX.value = dragStart.ox + (cx - dragStart.x)
+    panY.value = dragStart.oy + (cy - dragStart.y)
+  } else {
+    slideX.value = cx - dragStart.x
+  }
 }
-function onDragEnd() { dragStart = null }
+function endPan() {
+  if (!dragStart) return
+  const wasSwipe = dragStart.mode === 'swipe'
+  dragStart = null
+  sliding.value = true
+  if (wasSwipe && Math.abs(slideX.value) > 60) {
+    // 左滑看更早学期（idx+1），右滑看更近学期（idx-1）
+    stepTerm(slideX.value < 0 ? 1 : -1, slideX.value)
+  } else {
+    slideX.value = 0
+    setTimeout(() => { sliding.value = false }, 260)
+  }
+}
+/** dir=+1 上一学期（idx+1）/ dir=-1 下一学期；fromX 为拖动起始偏移，保证动画连贯 */
+function stepTerm(dir, fromX) {
+  const next = termIdx.value + dir
+  const W = window.innerWidth || 420
+  if (next < 0 || next >= previewTerms.length) {
+    // 越界回弹
+    sliding.value = true
+    slideX.value = 0
+    setTimeout(() => { sliding.value = false }, 260)
+    return
+  }
+  sliding.value = true
+  if (Math.abs(fromX || 0) > 4) {
+    // 拖动换页：先顺势滑出屏幕
+    slideX.value = (fromX < 0 ? -1 : 1) * W
+    setTimeout(() => {
+      noAnimSwitch(next)
+      slideX.value = (fromX < 0 ? 1 : -1) * W
+      requestAnimationFrame(() => { slideX.value = 0; setTimeout(() => { sliding.value = false }, 260) })
+    }, 180)
+  } else {
+    // 按钮切换：当前图滑出 → 新图从对侧滑入
+    slideX.value = -dir * W * 0.35
+    setTimeout(() => {
+      noAnimSwitch(next)
+      slideX.value = dir * W * 0.35
+      setTimeout(() => { slideX.value = 0; setTimeout(() => { sliding.value = false }, 260) }, 30)
+    }, 160)
+  }
+}
+/** 不触发图片加载态的学期切换（模态内平滑翻页） */
+function noAnimSwitch(i) {
+  termIdx.value = Math.max(0, Math.min(previewTerms.length - 1, Number(i)))
+  imgLoading.value = false
+}
 function onKey(e) {
   if (!showPreview.value) return
   if (e.key === 'Escape') closePreview()
   if (e.key === '+' || e.key === '=') zoomIn()
   if (e.key === '-') zoomOut()
+  if (e.key === 'ArrowLeft') stepTerm(1)
+  if (e.key === 'ArrowRight') stepTerm(-1)
 }
 onMounted(() => window.addEventListener('keydown', onKey))
 onUnmounted(() => window.removeEventListener('keydown', onKey))
@@ -171,8 +224,8 @@ onMounted(load)
       校历图片加载失败 ·
       <a :href="currentTerm.sourceUrl" target="_blank" rel="noopener">打开教务处原文页 ↗</a>
     </div>
-    <div v-else class="cal-shell" @click="imgLoaded && openPreview()">
-      <div v-if="imgLoading" class="cal-skeleton">校历加载中…</div>
+    <div v-else class="cal-shell" @click="openPreview()">
+      <div v-if="imgLoading && !imgLoaded" class="cal-skeleton">校历加载中…</div>
       <img
         class="cal-img"
         :src="currentTerm.image"
@@ -240,21 +293,46 @@ onMounted(load)
         <span class="cal-zoom-num">{{ Math.round(zoom * 100) }}%</span>
         <button class="cal-zoom-btn" @click="zoomIn">＋</button>
         <button class="cal-zoom-btn" @click="resetView">1:1</button>
+        <span class="cal-modal-term">{{ currentTerm.label }}</span>
         <button class="cal-close-btn" @click="closePreview">✕ 关闭</button>
       </div>
       <div
         class="cal-modal-body"
+        :class="{ dragging: !!dragStart }"
         @click.self="closePreview"
-        @mousedown="onDragStart"
-        @mousemove="onDragMove"
-        @mouseup="onDragEnd"
-        @mouseleave="onDragEnd"
-        @touchstart.prevent="onDragStart"
-        @touchmove.prevent="onDragMove"
-        @touchend="onDragEnd"
+        @mousedown.prevent="onDragStart($event.clientX, $event.clientY)"
+        @mousemove="onDragMove($event.clientX, $event.clientY)"
+        @mouseup="endPan"
+        @mouseleave="endPan"
       >
-        <img class="cal-modal-img" :class="{ grab: zoom > 1 }" :src="currentTerm.image" :alt="currentTerm.label" :style="previewStyle" draggable="false" />
+        <button class="cal-side-btn left" :disabled="termIdx >= previewTerms.length - 1" @click.stop="stepTerm(1)" title="上一学期">‹</button>
+        <div
+          class="cal-stage"
+          :class="{ sliding }"
+          @touchstart.prevent="onDragStart($event.touches[0].clientX, $event.touches[0].clientY)"
+          @touchmove.prevent="onDragMove($event.touches[0].clientX, $event.touches[0].clientY)"
+          @touchend="endPan"
+        >
+          <img
+            v-if="zoom <= 1"
+            class="cal-modal-img"
+            :src="currentTerm.image"
+            :alt="currentTerm.label"
+            :style="{ transform: 'translateX(' + (panX + slideX) + 'px)' }"
+            draggable="false"
+          />
+          <img
+            v-else
+            class="cal-modal-img zoomed"
+            :src="currentTerm.image"
+            :alt="currentTerm.label"
+            :style="previewStyle"
+            draggable="false"
+          />
+        </div>
+        <button class="cal-side-btn right" :disabled="termIdx <= 0" @click.stop="stepTerm(-1)" title="下一学期">›</button>
       </div>
+      <div class="cal-modal-tip" @click.stop>💡 双指或按钮缩放 · 放大后拖动查看细节 · 未放大时左右拖动切换学期</div>
     </div>
   </teleport>
 </template>
@@ -281,8 +359,17 @@ onMounted(load)
 .cal-zoom-btn:hover { background: rgba(255,255,255,.25); }
 .cal-zoom-num { color: #fff; font-size: 13px; min-width: 48px; text-align: center; }
 .cal-close-btn { height: 36px; padding: 0 16px; border-radius: 999px; border: none; background: var(--primary); color: #fff; font-size: 13px; cursor: pointer; }
-.cal-modal-body { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; }
-.cal-modal-img { max-width: 96%; max-height: 92%; object-fit: contain; user-select: none; box-shadow: 0 12px 48px rgba(0,0,0,.5); transition: transform .15s ease-out; }
-.cal-modal-img.grab { cursor: grab; transition: none; }
-.cal-modal-img.grab:active { cursor: grabbing; }
+.cal-modal-body { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; touch-action: none; }
+.cal-stage { display: flex; align-items: center; justify-content: center; max-width: 100%; max-height: 100%; }
+.cal-stage.sliding .cal-modal-img { transition: transform .26s cubic-bezier(.25,.8,.35,1); }
+.cal-modal-img { max-width: 96vw; max-height: 88vh; object-fit: contain; user-select: none; box-shadow: 0 12px 48px rgba(0,0,0,.5); }
+.cal-modal-img.zoomed { cursor: grab; }
+.cal-modal-img.zoomed:active { cursor: grabbing; }
+.cal-side-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; width: 44px; height: 60px; border: none; border-radius: 12px; background: rgba(255,255,255,.14); color: #fff; font-size: 28px; cursor: pointer; transition: all .15s; line-height: 1; }
+.cal-side-btn:hover:not(:disabled) { background: rgba(255,255,255,.3); }
+.cal-side-btn:disabled { opacity: .2; cursor: not-allowed; }
+.cal-side-btn.left { left: 10px; }
+.cal-side-btn.right { right: 10px; }
+.cal-modal-term { color: #fff; font-size: 13px; font-weight: 700; min-width: 0; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-modal-tip { text-align: center; color: rgba(255,255,255,.65); font-size: 11px; padding: 8px 12px 12px; }
 </style>

@@ -18,18 +18,32 @@ const expanded = ref(null)
 /* 全校教室大全（来源 NextFStar 教室导航公开接口） */
 const allKw = ref('')
 const allKind = ref('全部')
-const roomKinds = ['全部', ...Object.keys(nfsRoomGroups)]
-const allRooms = computed(() => {
+const PAGE = 48
+const shown = ref(PAGE)
+const kindOfRoom = (name) => Object.keys(nfsRoomGroups).find((k) => nfsRoomGroups[k].includes(name)) || '普通教室'
+const roomKindCount = computed(() => {
   const kw = allKw.value.trim().toLowerCase()
-  let list = nfsRooms
-  if (allKind.value !== '全部') list = nfsRoomGroups[allKind.value] || []
-  if (!kw) return list.slice(0, 60)
-  return list.filter((r) => r.toLowerCase().includes(kw)).slice(0, 120)
+  const hit = (r) => !kw || r.toLowerCase().includes(kw)
+  const c = { 全部: 0 }
+  for (const k of Object.keys(nfsRoomGroups)) {
+    c[k] = nfsRoomGroups[k].filter(hit).length
+    c.全部 += c[k]
+  }
+  return c
 })
+const roomKinds = computed(() => ['全部', ...Object.keys(nfsRoomGroups)])
+const matchedRooms = computed(() => {
+  const kw = allKw.value.trim().toLowerCase()
+  let list = allKind.value === '全部' ? nfsRooms : (nfsRoomGroups[allKind.value] || [])
+  if (kw) list = list.filter((r) => r.toLowerCase().includes(kw))
+  return list
+})
+const visibleRooms = computed(() => matchedRooms.value.slice(0, shown.value))
 function pickAllRoom(r) {
   emptyKw.value = ''
   selectRoom(r)
 }
+function moreRooms() { shown.value += PAGE }
 
 const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 const emptyDay = ref(1)
@@ -169,12 +183,20 @@ function fallbackRoute(b) {
         <input v-model="allKw" class="search-input" placeholder="搜索全校任意教室，如：外语楼 / 篮球 / 305" />
       </div>
       <div class="chips">
-        <button v-for="k in roomKinds" :key="k" class="chip" :class="{ active: allKind === k }" @click="allKind = k">{{ k }}</button>
+        <button v-for="k in roomKinds" :key="k" class="chip" :class="{ active: allKind === k }" @click="allKind = k; shown = PAGE">
+          {{ k }} <b>{{ roomKindCount[k] }}</b>
+        </button>
       </div>
-      <div class="tags" style="margin-top:10px;">
-        <button v-for="r in allRooms" :key="r" class="tag tag-btn" @click="pickAllRoom(r)">{{ r }}</button>
+      <div v-if="visibleRooms.length" class="room-grid">
+        <button v-for="r in visibleRooms" :key="r" class="room-card" @click="pickAllRoom(r)">
+          <span class="room-card-name">{{ r }}</span>
+          <span class="room-card-kind" :data-kind="kindOfRoom(r)">{{ kindOfRoom(r) === '普通教室' ? '教室' : kindOfRoom(r) }}</span>
+        </button>
       </div>
-      <div v-if="allKw.trim() && !allRooms.length" class="muted" style="padding:14px;text-align:center;font-size:13px;">没有匹配的教室</div>
+      <div v-else class="muted" style="padding:14px;text-align:center;font-size:13px;">没有匹配的教室，换个关键词试试</div>
+      <div v-if="matchedRooms.length > shown" style="text-align:center;margin-top:12px;">
+        <button class="refresh-btn" @click="moreRooms">加载更多（已显示 {{ shown }} / {{ matchedRooms.length }}）</button>
+      </div>
     </div>
 
     <div class="panel">
@@ -242,4 +264,13 @@ function fallbackRoute(b) {
 .floor-tag { flex: 0 0 56px; font-size: 12px; font-weight: 700; color: var(--primary); }
 .floor-rooms { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
 .room-chip { font-style: normal; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: var(--soft-gray, #eef3fb); color: var(--text-sub); white-space: nowrap; }
+
+.room-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 10px; }
+.room-card { position: relative; display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); color: var(--text); cursor: pointer; transition: all .13s; text-align: left; min-width: 0; }
+.room-card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.07); }
+.room-card-name { flex: 1; font-size: 12px; font-weight: 600; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-card-kind { flex-shrink: 0; font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: var(--soft-gray, #f0f2f5); color: var(--text-sub); }
+.room-card-kind[data-kind='实验室'] { background: #e8f5e9; color: #2e7d32; }
+.room-card-kind[data-kind='体育场馆'] { background: #fff3e0; color: #ef6c00; }
+.chips .chip b { margin-left: 3px; opacity: .75; }
 </style>

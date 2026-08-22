@@ -4,7 +4,7 @@
  * 灵感参考：https://nfs.pcdawn.cn/app/classroomNavigation（NextFStar 室内寻路系统）
  * 本项目保留原有空教室查询 + 楼宇列表 + 高德地图导航，未完全复刻分步导航图片指引功能。
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { buildings, campusFilters, searchRooms } from '../data/classrooms'
 import { nfsRooms, nfsRoomGroups } from '../data/nfsClassrooms'
 import { apiFetch } from '../api/index'
@@ -15,12 +15,19 @@ const keyword = ref('')
 const campus = ref('全部')
 const expanded = ref(null)
 
-/* 全校教室大全（来源 NextFStar 教室导航公开接口） */
+/* 全校教室大全（来源 NextFStar 教室导航公开接口）：按楼分组 + 手风琴 + 分页 */
 const allKw = ref('')
 const allKind = ref('全部')
-const PAGE = 48
-const shown = ref(PAGE)
+const openBldg = ref('')
+const page = ref(1)
+const jumpPage = ref('')
+const BUILDINGS_PER_PAGE = 8
 const kindOfRoom = (name) => Object.keys(nfsRoomGroups).find((k) => nfsRoomGroups[k].includes(name)) || '普通教室'
+function buildingOf(name) {
+  const m = name.match(/^([\u4e00-\u9fa5]+|[0-9]+)/)
+  if (!m) return '其他'
+  return /\d/.test(m[1]) ? m[1] + '栋' : m[1]
+}
 const roomKindCount = computed(() => {
   const kw = allKw.value.trim().toLowerCase()
   const hit = (r) => !kw || r.toLowerCase().includes(kw)
@@ -32,18 +39,52 @@ const roomKindCount = computed(() => {
   return c
 })
 const roomKinds = computed(() => ['全部', ...Object.keys(nfsRoomGroups)])
-const matchedRooms = computed(() => {
+const buildingGroups = computed(() => {
   const kw = allKw.value.trim().toLowerCase()
-  let list = allKind.value === '全部' ? nfsRooms : (nfsRoomGroups[allKind.value] || [])
-  if (kw) list = list.filter((r) => r.toLowerCase().includes(kw))
-  return list
+  const map = new Map()
+  for (const r of nfsRooms) {
+    if (allKind.value !== '全部' && !(nfsRoomGroups[allKind.value] || []).includes(r)) continue
+    if (kw && !r.toLowerCase().includes(kw)) continue
+    const b = buildingOf(r)
+    if (!map.has(b)) map.set(b, [])
+    map.get(b).push(r)
+  }
+  return [...map.entries()]
 })
-const visibleRooms = computed(() => matchedRooms.value.slice(0, shown.value))
+const totalPages = computed(() => Math.max(1, Math.ceil(buildingGroups.value.length / BUILDINGS_PER_PAGE)))
+watch([allKw, allKind], () => { page.value = 1; openBldg.value = '' })
+const pageGroups = computed(() => buildingGroups.value.slice((page.value - 1) * BUILDINGS_PER_PAGE, page.value * BUILDINGS_PER_PAGE))
+function gotoPage(n) {
+  page.value = Math.max(1, Math.min(totalPages.value, Number(n) || 1))
+  openBldg.value = ''
+  jumpPage.value = ''
+}
+function toggleBldg(b) {
+  openBldg.value = openBldg.value === b ? '' : b
+}
+/* 与下方原版楼宇列表联动：滚动定位并自动展开 */
+const linkHint = ref('')
+let hintTimer = null
+function gotoBuildingDetail(bname) {
+  const key = bname.replace(/\d+$/, '')
+  const b = buildings.find((x) => bname.startsWith(x.name) || x.name.startsWith(key) || (key.length >= 2 && x.name.includes(key)))
+  if (!b) {
+    linkHint.value = `「${bname}」暂无详细楼宇指引`
+    clearTimeout(hintTimer)
+    hintTimer = setTimeout(() => { linkHint.value = '' }, 2500)
+    return
+  }
+  keyword.value = ''
+  campus.value = '全部'
+  expanded.value = b.name
+  setTimeout(() => {
+    document.querySelector('.bldg-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, 60)
+}
 function pickAllRoom(r) {
   emptyKw.value = ''
   selectRoom(r)
 }
-function moreRooms() { shown.value += PAGE }
 
 const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 const emptyDay = ref(1)
@@ -183,19 +224,39 @@ function fallbackRoute(b) {
         <input v-model="allKw" class="search-input" placeholder="搜索全校任意教室，如：外语楼 / 篮球 / 305" />
       </div>
       <div class="chips">
-        <button v-for="k in roomKinds" :key="k" class="chip" :class="{ active: allKind === k }" @click="allKind = k; shown = PAGE">
+        <button v-for="k in roomKinds" :key="k" class="chip" :class="{ active: allKind === k }" @click="allKind = k">
           {{ k }} <b>{{ roomKindCount[k] }}</b>
         </button>
       </div>
-      <div v-if="visibleRooms.length" class="room-grid">
-        <button v-for="r in visibleRooms" :key="r" class="room-card" @click="pickAllRoom(r)">
-          <span class="room-card-name">{{ r }}</span>
-          <span class="room-card-kind" :data-kind="kindOfRoom(r)">{{ kindOfRoom(r) === '普通教室' ? '教室' : kindOfRoom(r) }}</span>
-        </button>
+      <div v-if="linkHint" class="link-hint">{{ linkHint }}</div>
+
+      <div class="bldg-pager">
+        <button class="pager-btn" :disabled="page <= 1" @click="gotoPage(page - 1)">‹</button>
+        <span class="pager-info">第 {{ page }} / {{ totalPages }} 页 · 共 {{ buildingGroups.length }} 栋</span>
+        <input v-model="jumpPage" class="pager-jump" type="number" min="1" :max="totalPages" placeholder="页码" @keyup.enter="gotoPage(jumpPage)" />
+        <button class="pager-btn" @click="gotoPage(jumpPage)">跳转</button>
+        <button class="pager-btn" :disabled="page >= totalPages" @click="gotoPage(page + 1)">›</button>
       </div>
-      <div v-else class="muted" style="padding:14px;text-align:center;font-size:13px;">没有匹配的教室，换个关键词试试</div>
-      <div v-if="matchedRooms.length > shown" style="text-align:center;margin-top:12px;">
-        <button class="refresh-btn" @click="moreRooms">加载更多（已显示 {{ shown }} / {{ matchedRooms.length }}）</button>
+
+      <div class="nfs-bldg-list">
+        <div v-for="[b, rooms] in pageGroups" :key="b" class="nfs-bldg" :class="{ open: openBldg === b }">
+          <button class="nfs-bldg-head" @click="toggleBldg(b)">
+            <span class="nfs-bldg-icon">🏢</span>
+            <span class="nfs-bldg-name">{{ b }}</span>
+            <span class="nfs-bldg-count">{{ rooms.length }} 间</span>
+            <span class="nfs-bldg-arrow">{{ openBldg === b ? '▾' : '▸' }}</span>
+          </button>
+          <div v-show="openBldg === b" class="nfs-bldg-body">
+            <div class="room-grid slim">
+              <button v-for="r in rooms" :key="r" class="room-card" @click="pickAllRoom(r)">
+                <span class="room-card-name">{{ r }}</span>
+                <span class="room-card-kind" :data-kind="kindOfRoom(r)">{{ kindOfRoom(r) === '普通教室' ? '教室' : kindOfRoom(r) }}</span>
+              </button>
+            </div>
+            <button class="nfs-bldg-link" @click="gotoBuildingDetail(b)">🗺️ 查看楼宇指引与地图定位 ›</button>
+          </div>
+        </div>
+        <div v-if="!buildingGroups.length" class="muted" style="padding:14px;text-align:center;font-size:13px;">没有匹配的教室，换个关键词试试</div>
       </div>
     </div>
 
@@ -266,6 +327,7 @@ function fallbackRoute(b) {
 .room-chip { font-style: normal; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: var(--soft-gray, #eef3fb); color: var(--text-sub); white-space: nowrap; }
 
 .room-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 10px; }
+.room-grid.slim { gap: 5px; }
 .room-card { position: relative; display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); color: var(--text); cursor: pointer; transition: all .13s; text-align: left; min-width: 0; }
 .room-card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.07); }
 .room-card-name { flex: 1; font-size: 12px; font-weight: 600; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -273,4 +335,29 @@ function fallbackRoute(b) {
 .room-card-kind[data-kind='实验室'] { background: #e8f5e9; color: #2e7d32; }
 .room-card-kind[data-kind='体育场馆'] { background: #fff3e0; color: #ef6c00; }
 .chips .chip b { margin-left: 3px; opacity: .75; }
+
+.link-hint { margin-top: 8px; font-size: 12px; color: #b45309; background: var(--soft-yellow); border-radius: 8px; padding: 7px 10px; }
+
+.bldg-pager { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.pager-btn { min-width: 34px; height: 32px; padding: 0 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; transition: all .13s; }
+.pager-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.pager-btn:disabled { opacity: .35; cursor: not-allowed; }
+.pager-info { font-size: 12px; color: var(--text-sub); flex: 1; text-align: center; min-width: 120px; }
+.pager-jump { width: 64px; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); color: var(--text); font-size: 12px; text-align: center; outline: none; -moz-appearance: textfield; }
+.pager-jump::-webkit-inner-spin-button, .pager-jump::-webkit-outer-spin-button { -webkit-appearance: none; }
+.pager-jump:focus { border-color: var(--primary); }
+
+.nfs-bldg-list { margin-top: 10px; display: flex; flex-direction: column; gap: 7px; }
+.nfs-bldg { border: 1px solid var(--border); border-radius: 11px; background: var(--card); overflow: hidden; transition: box-shadow .18s; }
+.nfs-bldg.open { box-shadow: 0 4px 16px rgba(0,0,0,.08); border-color: var(--primary); }
+.nfs-bldg-head { width: 100%; display: flex; align-items: center; gap: 9px; padding: 11px 13px; background: none; border: none; cursor: pointer; color: var(--text); text-align: left; }
+.nfs-bldg-head:hover { background: var(--primary-soft); }
+.nfs-bldg-icon { font-size: 15px; flex-shrink: 0; }
+.nfs-bldg-name { flex: 1; font-weight: 700; font-size: 13.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nfs-bldg-count { flex-shrink: 0; font-size: 11px; font-weight: 800; color: var(--primary); background: var(--primary-soft); padding: 2px 9px; border-radius: 999px; }
+.nfs-bldg-arrow { flex-shrink: 0; font-size: 11px; color: var(--text-sub); }
+.nfs-bldg-body { padding: 2px 12px 12px; animation: bldgIn .2s ease; }
+@keyframes bldgIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.nfs-bldg-link { margin-top: 10px; width: 100%; padding: 8px; border-radius: 8px; border: 1px dashed var(--primary); background: var(--primary-soft); color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; transition: all .13s; }
+.nfs-bldg-link:hover { filter: brightness(1.04); }
 </style>

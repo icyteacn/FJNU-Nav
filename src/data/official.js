@@ -6,7 +6,8 @@ export const officialGroups = [
       { name: '研究生信息管理系统', url: 'https://gedu.fjnu.edu.cn/cas/login?service=https://gedu.fjnu.edu.cn', desc: '研究生培养 / 选课 / 成绩 / 论文管理（需登录）', featured: true },
       { name: '研究生院', url: 'https://yjsy.fjnu.edu.cn', desc: '研究生招生 / 培养 / 学位 / 管理制度' },
       { name: '研究生招生', url: 'https://yjsy.fjnu.edu.cn/zs/list.htm', desc: '招生简章 / 专业目录 / 复试调剂' },
-      { name: '学位论文', url: 'https://yjsy.fjnu.edu.cn/xwgl/list.htm', desc: '论文开题 / 答辩 / 查重 / 学位申请' }
+      { name: '学位论文', url: 'https://yjsy.fjnu.edu.cn/xwgl/list.htm', desc: '论文开题 / 答辩 / 查重 / 学位申请' },
+      { name: '毕业生就业指导中心', url: 'https://career.fjnu.edu.cn/main.htm', desc: '招聘会 / 宣讲会 / 选调生 / 就业信息网' }
     ]
   },
   {

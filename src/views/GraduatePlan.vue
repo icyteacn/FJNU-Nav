@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import ZcAccumulator from '../components/ZcAccumulator.vue'
 import { loadState, saveState } from '../stores/scholarship'
 
@@ -24,6 +24,7 @@ const graduateLinks = [
   { name: '超星学习通', url: 'https://fjnu.zlgc2.chaoxing.com', desc: '在线课程 / 教学资源', icon: '📱' },
   { name: 'NextFStar', url: 'https://nfs.pcdawn.cn', desc: '校园服务聚合 · 课程表 / 食堂 / 教室导航', icon: '🌐' },
   { name: '研究生会', url: 'https://yjsy.fjnu.edu.cn/yjsh/list.htm', desc: '研究生会活动 / 社团 / 讲座', icon: '🎭' },
+  { name: '就业指导中心', url: 'https://career.fjnu.edu.cn/main.htm', desc: '招聘会 / 宣讲会 / 选调生 · 新版就业信息网', icon: '💼' },
 ]
 
 const creditRequirements = [
@@ -94,14 +95,31 @@ const academicTools = [
   { name: 'Zotero', desc: '免费文献管理工具，支持PDF标注和引用', url: 'https://www.zotero.org', icon: '📚', category: '文献管理' },
   { name: 'Mendeley', desc: 'Elsevier旗下文献管理工具', url: 'https://www.mendeley.com', icon: '📖', category: '文献管理' },
   { name: 'EndNote', desc: '专业文献管理软件（学校可能提供授权）', url: 'https://endnote.com', icon: '📝', category: '文献管理' },
+  { name: 'LetPub', desc: 'SCI期刊影响因子 / 审稿周期 / 投稿经验查询', url: 'https://www.letpub.com.cn', icon: '🔬', category: '期刊与会议' },
+  { name: '中科院分区表', desc: '中科院文献情报系统期刊分区查询（需订阅）', url: 'https://www.fenqubiao.com', icon: '📊', category: '期刊与会议' },
+  { name: 'CCF推荐目录', desc: '中国计算机学会推荐国际学术会议与期刊目录', url: 'https://www.ccf.org.cn', icon: '💻', category: '期刊与会议' },
+  { name: '小木虫', desc: '科研学术交流论坛 · 投稿与考博经验', url: 'http://muchong.com', icon: '🐛', category: '期刊与会议' },
+  { name: 'Google Scholar', desc: '谷歌学术搜索', url: 'https://scholar.google.com', icon: '🔍', category: '文献检索' },
+  { name: 'Web of Science', desc: '国际权威学术索引', url: 'https://www.webofscience.com', icon: '📊', category: '文献检索' },
+  { name: 'PubMed', desc: '生物医学文献数据库', url: 'https://pubmed.ncbi.nlm.nih.gov', icon: '🧬', category: '文献检索' },
+  { name: 'Semantic Scholar', desc: 'AI 驱动的免费学术论文检索', url: 'https://www.semanticscholar.org', icon: '🤖', category: '文献检索' },
+  { name: 'Connected Papers', desc: '可视化文献引用关系图，快速摸清领域脉络', url: 'https://www.connectedpapers.com', icon: '🕸️', category: '文献检索' },
+  { name: 'arXiv', desc: '物理 / 计算机 / 数学预印本平台，追前沿首选', url: 'https://arxiv.org', icon: '📄', category: '文献检索' },
   { name: 'Grammarly', desc: '英语语法检查和写作辅助', url: 'https://www.grammarly.com', icon: '✍️', category: '写作工具' },
   { name: 'LaTeX Online', desc: '在线LaTeX编辑器', url: 'https://www.overleaf.com', icon: '📄', category: '写作工具' },
-  { name: 'DeepL', desc: '高质量机器翻译', url: 'https://www.deepl.com', icon: '🌐', category: '翻译工具' },
+  { name: 'DeepL', desc: '高质量机器翻译', url: 'https://www.deepl.com', icon: '🌐', category: '写作工具' },
   { name: 'Sci-Hub', desc: '学术论文下载（仅供学术研究）', url: 'https://sci-hub.se', icon: '🔓', category: '论文下载' },
-  { name: 'Google Scholar', desc: '谷歌学术搜索', url: 'https://scholar.google.com', icon: '🔍', category: '学术搜索' },
-  { name: 'Web of Science', desc: '国际权威学术索引', url: 'https://www.webofscience.com', icon: '📊', category: '学术搜索' },
-  { name: 'PubMed', desc: '生物医学文献数据库', url: 'https://pubmed.ncbi.nlm.nih.gov', icon: '🧬', category: '学术搜索' },
 ]
+
+const toolGroups = computed(() => {
+  const groups = []
+  for (const t of academicTools) {
+    let g = groups.find(x => x.category === t.category)
+    if (!g) { g = { category: t.category, items: [] }; groups.push(g) }
+    g.items.push(t)
+  }
+  return groups
+})
 
 const tips = [
   { title: '选课建议', content: '研究生选课前请仔细阅读培养方案，必修课优先选修。选课系统开放时间有限，建议提前准备好课程列表。', icon: '💡' },
@@ -328,16 +346,19 @@ function eventClass(type) {
   <template v-if="activeTab === 'tools'">
     <div class="panel">
       <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>🔧 学术工具推荐</div>
-      <div class="tools-grid">
-        <a v-for="t in academicTools" :key="t.name" :href="t.url" target="_blank" rel="noopener" class="tool-card">
-          <div class="tool-header">
-            <span class="tool-icon">{{ t.icon }}</span>
-            <span class="tool-name">{{ t.name }}</span>
-          </div>
-          <div class="tool-desc">{{ t.desc }}</div>
-          <span class="tool-category">{{ t.category }}</span>
-        </a>
+      <div v-for="g in toolGroups" :key="g.category" class="tool-group">
+        <div class="tool-group-title">{{ g.category }}</div>
+        <div class="tools-grid">
+          <a v-for="t in g.items" :key="t.name" :href="t.url" target="_blank" rel="noopener" class="tool-card">
+            <div class="tool-header">
+              <span class="tool-icon">{{ t.icon }}</span>
+              <span class="tool-name">{{ t.name }}</span>
+            </div>
+            <div class="tool-desc">{{ t.desc }}</div>
+          </a>
+        </div>
       </div>
+      <p class="muted" style="font-size:12px;margin:12px 0 0;">期刊分区与影响因子以官方最新数据为准；校外访问知网 / WoS 请先登录福Star VPN。</p>
     </div>
   </template>
 
@@ -438,13 +459,15 @@ function eventClass(type) {
 .guide-content { font-size: 13px; color: var(--text-sub); line-height: 1.7; }
 
 .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.tool-group { margin-bottom: 18px; }
+.tool-group:last-of-type { margin-bottom: 0; }
+.tool-group-title { font-size: 13px; font-weight: 800; color: var(--primary-dark); margin-bottom: 10px; padding-left: 8px; border-left: 3px solid var(--accent); }
 .tool-card { padding: 16px; background: var(--soft-fg); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: all 0.2s; }
 .tool-card:hover { border-color: var(--primary); box-shadow: var(--shadow-hover); }
 .tool-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .tool-icon { font-size: 20px; }
 .tool-name { font-weight: 700; font-size: 14px; }
-.tool-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 8px; }
-.tool-category { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); }
+.tool-desc { font-size: 12px; color: var(--text-sub); }
 
 .timeline { position: relative; padding-left: 20px; }
 .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--border); }

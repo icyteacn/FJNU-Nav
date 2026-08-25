@@ -67,10 +67,12 @@ const dragPx = ref(0) // 1:1 下轮播拖动跟手偏移
 let dragStart = null
 const suppressClick = ref(false)
 
-/* NFS 式轮播 track：全部学期排成一条，translateX 百分比位移 + 缓动过渡 */
+/* NFS 式轮播 track：全部学期排成一条（row-reverse：旧学期在左、新学期在右），
+   translateX 正值向右移即翻向更旧学期，与手势/按钮方向一致 */
 const dragging = ref(false)
+let dragRawDx = 0 // 未阻尼的原始拖动位移（用于松手时判定翻页意图）
 const trackStyle = computed(() => ({
-  transform: `translateX(calc(${termIdx.value * -100}% + ${dragPx.value}px))`,
+  transform: `translateX(calc(${termIdx.value * 100}% + ${dragPx.value}px))`,
   transition: dragging.value ? 'none' : 'transform .42s cubic-bezier(.22, .9, .3, 1)',
 }))
 const zoomedStyle = computed(() => ({ transform: `translate(${panX.value}px, ${panY.value}px) scale(${zoom.value})` }))
@@ -92,17 +94,18 @@ function onDragMove(cx, cy) {
     panX.value = dragStart.ox + (cx - dragStart.x)
     panY.value = dragStart.oy + (cy - dragStart.y)
   } else {
-    // 边界阻尼：首尾学期继续拖动时阻力衰减
+    // 边界阻尼：最新学期（最右）继续左拖 / 最旧学期（最左）继续右拖时阻力衰减
     const dx = cx - dragStart.x
-    const atFirst = termIdx.value <= 0 && dx > 0
-    const atLast = termIdx.value >= previewTerms.length - 1 && dx < 0
+    dragRawDx = dx
+    const atFirst = termIdx.value <= 0 && dx < 0
+    const atLast = termIdx.value >= previewTerms.length - 1 && dx > 0
     dragPx.value = (atFirst || atLast) ? Math.round(dx * 0.35) : dx
   }
 }
 function endPan() {
   if (!dragStart) return
   const wasSwipe = dragStart.mode === 'swipe'
-  const moved = Math.abs(dragPx.value)
+  const moved = Math.abs(dragRawDx)
   dragStart = null
   if (wasSwipe) {
     // 拖动过就吞掉紧随其后的合成 click，防止误触遮罩关闭
@@ -110,9 +113,11 @@ function endPan() {
       suppressClick.value = true
       setTimeout(() => { suppressClick.value = false }, 0)
     }
-    if (dragPx.value < -60 && termIdx.value < previewTerms.length - 1) switchTerm(termIdx.value + 1)
-    else if (dragPx.value > 60 && termIdx.value > 0) switchTerm(termIdx.value - 1)
+    // 以原始位移判定翻页意图：右滑翻向更旧学期（左侧）、左滑翻向更新学期（右侧），与跟手方向一致
+    if (dragRawDx > 60 && termIdx.value < previewTerms.length - 1) switchTerm(termIdx.value + 1)
+    else if (dragRawDx < -60 && termIdx.value > 0) switchTerm(termIdx.value - 1)
     dragPx.value = 0
+    dragRawDx = 0
     setTimeout(() => { dragging.value = false }, 450)
   }
 }
@@ -128,6 +133,19 @@ function stepTerm(dir) {
   const next = termIdx.value + dir
   if (next < 0 || next >= previewTerms.length) return
   switchTerm(next)
+}
+/* 非模态预览：带方向的平滑切换（不闪加载态） */
+const slideDir = ref('fwd')
+function goTerm(i, dir) {
+  const next = Math.max(0, Math.min(previewTerms.length - 1, Number(i)))
+  if (next === termIdx.value) return
+  slideDir.value = dir === 'back' ? 'back' : (dir === 'fwd' ? 'fwd' : (next > termIdx.value ? 'back' : 'fwd'))
+  termIdx.value = next
+  imgLoading.value = false
+}
+function onSelectTerm(e) {
+  const next = Number(e.target.value)
+  goTerm(next, next > termIdx.value ? 'back' : 'fwd')
 }
 /** 不触发图片加载态的学期切换（模态内平滑翻页） */
 function noAnimSwitch(i) {
@@ -210,11 +228,11 @@ onMounted(load)
     <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>🗓️ 校历预览</div>
 
     <div class="cal-toolbar">
-      <button class="cal-nav-btn" :disabled="termIdx >= previewTerms.length - 1" title="上一学期" @click="switchTerm(termIdx + 1)">←</button>
-      <select class="cal-term-select" :value="termIdx" @change="switchTerm($event.target.value)">
+      <button class="cal-nav-btn" :disabled="termIdx >= previewTerms.length - 1" title="上一学期" @click="goTerm(termIdx + 1, 'back')">←</button>
+      <select class="cal-term-select" :value="termIdx" @change="onSelectTerm">
         <option v-for="(t, i) in previewTerms" :key="t.id" :value="i">{{ t.label }}</option>
       </select>
-      <button class="cal-nav-btn" :disabled="termIdx <= 0" title="下一学期" @click="switchTerm(termIdx - 1)">→</button>
+      <button class="cal-nav-btn" :disabled="termIdx <= 0" title="下一学期" @click="goTerm(termIdx - 1, 'fwd')">→</button>
     </div>
 
     <div v-if="brokenImgs.has(currentTerm.id)" class="cal-error">
@@ -223,14 +241,17 @@ onMounted(load)
     </div>
     <div v-else class="cal-shell" @click="openPreview()">
       <div v-if="imgLoading && !imgLoaded" class="cal-skeleton">校历加载中…</div>
-      <img
-        class="cal-img"
-        :src="currentTerm.image"
-        :alt="currentTerm.label"
-        loading="lazy"
-        @load="onImgLoad"
-        @error="onImgError"
-      />
+      <Transition :name="'cal-' + slideDir">
+        <img
+          :key="currentTerm.id"
+          class="cal-img"
+          :src="currentTerm.image"
+          :alt="currentTerm.label"
+          loading="lazy"
+          @load="onImgLoad"
+          @error="onImgError"
+        />
+      </Transition>
       <div class="cal-hint">🔍 点击图片全屏查看（支持缩放拖动）</div>
     </div>
     <div class="cal-src-line">
@@ -337,6 +358,12 @@ onMounted(load)
 .cal-shell { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--soft-fg); cursor: zoom-in; min-height: 120px; display: flex; align-items: center; justify-content: center; }
 .cal-skeleton { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-sub); z-index: 1; }
 .cal-img { width: 100%; height: auto; max-height: 420px; object-fit: contain; display: block; }
+.cal-back-enter-active, .cal-back-leave-active, .cal-fwd-enter-active, .cal-fwd-leave-active { transition: transform .42s cubic-bezier(.22, .9, .3, 1), opacity .42s ease; }
+.cal-back-leave-active, .cal-fwd-leave-active { position: absolute; top: 0; left: 0; }
+.cal-back-enter-from { transform: translateX(-45%); opacity: 0; }
+.cal-back-leave-to { transform: translateX(45%); opacity: 0; }
+.cal-fwd-enter-from { transform: translateX(45%); opacity: 0; }
+.cal-fwd-leave-to { transform: translateX(-45%); opacity: 0; }
 .cal-hint { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 11px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.55)); padding: 18px 0 8px; pointer-events: none; opacity: 0; transition: opacity .2s; }
 .cal-shell:hover .cal-hint { opacity: 1; }
 .cal-error { padding: 24px 12px; text-align: center; font-size: 13px; color: var(--text-sub); background: var(--soft-fg); border: 1px dashed var(--border); border-radius: var(--radius); }
@@ -351,7 +378,7 @@ onMounted(load)
 .cal-close-btn { height: 36px; padding: 0 16px; border-radius: 999px; border: none; background: var(--primary); color: #fff; font-size: 13px; cursor: pointer; }
 .cal-modal-body { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; touch-action: none; }
 .cal-viewport { width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; }
-.cal-track { display: flex; height: 100%; width: 100%; will-change: transform; }
+.cal-track { display: flex; flex-direction: row-reverse; height: 100%; width: 100%; will-change: transform; }
 .cal-slide { flex: 0 0 100%; display: flex; align-items: center; justify-content: center; min-width: 0; padding: 0 8px; }
 .cal-slide img { max-width: 100%; max-height: 88vh; object-fit: contain; user-select: none; box-shadow: 0 12px 48px rgba(0,0,0,.5); opacity: .45; transform: scale(.94); transition: opacity .35s ease, transform .35s ease; }
 .cal-slide img.active { opacity: 1; transform: scale(1); }

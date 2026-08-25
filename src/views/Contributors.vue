@@ -71,6 +71,7 @@ function hueOf(i) {
   <div class="panel" style="margin-top:16px;">
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
+      <li><b>v1.2.10</b> 校历轮播滑动方向修正 · 边界阻尼修复 · 按钮切换丝滑过渡</li>
       <li><b>v1.2.9</b> 学术工具箱分组扩充（期刊/会议查询 · 文献发现）· 就业信息直达</li>
       <li><b>v1.2.8</b> 校园动态新增计网学院官网栏目 · 搜索过滤</li>
       <li><b>v1.2.7</b> 教室大全楼栋指引卡 · 分步导航与地图定位</li>

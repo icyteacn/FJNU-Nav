@@ -15,7 +15,7 @@ export const SITE = {
   /** 校训（欢迎页标语） */
   motto: '知明行笃 · 立诚致广',
   /** 当前版本号（页脚 / 关于面板 / README 同步标注，格式 x.y.z） */
-  version: '1.2.9',
+  version: '1.2.10',
   /** 网站开发者署名 */
   developer: 'FJNU-Nav 团队',
 

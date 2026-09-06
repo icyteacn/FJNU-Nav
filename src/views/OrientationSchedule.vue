@@ -3,8 +3,8 @@
  * 日程助手：智能时间轴 + 实时提醒 + 事件详情 + 版本历史
  * 目标：随手打开就知道下一步该干什么、需要准备什么。
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { SCHEDULE_VERSIONS, EVENT_CATEGORIES, groupByDate, eventStatus, nextEvent, timeUntil } from '../data/orientationSchedule'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { SCHEDULE_VERSIONS, EVENT_CATEGORIES, groupByDate, eventStatus, nextEvent, timeUntil, nextEventDate } from '../data/orientationSchedule'
 
 const emit = defineEmits(['back'])
 
@@ -18,16 +18,18 @@ const searchKw = ref('')
 const expanded = ref(null)
 const showDetail = ref(null)
 const now = ref(new Date())
-const tick = setInterval(() => { now.value = new Date() }, 30000)
+const tick = setInterval(() => { now.value = new Date() }, 1000)
 
 onMounted(() => {
   const saved = localStorage.getItem('fjnu_schedule_version')
   if (saved && SCHEDULE_VERSIONS.some(v => v.id === saved)) versionId.value = saved
+  // 自动展开下一个活动所在日期
+  const nd = nextEventDate(events.value)
+  if (nd) expanded.value = nd
 })
 onUnmounted(() => clearInterval(tick))
 
-watchVersion(versionId)
-function watchVersion(v) { try { localStorage.setItem('fjnu_schedule_version', v) } catch {} }
+watch(versionId, (v) => { try { localStorage.setItem('fjnu_schedule_version', v) } catch {} })
 
 const nextEvt = computed(() => nextEvent(events.value, now.value))
 const countdown = computed(() => {
@@ -50,9 +52,9 @@ function catInfo(key) { return EVENT_CATEGORIES[key] || EVENT_CATEGORIES.other }
 
 function statusLabel(e) {
   const s = eventStatus(e, now.value)
-  if (s === 'ongoing') return '进行中'
-  if (s === 'past') return '已结束'
-  return '即将到来'
+  if (s === 'ongoing') return '🔴 进行中'
+  if (s === 'past') return '✅ 已结束'
+  return '⏳ 即将到来'
 }
 function statusCls(e) {
   const s = eventStatus(e, now.value)
@@ -72,6 +74,11 @@ function importanceIcon(imp) {
   if (imp === 'critical') return '🔴'
   if (imp === 'high') return '🟡'
   return '⚪'
+}
+
+function isToday(dateStr) {
+  const t = new Date()
+  return dateStr === `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
 }
 
 const completedCount = computed(() => events.value.filter(e => eventStatus(e, now.value) === 'past').length)
@@ -100,17 +107,20 @@ const progress = computed(() => totalCount.value ? Math.round((completedCount.va
   <div v-if="nextEvt" class="next-banner" :style="{ '--cat-color': catInfo(nextEvt.category).color }">
     <div class="next-head">
       <span class="next-badge">⏰ 下一个活动</span>
-      <span v-if="countdown" class="next-countdown">还有 {{ countdown }}</span>
+      <span v-if="countdown" class="next-countdown">⏱ {{ countdown.text }}</span>
     </div>
     <div class="next-topic">{{ catInfo(nextEvt.category).icon }} {{ nextEvt.topic }}</div>
     <div class="next-meta">
+      <span>📅 {{ nextEvt.date }} {{ weekDay(nextEvt.date) }}</span>
       <span>🕐 {{ nextEvt.time }}</span>
       <span>📍 {{ nextEvt.location }}</span>
     </div>
+    <div v-if="nextEvt.preparation?.length" class="next-prep-hint">📋 需准备 {{ nextEvt.preparation.length }} 项</div>
     <button class="next-detail-btn" @click="showDetail = nextEvt">查看详情 & 准备清单 →</button>
   </div>
   <div v-else class="next-banner empty">
-    <div class="next-badge">✅ 暂无即将到来的活动</div>
+    <div class="next-badge">🎉 入学教育全部完成！</div>
+    <div class="next-meta" style="justify-content:center;margin-top:6px;">所有活动已结束，祝研究生生活愉快</div>
   </div>
 
   <!-- 进度条 -->
@@ -137,8 +147,9 @@ const progress = computed(() => totalCount.value ? Math.round((completedCount.va
 
   <!-- 时间轴 -->
   <div class="timeline">
-    <div v-for="([date, evts]) in filteredGrouped" :key="date" class="tl-day">
+    <div v-for="([date, evts]) in filteredGrouped" :key="date" class="tl-day" :class="{ 'is-today': isToday(date) }">
       <button class="tl-day-head" @click="toggleExpand(date)">
+        <span v-if="isToday(date)" class="tl-today-badge">今天</span>
         <span class="tl-date">{{ date.slice(5) }}</span>
         <span class="tl-weekday">{{ weekDay(date) }}</span>
         <span class="tl-count">{{ evts.length }} 场</span>
@@ -210,6 +221,7 @@ const progress = computed(() => totalCount.value ? Math.round((completedCount.va
 .next-meta { display: flex; gap: 16px; font-size: 13px; opacity: .9; margin-bottom: 10px; }
 .next-detail-btn { width: 100%; padding: 10px; border: 1.5px solid rgba(255,255,255,.5); border-radius: 999px; background: rgba(255,255,255,.15); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
 .next-detail-btn:hover { background: rgba(255,255,255,.3); }
+.next-prep-hint { font-size: 12px; opacity: .85; margin-bottom: 8px; }
 
 .prog-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .prog-label { font-size: 13px; font-weight: 700; }
@@ -228,8 +240,11 @@ const progress = computed(() => totalCount.value ? Math.round((completedCount.va
 
 .timeline { display: flex; flex-direction: column; gap: 12px; }
 .tl-day { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--card); }
+.tl-day.is-today { border-color: var(--primary); border-width: 2px; }
 .tl-day-head { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--soft-fg); border: none; cursor: pointer; color: var(--text); text-align: left; }
+.tl-day.is-today .tl-day-head { background: var(--primary-soft); }
 .tl-day-head:hover { background: var(--primary-soft); }
+.tl-today-badge { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--primary); color: #fff; }
 .tl-date { font-size: 16px; font-weight: 800; color: var(--primary); }
 .tl-weekday { font-size: 13px; color: var(--text-sub); }
 .tl-count { margin-left: auto; font-size: 12px; color: var(--text-sub); background: var(--border); padding: 2px 8px; border-radius: 999px; }

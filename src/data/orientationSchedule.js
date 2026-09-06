@@ -347,14 +347,23 @@ export function groupByDate(events) {
   return [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
 }
 
+/** 安全解析时间字符串（支持 HH:MM / HH:MM-HH:MM / 全天 / 待定） */
+function parseTime(timeStr) {
+  if (!timeStr || timeStr === '全天' || timeStr === '待定') return null
+  const m = timeStr.match(/(\d{1,2}):(\d{2})/)
+  if (!m) return null
+  return `${m[1].padStart(2, '0')}:${m[2]}`
+}
+
 /** 获取事件状态：past / ongoing / upcoming */
 export function eventStatus(e, now = new Date()) {
   if (e.pending) return 'upcoming'
-  const d = new Date(e.date + 'T' + (e.time || '00:00').replace(/[时]/g, ':').slice(0, 5))
+  const t = parseTime(e.time)
+  if (!t) return 'upcoming'
+  const d = new Date(e.date + 'T' + t)
   if (isNaN(d.getTime())) return 'upcoming'
-  const end = e.endTime && e.endTime !== '全天' && e.endTime !== '待定'
-    ? new Date(e.date + 'T' + e.endTime.replace(/[时]/g, ':').slice(0, 5))
-    : new Date(d.getTime() + 2 * 3600 * 1000)
+  const et = parseTime(e.endTime)
+  const end = et ? new Date(e.date + 'T' + et) : new Date(d.getTime() + 2 * 3600 * 1000)
   if (now < d) return 'upcoming'
   if (now > end) return 'past'
   return 'ongoing'
@@ -362,25 +371,36 @@ export function eventStatus(e, now = new Date()) {
 
 /** 获取下一个即将到来的事件 */
 export function nextEvent(events, now = new Date()) {
-  const upcoming = events.filter(e => eventStatus(e, now) === 'upcoming' && !e.pending)
+  const upcoming = events.filter(e => eventStatus(e, now) === 'upcoming')
   if (!upcoming.length) return null
   return upcoming.sort((a, b) => {
-    const da = new Date(a.date + 'T' + (a.time || '00:00').slice(0, 5))
-    const db = new Date(b.date + 'T' + (b.time || '00:00').slice(0, 5))
+    const ta = parseTime(a.time) || '00:00'
+    const tb = parseTime(b.time) || '00:00'
+    const da = new Date(a.date + 'T' + ta)
+    const db = new Date(b.date + 'T' + tb)
     return da - db
   })[0]
 }
 
-/** 距今多久 */
+/** 距今多久（安全版） */
 export function timeUntil(dateStr, timeStr) {
-  const target = new Date(dateStr + 'T' + (timeStr || '00:00').slice(0, 5))
+  const t = parseTime(timeStr)
+  if (!t) return null
+  const target = new Date(dateStr + 'T' + t)
   const now = new Date()
   const diff = target - now
   if (diff <= 0) return null
   const days = Math.floor(diff / 86400000)
   const hours = Math.floor((diff % 86400000) / 3600000)
   const mins = Math.floor((diff % 3600000) / 60000)
-  if (days > 0) return `${days}天${hours}小时`
-  if (hours > 0) return `${hours}小时${mins}分钟`
-  return `${mins}分钟`
+  const secs = Math.floor((diff % 60000) / 1000)
+  if (days > 0) return { text: `${days}天${hours}小时${mins}分`, days, hours, mins, secs }
+  if (hours > 0) return { text: `${hours}小时${mins}分${secs}秒`, days: 0, hours, mins, secs }
+  return { text: `${mins}分${secs}秒`, days: 0, hours: 0, mins, secs }
+}
+
+/** 获取下一个活动的日期字符串（用于自动展开） */
+export function nextEventDate(events, now = new Date()) {
+  const n = nextEvent(events, now)
+  return n ? n.date : null
 }

@@ -285,11 +285,11 @@ function goClassroomNav() { emit('open', 'classroomNav') }
       </div>
       <div class="detail-title">{{ showDetail.topic }}</div>
       <div v-if="getCD(showDetail)" class="detail-countdown">⏱ 距开始还有 {{ getCD(showDetail) }}</div>
-      <div v-if="getImminent(e)" class="detail-imminent">⚡ 即将开始！请尽快前往</div>
+      <div v-if="getImminent(showDetail)" class="detail-imminent">⚡ 即将开始！请尽快前往</div>
       <div class="detail-grid">
         <div class="detail-row"><span>📅 日期</span><b>{{ showDetail.date }} {{ weekDay(showDetail.date) }}</b></div>
         <div class="detail-row"><span>🕐 时间</span><b>{{ showDetail.time }}{{ showDetail.duration ? '（' + showDetail.duration + '）' : '' }}</b></div>
-        <div class="detail-row"><span>📍 地点</span><b class="detail-loc" @click="showDetail = null; showMap = showDetail">{{ showDetail.location }} 🗺️</b></div>
+        <div class="detail-row"><span>📍 地点</span><b class="detail-loc" @click="showMap = showDetail; showDetail = null">{{ showDetail.location }} 🗺️</b></div>
         <div class="detail-row"><span>👥 参加</span><b>{{ showDetail.audience }}</b></div>
         <div v-if="showDetail.speaker && showDetail.speaker !== '/'" class="detail-row"><span>🎤 主讲</span><b>{{ showDetail.speaker }}</b></div>
         <div class="detail-row"><span>⚡ 重要性</span><b>{{ showDetail.importance === 'critical' ? '🔴 必须参加' : showDetail.importance === 'high' ? '🟡 重要' : '⚪ 一般' }}</b></div>
@@ -303,7 +303,7 @@ function goClassroomNav() { emit('open', 'classroomNav') }
         </div>
       </div>
       <div class="detail-actions">
-        <button class="btn" @click="showDetail = null; showMap = showDetail" style="flex:1;">🗺️ 导航</button>
+        <button class="btn" @click="showMap = showDetail; showDetail = null" style="flex:1;">🗺️ 导航</button>
         <button class="btn" @click="showDetail = null" style="flex:1;">关闭</button>
       </div>
     </div>

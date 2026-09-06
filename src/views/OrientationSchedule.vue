@@ -255,7 +255,7 @@ function goClassroomNav(loc) {
       <div class="tip-item"><span>📍 东区田径场</span><span>旗山校区东区，开学典礼用</span></div>
       <div class="tip-item"><span>📍 图书馆大会堂</span><span>图书馆一楼</span></div>
       <div class="tip-item"><span>📍 旗山校区校医院</span><span>体检用，注意空腹</span></div>
-      <div class="tip-item" style="border:none;"><span>🧭</span><span>点击地点可跳转教室导航查看教学楼</span></div>
+      <div class="tip-item" style="border:none;"><span>🧭</span><span>点击详情中的地点可跳转教室导航查看教学楼</span></div>
     </div>
   </div>
 
@@ -286,8 +286,7 @@ function goClassroomNav(loc) {
         </div>
       </div>
       <div class="detail-actions">
-        <button class="btn" @click="showDetail = null; goClassroomNav(showDetail.location)" style="flex:1;">🧭 教室导航</button>
-        <button class="btn" @click="showDetail = null" style="flex:1;">关闭</button>
+        <button class="btn accent" @click="showDetail = null" style="width:100%;">关闭</button>
       </div>
     </div>
   </div>

@@ -6,8 +6,9 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import {
   SCHEDULE_VERSIONS, EVENT_CATEGORIES, MAJORS, audienceMajors,
   groupByDate, eventStatus, nextEvent, timeUntil, nextEventDate,
-  mapUrls, eventCountdown, isImminent,
+  eventCountdown, isImminent,
 } from '../data/orientationSchedule'
+import { setNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -20,7 +21,6 @@ const selectedMajor = ref('')
 const searchKw = ref('')
 const expanded = ref(null)
 const showDetail = ref(null)
-const showMap = ref(null)
 const checked = ref(new Set())
 const detailRef = ref(null)
 const showTips = ref(false)
@@ -67,7 +67,6 @@ const countdown = computed(() => {
   return timeUntil(nextEvt.value.date, nextEvt.value.time)
 })
 
-function getMapUrls(loc) { return mapUrls(loc) }
 function getCD(e) { return eventCountdown(e, now.value) }
 function getImminent(e) { return isImminent(e, now.value) }
 
@@ -105,7 +104,10 @@ const checkedCount = computed(() => checked.value.size)
 const todayEvents = computed(() => events.value.filter(e => isToday(e.date) && !e.pending))
 const imminentCount = computed(() => events.value.filter(e => getImminent(e)).length)
 
-function goClassroomNav() { emit('open', 'classroomNav') }
+function goClassroomNav(loc) {
+  if (loc) setNavContext({ room: loc })
+  emit('open', 'classroomNav')
+}
 </script>
 
 <template>
@@ -141,7 +143,7 @@ function goClassroomNav() { emit('open', 'classroomNav') }
     <div class="next-meta">
       <span>📅 {{ nextEvt.date }} {{ weekDay(nextEvt.date) }}</span>
       <span>🕐 {{ nextEvt.time }}</span>
-      <span class="next-loc" @click.stop="showMap = nextEvt">📍 {{ nextEvt.location }} 🗺️</span>
+      <span class="next-loc" @click.stop="goClassroomNav(nextEvt.location)">📍 {{ nextEvt.location }} 🧭</span>
     </div>
     <div v-if="nextEvt.preparation?.length" class="next-prep-hint">📋 需准备 {{ nextEvt.preparation.length }} 项</div>
     <div class="next-btns">
@@ -223,7 +225,7 @@ function goClassroomNav() { emit('open', 'classroomNav') }
               <span v-if="getImminent(e)" class="tl-alert-badge">⚡即将开始</span>
             </div>
             <div class="tl-sub">
-              <span class="tl-loc" @click.stop="showMap = e">📍 {{ e.location }} 🗺️</span>
+              <span class="tl-loc">📍 {{ e.location }}</span>
               <span class="tl-cat-badge" :style="{ background: catInfo(e.category).color }">{{ catInfo(e.category).icon }} {{ catInfo(e.category).label }}</span>
             </div>
             <div class="tl-sub">
@@ -253,26 +255,7 @@ function goClassroomNav() { emit('open', 'classroomNav') }
       <div class="tip-item"><span>📍 东区田径场</span><span>旗山校区东区，开学典礼用</span></div>
       <div class="tip-item"><span>📍 图书馆大会堂</span><span>图书馆一楼</span></div>
       <div class="tip-item"><span>📍 旗山校区校医院</span><span>体检用，注意空腹</span></div>
-      <div class="tip-item" style="border:none;"><span>🗺️</span><span>点击任意地点可跳转高德/百度/腾讯地图导航</span></div>
-    </div>
-  </div>
-
-  <!-- 地点地图弹窗 -->
-  <div v-if="showMap" class="overlay" @click.self="showMap = null">
-    <div class="overlay-card map-card">
-      <div class="detail-head">
-        <span class="detail-cat" style="background:var(--primary);">🗺️ 地图导航</span>
-        <button class="overlay-close" @click="showMap = null">✕</button>
-      </div>
-      <div class="map-title">{{ showMap.location }}</div>
-      <div class="map-desc">选择地图应用进行导航：</div>
-      <div class="map-btns">
-        <a class="map-btn gaode" :href="getMapUrls(showMap.location).gaode" target="_blank" rel="noopener">📍 高德地图</a>
-        <a class="map-btn baidu" :href="getMapUrls(showMap.location).baidu" target="_blank" rel="noopener">📍 百度地图</a>
-        <a class="map-btn tencent" :href="getMapUrls(showMap.location).tencent" target="_blank" rel="noopener">📍 腾讯地图</a>
-        <a class="map-btn web" :href="getMapUrls(showMap.location).web" target="_blank" rel="noopener">🌐 网页版</a>
-      </div>
-      <button class="btn" style="width:100%;margin-top:12px;" @click="goClassroomNav(); showMap = null">🧭 查看教室导航</button>
+      <div class="tip-item" style="border:none;"><span>🧭</span><span>点击地点可跳转教室导航查看教学楼</span></div>
     </div>
   </div>
 
@@ -289,7 +272,7 @@ function goClassroomNav() { emit('open', 'classroomNav') }
       <div class="detail-grid">
         <div class="detail-row"><span>📅 日期</span><b>{{ showDetail.date }} {{ weekDay(showDetail.date) }}</b></div>
         <div class="detail-row"><span>🕐 时间</span><b>{{ showDetail.time }}{{ showDetail.duration ? '（' + showDetail.duration + '）' : '' }}</b></div>
-        <div class="detail-row"><span>📍 地点</span><b class="detail-loc" @click="showMap = showDetail; showDetail = null">{{ showDetail.location }} 🗺️</b></div>
+        <div class="detail-row"><span>📍 地点</span><b class="detail-loc" @click="showDetail = null; goClassroomNav(showDetail.location)">{{ showDetail.location }} 🧭</b></div>
         <div class="detail-row"><span>👥 参加</span><b>{{ showDetail.audience }}</b></div>
         <div v-if="showDetail.speaker && showDetail.speaker !== '/'" class="detail-row"><span>🎤 主讲</span><b>{{ showDetail.speaker }}</b></div>
         <div class="detail-row"><span>⚡ 重要性</span><b>{{ showDetail.importance === 'critical' ? '🔴 必须参加' : showDetail.importance === 'high' ? '🟡 重要' : '⚪ 一般' }}</b></div>
@@ -303,7 +286,7 @@ function goClassroomNav() { emit('open', 'classroomNav') }
         </div>
       </div>
       <div class="detail-actions">
-        <button class="btn" @click="showMap = showDetail; showDetail = null" style="flex:1;">🗺️ 导航</button>
+        <button class="btn" @click="showDetail = null; goClassroomNav(showDetail.location)" style="flex:1;">🧭 教室导航</button>
         <button class="btn" @click="showDetail = null" style="flex:1;">关闭</button>
       </div>
     </div>
@@ -434,17 +417,6 @@ function goClassroomNav() { emit('open', 'classroomNav') }
 .prep-done { text-decoration: line-through; opacity: .5; }
 .detail-actions { display: flex; gap: 8px; }
 
-.map-card { max-height: 70vh; overflow-y: auto; }
-.map-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-.map-desc { font-size: 13px; color: var(--text-sub); margin-bottom: 14px; }
-.map-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.map-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; color: #fff; transition: all .15s; }
-.map-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
-.map-btn.gaode { background: #22c55e; }
-.map-btn.baidu { background: #3b82f6; }
-.map-btn.tencent { background: #06b6d4; }
-.map-btn.web { background: #6b7280; }
-
 @media (max-width: 640px) {
   .next-banner { padding: 14px 16px; }
   .next-topic { font-size: 16px; }
@@ -459,6 +431,5 @@ function goClassroomNav() { emit('open', 'classroomNav') }
   .cat-chips, .major-chips { gap: 4px; }
   .cat-chip, .major-chip { padding: 4px 10px; font-size: 11px; }
   .today-card { flex-direction: column; gap: 4px; }
-  .map-btns { grid-template-columns: 1fr; }
 }
 </style>

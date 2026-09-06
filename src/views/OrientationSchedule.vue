@@ -101,7 +101,10 @@ const completedCount = computed(() => events.value.filter(e => eventStatus(e, no
 const totalCount = computed(() => events.value.length)
 const progress = computed(() => totalCount.value ? Math.round((completedCount.value / totalCount.value) * 100) : 0)
 const checkedCount = computed(() => checked.value.size)
-const todayEvents = computed(() => events.value.filter(e => isToday(e.date) && !e.pending))
+const todayEvents = computed(() => {
+  void now.value
+  return events.value.filter(e => isToday(e.date) && !e.pending)
+})
 const imminentCount = computed(() => events.value.filter(e => getImminent(e)).length)
 
 function goClassroomNav(loc) {

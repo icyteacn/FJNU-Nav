@@ -284,4 +284,20 @@ const progress = computed(() => totalCount.value ? Math.round((completedCount.va
 .detail-prep-item { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--border); display: flex; align-items: center; gap: 8px; }
 .detail-prep-item:last-child { border-bottom: none; }
 .prep-check { color: var(--primary); font-size: 16px; }
+
+@media (max-width: 640px) {
+  .next-banner { padding: 14px 16px; margin-bottom: 10px; }
+  .next-topic { font-size: 16px; }
+  .next-meta { flex-direction: column; gap: 4px; }
+  .next-countdown { font-size: 11px; }
+  .tl-card { flex-direction: column; gap: 6px; }
+  .tl-time { min-width: auto; }
+  .tl-status { align-self: flex-start; }
+  .tl-sub { flex-direction: column; gap: 4px; }
+  .tl-loc, .tl-audience, .tl-speaker { white-space: normal; }
+  .detail-row { flex-direction: column; gap: 2px; }
+  .detail-row span { flex: none; }
+  .cat-chips { gap: 4px; }
+  .cat-chip { padding: 4px 10px; font-size: 11px; }
+}
 </style>

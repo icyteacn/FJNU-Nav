@@ -355,11 +355,27 @@ function parseTime(timeStr) {
   return `${m[1].padStart(2, '0')}:${m[2]}`
 }
 
+/** 事件日期是否已过（与今天比较） */
+function isDatePast(dateStr) {
+  const t = new Date()
+  const today = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
+  return dateStr < today
+}
+function isDateToday(dateStr) {
+  const t = new Date()
+  return dateStr === `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
+}
+
 /** 获取事件状态：past / ongoing / upcoming */
 export function eventStatus(e, now = new Date()) {
   if (e.pending) return 'upcoming'
   const t = parseTime(e.time)
-  if (!t) return 'upcoming'
+  if (!t) {
+    // 全天/待定类事件：日期已过则 past，今天则 ongoing，未来则 upcoming
+    if (isDatePast(e.date)) return 'past'
+    if (isDateToday(e.date)) return 'ongoing'
+    return 'upcoming'
+  }
   const d = new Date(e.date + 'T' + t)
   if (isNaN(d.getTime())) return 'upcoming'
   const et = parseTime(e.endTime)
@@ -369,11 +385,14 @@ export function eventStatus(e, now = new Date()) {
   return 'ongoing'
 }
 
-/** 获取下一个即将到来的事件 */
+/** 获取下一个即将到来的事件（优先选有明确时间的） */
 export function nextEvent(events, now = new Date()) {
   const upcoming = events.filter(e => eventStatus(e, now) === 'upcoming')
   if (!upcoming.length) return null
-  return upcoming.sort((a, b) => {
+  // 优先选有明确时间的事件
+  const withTime = upcoming.filter(e => parseTime(e.time))
+  const pool = withTime.length ? withTime : upcoming
+  return pool.sort((a, b) => {
     const ta = parseTime(a.time) || '00:00'
     const tb = parseTime(b.time) || '00:00'
     const da = new Date(a.date + 'T' + ta)

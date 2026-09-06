@@ -1,7 +1,7 @@
 <script setup>
 /** 通用加分快速选档器：手风琴分类 + 档位 chips + 计数步进，供科研分 / 综测分两处复用 */
-import { reactive, computed } from 'vue'
-import { state, togglePick, getCount, setCount, factorIdxOf, setFactorIdx } from '../stores/scholarship'
+import { reactive, computed, watch } from 'vue'
+import { state, togglePick, getCount, setCount, factorIdxOf, setFactorIdx, highlightGroup } from '../stores/scholarship'
 import { MEMBER_FACTORS } from '../data/researchRules'
 
 const props = defineProps({
@@ -11,6 +11,10 @@ const props = defineProps({
 
 const open = reactive({})
 function toggleGroup(id) { open[id] = !open[id] }
+
+watch(highlightGroup, (gid) => {
+  if (gid && props.kind === 'r') { open[gid] = true; highlightGroup.value = null }
+})
 
 function optsOf(item) {
   if (item.opts) return item.opts

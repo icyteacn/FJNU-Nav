@@ -4,7 +4,7 @@
  * 科研快速选档、综测积累器、综合成绩测算器三处共用同一份 reactive 状态，
  * 任一处改动实时同步；选择结果自动持久化到 localStorage（仅本设备）。
  */
-import { reactive, watch, computed } from 'vue'
+import { reactive, ref, watch, computed } from 'vue'
 import { RESEARCH_GROUPS, MEMBER_FACTORS } from '../data/researchRules'
 import { ZC_GROUPS } from '../data/zcRules'
 import { majorById } from '../data/courseCredits'
@@ -29,6 +29,10 @@ export const state = reactive({
   counts: {},
   factors: {},
 })
+
+/** 从竞赛界面跳转时高亮展开的分组ID（如 'contestA' / 'contestB'），由 ScorePicker 监听 */
+export const highlightGroup = ref(null)
+export function setHighlightGroup(gid) { highlightGroup.value = gid }
 
 let _loaded = false
 let _watched = false

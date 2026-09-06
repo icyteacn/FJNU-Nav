@@ -1,11 +1,13 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import ZcAccumulator from '../components/ZcAccumulator.vue'
 import { loadState, saveState } from '../stores/scholarship'
+import { COMPETITIONS_A, COMPETITIONS_B_KEY, COMPETITIONS_B_NORMAL, SCHOLARSHIP_A, SCHOLARSHIP_B } from '../data/competitions'
 
 const emit = defineEmits(['back'])
 
 const activeTab = ref('links')
+const openCat = reactive({ a: true, 'b-key': false, 'b-normal': false })
 loadState()
 saveState()
 
@@ -186,6 +188,7 @@ function eventClass(type) {
     <button class="tab" :class="{ active: activeTab === 'links' }" @click="activeTab = 'links'">常用网站</button>
     <button class="tab" :class="{ active: activeTab === 'credit' }" @click="activeTab = 'credit'">学分要求</button>
     <button class="tab" :class="{ active: activeTab === 'scholarship' }" @click="activeTab = 'scholarship'">奖学金</button>
+    <button class="tab" :class="{ active: activeTab === 'competition' }" @click="activeTab = 'competition'">学科竞赛</button>
     <button class="tab" :class="{ active: activeTab === 'zc' }" @click="activeTab = 'zc'">综测积累</button>
     <button class="tab" :class="{ active: activeTab === 'tools' }" @click="activeTab = 'tools'">学术工具</button>
     <button class="tab" :class="{ active: activeTab === 'calendar' }" @click="activeTab = 'calendar'">学术日历</button>
@@ -336,6 +339,73 @@ function eventClass(type) {
         <li v-for="d in disqualifications" :key="d">{{ d }}</li>
       </ul>
       <p class="muted" style="font-size:12px;margin:10px 0 0;">细则全文以学院最新通知为准，本页内容仅供快速参考。</p>
+    </div>
+  </template>
+
+  <template v-if="activeTab === 'competition'">
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="section-title" style="margin:0 0 6px;"><span class="bar"></span>📋 学科竞赛分类清单</div>
+      <p class="muted" style="font-size:12px;margin:0 0 14px;">依据《计网学院学生高水平创新创业竞赛实施办法（修订）》（师大计网〔2026〕5号），竞赛分为 A、B 两类。A类含创新创业大赛及挑战杯系列，B类含研究生创新实践系列大赛及各类学科竞赛。</p>
+
+      <div v-for="cat in [
+        { key: 'a', title: 'A类创新创业竞赛', icon: '🏆', color: '#c62828', bg: '#ffebee', items: COMPETITIONS_A },
+        { key: 'b-key', title: 'B类重点竞赛', icon: '🥇', color: '#e65100', bg: '#fff3e0', items: COMPETITIONS_B_KEY },
+        { key: 'b-normal', title: 'B类一般竞赛', icon: '📋', color: '#2e7d32', bg: '#e8f5e9', items: COMPETITIONS_B_NORMAL },
+      ]" :key="cat.key" class="comp-category">
+        <button class="comp-cat-head" @click="openCat[cat.key] = !openCat[cat.key]" :style="{ borderColor: cat.color }">
+          <span class="comp-cat-icon">{{ cat.icon }}</span>
+          <span class="comp-cat-title" :style="{ color: cat.color }">{{ cat.title }}</span>
+          <span class="comp-cat-count">{{ cat.items.length }} 项</span>
+          <span class="comp-cat-arrow">{{ openCat[cat.key] ? '▾' : '▸' }}</span>
+        </button>
+        <div v-show="openCat[cat.key]" class="comp-cat-body">
+          <div v-for="c in cat.items" :key="c.name" class="comp-item" :style="{ borderLeftColor: cat.color }">
+            <div class="comp-item-name">{{ c.name }}<span v-if="c.sub" class="comp-item-sub">{{ c.sub }}</span></div>
+            <div class="comp-item-meta">
+              <span class="comp-item-org">{{ c.organizer }}</span>
+              <span class="comp-item-score" :style="{ color: cat.color }">{{ c.scholarship }}</span>
+            </div>
+            <div v-if="c.note" class="comp-item-note">💡 {{ c.note }}</div>
+            <div v-if="c.local" class="comp-item-local">含省赛：{{ c.local }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>💰 学院奖学金标准（团队奖金）</div>
+      <div class="schol-grid">
+        <div v-for="(schol, si) in [
+          { title: 'A类竞赛', icon: '🏆', data: SCHOLARSHIP_A, color: '#c62828' },
+          { title: 'B类重点竞赛', icon: '🥇', data: SCHOLARSHIP_B, color: '#e65100' },
+        ]" :key="si" class="schol-card" :style="{ borderTopColor: schol.color }">
+          <div class="schol-card-title" :style="{ color: schol.color }">{{ schol.icon }} {{ schol.title }}</div>
+          <div v-for="lvl in schol.data" :key="lvl.level" class="schol-level">
+            <div class="schol-level-name">{{ lvl.level }}</div>
+            <div class="schol-tiers">
+              <div v-for="t in lvl.tiers" :key="t.rank" class="schol-tier">
+                <span class="schol-rank">{{ t.rank }}</span>
+                <span class="schol-amount">¥{{ t.amount.toLocaleString() }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="schol-notes">
+        <div>📌 第二/第三单位参与A类获奖，奖学金按相应等级的 <b>20%</b> 颁发</div>
+        <div>📌 个人赛奖金为同等级团队赛的 <b>1/3</b></div>
+        <div>📌 同一项目多层次获奖按就高原则，不重复计算</div>
+        <div>📌 每年学生竞赛奖学金封顶 <b>20万元</b>，超额按比例折算</div>
+        <div>📌 B类全国赛的省级选拔赛不给予奖学金</div>
+      </div>
+    </div>
+
+    <div class="panel calc-entry" style="margin-bottom:16px;">
+      <div class="calc-entry-info">
+        <b>🎯 快速加分</b>
+        <span>前往「综测积累」→ 科研创新选档，点击对应竞赛等级即累加科研分</span>
+      </div>
+      <button class="calc-entry-btn" @click="activeTab = 'zc'">前往加分 →</button>
     </div>
   </template>
 
@@ -491,4 +561,35 @@ function eventClass(type) {
 .tip-icon { font-size: 20px; }
 .tip-title { font-weight: 700; font-size: 14px; }
 .tip-content { font-size: 13px; color: var(--text-sub); line-height: 1.7; }
+
+.comp-category { border: 1px solid var(--border); border-radius: var(--radius); background: var(--soft-fg); overflow: hidden; margin-bottom: 10px; }
+.comp-cat-head { width: 100%; display: flex; align-items: center; gap: 10px; padding: 13px 14px; background: none; border: none; cursor: pointer; color: var(--text); text-align: left; border-left: 4px solid; }
+.comp-cat-head:hover { background: var(--primary-soft); }
+.comp-cat-icon { font-size: 18px; flex-shrink: 0; }
+.comp-cat-title { flex: 1; font-weight: 700; font-size: 14px; }
+.comp-cat-count { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--soft-gray); color: var(--text-sub); flex-shrink: 0; }
+.comp-cat-arrow { font-size: 12px; color: var(--text-sub); flex-shrink: 0; }
+.comp-cat-body { padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 8px; animation: compIn .18s ease; }
+@keyframes compIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.comp-item { padding: 10px 12px; background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 8px; }
+.comp-item-name { font-weight: 700; font-size: 13px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.comp-item-sub { font-size: 11px; color: var(--text-sub); font-weight: 500; }
+.comp-item-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; font-size: 11px; }
+.comp-item-org { color: var(--text-sub); }
+.comp-item-score { font-weight: 700; }
+.comp-item-note { font-size: 11px; color: #b45309; margin-top: 4px; }
+.comp-item-local { font-size: 11px; color: var(--text-sub); margin-top: 2px; font-style: italic; }
+
+.schol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.schol-card { padding: 14px; background: var(--soft-fg); border: 1px solid var(--border); border-top: 3px solid; border-radius: var(--radius); }
+.schol-card-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+.schol-level { margin-bottom: 8px; }
+.schol-level:last-child { margin-bottom: 0; }
+.schol-level-name { font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; }
+.schol-tiers { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+.schol-tier { display: flex; flex-direction: column; align-items: center; padding: 8px 6px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+.schol-rank { font-size: 11px; color: var(--text-sub); }
+.schol-amount { font-size: 16px; font-weight: 800; color: var(--primary); }
+.schol-notes { padding: 12px 14px; background: var(--soft-yellow, #fff8e1); border: 1px dashed var(--accent, #b8860b); border-radius: var(--radius); font-size: 12px; color: var(--text-sub); line-height: 2; }
+.schol-notes b { color: var(--primary); }
 </style>

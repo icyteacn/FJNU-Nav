@@ -60,7 +60,11 @@ const filtered = computed(() => {
 })
 const filteredGrouped = computed(() => groupByDate(filtered.value))
 
-const nextEvt = computed(() => nextEvent(events.value, now.value))
+const nextEvt = computed(() => {
+  let evts = events.value
+  if (selectedMajor.value) evts = evts.filter(e => audienceMajors(e.audience).includes(selectedMajor.value))
+  return nextEvent(evts, now.value)
+})
 const countdown = computed(() => {
   if (!nextEvt.value) return null
   void now.value
@@ -103,9 +107,15 @@ const progress = computed(() => totalCount.value ? Math.round((completedCount.va
 const checkedCount = computed(() => checked.value.size)
 const todayEvents = computed(() => {
   void now.value
-  return events.value.filter(e => isToday(e.date) && !e.pending)
+  let list = events.value.filter(e => isToday(e.date) && !e.pending)
+  if (selectedMajor.value) list = list.filter(e => audienceMajors(e.audience).includes(selectedMajor.value))
+  return list
 })
-const imminentCount = computed(() => events.value.filter(e => getImminent(e)).length)
+const imminentCount = computed(() => {
+  let list = events.value.filter(e => getImminent(e))
+  if (selectedMajor.value) list = list.filter(e => audienceMajors(e.audience).includes(selectedMajor.value))
+  return list.length
+})
 
 function goClassroomNav(loc) {
   if (loc) setNavContext({ room: loc })

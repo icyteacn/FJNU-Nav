@@ -1,14 +1,15 @@
 ﻿<script setup>
 /** 生活费计数器：随手记账 + 微信/支付宝账单导入 + 奖学金快捷勾选
  *  数据仅存本机浏览器 localStorage（fjnu_budget_records），不上传任何数据 */
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import BudgetSim from './BudgetSim.vue'
 import BudgetPro from './BudgetPro.vue'
 import BarRow from '../components/BarRow.vue'
 import PieChart from '../components/PieChart.vue'
 import { parseBillFile } from '../utils/billImport.js'
+import { consumeNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 /** 子视图：main 计数器 / sim 生活费模拟 / pro 专业版 */
 const subView = ref('main')
@@ -131,6 +132,15 @@ const cleanMode = ref(localStorage.getItem(CLEAN_KEY) !== '0')
 watch(cleanMode, (v) => { try { localStorage.setItem(CLEAN_KEY, v ? '1' : '0') } catch { /* noop */ } })
 const showRef = ref(false)
 const importMsg = ref('')
+
+onMounted(() => {
+  const ctx = consumeNavContext()
+  if (ctx) {
+    if (ctx.category) { mode.value = 'expense'; cat.value = ctx.category }
+    if (ctx.amount) amount.value = String(ctx.amount)
+    if (ctx.note) note.value = ctx.note
+  }
+})
 
 const cats = computed(() => CATS[mode.value])
 const catInfo = (type, key) => (CATS[type] || []).find((c) => c.key === key)

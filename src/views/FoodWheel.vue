@@ -2,8 +2,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { foods, halls } from '../data/foods'
 import CountUp from '../components/CountUp.vue'
+import { setNavContext, consumeNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 const HUNGRY = { name: '饿着😭', campus: '', zone: '', hall: '' }
 /** 轮盘旋转动画时长（ms），与 .wheel 的 transition 时长保持一致 */
@@ -117,6 +118,10 @@ function pickTier(k) {
   if (canUseTier(t)) tier.value = k
 }
 
+function goCanteen() {
+  emit('open', 'canteen')
+}
+
 onMounted(() => {
   spins.value = Number(sessionStorage.getItem('fjnu_wheel_spins')) || 0
   balance.value = Number(localStorage.getItem('fjnu_wheel_balance')) || 0
@@ -169,6 +174,7 @@ const groupedFoods = computed(() => halls.map((h) => ({ ...h, foods: foods.filte
       <div class="muted" style="font-size:13px;">{{ result.hungry ? '很遗憾，今天要饿着啦' : stage === 'dish' ? '转到这家餐厅，继续转菜式' : '恭喜抽中' }}</div>
       <div style="font-size:22px;font-weight:800;margin:4px 0;">{{ result.hungry ? '😭 ' + result.name : '🍽️ ' + result.name }}</div>
       <div v-if="!result.hungry" class="muted" style="font-size:13px;">{{ result.campus }} · {{ result.zone }}</div>
+      <button v-if="!result.hungry && stage === 'hall'" class="btn" style="margin-top:8px;" @click="goCanteen">📍 查看食堂实时空座</button>
     </div>
     <div v-else class="muted" style="margin:10px 0;">
       {{ stage === 'hall' ? '点击「开始抽奖」先转出餐厅' : '转出菜式！' }}

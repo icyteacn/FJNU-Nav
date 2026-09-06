@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import CountUp from '../components/CountUp.vue'
+import { setNavContext, consumeNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 const PAIRS = [
   ['知明楼', '校训「知明」'],
@@ -81,6 +82,11 @@ const stars = computed(() => {
   if (moves.value <= n * 2.2) return 2
   return 1
 })
+
+function goClassroomNav(building) {
+  setNavContext({ room: building })
+  emit('open', 'classroomNav')
+}
 
 function pickDiff(d) {
   diff.value = d
@@ -200,6 +206,7 @@ function restart() {
       <div style="font-size:26px;">🎉</div>
       <div style="font-weight:800;font-size:18px;">全部配对成功！</div>
       <div style="margin-top:4px;">{{ DIFFS[diff].label }}难度 · 用了 {{ moves }} 步 · 获得 {{ stars }} 星</div>
+      <button class="btn" style="margin-top:12px;" @click="goClassroomNav(activePairs[0]?.[0] || '')">🧭 去教室导航看看这些楼</button>
     </div>
 
     <div

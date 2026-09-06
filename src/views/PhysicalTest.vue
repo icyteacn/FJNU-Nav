@@ -1,8 +1,9 @@
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { standards, itemWeights, itemLabels, bmiScore, itemScore, gradeOf } from '../data/physical'
+import { setNavContext, consumeNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 const yearLabels = ['大一', '大二', '大三', '大四']
 const gender = ref('male')
@@ -58,6 +59,13 @@ const filledNow = computed(() => active.value.filled)
 const activeTable = ref('bmi')
 
 const FIELD = { vitalCapacity: 'vital', sprint50: 'sprint', sitReach: 'sitReach', longJump: 'longJump', strength: 'strength' }
+
+function goWhatToEat() {
+  const bmi = years[activeYear.value].height && years[activeYear.value].weight
+    ? years[activeYear.value].weight / Math.pow(years[activeYear.value].height / 100, 2) : null
+  setNavContext({ bmi: bmi ? +bmi.toFixed(1) : null })
+  emit('open', 'whatToEat')
+}
 
 function rawOf(y, key) {
   if (key === 'bmi') {
@@ -143,6 +151,7 @@ const activeTableData = computed(() => {
       </div>
       <div class="result-grade" :class="active.grade.cls">{{ active.grade.label }}</div>
       <div class="result-hint">已填 {{ filledNow }}/7 项 · 总分按各项权重加权</div>
+      <button v-if="years[activeYear].height && years[activeYear].weight" class="btn" style="margin-top:10px;width:100%;" @click="goWhatToEat">🍽️ 根据BMI获取健康饮食推荐</button>
     </div>
 
     <div class="field-grid">

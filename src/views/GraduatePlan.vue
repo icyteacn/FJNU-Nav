@@ -1,15 +1,26 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import ZcAccumulator from '../components/ZcAccumulator.vue'
 import { loadState, saveState, togglePick, isContestPicked, setHighlightGroup } from '../stores/scholarship'
 import { COMPETITIONS_A, COMPETITIONS_B_KEY, COMPETITIONS_B_NORMAL, SCHOLARSHIP_A, SCHOLARSHIP_B, AWARD_CHIPS_A, AWARD_CHIPS_B } from '../data/competitions'
+import { setNavContext, consumeNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 const activeTab = ref('links')
 const openCat = reactive({ a: true, 'b-key': false, 'b-normal': false })
 loadState()
 saveState()
+
+function goBudgetScholarship() {
+  setNavContext({ category: 'scholarship', amount: 10000, note: '硕士学业奖学金' })
+  emit('open', 'budget')
+}
+
+onMounted(() => {
+  const ctx = consumeNavContext()
+  if (ctx?.tab) activeTab.value = ctx.tab
+})
 
 
 const graduateLinks = [
@@ -270,6 +281,7 @@ function eventClass(type) {
       <div class="scholarship-extra">
         <span>另可兼得：国家奖学金（硕士 ¥20,000 / 博士 ¥30,000）· 国家助学金（¥600/月）· 省政府奖学金等</span>
       </div>
+      <button class="btn" style="margin-top:10px;width:100%;" @click="goBudgetScholarship">💰 奖学金入账记一笔</button>
     </div>
 
     <div class="panel" style="margin-bottom:16px;">

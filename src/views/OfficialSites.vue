@@ -1,8 +1,9 @@
 ﻿<script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { officialGroups, colleges, emergency } from '../data/official'
+import { consumeNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 const tab = ref('official')
 
 const groups = officialGroups
@@ -31,6 +32,11 @@ async function copyMail() {
     /* 剪贴板权限受限时静默忽略 */
   }
 }
+
+onMounted(() => {
+  const ctx = consumeNavContext()
+  if (ctx?.sid) { sid.value = ctx.sid; tab.value = 'official' }
+})
 </script>
 
 <template>

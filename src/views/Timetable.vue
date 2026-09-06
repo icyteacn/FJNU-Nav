@@ -10,8 +10,9 @@ import { loadSnap } from '../api/localCourse'
 import { loadTimetableMeta, loadTermRows } from '../api/termTimetable'
 import { normRoom, clsSplit, profOf, gradeOf, parseWeeks } from '../utils/course'
 import { fmtTime } from '../utils/format'
+import { setNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 const tab = ref('class')
 const kw = ref('')
@@ -265,6 +266,14 @@ async function loadCourses(force) {
   coursesLoading.value = false
 }
 onMounted(loadCourses)
+
+function goClassroomNav(room) {
+  setNavContext({ room })
+  emit('open', 'classroomNav')
+}
+function goCanteen() {
+  emit('open', 'canteen')
+}
 </script>
 
 <template>
@@ -347,6 +356,10 @@ onMounted(loadCourses)
         <div v-if="detail.campus && detail.campus !== '未标注'" class="course-detail-row"><span>校区</span><b>{{ detail.campus }}</b></div>
         <div v-if="detail.cat" class="course-detail-row"><span>类别</span><b>{{ detail.cat }}</b></div>
         <div v-if="detail.credit" class="course-detail-row"><span>学分</span><b>{{ detail.credit }}</b></div>
+        <div v-if="detail.r" class="course-detail-actions">
+          <button class="btn" style="flex:1;" @click="goClassroomNav(detail.r)">🧭 教室导航</button>
+          <button class="btn" style="flex:1;" @click="goCanteen()">🍚 去哪吃</button>
+        </div>
         <button class="btn accent" style="width:100%;margin-top:14px;" @click="detail = null">知道了</button>
       </div>
     </div>
@@ -574,6 +587,7 @@ onMounted(loadCourses)
 .course-detail-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 13px; }
 .course-detail-row span { flex: 0 0 52px; color: var(--text-sub); }
 .course-detail-row b { flex: 1; color: var(--text); font-weight: 600; word-break: break-all; }
+.course-detail-actions { display: flex; gap: 8px; margin-top: 12px; }
 @media (max-width: 640px) {
   /* 手机端：隐藏节次时间列，7 天均分一屏，无需左右拖拽；每卡只显示课程名，点卡片看详情 */
   .week-grid { --row: 30px; --tc: 0px; }

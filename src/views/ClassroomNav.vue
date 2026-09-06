@@ -9,6 +9,7 @@ import { buildings, campusFilters, searchRooms } from '../data/classrooms'
 import { nfsRooms, nfsRoomGroups } from '../data/nfsClassrooms'
 import { guideOf } from '../data/buildingGuides'
 import { apiFetch } from '../api/index'
+import { consumeNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back'])
 const view = ref('main')
@@ -40,6 +41,12 @@ const roomKindCount = computed(() => {
   return c
 })
 const roomKinds = computed(() => ['全部', ...Object.keys(nfsRoomGroups)])
+
+onMounted(() => {
+  const ctx = consumeNavContext()
+  if (ctx?.room) { keyword.value = ctx.room; view.value = 'main' }
+})
+
 const buildingGroups = computed(() => {
   const kw = allKw.value.trim().toLowerCase()
   const map = new Map()

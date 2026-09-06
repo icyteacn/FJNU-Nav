@@ -7,8 +7,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { foods, halls, menu } from '../data/foods'
 import CountUp from '../components/CountUp.vue'
+import { setNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 const picks = ref([])
 const pickedCount = ref(0)
@@ -118,6 +119,14 @@ function openDetail(f) {
   showDetail.value = true
 }
 
+function goCanteen() {
+  emit('open', 'canteen')
+}
+function goBudget(name, price) {
+  setNavContext({ category: 'food', amount: price, note: name })
+  emit('open', 'budget')
+}
+
 function setCampus(c) {
   campusFilter.value = c
   roll()
@@ -148,6 +157,14 @@ function descOf(f) {
   const dishes = menu[f.name] || []
   return dishes.length ? dishes[0].desc : ''
 }
+
+onMounted(() => {
+  const ctx = consumeNavContext()
+  if (ctx?.bmi != null) {
+    if (ctx.bmi < 18.5) budgetFilter.value = '15-25元'
+    else if (ctx.bmi > 24) budgetFilter.value = '8元以内'
+  }
+})
 
 const dishesOf = (f) => menu[f.name] || []
 
@@ -294,6 +311,10 @@ onMounted(() => {
       <div v-if="selectedDish.tags?.length" class="detail-tags">
         <span v-for="t in selectedDish.tags" :key="t" class="detail-tag">{{ t }}</span>
       </div>
+      <div class="detail-actions">
+        <button class="btn" style="flex:1;" @click="showDetail = false; goCanteen()">📍 查看食堂空座</button>
+        <button v-if="priceOf(selectedDish)" class="btn" style="flex:1;" @click="showDetail = false; goBudget(selectedDish.name, priceOf(selectedDish))">💰 记一笔</button>
+      </div>
       <button class="btn accent" style="width:100%;margin-top:14px;" @click="showDetail = false">知道了</button>
     </div>
   </div>
@@ -332,6 +353,7 @@ onMounted(() => {
 .card-spice { font-size: 11px; }
 .card-location { font-size: 11px; color: var(--text-sub); display: flex; flex-direction: column; gap: 2px; }
 .card-detail-hint { font-size: 11px; color: var(--primary); margin-top: 8px; font-weight: 600; }
+.detail-actions { display: flex; gap: 8px; margin-top: 12px; }
 .draw-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .empty-state { padding: 30px 0; }
 .hall-card {

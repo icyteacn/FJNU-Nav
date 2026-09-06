@@ -10,8 +10,9 @@ import CountUp from '../components/CountUp.vue'
 import KpiCard from '../components/KpiCard.vue'
 import BarRow from '../components/BarRow.vue'
 import InsightPanel from '../components/InsightPanel.vue'
+import { setNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 const stats = ref(EMPTY_STATS)
 const loading = ref(true)
@@ -24,6 +25,11 @@ const maxTerm = ref(1)
 const maxKind = ref(1)
 const maxCampus = ref(1)
 const maxCol = ref(1)
+
+function goClassroomNav(room) {
+  setNavContext({ room })
+  emit('open', 'classroomNav')
+}
 
 onMounted(async () => {
   stats.value = await getCourseStats()

@@ -1,5 +1,19 @@
 <script setup>
-const emit = defineEmits(['back'])
+import { ref, onMounted } from 'vue'
+import { setNavContext, consumeNavContext } from '../stores/navContext'
+
+const emit = defineEmits(['back', 'open'])
+
+const sid = ref('')
+function goOfficialSites() {
+  setNavContext({ sid: sid.value })
+  emit('open', 'officialSites')
+}
+
+onMounted(() => {
+  const ctx = consumeNavContext()
+  if (ctx?.sid) sid.value = ctx.sid
+})
 </script>
 
 <template>
@@ -52,6 +66,10 @@ const emit = defineEmits(['back'])
 
   <div class="panel" style="margin-bottom:16px;">
     <div style="font-weight:700;margin-bottom:10px;">🔗 常用平台</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input class="input" v-model="sid" placeholder="输入学号生成邮箱" style="flex:1;" />
+      <button class="btn" @click="goOfficialSites">📧 邮箱助手</button>
+    </div>
     <div class="cal-list">
       <a class="cal-item" href="https://vpn3.fjnu.edu.cn/auth/login?returnUrl=https://zhifu-cnki-net-s.vpn3.fjnu.edu.cn/" target="_blank" rel="noopener">
         <span class="cal-title">福Star VPN（访问知网）</span>

@@ -4,8 +4,9 @@ import KpiCard from '../components/KpiCard.vue'
 import InsightPanel from '../components/InsightPanel.vue'
 import BarRow from '../components/BarRow.vue'
 import LineChart from '../components/LineChart.vue'
+import { setNavContext, consumeNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 
 const loading = ref(true)
 const status = ref('loading')
@@ -68,6 +69,15 @@ const trendLine = computed(() => ({
   series: [{ label: '发帖', color: '#0891b2', data: (data.value?.weekTrend || []).map((p) => p.count) }]
 }))
 const topKw = computed(() => data.value?.keywords?.[0] || null)
+
+const TOPIC_APP_MAP = {
+  '考研升学': 'graduatePlan', '学习考试': 'timetable', '校园生活': 'canteen',
+  '就业实习': 'officialSites', '校园事务': 'campusNews', '吐槽求助': 'home'
+}
+function goTopicApp(topic) {
+  const appId = TOPIC_APP_MAP[topic] || 'home'
+  emit('open', appId)
+}
 
 /** 自动生成的文字洞察（数据驱动，无数据时自动降级为空） */
 const insights = computed(() => {
@@ -161,7 +171,13 @@ const insights = computed(() => {
       <div class="panel">
         <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>🗂️ 话题分布</div>
         <div v-if="data.topics.length">
-          <BarRow v-for="t in data.topics" :key="t.name" :label="(TOPIC_ICONS[t.name] || '·') + ' ' + t.name" :value="t.count" :max="maxTopic" :text="Math.round((t.count / topicTotal) * 100) + '%'" color="linear-gradient(90deg,#0d9488,#2dd4bf)" />
+          <div v-for="t in data.topics" :key="t.name" class="topic-row" @click="goTopicApp(t.name)">
+            <span class="topic-icon">{{ TOPIC_ICONS[t.name] || '·' }}</span>
+            <span class="topic-name">{{ t.name }}</span>
+            <span class="topic-count">{{ t.count }} 条</span>
+            <span class="topic-share">{{ Math.round((t.count / topicTotal) * 100) }}%</span>
+            <span class="topic-arrow">›</span>
+          </div>
         </div>
         <p v-if="!data.topics.length" class="muted" style="font-size:13px;">暂无话题归类。</p>
       </div>
@@ -332,4 +348,11 @@ const insights = computed(() => {
 .mb-bar.hi { background: rgba(245, 158, 11, 0.25); }
 .mb-bar.hi i { background: linear-gradient(180deg, #fbbf24, #f59e0b); }
 .mb-label { font-size: 9px; color: var(--text-sub); }
+.topic-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: all .15s; background: var(--soft-fg); }
+.topic-row:hover { border-color: var(--primary); background: var(--primary-soft); }
+.topic-icon { font-size: 16px; flex-shrink: 0; }
+.topic-name { flex: 1; font-weight: 600; font-size: 13px; }
+.topic-count { font-size: 12px; color: var(--text-sub); }
+.topic-share { font-size: 11px; font-weight: 700; color: var(--primary); }
+.topic-arrow { font-size: 14px; color: var(--text-sub); }
 </style>

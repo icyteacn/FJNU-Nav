@@ -3,8 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import { canteens, canteenStats } from '../data/canteens'
 import { menu } from '../data/foods'
 import { apiFetch } from '../api/index'
+import { setNavContext } from '../stores/navContext'
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open'])
 const campus = ref('全部')
 const live = ref(null)
 const loading = ref(true)
@@ -33,6 +34,8 @@ async function loadLive() {
 }
 
 onMounted(async () => {
+  const ctx = consumeNavContext()
+  if (ctx?.campus) campus.value = ctx.campus
   await loadLive()
   loading.value = false
 })
@@ -86,6 +89,11 @@ function busyPct(c) {
 }
 function foodsOf(c) {
   return c.foods.map((f) => ({ name: f, dishes: menu[f] || [] }))
+}
+
+function goBudget(foodName, price) {
+  setNavContext({ category: 'food', amount: price, note: foodName })
+  emit('open', 'budget')
 }
 
 function basicOpen() {
@@ -200,6 +208,7 @@ function toggleFood(name) {
             <div v-if="f.dishes.length" class="food-dishes">
               <span v-for="d in f.dishes" :key="d.name" class="dish-chip">
                 {{ d.name }} · <b class="price">{{ d.price }}元</b>
+                <button class="dish-pay-btn" @click.stop="goBudget(c.name + ' ' + d.name, d.price)" title="记一笔">💰</button>
               </span>
             </div>
           </div>
@@ -315,4 +324,6 @@ function toggleFood(name) {
 .food-dishes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .dish-chip { font-size: 11px; padding: 3px 8px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); color: var(--text); }
 .dish-chip .price { color: #e65100; }
+.dish-pay-btn { background: none; border: none; cursor: pointer; font-size: 12px; padding: 0 2px; opacity: 0.6; transition: opacity .15s; }
+.dish-pay-btn:hover { opacity: 1; }
 </style>

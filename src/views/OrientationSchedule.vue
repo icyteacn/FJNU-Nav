@@ -178,7 +178,7 @@ function goClassroomNav(loc) {
   <div class="panel" style="margin-bottom:12px;">
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>🎓 选择专业筛选</div>
     <div class="major-chips">
-      <button class="major-chip" :class="{ active: !selectedMajor }" @click="selectedMajor = ''">全部专业</button>
+      <button class="major-chip" :class="{ active: !selectedMajor }" @click="selectedMajor = ''">全部</button>
       <button v-for="m in MAJORS" :key="m.key" class="major-chip" :class="{ active: selectedMajor === m.key }" @click="filterByMajor(m.key)">
         {{ m.icon }} {{ m.short }}
       </button>
@@ -208,7 +208,7 @@ function goClassroomNav(loc) {
         <span class="tl-count">{{ evts.length }} 场</span>
         <span class="tl-arrow">{{ expanded === date ? '▾' : '▸' }}</span>
       </button>
-      <div v-show="expanded === date || catFilter || selectedMajor || searchKw" class="tl-events">
+      <div v-show="expanded === date" class="tl-events">
         <div v-for="e in evts" :key="e.id" class="tl-card" :class="[statusCls(e), { 'is-next': nextEvt && e.id === nextEvt.id, 'is-checked': checked.has(e.id) }]" @click="openDetail(e)">
           <div class="tl-left">
             <div class="tl-time">{{ e.time }}</div>

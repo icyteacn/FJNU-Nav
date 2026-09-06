@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { canteens, canteenStats } from '../data/canteens'
 import { menu } from '../data/foods'
 import { apiFetch } from '../api/index'
-import { setNavContext, watchNavContext } from '../stores/navContext'
+import { navCtx } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 const campus = ref('全部')
@@ -33,9 +33,10 @@ async function loadLive() {
   } catch (e) { /* noop */ }
 }
 
-watchNavContext((ctx) => {
+watch(navCtx, (ctx) => {
   if (ctx?.campus) campus.value = ctx.campus
-})
+  if (ctx) navCtx.value = null
+}, { immediate: true })
 
 onMounted(async () => {
   await loadLive()

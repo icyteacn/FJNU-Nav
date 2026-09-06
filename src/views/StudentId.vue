@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import { setNavContext, watchNavContext } from '../stores/navContext'
+import { ref, watch } from 'vue'
+import { setNavContext, navCtx } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -10,9 +10,9 @@ function goOfficialSites() {
   emit('open', 'officialSites')
 }
 
-watchNavContext((ctx) => {
-  if (ctx?.sid) sid.value = ctx.sid
-})
+watch(navCtx, (ctx) => {
+  if (ctx?.sid) { sid.value = ctx.sid; navCtx.value = null }
+}, { immediate: true })
 </script>
 
 <template>

@@ -7,7 +7,7 @@ import BudgetPro from './BudgetPro.vue'
 import BarRow from '../components/BarRow.vue'
 import PieChart from '../components/PieChart.vue'
 import { parseBillFile } from '../utils/billImport.js'
-import { watchNavContext } from '../stores/navContext'
+import { navCtx } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -133,13 +133,14 @@ watch(cleanMode, (v) => { try { localStorage.setItem(CLEAN_KEY, v ? '1' : '0') }
 const showRef = ref(false)
 const importMsg = ref('')
 
-watchNavContext((ctx) => {
+watch(navCtx, (ctx) => {
   if (ctx) {
     if (ctx.category) { mode.value = 'expense'; cat.value = ctx.category }
     if (ctx.amount) amount.value = String(ctx.amount)
     if (ctx.note) note.value = ctx.note
+    navCtx.value = null
   }
-})
+}, { immediate: true })
 
 const cats = computed(() => CATS[mode.value])
 const catInfo = (type, key) => (CATS[type] || []).find((c) => c.key === key)

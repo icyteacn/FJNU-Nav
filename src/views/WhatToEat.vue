@@ -4,10 +4,10 @@
  * 灵感参考：https://nfs.pcdawn.cn/app/whatToEatToday（NextFStar 多维度筛选 + 抽取动画）
  * 本项目复刻了校区/餐次/预算/口味筛选 + 菜品详情弹窗 + 抽取动画功能。
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { foods, halls, menu } from '../data/foods'
 import CountUp from '../components/CountUp.vue'
-import { setNavContext, watchNavContext } from '../stores/navContext'
+import { navCtx } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -158,12 +158,13 @@ function descOf(f) {
   return dishes.length ? dishes[0].desc : ''
 }
 
-watchNavContext((ctx) => {
+watch(navCtx, (ctx) => {
   if (ctx?.bmi != null) {
     if (ctx.bmi < 18.5) budgetFilter.value = '15-25元'
     else if (ctx.bmi > 24) budgetFilter.value = '8元以内'
   }
-})
+  if (ctx) navCtx.value = null
+}, { immediate: true })
 
 onMounted(() => {
   pickedCount.value = Number(sessionStorage.getItem('fjnu_food_picked')) || 0

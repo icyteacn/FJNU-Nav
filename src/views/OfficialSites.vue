@@ -1,7 +1,7 @@
 ﻿<script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { officialGroups, colleges, emergency } from '../data/official'
-import { watchNavContext } from '../stores/navContext'
+import { navCtx } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 const tab = ref('official')
@@ -33,9 +33,9 @@ async function copyMail() {
   }
 }
 
-watchNavContext((ctx) => {
-  if (ctx?.sid) { sid.value = ctx.sid; tab.value = 'official' }
-})
+watch(navCtx, (ctx) => {
+  if (ctx?.sid) { sid.value = ctx.sid; tab.value = 'official'; navCtx.value = null }
+}, { immediate: true })
 </script>
 
 <template>

@@ -96,6 +96,11 @@ export function getCount(gid, item) {
 export function factorIdxOf(gid) { return state.factors[gid] || 0 }
 export function setFactorIdx(gid, i) { state.factors = { ...state.factors, [gid]: i } }
 
+/** 检查某竞赛档位是否已选中（供竞赛界面 chips 高亮用） */
+export function isContestPicked(gid, iid) {
+  return state.rPicks.some(p => p.gid === gid && p.iid === iid)
+}
+
 /** 计算一组分类的得分明细：就高 / 上限 / 成员系数 / 计数项统一在此处理 */
 function evalGroups(groups, picks) {
   return groups.map(g => {

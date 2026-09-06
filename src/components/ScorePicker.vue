@@ -14,7 +14,7 @@ function toggleGroup(id) { open[id] = !open[id] }
 
 watch(highlightGroup, (gid) => {
   if (gid && props.kind === 'r') { open[gid] = true; highlightGroup.value = null }
-})
+}, { immediate: true })
 
 function optsOf(item) {
   if (item.opts) return item.opts

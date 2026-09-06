@@ -1,8 +1,8 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import ZcAccumulator from '../components/ZcAccumulator.vue'
-import { loadState, saveState } from '../stores/scholarship'
-import { COMPETITIONS_A, COMPETITIONS_B_KEY, COMPETITIONS_B_NORMAL, SCHOLARSHIP_A, SCHOLARSHIP_B } from '../data/competitions'
+import { loadState, saveState, togglePick, isContestPicked, setHighlightGroup } from '../stores/scholarship'
+import { COMPETITIONS_A, COMPETITIONS_B_KEY, COMPETITIONS_B_NORMAL, SCHOLARSHIP_A, SCHOLARSHIP_B, AWARD_CHIPS_A, AWARD_CHIPS_B } from '../data/competitions'
 
 const emit = defineEmits(['back'])
 
@@ -344,13 +344,13 @@ function eventClass(type) {
 
   <template v-if="activeTab === 'competition'">
     <div class="panel" style="margin-bottom:16px;">
-      <div class="section-title" style="margin:0 0 6px;"><span class="bar"></span>📋 学科竞赛分类清单</div>
-      <p class="muted" style="font-size:12px;margin:0 0 14px;">依据《计网学院学生高水平创新创业竞赛实施办法（修订）》（师大计网〔2026〕5号），竞赛分为 A、B 两类。A类含创新创业大赛及挑战杯系列，B类含研究生创新实践系列大赛及各类学科竞赛。</p>
+      <div class="section-title" style="margin:0 0 6px;"><span class="bar"></span>📋 学科竞赛 · 点击获奖等级直接加分</div>
+      <p class="muted" style="font-size:12px;margin:0 0 14px;">依据《计网学院学生高水平创新创业竞赛实施办法（修订）》（师大计网〔2026〕5号）。点击下方获奖等级 chip 即直接累加科研分，再点取消。</p>
 
       <div v-for="cat in [
-        { key: 'a', title: 'A类创新创业竞赛', icon: '🏆', color: '#c62828', bg: '#ffebee', items: COMPETITIONS_A },
-        { key: 'b-key', title: 'B类重点竞赛', icon: '🥇', color: '#e65100', bg: '#fff3e0', items: COMPETITIONS_B_KEY },
-        { key: 'b-normal', title: 'B类一般竞赛', icon: '📋', color: '#2e7d32', bg: '#e8f5e9', items: COMPETITIONS_B_NORMAL },
+        { key: 'a', title: 'A类创新创业竞赛', icon: '🏆', color: '#c62828', items: COMPETITIONS_A, chips: AWARD_CHIPS_A, gid: 'contestA' },
+        { key: 'b-key', title: 'B类重点竞赛', icon: '🥇', color: '#e65100', items: COMPETITIONS_B_KEY, chips: AWARD_CHIPS_B, gid: 'contestB' },
+        { key: 'b-normal', title: 'B类一般竞赛', icon: '📋', color: '#2e7d32', items: COMPETITIONS_B_NORMAL, chips: AWARD_CHIPS_B, gid: 'contestB' },
       ]" :key="cat.key" class="comp-category">
         <button class="comp-cat-head" @click="openCat[cat.key] = !openCat[cat.key]" :style="{ borderColor: cat.color }">
           <span class="comp-cat-icon">{{ cat.icon }}</span>
@@ -360,13 +360,20 @@ function eventClass(type) {
         </button>
         <div v-show="openCat[cat.key]" class="comp-cat-body">
           <div v-for="c in cat.items" :key="c.name" class="comp-item" :style="{ borderLeftColor: cat.color }">
-            <div class="comp-item-name">{{ c.name }}<span v-if="c.sub" class="comp-item-sub">{{ c.sub }}</span></div>
-            <div class="comp-item-meta">
+            <div class="comp-item-head">
+              <div class="comp-item-name">{{ c.name }}<span v-if="c.sub" class="comp-item-sub">{{ c.sub }}</span></div>
               <span class="comp-item-org">{{ c.organizer }}</span>
-              <span class="comp-item-score" :style="{ color: cat.color }">{{ c.scholarship }}</span>
             </div>
             <div v-if="c.note" class="comp-item-note">💡 {{ c.note }}</div>
             <div v-if="c.local" class="comp-item-local">含省赛：{{ c.local }}</div>
+            <div class="comp-chips">
+              <button
+                v-for="chip in cat.chips" :key="chip.id"
+                class="comp-chip" :class="{ on: isContestPicked(cat.gid, chip.id) }"
+                :style="{ '--chip-color': cat.color }"
+                @click="togglePick('r', cat.gid, { id: chip.id, label: chip.label, pts: chip.pts }, 0)"
+              >{{ chip.label }}<i>+{{ chip.pts }}</i></button>
+            </div>
           </div>
         </div>
       </div>
@@ -402,10 +409,10 @@ function eventClass(type) {
 
     <div class="panel calc-entry" style="margin-bottom:16px;">
       <div class="calc-entry-info">
-        <b>🎯 快速加分</b>
-        <span>前往「综测积累」→ 科研创新选档，点击对应竞赛等级即累加科研分</span>
+        <b>🔬 查看完整选档</b>
+        <span>前往「综测积累」→ 科研创新，查看所有竞赛分组与成员系数选择</span>
       </div>
-      <button class="calc-entry-btn" @click="activeTab = 'zc'">前往加分 →</button>
+      <button class="calc-entry-btn" @click="setHighlightGroup('contestA'); activeTab = 'zc'">前往综测积累 →</button>
     </div>
   </template>
 
@@ -572,13 +579,18 @@ function eventClass(type) {
 .comp-cat-body { padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 8px; animation: compIn .18s ease; }
 @keyframes compIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .comp-item { padding: 10px 12px; background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 8px; }
+.comp-item-head { display: flex; flex-direction: column; gap: 2px; }
 .comp-item-name { font-weight: 700; font-size: 13px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .comp-item-sub { font-size: 11px; color: var(--text-sub); font-weight: 500; }
-.comp-item-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; font-size: 11px; }
-.comp-item-org { color: var(--text-sub); }
-.comp-item-score { font-weight: 700; }
+.comp-item-org { font-size: 11px; color: var(--text-sub); }
 .comp-item-note { font-size: 11px; color: #b45309; margin-top: 4px; }
 .comp-item-local { font-size: 11px; color: var(--text-sub); margin-top: 2px; font-style: italic; }
+.comp-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.comp-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--soft-fg); color: var(--text); font-size: 11px; cursor: pointer; transition: all .15s; }
+.comp-chip i { font-style: normal; font-weight: 800; color: var(--chip-color, var(--primary)); font-size: 10px; }
+.comp-chip:hover { border-color: var(--chip-color, var(--primary)); transform: translateY(-1px); }
+.comp-chip.on { background: var(--chip-color, var(--primary)); border-color: var(--chip-color, var(--primary)); color: #fff; }
+.comp-chip.on i { color: #fff; }
 
 .schol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 12px; }
 .schol-card { padding: 14px; background: var(--soft-fg); border: 1px solid var(--border); border-top: 3px solid; border-radius: var(--radius); }

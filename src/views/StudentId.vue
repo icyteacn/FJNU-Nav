@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { setNavContext, navCtx } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
@@ -10,9 +10,10 @@ function goOfficialSites() {
   emit('open', 'officialSites')
 }
 
-watch(navCtx, (ctx) => {
-  if (ctx?.sid) { sid.value = ctx.sid; navCtx.value = null }
-}, { immediate: true })
+onMounted(() => {
+  const ctx = navCtx()
+  if (ctx?.sid) sid.value = ctx.sid
+})
 </script>
 
 <template>

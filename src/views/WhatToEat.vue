@@ -158,13 +158,13 @@ function descOf(f) {
   return dishes.length ? dishes[0].desc : ''
 }
 
-watch(navCtx, (ctx) => {
+onMounted(() => {
+  const ctx = navCtx()
   if (ctx?.bmi != null) {
     if (ctx.bmi < 18.5) budgetFilter.value = '15-25元'
     else if (ctx.bmi > 24) budgetFilter.value = '8元以内'
   }
-  if (ctx) navCtx.value = null
-}, { immediate: true })
+})
 
 onMounted(() => {
   pickedCount.value = Number(sessionStorage.getItem('fjnu_food_picked')) || 0

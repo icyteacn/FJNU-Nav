@@ -42,7 +42,8 @@ const roomKindCount = computed(() => {
 })
 const roomKinds = computed(() => ['全部', ...Object.keys(nfsRoomGroups)])
 
-watch(navCtx, (ctx) => {
+onMounted(() => {
+  const ctx = navCtx()
   if (ctx?.room) {
     keyword.value = ctx.room
     allKw.value = ctx.room
@@ -51,9 +52,8 @@ watch(navCtx, (ctx) => {
       const match = buildingGroups.value.find(([b]) => b.includes(ctx.room) || ctx.room.includes(b))
       if (match) openBldg.value = match[0]
     })
-    navCtx.value = null
   }
-}, { immediate: true })
+})
 
 const buildingGroups = computed(() => {
   const kw = allKw.value.trim().toLowerCase()

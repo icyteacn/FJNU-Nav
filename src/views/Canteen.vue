@@ -33,10 +33,12 @@ async function loadLive() {
   } catch (e) { /* noop */ }
 }
 
-watch(navCtx, (ctx) => {
+onMounted(async () => {
+  const ctx = navCtx()
   if (ctx?.campus) campus.value = ctx.campus
-  if (ctx) navCtx.value = null
-}, { immediate: true })
+  await loadLive()
+  loading.value = false
+})
 
 onMounted(async () => {
   await loadLive()

@@ -33,9 +33,10 @@ async function copyMail() {
   }
 }
 
-watch(navCtx, (ctx) => {
-  if (ctx?.sid) { sid.value = ctx.sid; tab.value = 'official'; navCtx.value = null }
-}, { immediate: true })
+onMounted(() => {
+  const ctx = navCtx()
+  if (ctx?.sid) { sid.value = ctx.sid; tab.value = 'official' }
+})
 </script>
 
 <template>

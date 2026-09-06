@@ -17,9 +17,10 @@ function goBudgetScholarship() {
   emit('open', 'budget')
 }
 
-watch(navCtx, (ctx) => {
-  if (ctx?.tab) { activeTab.value = ctx.tab; navCtx.value = null }
-}, { immediate: true })
+onMounted(() => {
+  const ctx = navCtx()
+  if (ctx?.tab) activeTab.value = ctx.tab
+})
 
 
 const graduateLinks = [

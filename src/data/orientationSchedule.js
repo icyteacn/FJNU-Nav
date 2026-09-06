@@ -446,3 +446,48 @@ export function nextEventDate(events, now = new Date()) {
   const n = nextEvent(events, now)
   return n ? n.date : null
 }
+
+/** 从地点文本提取楼栋名（用于地图导航） */
+function extractBuilding(loc) {
+  if (!loc) return ''
+  const m = loc.match(/(计网楼|笃行\d?|立诚\d?|致广\d?|桂\d+|图书馆|东区田径场|旗山校区校医院)/)
+  return m ? m[1] : loc.split(/（|[//]/)[0].trim()
+}
+
+/** 生成三端地图导航 URL */
+export function mapUrls(location) {
+  const building = extractBuilding(location)
+  const query = `福建师范大学 ${building}`
+  const encoded = encodeURIComponent(query)
+  return {
+    gaode: `https://uri.amap.com/marker?position=&name=${encoded}&src=fjnu-nav&callnative=1`,
+    baidu: `https://api.map.baidu.com/marker?location=&title=${encoded}&content=&src=fjnu-nav&callnative=1`,
+    tencent: `https://apis.map.qq.com/uri/v1/marker?marker=title:${encoded};coord:0,0&callnative=1`,
+    web: `https://uri.amap.com/search?keyword=${encoded}`,
+  }
+}
+
+/** 单个事件的倒计时 */
+export function eventCountdown(e, now = new Date()) {
+  const t = parseTime(e.time)
+  if (!t) return null
+  const target = new Date(e.date + 'T' + t)
+  const diff = target - now
+  if (diff <= 0) return null
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  const secs = Math.floor((diff % 60000) / 1000)
+  if (days > 0) return `${days}天${hours}时${mins}分`
+  if (hours > 0) return `${hours}时${mins}分${secs}秒`
+  return `${mins}分${secs}秒`
+}
+
+/** 智能提醒：是否即将开始（30分钟内） */
+export function isImminent(e, now = new Date()) {
+  const t = parseTime(e.time)
+  if (!t) return false
+  const target = new Date(e.date + 'T' + t)
+  const diff = target - now
+  return diff > 0 && diff < 30 * 60 * 1000
+}

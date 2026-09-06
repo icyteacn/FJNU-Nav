@@ -1,36 +1,39 @@
 <script setup>
 /**
- * 日程助手 v2：实时倒计时 + 专业筛选 + 出席打卡 + 自动滚动 + 更多功能
+ * 日程助手 v3：实时倒计时全覆盖 + 地点跳转地图 + 智能提醒 + 出席打卡 + 专业筛选
  */
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { SCHEDULE_VERSIONS, EVENT_CATEGORIES, MAJORS, audienceMajors, groupByDate, eventStatus, nextEvent, timeUntil, nextEventDate } from '../data/orientationSchedule'
+import {
+  SCHEDULE_VERSIONS, EVENT_CATEGORIES, MAJORS, audienceMajors,
+  groupByDate, eventStatus, nextEvent, timeUntil, nextEventDate,
+  mapUrls, eventCountdown, isImminent,
+} from '../data/orientationSchedule'
 
 const emit = defineEmits(['back', 'open'])
 
 const versionId = ref(SCHEDULE_VERSIONS[0]?.id || '')
 const version = computed(() => SCHEDULE_VERSIONS.find(v => v.id === versionId.value) || SCHEDULE_VERSIONS[0])
 const events = computed(() => version.value?.events || [])
-const grouped = computed(() => groupByDate(events.value))
 
 const catFilter = ref('')
-const majorFilter = ref('')
+const selectedMajor = ref('')
 const searchKw = ref('')
 const expanded = ref(null)
 const showDetail = ref(null)
-const showCalendar = ref(false)
+const showMap = ref(null)
 const checked = ref(new Set())
 const detailRef = ref(null)
+const showTips = ref(false)
 
-/* 实时 now — 每秒刷新 */
 const now = ref(new Date())
 const tick = setInterval(() => { now.value = new Date() }, 1000)
 onUnmounted(() => clearInterval(tick))
 
 onMounted(() => {
-  const saved = localStorage.getItem('fjnu_schedule_version')
-  if (saved && SCHEDULE_VERSIONS.some(v => v.id === saved)) versionId.value = saved
-  const savedChecked = localStorage.getItem('fjnu_schedule_checked')
-  if (savedChecked) try { checked.value = new Set(JSON.parse(savedChecked)) } catch {}
+  const sv = localStorage.getItem('fjnu_schedule_version')
+  if (sv && SCHEDULE_VERSIONS.some(v => v.id === sv)) versionId.value = sv
+  const sc = localStorage.getItem('fjnu_schedule_checked')
+  if (sc) try { checked.value = new Set(JSON.parse(sc)) } catch {}
   const nd = nextEventDate(events.value)
   if (nd) expanded.value = nd
 })
@@ -43,19 +46,12 @@ function toggleCheck(id) {
   persistChecked()
 }
 
-/* 专业筛选 */
-const selectedMajor = ref('')
-function filterByMajor(major) { selectedMajor.value = selectedMajor.value === major ? '' : major }
+function filterByMajor(m) { selectedMajor.value = selectedMajor.value === m ? '' : m }
 
 const filtered = computed(() => {
   let list = events.value
   if (catFilter.value) list = list.filter(e => e.category === catFilter.value)
-  if (selectedMajor.value) {
-    list = list.filter(e => {
-      const majors = audienceMajors(e.audience)
-      return majors.includes(selectedMajor.value)
-    })
-  }
+  if (selectedMajor.value) list = list.filter(e => audienceMajors(e.audience).includes(selectedMajor.value))
   if (searchKw.value) {
     const kw = searchKw.value.toLowerCase()
     list = list.filter(e => e.topic.toLowerCase().includes(kw) || e.location.toLowerCase().includes(kw) || e.audience.toLowerCase().includes(kw))
@@ -64,7 +60,6 @@ const filtered = computed(() => {
 })
 const filteredGrouped = computed(() => groupByDate(filtered.value))
 
-/* 下一个活动 + 实时倒计时（直接依赖 now.value 保证秒级更新） */
 const nextEvt = computed(() => nextEvent(events.value, now.value))
 const countdown = computed(() => {
   if (!nextEvt.value) return null
@@ -72,14 +67,17 @@ const countdown = computed(() => {
   return timeUntil(nextEvt.value.date, nextEvt.value.time)
 })
 
-/* 详情弹窗自动滚动 */
+function getMapUrls(loc) { return mapUrls(loc) }
+function getCD(e) { return eventCountdown(e, now.value) }
+function getImminent(e) { return isImminent(e, now.value) }
+
 async function openDetail(e) {
   showDetail.value = e
   await nextTick()
   if (detailRef.value) detailRef.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-function catInfo(key) { return EVENT_CATEGORIES[key] || EVENT_CATEGORIES.other }
+function catInfo(k) { return EVENT_CATEGORIES[k] || EVENT_CATEGORIES.other }
 function statusLabel(e) {
   const s = eventStatus(e, now.value)
   if (s === 'ongoing') return '🔴 进行中'
@@ -92,29 +90,22 @@ function statusCls(e) {
   if (s === 'past') return 'st-past'
   return 'st-upcoming'
 }
-function weekDay(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00')
-  return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()]
-}
-function toggleExpand(date) { expanded.value = expanded.value === date ? null : date }
-function importanceIcon(imp) { return imp === 'critical' ? '🔴' : imp === 'high' ? '🟡' : '⚪' }
-function isToday(dateStr) {
+function weekDay(ds) { return ['周日','周一','周二','周三','周四','周五','周六'][new Date(ds+'T00:00:00').getDay()] }
+function toggleExpand(d) { expanded.value = expanded.value === d ? null : d }
+function impIcon(i) { return i === 'critical' ? '🔴' : i === 'high' ? '🟡' : '⚪' }
+function isToday(ds) {
   const t = new Date()
-  return dateStr === `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
+  return ds === `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
 }
 
-/* 统计 */
 const completedCount = computed(() => events.value.filter(e => eventStatus(e, now.value) === 'past').length)
 const totalCount = computed(() => events.value.length)
 const progress = computed(() => totalCount.value ? Math.round((completedCount.value / totalCount.value) * 100) : 0)
 const checkedCount = computed(() => checked.value.size)
 const todayEvents = computed(() => events.value.filter(e => isToday(e.date) && !e.pending))
+const imminentCount = computed(() => events.value.filter(e => getImminent(e)).length)
 
-/* 快捷导航到教室 */
-function goClassroomNav(loc) {
-  const match = loc.match(/计网楼|笃行|立诚|致广|桂\d+/)
-  if (match) { emit('open', 'classroomNav') }
-}
+function goClassroomNav() { emit('open', 'classroomNav') }
 </script>
 
 <template>
@@ -134,7 +125,13 @@ function goClassroomNav(loc) {
     </div>
   </div>
 
-  <!-- 下一个活动提醒（实时倒计时） -->
+  <!-- 智能提醒横幅 -->
+  <div v-if="imminentCount > 0" class="alert-banner">
+    <span class="alert-icon">🔔</span>
+    <span>有 <b>{{ imminentCount }}</b> 场活动即将在30分钟内开始！</span>
+  </div>
+
+  <!-- 下一个活动提醒 -->
   <div v-if="nextEvt" class="next-banner" :style="{ '--cat-color': catInfo(nextEvt.category).color }">
     <div class="next-head">
       <span class="next-badge">⏰ 下一个活动</span>
@@ -144,39 +141,40 @@ function goClassroomNav(loc) {
     <div class="next-meta">
       <span>📅 {{ nextEvt.date }} {{ weekDay(nextEvt.date) }}</span>
       <span>🕐 {{ nextEvt.time }}</span>
-      <span>📍 {{ nextEvt.location }}</span>
+      <span class="next-loc" @click.stop="showMap = nextEvt">📍 {{ nextEvt.location }} 🗺️</span>
     </div>
     <div v-if="nextEvt.preparation?.length" class="next-prep-hint">📋 需准备 {{ nextEvt.preparation.length }} 项</div>
-    <button class="next-detail-btn" @click="openDetail(nextEvt)">查看详情 & 准备清单 →</button>
+    <div class="next-btns">
+      <button class="next-detail-btn" @click="openDetail(nextEvt)">查看详情 & 准备清单 →</button>
+    </div>
   </div>
   <div v-else class="next-banner empty">
     <div class="next-badge">🎉 入学教育全部完成！</div>
-    <div class="next-meta" style="justify-content:center;margin-top:6px;">所有活动已结束，祝研究生生活愉快</div>
   </div>
 
   <!-- 今日速览 -->
   <div v-if="todayEvents.length" class="panel today-panel">
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>📌 今日活动（{{ todayEvents.length }} 场）</div>
-    <div v-for="e in todayEvents" :key="e.id" class="today-card" @click="openDetail(e)">
+    <div v-for="e in todayEvents" :key="e.id" class="today-card" :class="{ imminent: getImminent(e) }" @click="openDetail(e)">
       <span class="today-time">{{ e.time }}</span>
       <span class="today-topic">{{ catInfo(e.category).icon }} {{ e.topic }}</span>
+      <span v-if="getCD(e)" class="today-cd">⏱ {{ getCD(e) }}</span>
       <span class="today-status" :class="statusCls(e)">{{ statusLabel(e) }}</span>
     </div>
   </div>
 
-  <!-- 进度 + 打卡统计 -->
+  <!-- 进度 -->
   <div class="panel" style="margin-bottom:12px;">
     <div class="prog-row">
       <span class="prog-label">完成进度</span>
-      <span class="prog-num">{{ completedCount }}/{{ totalCount }} 场（{{ progress }}%）</span>
+      <span class="prog-num">{{ completedCount }}/{{ totalCount }} 场（{{ progress }}%）<span v-if="checkedCount"> · 已打卡 {{ checkedCount }}</span></span>
     </div>
     <div class="prog-bar"><div class="prog-fill" :style="{ width: progress + '%' }"></div></div>
-    <div v-if="checkedCount" class="prog-checked">✅ 已打卡 {{ checkedCount }} 场</div>
   </div>
 
   <!-- 专业筛选 -->
   <div class="panel" style="margin-bottom:12px;">
-    <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>🎓 选择专业筛选</div>
+    <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>🎓 选择专业</div>
     <div class="major-chips">
       <button class="major-chip" :class="{ active: !selectedMajor }" @click="selectedMajor = ''">全部</button>
       <button v-for="m in MAJORS" :key="m.key" class="major-chip" :class="{ active: selectedMajor === m.key }" @click="filterByMajor(m.key)">
@@ -185,10 +183,10 @@ function goClassroomNav(loc) {
     </div>
   </div>
 
-  <!-- 搜索 + 分类筛选 -->
+  <!-- 搜索 + 分类 -->
   <div class="panel" style="margin-bottom:12px;">
     <div class="input-row" style="margin-bottom:10px;">
-      <input class="input" v-model="searchKw" placeholder="搜索活动名称、地点、参加对象…" />
+      <input class="input" v-model="searchKw" placeholder="搜索活动名称、地点…" />
     </div>
     <div class="cat-chips">
       <button class="cat-chip" :class="{ active: catFilter === '' }" @click="catFilter = ''">全部</button>
@@ -209,7 +207,7 @@ function goClassroomNav(loc) {
         <span class="tl-arrow">{{ expanded === date ? '▾' : '▸' }}</span>
       </button>
       <div v-show="expanded === date" class="tl-events">
-        <div v-for="e in evts" :key="e.id" class="tl-card" :class="[statusCls(e), { 'is-next': nextEvt && e.id === nextEvt.id, 'is-checked': checked.has(e.id) }]" @click="openDetail(e)">
+        <div v-for="e in evts" :key="e.id" class="tl-card" :class="[statusCls(e), { 'is-next': nextEvt && e.id === nextEvt.id, 'is-checked': checked.has(e.id), imminent: getImminent(e) }]" @click="openDetail(e)">
           <div class="tl-left">
             <div class="tl-time">{{ e.time }}</div>
             <button class="tl-check" :class="{ on: checked.has(e.id) }" @click.stop="toggleCheck(e.id)" :title="checked.has(e.id) ? '取消打卡' : '打卡'">
@@ -218,12 +216,14 @@ function goClassroomNav(loc) {
           </div>
           <div class="tl-body">
             <div class="tl-topic">
-              <span class="tl-imp" :title="e.importance">{{ importanceIcon(e.importance) }}</span>
+              <span class="tl-imp">{{ impIcon(e.importance) }}</span>
               {{ e.topic }}
               <span v-if="e.pending" class="tl-pending">待定</span>
+              <span v-if="getCD(e)" class="tl-cd-badge">⏱ {{ getCD(e) }}</span>
+              <span v-if="getImminent(e)" class="tl-alert-badge">⚡即将开始</span>
             </div>
             <div class="tl-sub">
-              <span class="tl-loc">📍 {{ e.location }}</span>
+              <span class="tl-loc" @click.stop="showMap = e">📍 {{ e.location }} 🗺️</span>
               <span class="tl-cat-badge" :style="{ background: catInfo(e.category).color }">{{ catInfo(e.category).icon }} {{ catInfo(e.category).label }}</span>
             </div>
             <div class="tl-sub">
@@ -242,6 +242,40 @@ function goClassroomNav(loc) {
     <div>没有匹配的活动</div>
   </div>
 
+  <!-- 实用信息 -->
+  <div class="panel tips-panel" @click="showTips = !showTips">
+    <div class="section-title" style="margin:0;"><span class="bar"></span>💡 实用信息 <span style="float:right;font-size:12px;">{{ showTips ? '▾' : '▸' }}</span></div>
+    <div v-show="showTips" class="tips-body">
+      <div class="tip-item"><span>📍 计网楼</span><span>旗山校区东门进，直行约200米</span></div>
+      <div class="tip-item"><span>📍 笃行楼</span><span>校训「行笃」，旗山校区中部</span></div>
+      <div class="tip-item"><span>📍 立诚楼</span><span>校训「立诚」，旗山校区</span></div>
+      <div class="tip-item"><span>📍 致广楼</span><span>校训「致广」，旗山校区</span></div>
+      <div class="tip-item"><span>📍 东区田径场</span><span>旗山校区东区，开学典礼用</span></div>
+      <div class="tip-item"><span>📍 图书馆大会堂</span><span>图书馆一楼</span></div>
+      <div class="tip-item"><span>📍 旗山校区校医院</span><span>体检用，注意空腹</span></div>
+      <div class="tip-item" style="border:none;"><span>🗺️</span><span>点击任意地点可跳转高德/百度/腾讯地图导航</span></div>
+    </div>
+  </div>
+
+  <!-- 地点地图弹窗 -->
+  <div v-if="showMap" class="overlay" @click.self="showMap = null">
+    <div class="overlay-card map-card">
+      <div class="detail-head">
+        <span class="detail-cat" style="background:var(--primary);">🗺️ 地图导航</span>
+        <button class="overlay-close" @click="showMap = null">✕</button>
+      </div>
+      <div class="map-title">{{ showMap.location }}</div>
+      <div class="map-desc">选择地图应用进行导航：</div>
+      <div class="map-btns">
+        <a class="map-btn gaode" :href="getMapUrls(showMap.location).gaode" target="_blank" rel="noopener">📍 高德地图</a>
+        <a class="map-btn baidu" :href="getMapUrls(showMap.location).baidu" target="_blank" rel="noopener">📍 百度地图</a>
+        <a class="map-btn tencent" :href="getMapUrls(showMap.location).tencent" target="_blank" rel="noopener">📍 腾讯地图</a>
+        <a class="map-btn web" :href="getMapUrls(showMap.location).web" target="_blank" rel="noopener">🌐 网页版</a>
+      </div>
+      <button class="btn" style="width:100%;margin-top:12px;" @click="goClassroomNav(); showMap = null">🧭 查看教室导航</button>
+    </div>
+  </div>
+
   <!-- 详情弹窗 -->
   <div v-if="showDetail" class="overlay" @click.self="showDetail = null">
     <div ref="detailRef" class="overlay-card detail-card">
@@ -250,10 +284,12 @@ function goClassroomNav(loc) {
         <button class="overlay-close" @click="showDetail = null">✕</button>
       </div>
       <div class="detail-title">{{ showDetail.topic }}</div>
+      <div v-if="getCD(showDetail)" class="detail-countdown">⏱ 距开始还有 {{ getCD(showDetail) }}</div>
+      <div v-if="getImminent(e)" class="detail-imminent">⚡ 即将开始！请尽快前往</div>
       <div class="detail-grid">
         <div class="detail-row"><span>📅 日期</span><b>{{ showDetail.date }} {{ weekDay(showDetail.date) }}</b></div>
         <div class="detail-row"><span>🕐 时间</span><b>{{ showDetail.time }}{{ showDetail.duration ? '（' + showDetail.duration + '）' : '' }}</b></div>
-        <div class="detail-row"><span>📍 地点</span><b>{{ showDetail.location }}</b></div>
+        <div class="detail-row"><span>📍 地点</span><b class="detail-loc" @click="showDetail = null; showMap = showDetail">{{ showDetail.location }} 🗺️</b></div>
         <div class="detail-row"><span>👥 参加</span><b>{{ showDetail.audience }}</b></div>
         <div v-if="showDetail.speaker && showDetail.speaker !== '/'" class="detail-row"><span>🎤 主讲</span><b>{{ showDetail.speaker }}</b></div>
         <div class="detail-row"><span>⚡ 重要性</span><b>{{ showDetail.importance === 'critical' ? '🔴 必须参加' : showDetail.importance === 'high' ? '🟡 重要' : '⚪ 一般' }}</b></div>
@@ -267,29 +303,39 @@ function goClassroomNav(loc) {
         </div>
       </div>
       <div class="detail-actions">
-        <button class="btn" style="flex:1;" @click="showDetail = null; $el.closest('.overlay')?.remove()">关闭</button>
+        <button class="btn" @click="showDetail = null; showMap = showDetail" style="flex:1;">🗺️ 导航</button>
+        <button class="btn" @click="showDetail = null" style="flex:1;">关闭</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.alert-banner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: var(--radius); margin-bottom: 12px; font-size: 13px; font-weight: 600; color: #92400e; animation: alertPulse 2s ease infinite; }
+@keyframes alertPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,.3); } 50% { box-shadow: 0 0 0 8px rgba(251,191,36,0); } }
+.alert-icon { font-size: 18px; }
+
 .next-banner { background: linear-gradient(135deg, var(--cat-color, var(--primary)), color-mix(in srgb, var(--cat-color, var(--primary)) 70%, #000)); color: #fff; border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 12px; }
 .next-banner.empty { background: var(--soft-fg); color: var(--text-sub); text-align: center; }
 .next-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .next-badge { font-size: 13px; font-weight: 800; }
 .next-countdown { font-size: 13px; font-weight: 800; background: rgba(255,255,255,.2); padding: 3px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
 .next-topic { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
-.next-meta { display: flex; gap: 16px; font-size: 13px; opacity: .9; margin-bottom: 10px; flex-wrap: wrap; }
-.next-detail-btn { width: 100%; padding: 10px; border: 1.5px solid rgba(255,255,255,.5); border-radius: 999px; background: rgba(255,255,255,.15); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
-.next-detail-btn:hover { background: rgba(255,255,255,.3); }
+.next-meta { display: flex; gap: 14px; font-size: 13px; opacity: .9; margin-bottom: 10px; flex-wrap: wrap; }
+.next-loc { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.next-loc:hover { opacity: .8; }
 .next-prep-hint { font-size: 12px; opacity: .85; margin-bottom: 8px; }
+.next-btns { display: flex; gap: 8px; }
+.next-detail-btn { flex: 1; padding: 10px; border: 1.5px solid rgba(255,255,255,.5); border-radius: 999px; background: rgba(255,255,255,.15); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
+.next-detail-btn:hover { background: rgba(255,255,255,.3); }
 
 .today-panel { border-left: 3px solid var(--primary); }
 .today-card { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: all .15s; }
 .today-card:hover { border-color: var(--primary); background: var(--primary-soft); }
+.today-card.imminent { border-color: #f59e0b; background: #fffbeb; }
 .today-time { font-weight: 800; color: var(--primary); min-width: 70px; font-size: 13px; }
 .today-topic { flex: 1; font-weight: 600; font-size: 13px; }
+.today-cd { font-size: 11px; font-weight: 700; color: #f59e0b; font-variant-numeric: tabular-nums; }
 .today-status { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
 .today-status.st-ongoing { background: #dcfce7; color: #166534; }
 .today-status.st-past { background: var(--soft-gray); color: var(--text-sub); }
@@ -300,7 +346,6 @@ function goClassroomNav(loc) {
 .prog-num { font-size: 12px; color: var(--text-sub); }
 .prog-bar { height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; }
 .prog-fill { height: 100%; border-radius: 999px; background: var(--primary); transition: width .5s ease; }
-.prog-checked { font-size: 12px; color: var(--text-sub); margin-top: 6px; }
 
 .major-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .major-chip { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
@@ -332,6 +377,8 @@ function goClassroomNav(loc) {
 .tl-card:hover { border-color: var(--primary); box-shadow: var(--shadow-hover); }
 .tl-card.is-next { border-color: var(--primary); border-width: 2px; background: var(--primary-soft); }
 .tl-card.is-checked { border-left: 3px solid #22c55e; }
+.tl-card.imminent { border-color: #f59e0b; background: #fffbeb; animation: imminentPulse 1.5s ease infinite; }
+@keyframes imminentPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,.2); } 50% { box-shadow: 0 0 0 6px rgba(245,158,11,0); } }
 .tl-card.st-past { opacity: .55; }
 .tl-card.st-ongoing { border-color: #22c55e; background: #f0fdf4; }
 .tl-left { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -344,24 +391,39 @@ function goClassroomNav(loc) {
 .tl-topic { font-weight: 700; font-size: 14px; line-height: 1.4; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .tl-imp { font-size: 12px; }
 .tl-pending { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: #fef3c7; color: #92400e; }
+.tl-cd-badge { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #dbeafe; color: #1e40af; font-variant-numeric: tabular-nums; }
+.tl-alert-badge { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; animation: alertBlink 1s ease infinite; }
+@keyframes alertBlink { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
 .tl-sub { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; font-size: 12px; color: var(--text-sub); }
-.tl-loc, .tl-audience, .tl-speaker { white-space: nowrap; }
+.tl-loc { cursor: pointer; }
+.tl-loc:hover { color: var(--primary); }
 .tl-cat-badge { font-size: 10px; padding: 1px 8px; border-radius: 999px; color: #fff; font-weight: 600; }
 .tl-status { font-size: 11px; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; align-self: flex-start; font-weight: 600; }
 .tl-status.st-ongoing { background: #dcfce7; color: #166534; }
 .tl-status.st-past { background: var(--soft-gray); color: var(--text-sub); }
 .tl-status.st-upcoming { background: var(--primary-soft); color: var(--primary); }
 
+.tips-panel { cursor: pointer; }
+.tips-body { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.tip-item { display: flex; gap: 12px; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+.tip-item:last-child { border: none; }
+.tip-item span:first-child { font-weight: 700; min-width: 100px; color: var(--text); }
+.tip-item span:last-child { color: var(--text-sub); }
+
 .empty-state { text-align: center; padding: 40px 0; color: var(--text-sub); font-size: 14px; }
 
-.detail-card { max-height: 80vh; overflow-y: auto; }
+.detail-card { max-height: 85vh; overflow-y: auto; }
 .detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .detail-cat { font-size: 12px; padding: 4px 12px; border-radius: 999px; color: #fff; font-weight: 700; }
-.detail-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; line-height: 1.4; }
+.detail-title { font-size: 20px; font-weight: 800; margin-bottom: 12px; line-height: 1.4; }
+.detail-countdown { font-size: 15px; font-weight: 800; color: var(--primary); margin-bottom: 8px; padding: 8px 12px; background: var(--primary-soft); border-radius: 8px; font-variant-numeric: tabular-nums; }
+.detail-imminent { font-size: 14px; font-weight: 700; color: #f59e0b; margin-bottom: 12px; padding: 8px 12px; background: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px; animation: alertPulse 2s ease infinite; }
 .detail-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .detail-row { display: flex; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
 .detail-row span { flex: 0 0 70px; color: var(--text-sub); }
 .detail-row b { flex: 1; color: var(--text); font-weight: 600; }
+.detail-loc { cursor: pointer; color: var(--primary) !important; }
+.detail-loc:hover { text-decoration: underline; }
 .detail-tip { padding: 12px; background: var(--soft-yellow, #fff8e1); border: 1px dashed var(--accent, #b8860b); border-radius: 10px; font-size: 13px; line-height: 1.7; margin-bottom: 16px; }
 .detail-prep { background: var(--soft-fg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
 .detail-prep-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
@@ -372,11 +434,21 @@ function goClassroomNav(loc) {
 .prep-done { text-decoration: line-through; opacity: .5; }
 .detail-actions { display: flex; gap: 8px; }
 
+.map-card { max-height: 70vh; overflow-y: auto; }
+.map-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.map-desc { font-size: 13px; color: var(--text-sub); margin-bottom: 14px; }
+.map-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.map-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; color: #fff; transition: all .15s; }
+.map-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.map-btn.gaode { background: #22c55e; }
+.map-btn.baidu { background: #3b82f6; }
+.map-btn.tencent { background: #06b6d4; }
+.map-btn.web { background: #6b7280; }
+
 @media (max-width: 640px) {
   .next-banner { padding: 14px 16px; }
   .next-topic { font-size: 16px; }
   .next-meta { flex-direction: column; gap: 4px; }
-  .next-countdown { font-size: 12px; }
   .tl-card { flex-direction: column; gap: 6px; }
   .tl-left { flex-direction: row; justify-content: space-between; }
   .tl-time { min-width: auto; text-align: left; }
@@ -384,11 +456,9 @@ function goClassroomNav(loc) {
   .tl-loc, .tl-audience, .tl-speaker { white-space: normal; }
   .detail-row { flex-direction: column; gap: 2px; }
   .detail-row span { flex: none; }
-  .cat-chips { gap: 4px; }
-  .cat-chip { padding: 4px 10px; font-size: 11px; }
-  .major-chips { gap: 4px; }
-  .major-chip { padding: 5px 12px; font-size: 12px; }
+  .cat-chips, .major-chips { gap: 4px; }
+  .cat-chip, .major-chip { padding: 4px 10px; font-size: 11px; }
   .today-card { flex-direction: column; gap: 4px; }
-  .today-time { min-width: auto; }
+  .map-btns { grid-template-columns: 1fr; }
 }
 </style>

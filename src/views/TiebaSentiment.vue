@@ -4,7 +4,7 @@ import KpiCard from '../components/KpiCard.vue'
 import InsightPanel from '../components/InsightPanel.vue'
 import BarRow from '../components/BarRow.vue'
 import LineChart from '../components/LineChart.vue'
-import { setNavContext, consumeNavContext } from '../stores/navContext'
+import { setNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 

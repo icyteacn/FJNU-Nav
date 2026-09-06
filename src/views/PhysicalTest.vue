@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { standards, itemWeights, itemLabels, bmiScore, itemScore, gradeOf } from '../data/physical'
-import { setNavContext, consumeNavContext } from '../stores/navContext'
+import { setNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 

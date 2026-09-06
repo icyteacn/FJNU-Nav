@@ -7,7 +7,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { foods, halls, menu } from '../data/foods'
 import CountUp from '../components/CountUp.vue'
-import { setNavContext } from '../stores/navContext'
+import { setNavContext, watchNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -158,15 +158,12 @@ function descOf(f) {
   return dishes.length ? dishes[0].desc : ''
 }
 
-onMounted(() => {
-  const ctx = consumeNavContext()
+watchNavContext((ctx) => {
   if (ctx?.bmi != null) {
     if (ctx.bmi < 18.5) budgetFilter.value = '15-25元'
     else if (ctx.bmi > 24) budgetFilter.value = '8元以内'
   }
 })
-
-const dishesOf = (f) => menu[f.name] || []
 
 onMounted(() => {
   pickedCount.value = Number(sessionStorage.getItem('fjnu_food_picked')) || 0

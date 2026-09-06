@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import CountUp from '../components/CountUp.vue'
-import { setNavContext, consumeNavContext } from '../stores/navContext'
+import { setNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 

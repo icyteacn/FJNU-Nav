@@ -3,7 +3,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import ZcAccumulator from '../components/ZcAccumulator.vue'
 import { loadState, saveState, togglePick, isContestPicked, setHighlightGroup } from '../stores/scholarship'
 import { COMPETITIONS_A, COMPETITIONS_B_KEY, COMPETITIONS_B_NORMAL, SCHOLARSHIP_A, SCHOLARSHIP_B, AWARD_CHIPS_A, AWARD_CHIPS_B } from '../data/competitions'
-import { setNavContext, consumeNavContext } from '../stores/navContext'
+import { setNavContext, watchNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -17,8 +17,7 @@ function goBudgetScholarship() {
   emit('open', 'budget')
 }
 
-onMounted(() => {
-  const ctx = consumeNavContext()
+watchNavContext((ctx) => {
   if (ctx?.tab) activeTab.value = ctx.tab
 })
 

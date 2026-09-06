@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { setNavContext, consumeNavContext } from '../stores/navContext'
+import { ref } from 'vue'
+import { setNavContext, watchNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -10,8 +10,7 @@ function goOfficialSites() {
   emit('open', 'officialSites')
 }
 
-onMounted(() => {
-  const ctx = consumeNavContext()
+watchNavContext((ctx) => {
   if (ctx?.sid) sid.value = ctx.sid
 })
 </script>

@@ -9,6 +9,7 @@
  * 详见 README「二次开发：新增应用」。
  */
 export const apps = [
+  { id: 'orientationSchedule', title: '日程助手', desc: '新生入学教育日程 · 智能提醒 · 准备清单', icon: '📅', color: '#1565c0', group: '新生', },
   { id: 'graduatePlan', title: '研究生服务', desc: '培养方案 / 学术日历 / 常用资源 / 研究生专属服务', icon: '🎓', color: '#6a1b9a', group: '服务', },
   { id: 'officialSites', title: '学校官网', desc: '福建师范大学官方网站与各学院官网大全', icon: '🏯', color: '#c62828', group: '服务', },
   { id: 'campusNews', title: '校园动态', desc: '教务处官方通知与动态实时同步', icon: '📰', color: '#d81b60', group: '学习', },

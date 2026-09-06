@@ -71,6 +71,7 @@ function hueOf(i) {
   <div class="panel" style="margin-top:16px;">
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
+      <li><b>v1.2.13</b> 新增日程助手应用（智能时间轴 + 实时提醒 + 准备清单 + 版本化历史日程）</li>
       <li><b>v1.2.12</b> 全站跨应用联动体系（课程表→教室导航/食堂·食堂→记账·贴吧→应用推荐·体测→饮食·奖学金→记账·学号→邮箱·速配→导航）</li>
       <li><b>v1.2.11</b> 研究生服务新增学科竞赛清单 · A/B类竞赛分类展示 · 奖学金标准 · 联动综测积累选档</li>
       <li><b>v1.2.10</b> 校历轮播滑动方向修正 · 边界阻尼修复 · 按钮切换丝滑过渡</li>

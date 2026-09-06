@@ -29,7 +29,7 @@ const graduateLinks = [
   { name: '计网学院通知', url: 'https://ccs.fjnu.edu.cn/tzgg/list.htm', desc: '国奖评选 / 竞赛 / 博士招生等学院级通知', icon: '🏫' },
   { name: '学位论文管理', url: 'https://yjsy.fjnu.edu.cn/xwgl/list.htm', desc: '论文开题 / 答辩 / 查重 / 学位申请', icon: '📝' },
   { name: '培养方案查询', url: 'https://yjsy.fjnu.edu.cn/pygl/list.htm', desc: '培养计划 / 课程设置 / 学分要求', icon: '📋' },
-  { name: '导师信息查询', url: 'https://yjsy.fjnu.edu.cn/dsxx/list.htm', desc: '导师简介 / 研究方向 / 联系方式', icon: '👨‍🏫' },
+  { name: '导师信息查询', url: 'https://ccs.fjnu.edu.cn/yxrc/list.htm', desc: '导师简介 / 研究方向 / 联系方式', icon: '👨‍🏫' },
   { name: '研究生招生', url: 'https://yjsy.fjnu.edu.cn/zs/list.htm', desc: '招生简章 / 专业目录 / 复试调剂', icon: '🎓' },
   { name: '福Star VPN', url: 'https://vpn3.fjnu.edu.cn/auth/login?returnUrl=https://zhifu-cnki-net-s.vpn3.fjnu.edu.cn/', desc: '校外访问知网等学术资源', icon: '🌐', featured: true },
   { name: '中国知网', url: 'https://www.cnki.net', desc: '学术论文检索（需VPN或校园网）', icon: '📚' },

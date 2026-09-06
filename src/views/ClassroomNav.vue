@@ -4,7 +4,7 @@
  * 灵感参考：https://nfs.pcdawn.cn/app/classroomNavigation（NextFStar 室内寻路系统）
  * 本项目保留原有空教室查询 + 楼宇列表 + 高德地图导航，未完全复刻分步导航图片指引功能。
  */
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { buildings, campusFilters, searchRooms } from '../data/classrooms'
 import { nfsRooms, nfsRoomGroups } from '../data/nfsClassrooms'
 import { guideOf } from '../data/buildingGuides'
@@ -44,7 +44,15 @@ const roomKinds = computed(() => ['全部', ...Object.keys(nfsRoomGroups)])
 
 onMounted(() => {
   const ctx = consumeNavContext()
-  if (ctx?.room) { keyword.value = ctx.room; view.value = 'main' }
+  if (ctx?.room) {
+    keyword.value = ctx.room
+    allKw.value = ctx.room
+    view.value = 'main'
+    nextTick(() => {
+      const match = buildingGroups.value.find(([b]) => b.includes(ctx.room) || ctx.room.includes(b))
+      if (match) openBldg.value = match[0]
+    })
+  }
 })
 
 const buildingGroups = computed(() => {

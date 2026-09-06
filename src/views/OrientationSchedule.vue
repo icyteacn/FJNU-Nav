@@ -272,7 +272,7 @@ function goClassroomNav(loc) {
       <div class="detail-grid">
         <div class="detail-row"><span>📅 日期</span><b>{{ showDetail.date }} {{ weekDay(showDetail.date) }}</b></div>
         <div class="detail-row"><span>🕐 时间</span><b>{{ showDetail.time }}{{ showDetail.duration ? '（' + showDetail.duration + '）' : '' }}</b></div>
-        <div class="detail-row"><span>📍 地点</span><b class="detail-loc" @click="showDetail = null; goClassroomNav(showDetail.location)">{{ showDetail.location }} 🧭</b></div>
+        <div class="detail-row"><span>📍 地点</span><b class="detail-loc" @click="goClassroomNav(showDetail.location); showDetail = null">{{ showDetail.location }} 🧭</b></div>
         <div class="detail-row"><span>👥 参加</span><b>{{ showDetail.audience }}</b></div>
         <div v-if="showDetail.speaker && showDetail.speaker !== '/'" class="detail-row"><span>🎤 主讲</span><b>{{ showDetail.speaker }}</b></div>
         <div class="detail-row"><span>⚡ 重要性</span><b>{{ showDetail.importance === 'critical' ? '🔴 必须参加' : showDetail.importance === 'high' ? '🟡 重要' : '⚪ 一般' }}</b></div>

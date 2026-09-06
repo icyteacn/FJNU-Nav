@@ -15,6 +15,29 @@ export const EVENT_CATEGORIES = {
   other: { label: '其他', icon: '📌', color: '#455a64' },
 }
 
+export const MAJORS = [
+  { key: 'cs', label: '计算机科学与技术', short: '计科', icon: '🖥️' },
+  { key: 'cyber', label: '网络空间安全', short: '网安', icon: '🛡️' },
+  { key: 'ai', label: '人工智能', short: 'AI', icon: '🤖' },
+  { key: 'se', label: '软件工程', short: '软工', icon: '⚙️' },
+  { key: 'ns', label: '网络与信息安全', short: '网信', icon: '🔒' },
+]
+
+/** 根据 audience 文本判断哪些专业需要参加 */
+export function audienceMajors(audience) {
+  if (!audience || audience.includes('全体')) return MAJORS.map(m => m.key)
+  const keys = []
+  if (audience.includes('计算机科学与技术')) keys.push('cs')
+  if (audience.includes('网络空间安全')) keys.push('cyber')
+  if (audience.includes('人工智能') && !audience.includes('海西')) keys.push('ai')
+  if (audience.includes('人工智能') && audience.includes('海西')) keys.push('ai')
+  if (audience.includes('软件工程')) keys.push('se')
+  if (audience.includes('网络与信息安全')) keys.push('ns')
+  if (audience.includes('海西联培')) keys.push('ai')
+  if (keys.length === 0) return MAJORS.map(m => m.key)
+  return [...new Set(keys)]
+}
+
 export const SCHEDULE_VERSIONS = [
   {
     id: '2026-orientation-v1',

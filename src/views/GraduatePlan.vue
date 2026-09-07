@@ -25,19 +25,18 @@ onMounted(() => {
 
 const graduateLinks = [
   { name: '研究生信息管理系统', url: 'https://gedu.fjnu.edu.cn/cas/login?service=https://gedu.fjnu.edu.cn', desc: '培养方案 / 选课 / 成绩 / 论文管理', icon: '🔑', featured: true },
+  { name: '知网CARSI校外访问', url: 'https://fsso.cnki.net/', desc: '校外访问知网学术资源（输入福建师范大学）', icon: '🔗', featured: true },
   { name: '研究生院官网', url: 'https://yjsy.fjnu.edu.cn', desc: '招生 / 培养 / 学位 / 管理制度', icon: '🏛️' },
   { name: '计网学院通知', url: 'https://ccs.fjnu.edu.cn/tzgg/list.htm', desc: '国奖评选 / 竞赛 / 博士招生等学院级通知', icon: '🏫' },
-  { name: '学位论文管理', url: 'https://yjsy.fjnu.edu.cn/xwgl/list.htm', desc: '论文开题 / 答辩 / 查重 / 学位申请', icon: '📝' },
-  { name: '培养方案查询', url: 'https://yjsy.fjnu.edu.cn/pygl/list.htm', desc: '培养计划 / 课程设置 / 学分要求', icon: '📋' },
+  { name: '培养方案查询', url: 'https://yjsy.fjnu.edu.cn/pyfa/list.htm', desc: '培养计划 / 课程设置 / 学分要求', icon: '📋' },
+  { name: '研究生招生', url: 'https://yjsy.fjnu.edu.cn/4223/list.htm', desc: '招生简章 / 专业目录 / 复试调剂', icon: '🎓' },
   { name: '导师信息查询', url: 'https://ccs.fjnu.edu.cn/yxrc/list.htm', desc: '导师简介 / 研究方向 / 联系方式', icon: '👨‍🏫' },
-  { name: '研究生招生', url: 'https://yjsy.fjnu.edu.cn/zs/list.htm', desc: '招生简章 / 专业目录 / 复试调剂', icon: '🎓' },
   { name: '福Star VPN', url: 'https://vpn3.fjnu.edu.cn/auth/login?returnUrl=https://zhifu-cnki-net-s.vpn3.fjnu.edu.cn/', desc: '校外访问知网等学术资源', icon: '🌐', featured: true },
   { name: '中国知网', url: 'https://www.cnki.net', desc: '学术论文检索（需VPN或校园网）', icon: '📚' },
   { name: '万方数据', url: 'https://www.wanfangdata.com.cn', desc: '学术论文检索（需VPN或校园网）', icon: '📖' },
   { name: '超星学习通', url: 'https://fjnu.zlgc2.chaoxing.com', desc: '在线课程 / 教学资源', icon: '📱' },
   { name: 'NextFStar', url: 'https://nfs.pcdawn.cn', desc: '校园服务聚合 · 课程表 / 食堂 / 教室导航', icon: '🌐' },
-  { name: '研究生会', url: 'https://yjsy.fjnu.edu.cn/yjsh/list.htm', desc: '研究生会活动 / 社团 / 讲座', icon: '🎭' },
-  { name: '就业指导中心', url: 'https://career.fjnu.edu.cn/main.htm', desc: '招聘会 / 宣讲会 / 选调生 · 新版就业信息网', icon: '💼' },
+  { name: '就业指导中心', url: 'https://career.fjnu.edu.cn/main.htm', desc: '招聘会 / 宣讲会 / 选调生', icon: '💼' },
 ]
 
 const creditRequirements = [
@@ -219,6 +218,14 @@ function eventClass(type) {
           <span class="link-go">↗</span>
         </a>
       </div>
+      <a href="https://library.fjnu.edu.cn/03/99/c3604a328601/page.htm" target="_blank" rel="noopener" class="arsi-tip">
+        <span class="arsi-tip-icon">📖</span>
+        <div class="arsi-tip-content">
+          <div class="arsi-tip-title">知网CARSI校外访问攻略</div>
+          <div class="arsi-tip-desc">详细图文教程 · 手机端也能用 · 常见问题解答</div>
+        </div>
+        <span class="arsi-tip-arrow">›</span>
+      </a>
     </div>
     <div class="panel">
       <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>📚 学术资源</div>
@@ -493,6 +500,14 @@ function eventClass(type) {
 .link-name { font-weight: 700; font-size: 14px; }
 .link-desc { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
 .link-go { color: var(--primary); font-weight: 700; flex-shrink: 0; }
+
+.arsi-tip { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-top: 12px; border: 1px dashed var(--primary); border-radius: var(--radius); background: linear-gradient(135deg, var(--primary-soft) 0%, transparent 100%); text-decoration: none; color: var(--text); transition: all 0.2s; cursor: pointer; }
+.arsi-tip:hover { border-style: solid; background: var(--primary-soft); transform: translateX(4px); }
+.arsi-tip-icon { font-size: 28px; flex-shrink: 0; }
+.arsi-tip-content { flex: 1; min-width: 0; }
+.arsi-tip-title { font-weight: 700; font-size: 13px; color: var(--primary); }
+.arsi-tip-desc { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+.arsi-tip-arrow { font-size: 20px; font-weight: 700; color: var(--primary); flex-shrink: 0; }
 
 .credit-summary { display: flex; gap: 20px; margin-bottom: 16px; padding: 16px; background: var(--primary-soft); border-radius: var(--radius); }
 .credit-item { text-align: center; flex: 1; }

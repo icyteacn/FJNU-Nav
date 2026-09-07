@@ -227,9 +227,9 @@ onMounted(load)
   <div class="panel" style="margin-bottom:16px;">
     <div class="section-title" style="margin:0 0 12px;"><span class="bar"></span>🗓️ 校历预览</div>
 
-    <div class="cal-toolbar">
+    <div class="cal-toolbar" data-tour="cal-mode">
       <button class="cal-nav-btn" :disabled="termIdx >= previewTerms.length - 1" title="上一学期" @click="goTerm(termIdx + 1, 'back')">←</button>
-      <select class="cal-term-select" :value="termIdx" @change="onSelectTerm">
+      <select class="cal-term-select" :value="termIdx" @change="onSelectTerm" data-tour="cal-selector">
         <option v-for="(t, i) in previewTerms" :key="t.id" :value="i">{{ t.label }}</option>
       </select>
       <button class="cal-nav-btn" :disabled="termIdx <= 0" title="下一学期" @click="goTerm(termIdx - 1, 'fwd')">→</button>
@@ -239,7 +239,7 @@ onMounted(load)
       校历图片加载失败 ·
       <a :href="currentTerm.sourceUrl" target="_blank" rel="noopener">打开教务处原文页 ↗</a>
     </div>
-    <div v-else class="cal-shell" @click="openPreview()">
+    <div v-else class="cal-shell" @click="openPreview()" data-tour="cal-preview">
       <div v-if="imgLoading && !imgLoaded" class="cal-skeleton">校历加载中…</div>
       <Transition :name="'cal-' + slideDir">
         <img

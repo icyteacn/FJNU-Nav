@@ -54,7 +54,7 @@ onMounted(() => {
     </div>
 
     <template v-if="tab === 'official'">
-      <div class="mail-helper">
+      <div class="mail-helper" data-tour="sites-featured">
         <div class="mail-head">
           <span class="mail-emoji">📧</span>
           <div class="mail-head-txt">
@@ -85,7 +85,7 @@ onMounted(() => {
     </template>
 
     <template v-else-if="tab === 'college'">
-      <div v-for="g in collegeGroups" :key="g.cat" class="official-group">
+      <div v-for="g in collegeGroups" :key="g.cat" class="official-group" data-tour="sites-colleges">
         <h4 class="group-name">{{ g.cat }}</h4>
         <div class="college-grid">
           <a v-for="c in g.list" :key="c.name" class="college-card" :href="c.url" target="_blank" rel="noopener">
@@ -98,7 +98,7 @@ onMounted(() => {
     </template>
 
     <template v-else>
-      <div class="phone-list">
+      <div class="phone-list" data-tour="sites-phone">
         <div v-for="(v, k) in emergency" :key="k" class="phone-row">
           <span class="phone-name">{{ k }}</span>
           <span class="phone-num">{{ v }}</span>

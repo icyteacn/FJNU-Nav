@@ -138,13 +138,13 @@ const activeTableData = computed(() => {
       <button class="seg-btn" :class="{ active: gender === 'female' }" @click="gender = 'female'">👩 女</button>
     </div>
 
-    <div class="year-tabs">
+    <div class="year-tabs" data-tour="pt-year">
       <button v-for="(l, i) in yearLabels" :key="l" class="year-tab" :class="{ active: activeYear === i }" @click="activeYear = i">
         {{ l }}
       </button>
     </div>
 
-    <div class="result-banner">
+    <div class="result-banner" data-tour="pt-result">
       <div class="result-score">
         <span class="result-num">{{ active.total }}</span>
         <span class="result-total">/100</span>
@@ -154,7 +154,7 @@ const activeTableData = computed(() => {
       <button v-if="years[activeYear].height && years[activeYear].weight" class="btn" style="margin-top:10px;width:100%;" @click="goWhatToEat">🍽️ 根据BMI获取健康饮食推荐</button>
     </div>
 
-    <div class="field-grid">
+    <div class="field-grid" data-tour="pt-form">
       <label class="field">
         <span class="field-label">身高（cm）</span>
         <input v-model.number="years[activeYear].height" class="input" type="number" placeholder="如 175" @focus="activeTable = 'bmi'" />

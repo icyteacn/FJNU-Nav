@@ -5,10 +5,15 @@
  * 视图注册、路由解析、导航逻辑集中在 src/router.js；
  * 品牌、版权、文案集中在 src/config/site.js。此处只做组装。
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import Welcome from './views/Welcome.vue'
+import TourOverlay from './components/TourOverlay.vue'
 import { SITE } from './config/site'
 import { NAV_APPS, useViewState, preloadPopular } from './router'
+import { useTour } from './utils/useTour'
+import { getTourSteps } from './data/tourSteps'
+
+const { startTour, isTourCompleted, isActive } = useTour()
 
 /** 会话级初始页：每次新开浏览器先展示欢迎页，进入后本会话不再打扰 */
 const stage = ref(sessionStorage.getItem('fjnu_welcome_seen') ? 'main' : 'welcome')
@@ -51,6 +56,42 @@ onMounted(() => {
 })
 
 const { current, currentComp, openApp, goHome, loadingView } = useViewState()
+
+/** 新手引导：首次访问自动触发，之后可通过按钮触发 */
+function triggerTour() {
+  const steps = getTourSteps(current.value)
+  if (steps) {
+    startTour(current.value, steps)
+  }
+}
+
+// 进入主页面后检查是否需要自动触发引导（仅在非欢迎页状态时）
+function checkAndTriggerTour() {
+  // 等待 DOM 渲染完成后再触发
+  setTimeout(() => {
+    if (current.value === 'home' && !isTourCompleted('home')) {
+      triggerTour()
+    }
+  }, 600)
+}
+
+// 监听 stage 变化，欢迎页进入主页面后触发引导
+watch(stage, (val) => {
+  if (val === 'main') {
+    checkAndTriggerTour()
+  }
+})
+
+// 切换页面时检查是否需要自动触发引导
+watch(current, (val) => {
+  if (!isActive.value && !isTourCompleted(val)) {
+    nextTick(() => {
+      setTimeout(() => {
+        triggerTour()
+      }, 400)
+    })
+  }
+})
 
 /* 公告系统 */
 const NOTICE_KEY = 'fjnu_notice_read'
@@ -107,7 +148,8 @@ onMounted(() => {
             🔔
             <span class="notice-dot" v-if="unreadCount">{{ unreadCount }}</span>
           </button>
-          <button class="ghost-btn" :title="theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'" @click="toggleTheme">{{ theme === 'dark' ? '☀️' : '🌙' }}</button>
+          <button class="ghost-btn tour-btn-header" data-tour="tour-btn" title="查看新手引导" @click="triggerTour">❓</button>
+          <button class="ghost-btn" data-tour="theme-toggle" :title="theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'" @click="toggleTheme">{{ theme === 'dark' ? '☀️' : '🌙' }}</button>
           <button class="ghost-btn" @click="goHome">🏠 首页</button>
         </div>
       </div>
@@ -131,7 +173,7 @@ onMounted(() => {
       <div class="footer-dev">{{ SITE.devLine }}</div>
     </footer>
 
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" data-tour="bottom-nav">
       <button class="bottom-nav__item" :class="{ 'is-active': current === 'home' }" @click="goHome">
         <span class="bn-icon">🏠</span><span>首页</span>
       </button>
@@ -167,4 +209,7 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <!-- 新手引导覆盖层 -->
+  <TourOverlay />
 </template>

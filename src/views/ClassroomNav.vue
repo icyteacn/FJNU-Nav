@@ -172,7 +172,7 @@ function fallbackRoute(b) {
 
 <template>
   <div class="view-top">
-    <button class="back-btn" @click="view === 'empty' ? (view = 'main') : emit('back')">← {{ view === 'empty' ? '返回教室导航' : '返回首页' }}</button>
+    <button class="back-btn" data-tour="back" @click="view === 'empty' ? (view = 'main') : emit('back')">← {{ view === 'empty' ? '返回教室导航' : '返回首页' }}</button>
     <div class="view-title">{{ view === 'empty' ? '空教室查询结果' : '教室导航' }}</div>
     <div class="view-sub">{{ view === 'empty' ? '点击教室可查看其一周占用安排' : '空教室实时查询 · 教室检索与导航指引' }}</div>
   </div>
@@ -194,7 +194,7 @@ function fallbackRoute(b) {
   </div>
 
   <template v-if="view === 'empty'">
-    <div class="panel" style="margin-bottom:16px;">
+    <div class="panel" data-tour="classroom-result" style="margin-bottom:16px;">
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
         <div style="font-weight:700;font-size:15px;">{{ dayNames[emptyResult.day - 1] }} · 第 {{ emptyResult.period }} 节</div>
         <div class="muted" style="font-size:13px;">空闲教室 {{ emptyResult.emptyCount }} / {{ emptyResult.total }} 间</div>
@@ -218,7 +218,7 @@ function fallbackRoute(b) {
       <div style="font-weight:700;margin-bottom:10px;">🪑 空教室查询
         <span v-if="courseTable" class="muted" style="font-size:12px;font-weight:400;">（{{ courseTable.semester }} · 解析自教务处课程总表，{{ courseTable.rooms }} 间教室）</span>
       </div>
-      <div class="input-row">
+      <div class="input-row" data-tour="classroom-search">
         <select class="input" v-model="emptyDay">
           <option v-for="(d, i) in dayNames" :key="i" :value="i + 1">{{ d }}</option>
         </select>

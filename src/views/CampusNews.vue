@@ -99,7 +99,7 @@ function openItem(it) {
       <button class="refresh-btn" :disabled="refreshing" @click="refresh">{{ refreshing ? '刷新中…' : '🔄 刷新' }}</button>
     </div>
 
-    <div class="tab-row" style="margin-bottom:12px;flex-wrap:wrap;gap:6px;">
+    <div class="tab-row" style="margin-bottom:12px;flex-wrap:wrap;gap:6px;" data-tour="news-tabs">
       <button class="tab" :class="{ active: tab === 'notice' }" @click="tab = 'notice'">📢 教务通知（{{ filteredNotices.length }}）</button>
       <button class="tab" :class="{ active: tab === 'news' }" @click="tab = 'news'">📰 工作动态（{{ filteredNews.length }}）</button>
       <button class="tab" :class="{ active: tab === 'cse' }" @click="tab = 'cse'">
@@ -108,14 +108,14 @@ function openItem(it) {
     </div>
 
     <div class="panel" style="margin-bottom:16px;">
-      <div class="search-bar">
+      <div class="search-bar" data-tour="news-filter">
         <span class="search-icon">🔍</span>
         <input v-model="kw" class="search-input" placeholder="过滤当前栏目：奖学金 / 竞赛 / 日期…" />
       </div>
     </div>
 
     <!-- 教务通知 -->
-    <div v-if="tab === 'notice'" class="panel">
+    <div v-if="tab === 'notice'" class="panel" data-tour="news-list">
       <div class="cal-list">
         <button v-for="it in filteredNotices" :key="it.url" class="news-item news-click" @click="selected = it">
           <span class="news-date">{{ it.date }}</span>

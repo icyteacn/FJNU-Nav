@@ -46,10 +46,10 @@ function toggleCampus(name) {
 
 <template>
   <div class="page home">
-    <section class="hero">
+    <section class="hero" data-tour="hero">
       <h2 class="hero-title">{{ greeting() }}</h2>
       <p class="hero-sub">欢迎回到 {{ SITE.name }}，{{ SITE.heroSub }}</p>
-      <div class="search-bar">
+      <div class="search-bar" data-tour="search">
         <span class="search-icon">🔍</span>
         <input v-model="keyword" class="search-input" placeholder="搜索应用或功能：奖学金、空教室、记账…" />
       </div>
@@ -80,7 +80,7 @@ function toggleCampus(name) {
           <button class="section-link" @click="emit('open', 'categories')">查看全部分类 ›</button>
         </div>
       </div>
-      <div v-if="keyword.trim() && filtered.length" class="tile-grid">
+      <div v-if="keyword.trim() && filtered.length" class="tile-grid" data-tour="app-grid">
         <button
           v-for="r in filtered"
           :key="r.app.id"
@@ -95,7 +95,7 @@ function toggleCampus(name) {
           </span>
         </button>
       </div>
-      <div v-else-if="!keyword.trim()" class="tile-grid">
+      <div v-else-if="!keyword.trim()" class="tile-grid" data-tour="app-grid">
         <button
           v-for="a in apps"
           :key="a.id"

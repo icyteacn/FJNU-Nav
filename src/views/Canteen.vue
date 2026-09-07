@@ -137,7 +137,7 @@ function toggleFood(name) {
       <div class="view-sub">福star食堂名单 · 实时空座监测 · 档口菜价一览</div>
     </div>
 
-    <div class="panel status-panel">
+    <div class="panel status-panel" data-tour="canteen-live">
       <div class="status-header">
         <span class="status-dot" :class="mealTag.open ? 'on' : 'off'"></span>
         <div class="status-info">
@@ -161,7 +161,7 @@ function toggleFood(name) {
           <span>风味档口</span>
         </div>
       </div>
-      <div class="hour-row">
+      <div class="hour-row" data-tour="canteen-peak">
         <span class="hour-tag basic">大众窗口 {{ canteenStats.basicHours }}</span>
         <span class="hour-tag flavor">风味档口 {{ canteenStats.flavorHours }}</span>
       </div>
@@ -219,7 +219,7 @@ function toggleFood(name) {
           </div>
         </div>
       </div>
-      <div v-if="live && live.updatedAt" class="update-info">
+      <div v-if="live && live.updatedAt" class="update-info" data-tour="canteen-refresh">
         <div class="update-time">
           <span class="update-label">数据更新：</span>
           <span class="update-value">{{ live.updatedAt }}</span>

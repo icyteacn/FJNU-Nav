@@ -672,7 +672,7 @@ const monthLabel = computed(() => {
     <button class="back-btn" @click="emit('back')">← 返回首页</button>
     <div class="view-title">生活费计数器</div>
     <div class="view-sub">随手记一笔，月底少流一滴泪 · 奖学金、兼职收入也能入账</div>
-    <div class="top-actions">
+    <div class="top-actions" data-tour="budget-sub">
       <button class="btn ghost small" @click="subView = 'sim'">📊 生活费模拟 ›</button>
       <button class="btn ghost small pro-btn" @click="subView = 'pro'">⚙️ 专业版 ›</button>
     </div>
@@ -729,7 +729,7 @@ const monthLabel = computed(() => {
         @touchend="holdEnd"
       >💵 收入</button>
     </div>
-    <div class="cat-grid">
+    <div class="cat-grid" data-tour="budget-category">
       <button
         v-for="c in cats"
         :key="c.key"
@@ -753,7 +753,7 @@ const monthLabel = computed(() => {
         </div>
       </div>
     </template>
-    <div class="input-row" style="margin-top:14px;">
+    <div class="input-row" style="margin-top:14px;" data-tour="budget-input">
       <input v-model="amount" class="input amount-input" type="number" inputmode="decimal" placeholder="金额，如 12.5" @keyup.enter="save" />
       <input v-model="date" class="input date-input" type="date" />
     </div>
@@ -803,7 +803,7 @@ const monthLabel = computed(() => {
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel" data-tour="budget-chart">
     <div class="section-head" style="align-items:center;margin:0 0 12px;">
       <h3 class="section-title" style="margin:0;"><span class="bar"></span>本月支出构成</h3>
       <div class="chart-type">

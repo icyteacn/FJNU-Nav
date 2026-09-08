@@ -65,11 +65,11 @@ function triggerTour() {
   }
 }
 
-// 进入主页面后检查是否需要自动触发引导（仅在非欢迎页状态时）
+// 进入主页面后检查是否需要自动触发引导（支持深链接直接进入任意页面）
 function checkAndTriggerTour() {
-  // 等待 DOM 渲染完成后再触发
   setTimeout(() => {
-    if (current.value === 'home' && !isTourCompleted('home')) {
+    const page = current.value
+    if (page && !isTourCompleted(page)) {
       triggerTour()
     }
   }, 600)
@@ -84,7 +84,7 @@ watch(stage, (val) => {
 
 // 切换页面时检查是否需要自动触发引导
 watch(current, (val) => {
-  if (!isActive.value && !isTourCompleted(val)) {
+  if (!isActive.value && val && !isTourCompleted(val)) {
     nextTick(() => {
       setTimeout(() => {
         triggerTour()
@@ -150,7 +150,7 @@ onMounted(() => {
           </button>
           <button class="ghost-btn tour-btn-header" data-tour="tour-btn" title="查看新手引导" @click="triggerTour">❓</button>
           <button class="ghost-btn" data-tour="theme-toggle" :title="theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'" @click="toggleTheme">{{ theme === 'dark' ? '☀️' : '🌙' }}</button>
-          <button class="ghost-btn" @click="goHome">🏠 首页</button>
+          <button class="ghost-btn home-btn" @click="goHome">🏠<span class="home-btn-text"> 首页</span></button>
         </div>
       </div>
     </header>

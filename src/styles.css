@@ -1024,6 +1024,7 @@ table.data th { background: var(--primary-soft); color: var(--primary-dark); fon
   .brand-name { font-size: 15px; }
   .header-right { gap: 6px; }
   .ghost-btn { padding: 7px 10px; font-size: 12px; }
+  .home-btn-text { display: none; }
   .brand-sub { display: none; }
   .result-banner { flex-wrap: wrap; }
   .result-hint { width: 100%; margin-left: 0; }

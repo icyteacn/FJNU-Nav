@@ -459,7 +459,7 @@ function pickScholar(s) {
   note.value = s.name
 }
 
-/** 导入微信 / 支付宝账单文件（csv/xlsx 均支持，全部在浏览器本地解析） */
+/** 导入微信 / 支付宝 / 建行 / 中行账单文件（csv/xlsx/xls/pdf 均支持，全部在浏览器本地解析） */
 async function billImport(file) {
   importMsg.value = ''
   if (!file) return
@@ -470,7 +470,7 @@ async function billImport(file) {
   }
   let { added, skipped, brand, source } = res
   if (!added.length) {
-    importMsg.value = `未找到可导入的收支记录（跳过中性交易/无效记录 ${skipped.neutral + skipped.closed} 笔）。请确认账单文件为微信「用于个人对账」或支付宝「交易明细」导出。`
+    importMsg.value = `未找到可导入的收支记录（跳过中性交易/无效记录 ${skipped.neutral + skipped.closed} 笔）。请确认账单文件为微信/支付宝/建行/中行导出。`
     return
   }
 
@@ -491,9 +491,9 @@ async function billImport(file) {
     }
   }
 
-  /* 导入去重：与现有记录及本批次内按 (日期|金额|收支|类别|备注) 比对，
+  /* 导入去重：与现有记录及本批次内按 (日期|时间|金额|收支|类别|备注) 比对，
    * 重复导入同一账单时不再产生多条相同记录。 */
-  const keyOf = (r) => `${r.date}|${r.amount}|${r.type}|${r.cat}|${r.note}`
+  const keyOf = (r) => `${r.date}|${r.time || ''}|${r.amount}|${r.type}|${r.cat}|${r.note}`
   const existing = new Set(records.value.map(keyOf))
   const seen = new Set()
   const fresh = []
@@ -515,8 +515,10 @@ async function billImport(file) {
   for (const r of fresh) if (r.date > latest) latest = r.date.slice(0, 7)
   if (latest) month.value = latest
 
-  const brandName = brand === 'alipay' ? '支付宝' : '微信'
-  const typeName = source === 'xlsx' ? 'Excel(xlsx)' : '表格'
+  const brandNames = { alipay: '支付宝', wechat: '微信', ccb: '建设银行', boc: '中国银行' }
+  const sourceNames = { xlsx: 'Excel(xlsx)', xls: 'Excel(xls)', pdf: 'PDF', text: 'CSV/表格' }
+  const brandName = brandNames[brand] || brand
+  const typeName = sourceNames[source] || source
   const byMonth = {}
   for (const r of fresh) {
     const mk = r.date.slice(0, 7)
@@ -593,6 +595,7 @@ const sortDir = ref('desc')
 const typeFilter = ref('all')
 const catFilter = ref('all')
 const incCatFilter = ref('all')
+const searchText = ref('')
 const PAGE_SIZE = 10
 const page = ref(1)
 function switchSort(k) {
@@ -600,12 +603,21 @@ function switchSort(k) {
   sortMode.value = k
   page.value = 1
 }
-watch([catFilter, incCatFilter, typeFilter, sortMode], () => { page.value = 1 })
+watch([catFilter, incCatFilter, typeFilter, sortMode, searchText], () => { page.value = 1 })
 const sorted = computed(() => {
   let list = monthRecords.value
   if (typeFilter.value !== 'all') list = list.filter((r) => r.type === typeFilter.value)
   if (catFilter.value !== 'all') list = list.filter((r) => r.type === 'expense' && r.cat === catFilter.value)
   if (incCatFilter.value !== 'all') list = list.filter((r) => r.type === 'income' && r.cat === incCatFilter.value)
+  if (searchText.value.trim()) {
+    const kw = searchText.value.trim().toLowerCase()
+    list = list.filter((r) => {
+      const catLabel = (catInfo(r.type, r.cat) || {}).label || ''
+      const merchant = r.merchant || ''
+      const note = r.note || ''
+      return catLabel.toLowerCase().includes(kw) || merchant.toLowerCase().includes(kw) || note.toLowerCase().includes(kw) || String(r.amount).includes(kw)
+    })
+  }
   const arr = [...list]
   if (sortMode.value === 'amount') arr.sort((a, b) => (sortDir.value === 'asc' ? a.amount - b.amount : b.amount - a.amount) || (a.date < b.date ? 1 : -1))
   else if (sortMode.value === 'cat') arr.sort((a, b) => (catInfo('expense', a.cat) || {}).label?.localeCompare((catInfo('expense', b.cat) || {}).label || '') || (a.date < b.date ? 1 : -1))
@@ -647,6 +659,51 @@ function clearAll() {
   if (window.confirm('确定清空全部记账记录？此操作不可恢复。')) {
     records.value = []
   }
+}
+
+/** 检测左右手倒钱：同一天或相近日期内，金额相同、类型相反的交易对 */
+const transferPairs = ref([])
+const showTransferClean = ref(false)
+function detectTransferPairs() {
+  const pairs = []
+  const allRecs = [...records.value]
+  const used = new Set()
+  for (let i = 0; i < allRecs.length; i++) {
+    if (used.has(i)) continue
+    const r1 = allRecs[i]
+    for (let j = i + 1; j < allRecs.length; j++) {
+      if (used.has(j)) continue
+      const r2 = allRecs[j]
+      if (Math.abs(r1.amount - r2.amount) < 0.01 && r1.type !== r2.type) {
+        const d1 = new Date(r1.date)
+        const d2 = new Date(r2.date)
+        const dayDiff = Math.abs(d1 - d2) / 86400000
+        if (dayDiff <= 1) {
+          pairs.push({ r1, r2, id: `${r1.id}-${r2.id}` })
+          used.add(i)
+          used.add(j)
+          break
+        }
+      }
+    }
+  }
+  transferPairs.value = pairs
+  showTransferClean.value = true
+}
+function removeTransferPairs() {
+  const idsToRemove = new Set()
+  for (const p of transferPairs.value) {
+    idsToRemove.add(p.r1.id)
+    idsToRemove.add(p.r2.id)
+  }
+  records.value = records.value.filter((r) => !idsToRemove.has(r.id))
+  const count = transferPairs.value.length
+  transferPairs.value = []
+  showTransferClean.value = false
+  showToast(`已清理 ${count} 对疑似倒钱记录（共 ${count * 2} 笔）`, 3000)
+}
+function closeTransferClean() {
+  showTransferClean.value = false
 }
 
 const monthLabel = computed(() => {
@@ -771,12 +828,12 @@ const monthLabel = computed(() => {
   </div>
 
   <div class="panel">
-    <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>📥 导入微信 / 支付宝账单</div>
+    <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>📥 导入账单</div>
     <p class="muted" style="font-size:12px;margin-bottom:10px;">
-      直接选择从微信 / 支付宝下载的账单文件即可自动识别：微信「支付 → 钱包 → 账单 → 常见问题 → 下载账单 → 用于个人对账」或支付宝「我的 → 账单 → 右上角 ⋯ → 开具交易流水证明 / 导出」，下载的 CSV 或 Excel(xlsx) 都能识别。金额按「收/支」自动记入，支出按交易分类与商品名自动归类。
+      支持导入<b>微信</b>、<b>支付宝</b>、<b>建设银行</b>、<b>中国银行</b>账单文件：微信「支付 → 钱包 → 账单 → 常见问题 → 下载账单 → 用于个人对账」，支付宝「我的 → 账单 → 右上角 ⋯ → 开具交易流水证明 / 导出」，建行/中行网银导出交易明细。金额按「收/支」自动记入，支出按交易分类与商品名自动归类。
     </p>
-    <input id="csv-file" type="file" accept=".csv,.xlsx,text/csv" style="display:none;" @change="billImport($event.target.files[0])" />
-    <label for="csv-file" class="btn ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📄 选择账单文件（CSV / Excel）</label>
+    <input id="csv-file" type="file" accept=".csv,.xlsx,.xls,.pdf,text/csv" style="display:none;" @change="billImport($event.target.files[0])" />
+    <label for="csv-file" class="btn ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📄 选择账单文件（CSV / Excel / PDF）</label>
     <div class="clean-toggle">
       <input id="clean-switch" type="checkbox" v-model="cleanMode" />
       <label for="clean-switch">智能清洗：自动跳过转账 / 红包 / 收款类<b>大额中转</b>（≥1000 元，如别人转几万给你、你再转去他另一张卡这类过账，避免虚增当月收支；小额 AA 饭钱等转账仍保留）</label>
@@ -784,6 +841,45 @@ const monthLabel = computed(() => {
     <div v-if="importMsg" class="import-msg">{{ importMsg }}</div>
     <div class="privacy-note">
       🔒 隐私说明：本站为纯静态网页（无后端服务器），账单文件只在你自己的浏览器里本地解析，<b>不会上传到任何服务器</b>，也不会被任何服务方获取；导入的记账记录仅保存在本机浏览器 localStorage，可安心试用。清除浏览器数据会一并清空记录。
+    </div>
+  </div>
+
+  <div class="panel" v-if="records.length > 0">
+    <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>🧹 数据清洗</div>
+    <p class="muted" style="font-size:12px;margin-bottom:10px;">
+      检测并清理疑似「左手倒右手」的交易：同一天或相邻日期内，金额相同但收支方向相反的记录对（如微信转出 → 支付宝收入），这类记录通常是平台间转账，会虚增收支数据。
+    </p>
+    <button class="btn ghost" @click="detectTransferPairs" style="display:inline-flex;align-items:center;gap:6px;">🔍 检测倒钱记录</button>
+    <div v-if="showTransferClean" class="transfer-clean-panel">
+      <div v-if="transferPairs.length === 0" class="transfer-empty">
+        ✅ 未检测到疑似倒钱记录，你的账单很干净！
+      </div>
+      <div v-else>
+        <div class="transfer-summary">
+          检测到 <b>{{ transferPairs.length }}</b> 对疑似倒钱记录（共 <b>{{ transferPairs.length * 2 }}</b> 笔），金额合计 ¥{{ fmt(transferPairs.reduce((s, p) => s + p.r1.amount, 0)) }}
+        </div>
+        <div class="transfer-list">
+          <div v-for="p in transferPairs" :key="p.id" class="transfer-pair">
+            <div class="transfer-item expense">
+              <span class="transfer-type">支出</span>
+              <span class="transfer-amt">-¥{{ fmt(p.r1.amount) }}</span>
+              <span class="transfer-note">{{ p.r1.note || p.r1.merchant || '无备注' }}</span>
+              <span class="transfer-date">{{ p.r1.date }}</span>
+            </div>
+            <div class="transfer-arrow">↔</div>
+            <div class="transfer-item income">
+              <span class="transfer-type">收入</span>
+              <span class="transfer-amt">+¥{{ fmt(p.r2.amount) }}</span>
+              <span class="transfer-note">{{ p.r2.note || p.r2.merchant || '无备注' }}</span>
+              <span class="transfer-date">{{ p.r2.date }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="transfer-actions">
+          <button class="btn accent" @click="removeTransferPairs">🗑️ 一键删除以上 {{ transferPairs.length }} 对记录</button>
+          <button class="btn ghost" @click="closeTransferClean">取消</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -836,6 +932,10 @@ const monthLabel = computed(() => {
       <h3 class="section-title" style="margin:0;">明细（{{ sorted.length }}）</h3>
       <button v-if="records.length" class="btn ghost small" @click="clearAll">清空全部</button>
     </div>
+    <div class="search-row">
+      <input v-model="searchText" class="input search-input" type="text" placeholder="🔍 搜索备注、商户、分类、金额..." />
+      <button v-if="searchText" class="btn ghost small" @click="searchText = ''">✕</button>
+    </div>
     <div class="sort-row">
       <button class="tab" :class="{ active: typeFilter === 'all' }" @click="typeFilter = 'all'; catFilter = 'all'; incCatFilter = 'all'">全部</button>
       <button class="tab" :class="{ active: typeFilter === 'expense' }" @click="typeFilter = 'expense'; catFilter = 'all'">支出</button>
@@ -862,7 +962,7 @@ const monthLabel = computed(() => {
         <span class="rec-icon">{{ (catInfo(r.type, r.cat) || {}).icon || '📌' }}</span>
         <span class="rec-main">
           <span class="rec-name">{{ (catInfo(r.type, r.cat) || {}).label || r.cat }}<em v-if="r.merchant"> · {{ r.merchant }}</em><em v-if="r.refunded"> ↩︎已退款</em><em v-if="r.note && r.note !== r.merchant"> · {{ r.note }}</em></span>
-          <span class="muted" style="font-size:11px;">{{ r.date }}</span>
+          <span class="muted" style="font-size:11px;">{{ r.date }}{{ r.time ? ' ' + r.time : '' }}</span>
         </span>
         <span class="rec-amt" :class="r.type === 'income' ? 'in' : 'out'">{{ r.type === 'income' ? '+' : '-' }}¥{{ fmt(r.amount) }}</span>
         <button class="rec-del" @click="editStart(r)" title="编辑">✎</button>
@@ -1018,6 +1118,60 @@ const monthLabel = computed(() => {
   border-radius: 10px;
   color: var(--text-sub);
 }
+
+/* 倒钱检测面板 */
+.transfer-clean-panel {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--soft-orange, #fff7ed);
+  border: 1px solid var(--soft-orange-border, #fed7aa);
+  border-radius: 12px;
+}
+.transfer-empty {
+  font-size: 13px;
+  color: #16a34a;
+  padding: 8px 0;
+}
+.transfer-summary {
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: #92400e;
+}
+.transfer-summary b { color: #dc2626; }
+.transfer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+.transfer-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--card);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.transfer-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+.transfer-type { font-weight: 700; font-size: 11px; }
+.transfer-item.expense .transfer-type { color: #dc2626; }
+.transfer-item.income .transfer-type { color: #16a34a; }
+.transfer-amt { font-weight: 800; font-size: 14px; }
+.transfer-item.expense .transfer-amt { color: #dc2626; }
+.transfer-item.income .transfer-amt { color: #16a34a; }
+.transfer-note { color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.transfer-date { color: var(--text-light); font-size: 11px; }
+.transfer-arrow { font-size: 16px; color: var(--text-light); flex: none; }
+.transfer-actions { display: flex; gap: 8px; }
 .ref-toggle {
   width: 100%;
   display: flex;
@@ -1155,6 +1309,9 @@ const monthLabel = computed(() => {
 .top-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .pro-btn { border-color: var(--primary) !important; color: var(--primary) !important; }
 
+/* 明细搜索 */
+.search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.search-input { flex: 1; font-size: 13px; padding: 8px 12px; }
 /* 明细排序 / 分类筛选 */
 .sort-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
 .sort-row .tab { flex: 0 0 auto; font-size: 12px; }

@@ -706,6 +706,92 @@ function closeTransferClean() {
   showTransferClean.value = false
 }
 
+/** 检测跨平台重复支出：微信/支付宝支付 vs 银行卡同一笔支出（同天同金额的支出-支出对） */
+const crossDups = ref([])
+const showCrossClean = ref(false)
+function detectCrossDups() {
+  const pairs = []
+  const allRecs = [...records.value]
+  const used = new Set()
+  const wechatAlipayCats = new Set(['food', 'party', 'transport', 'fruit', 'study', 'cloth', 'medical', 'daily', 'phone', 'fun', 'beauty', 'digital', 'sport', 'virtual', 'housing', 'other'])
+  for (let i = 0; i < allRecs.length; i++) {
+    if (used.has(i)) continue
+    const r1 = allRecs[i]
+    if (r1.type !== 'expense') continue
+    for (let j = i + 1; j < allRecs.length; j++) {
+      if (used.has(j)) continue
+      const r2 = allRecs[j]
+      if (r2.type !== 'expense') continue
+      if (Math.abs(r1.amount - r2.amount) < 0.01) {
+        const d1 = new Date(r1.date)
+        const d2 = new Date(r2.date)
+        const dayDiff = Math.abs(d1 - d2) / 86400000
+        if (dayDiff === 0) {
+          const n1 = (r1.note || '').toLowerCase()
+          const n2 = (r2.note || '').toLowerCase()
+          const m1 = (r1.merchant || '').toLowerCase()
+          const m2 = (r2.merchant || '').toLowerCase()
+          const isWxOrAlipay = (s) => /微信|财付通|weixin|wechat|支付宝|alipay|花呗|余额宝/.test(s)
+          const isBank = (s) => /建行|工行|农行|中行|招行|银行卡|快捷支付|网上支付|银联|card|bank/.test(s)
+          const r1IsWx = isWxOrAlipay(n1 + m1)
+          const r2IsWx = isWxOrAlipay(n2 + m2)
+          const r1IsBank = isBank(n1 + m1)
+          const r2IsBank = isBank(n2 + m2)
+          if ((r1IsWx && r2IsBank) || (r1IsBank && r2IsWx)) {
+            pairs.push({ r1, r2, id: `${r1.id}-${r2.id}` })
+            used.add(i)
+            used.add(j)
+            break
+          }
+        }
+      }
+    }
+  }
+  crossDups.value = pairs
+  showCrossClean.value = true
+}
+function removeCrossDups() {
+  const idsToRemove = new Set()
+  for (const p of crossDups.value) {
+    idsToRemove.add(p.r2.id)
+  }
+  records.value = records.value.filter((r) => !idsToRemove.has(r.id))
+  const count = crossDups.value.length
+  crossDups.value = []
+  showCrossClean.value = false
+  showToast(`已清理 ${count} 笔跨平台重复支出`, 3000)
+}
+function closeCrossClean() {
+  showCrossClean.value = false
+}
+
+/** 全部明细时间线：跨所有年份，按日期分组 */
+const timelineMode = ref(false)
+const timelineSearch = ref('')
+const timelineRecords = computed(() => {
+  let list = [...records.value]
+  if (timelineSearch.value.trim()) {
+    const kw = timelineSearch.value.trim().toLowerCase()
+    list = list.filter((r) => {
+      const catLabel = (catInfo(r.type, r.cat) || {}).label || ''
+      const merchant = r.merchant || ''
+      const note = r.note || ''
+      return catLabel.toLowerCase().includes(kw) || merchant.toLowerCase().includes(kw) || note.toLowerCase().includes(kw) || String(r.amount).includes(kw)
+    })
+  }
+  list.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id))
+  return list
+})
+const timelineGroups = computed(() => {
+  const map = {}
+  for (const r of timelineRecords.value) {
+    const d = r.date || '未知日期'
+    if (!map[d]) map[d] = []
+    map[d].push(r)
+  }
+  return Object.entries(map).map(([date, recs]) => ({ date, recs, total: sum(recs, 'income') - sum(recs, 'expense') }))
+})
+
 const monthLabel = computed(() => {
   const [y, m] = month.value.split('-').map(Number)
   return `${y}年${m}月`
@@ -847,9 +933,12 @@ const monthLabel = computed(() => {
   <div class="panel" v-if="records.length > 0">
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>🧹 数据清洗</div>
     <p class="muted" style="font-size:12px;margin-bottom:10px;">
-      检测并清理疑似「左手倒右手」的交易：同一天或相邻日期内，金额相同但收支方向相反的记录对（如微信转出 → 支付宝收入），这类记录通常是平台间转账，会虚增收支数据。
+      检测并清理脏数据，保持账单干净。
     </p>
-    <button class="btn ghost" @click="detectTransferPairs" style="display:inline-flex;align-items:center;gap:6px;">🔍 检测倒钱记录</button>
+    <div class="clean-btns">
+      <button class="btn ghost" @click="detectTransferPairs" style="display:inline-flex;align-items:center;gap:6px;">🔄 检测倒钱记录</button>
+      <button class="btn ghost" @click="detectCrossDups" style="display:inline-flex;align-items:center;gap:6px;">🔁 检测跨平台重复</button>
+    </div>
     <div v-if="showTransferClean" class="transfer-clean-panel">
       <div v-if="transferPairs.length === 0" class="transfer-empty">
         ✅ 未检测到疑似倒钱记录，你的账单很干净！
@@ -864,20 +953,51 @@ const monthLabel = computed(() => {
               <span class="transfer-type">支出</span>
               <span class="transfer-amt">-¥{{ fmt(p.r1.amount) }}</span>
               <span class="transfer-note">{{ p.r1.note || p.r1.merchant || '无备注' }}</span>
-              <span class="transfer-date">{{ p.r1.date }}</span>
+              <span class="transfer-date">{{ p.r1.date }}{{ p.r1.time ? ' ' + p.r1.time : '' }}</span>
             </div>
             <div class="transfer-arrow">↔</div>
             <div class="transfer-item income">
               <span class="transfer-type">收入</span>
               <span class="transfer-amt">+¥{{ fmt(p.r2.amount) }}</span>
               <span class="transfer-note">{{ p.r2.note || p.r2.merchant || '无备注' }}</span>
-              <span class="transfer-date">{{ p.r2.date }}</span>
+              <span class="transfer-date">{{ p.r2.date }}{{ p.r2.time ? ' ' + p.r2.time : '' }}</span>
             </div>
           </div>
         </div>
         <div class="transfer-actions">
           <button class="btn accent" @click="removeTransferPairs">🗑️ 一键删除以上 {{ transferPairs.length }} 对记录</button>
           <button class="btn ghost" @click="closeTransferClean">取消</button>
+        </div>
+      </div>
+    </div>
+    <div v-if="showCrossClean" class="transfer-clean-panel" style="background:var(--soft-orange,#fff7ed);border-color:var(--soft-orange-border,#fed7aa);">
+      <div v-if="crossDups.length === 0" class="transfer-empty">
+        ✅ 未检测到跨平台重复支出，你的账单很干净！
+      </div>
+      <div v-else>
+        <div class="transfer-summary">
+          检测到 <b>{{ crossDups.length }}</b> 笔跨平台重复支出（微信/支付宝支付 vs 银行卡同一笔），金额合计 ¥{{ fmt(crossDups.reduce((s, p) => s + p.r1.amount, 0)) }}。将保留来源更明确的一条，删除银行侧重复记录。
+        </div>
+        <div class="transfer-list">
+          <div v-for="p in crossDups" :key="p.id" class="transfer-pair">
+            <div class="transfer-item expense">
+              <span class="transfer-type">保留</span>
+              <span class="transfer-amt">-¥{{ fmt(p.r1.amount) }}</span>
+              <span class="transfer-note">{{ p.r1.note || p.r1.merchant || '无备注' }}</span>
+              <span class="transfer-date">{{ p.r1.date }}{{ p.r1.time ? ' ' + p.r1.time : '' }}</span>
+            </div>
+            <div class="transfer-arrow">≈</div>
+            <div class="transfer-item expense" style="opacity:0.5;">
+              <span class="transfer-type">删除</span>
+              <span class="transfer-amt">-¥{{ fmt(p.r2.amount) }}</span>
+              <span class="transfer-note">{{ p.r2.note || p.r2.merchant || '无备注' }}</span>
+              <span class="transfer-date">{{ p.r2.date }}{{ p.r2.time ? ' ' + p.r2.time : '' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="transfer-actions">
+          <button class="btn accent" @click="removeCrossDups">🗑️ 一键删除以上 {{ crossDups.length }} 笔重复记录</button>
+          <button class="btn ghost" @click="closeCrossClean">取消</button>
         </div>
       </div>
     </div>
@@ -929,54 +1049,88 @@ const monthLabel = computed(() => {
 
   <div class="panel">
     <div class="section-head" style="align-items:center;margin:0 0 8px;">
-      <h3 class="section-title" style="margin:0;">明细（{{ sorted.length }}）</h3>
-      <button v-if="records.length" class="btn ghost small" @click="clearAll">清空全部</button>
-    </div>
-    <div class="search-row">
-      <input v-model="searchText" class="input search-input" type="text" placeholder="🔍 搜索备注、商户、分类、金额..." />
-      <button v-if="searchText" class="btn ghost small" @click="searchText = ''">✕</button>
-    </div>
-    <div class="sort-row">
-      <button class="tab" :class="{ active: typeFilter === 'all' }" @click="typeFilter = 'all'; catFilter = 'all'; incCatFilter = 'all'">全部</button>
-      <button class="tab" :class="{ active: typeFilter === 'expense' }" @click="typeFilter = 'expense'; catFilter = 'all'">支出</button>
-      <button class="tab" :class="{ active: typeFilter === 'income' }" @click="typeFilter = 'income'; incCatFilter = 'all'">收入</button>
-      <span class="sep">|</span>
-      <button class="tab" :class="{ active: sortMode === 'date' }" @click="switchSort('date')">日期</button>
-      <button class="tab" :class="{ active: sortMode === 'amount' }" @click="switchSort('amount')">金额{{ sortMode === 'amount' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '' }}</button>
-      <button class="tab" :class="{ active: sortMode === 'cat' }" @click="switchSort('cat')">分类</button>
-      <span class="muted" style="font-size:10px;margin-left:auto;">共 {{ monthRecords.length }} 笔</span>
-    </div>
-    <div v-if="sortMode === 'cat'" class="cat-chips">
-      <template v-if="typeFilter !== 'income'">
-        <button class="chip" :class="{ active: catFilter === 'all' }" @click="catFilter = 'all'">全部支出</button>
-        <button v-for="c in CATS.expense" :key="c.key" class="chip" :class="{ active: catFilter === c.key }" @click="catFilter = c.key">{{ c.icon }}{{ c.label }}</button>
-      </template>
-      <template v-else>
-        <button class="chip" :class="{ active: incCatFilter === 'all' }" @click="incCatFilter = 'all'">全部收入</button>
-        <button v-for="c in CATS.income" :key="c.key" class="chip" :class="{ active: incCatFilter === c.key }" @click="incCatFilter = c.key">{{ c.icon }}{{ c.label }}</button>
-      </template>
-    </div>
-    <div v-if="!sorted.length" class="muted" style="text-align:center;padding:16px;">本月还没有记录</div>
-    <div v-else class="rec-list">
-      <div v-for="r in paged" :key="r.id" class="rec-row">
-        <span class="rec-icon">{{ (catInfo(r.type, r.cat) || {}).icon || '📌' }}</span>
-        <span class="rec-main">
-          <span class="rec-name">{{ (catInfo(r.type, r.cat) || {}).label || r.cat }}<em v-if="r.merchant"> · {{ r.merchant }}</em><em v-if="r.refunded"> ↩︎已退款</em><em v-if="r.note && r.note !== r.merchant"> · {{ r.note }}</em></span>
-          <span class="muted" style="font-size:11px;">{{ r.date }}{{ r.time ? ' ' + r.time : '' }}</span>
-        </span>
-        <span class="rec-amt" :class="r.type === 'income' ? 'in' : 'out'">{{ r.type === 'income' ? '+' : '-' }}¥{{ fmt(r.amount) }}</span>
-        <button class="rec-del" @click="editStart(r)" title="编辑">✎</button>
-        <button class="rec-del" @click="remove(r.id)" title="删除">✕</button>
+      <h3 class="section-title" style="margin:0;">{{ timelineMode ? '全部明细（跨所有月份）' : '本月明细（' + sorted.length + '）' }}</h3>
+      <div style="display:flex;gap:6px;">
+        <button class="btn ghost small" :class="{ 'active-btn': timelineMode }" @click="timelineMode = !timelineMode">{{ timelineMode ? '📅 返回本月' : '📋 全部明细' }}</button>
+        <button v-if="records.length && !timelineMode" class="btn ghost small" @click="clearAll">清空全部</button>
       </div>
     </div>
-    <div v-if="pageCount > 1" class="pager">
-      <button class="btn ghost small" :disabled="page <= 1" @click="page--">‹ 上页</button>
-      <div class="pager-jump">
-        <input v-model.number="page" type="number" class="input page-input" min="1" :max="pageCount" />
-        <span>/ {{ pageCount }}</span>
+    <template v-if="!timelineMode">
+      <div class="search-row">
+        <input v-model="searchText" class="input search-input" type="text" placeholder="🔍 搜索备注、商户、分类、金额..." />
+        <button v-if="searchText" class="btn ghost small" @click="searchText = ''">✕</button>
       </div>
-      <button class="btn ghost small" :disabled="page >= pageCount" @click="page++">下页 ›</button>
-    </div>
+      <div class="sort-row">
+        <button class="tab" :class="{ active: typeFilter === 'all' }" @click="typeFilter = 'all'; catFilter = 'all'; incCatFilter = 'all'">全部</button>
+        <button class="tab" :class="{ active: typeFilter === 'expense' }" @click="typeFilter = 'expense'; catFilter = 'all'">支出</button>
+        <button class="tab" :class="{ active: typeFilter === 'income' }" @click="typeFilter = 'income'; incCatFilter = 'all'">收入</button>
+        <span class="sep">|</span>
+        <button class="tab" :class="{ active: sortMode === 'date' }" @click="switchSort('date')">日期</button>
+        <button class="tab" :class="{ active: sortMode === 'amount' }" @click="switchSort('amount')">金额{{ sortMode === 'amount' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '' }}</button>
+        <button class="tab" :class="{ active: sortMode === 'cat' }" @click="switchSort('cat')">分类</button>
+        <span class="muted" style="font-size:10px;margin-left:auto;">共 {{ monthRecords.length }} 笔</span>
+      </div>
+      <div v-if="sortMode === 'cat'" class="cat-chips">
+        <template v-if="typeFilter !== 'income'">
+          <button class="chip" :class="{ active: catFilter === 'all' }" @click="catFilter = 'all'">全部支出</button>
+          <button v-for="c in CATS.expense" :key="c.key" class="chip" :class="{ active: catFilter === c.key }" @click="catFilter = c.key">{{ c.icon }}{{ c.label }}</button>
+        </template>
+        <template v-else>
+          <button class="chip" :class="{ active: incCatFilter === 'all' }" @click="incCatFilter = 'all'">全部收入</button>
+          <button v-for="c in CATS.income" :key="c.key" class="chip" :class="{ active: incCatFilter === c.key }" @click="incCatFilter = c.key">{{ c.icon }}{{ c.label }}</button>
+        </template>
+      </div>
+      <div v-if="!sorted.length" class="muted" style="text-align:center;padding:16px;">本月还没有记录</div>
+      <div v-else class="rec-list">
+        <div v-for="r in paged" :key="r.id" class="rec-row">
+          <span class="rec-icon">{{ (catInfo(r.type, r.cat) || {}).icon || '📌' }}</span>
+          <span class="rec-main">
+            <span class="rec-name">{{ (catInfo(r.type, r.cat) || {}).label || r.cat }}<em v-if="r.merchant"> · {{ r.merchant }}</em><em v-if="r.refunded"> ↩︎已退款</em><em v-if="r.note && r.note !== r.merchant"> · {{ r.note }}</em></span>
+            <span class="muted" style="font-size:11px;">{{ r.date }}{{ r.time ? ' ' + r.time : '' }}</span>
+          </span>
+          <span class="rec-amt" :class="r.type === 'income' ? 'in' : 'out'">{{ r.type === 'income' ? '+' : '-' }}¥{{ fmt(r.amount) }}</span>
+          <button class="rec-del" @click="editStart(r)" title="编辑">✎</button>
+          <button class="rec-del" @click="remove(r.id)" title="删除">✕</button>
+        </div>
+      </div>
+      <div v-if="pageCount > 1" class="pager">
+        <button class="btn ghost small" :disabled="page <= 1" @click="page--">‹ 上页</button>
+        <div class="pager-jump">
+          <input v-model.number="page" type="number" class="input page-input" min="1" :max="pageCount" />
+          <span>/ {{ pageCount }}</span>
+        </div>
+        <button class="btn ghost small" :disabled="page >= pageCount" @click="page++">下页 ›</button>
+      </div>
+    </template>
+    <template v-else>
+      <div class="search-row">
+        <input v-model="timelineSearch" class="input search-input" type="text" placeholder="🔍 搜索全部年份的备注、商户、分类、金额..." />
+        <button v-if="timelineSearch" class="btn ghost small" @click="timelineSearch = ''">✕</button>
+      </div>
+      <div class="muted" style="font-size:11px;margin-bottom:10px;">共 {{ timelineRecords.length }} 笔记录，按日期倒序排列，可搜索跨所有年份</div>
+      <div v-if="!timelineGroups.length" class="muted" style="text-align:center;padding:16px;">没有找到匹配的记录</div>
+      <div v-else class="timeline">
+        <div v-for="g in timelineGroups" :key="g.date" class="timeline-day">
+          <div class="timeline-date">
+            <span class="timeline-date-text">{{ g.date }}</span>
+            <span class="timeline-date-count">{{ g.recs.length }} 笔</span>
+            <span class="timeline-date-bal" :class="g.total >= 0 ? 'in' : 'out'">{{ g.total >= 0 ? '+' : '' }}¥{{ fmt(Math.abs(g.total)) }}</span>
+          </div>
+          <div class="timeline-items">
+            <div v-for="r in g.recs" :key="r.id" class="rec-row">
+              <span class="rec-icon">{{ (catInfo(r.type, r.cat) || {}).icon || '📌' }}</span>
+              <span class="rec-main">
+                <span class="rec-name">{{ (catInfo(r.type, r.cat) || {}).label || r.cat }}<em v-if="r.merchant"> · {{ r.merchant }}</em><em v-if="r.note && r.note !== r.merchant"> · {{ r.note }}</em></span>
+                <span class="muted" style="font-size:11px;">{{ r.time || '' }}</span>
+              </span>
+              <span class="rec-amt" :class="r.type === 'income' ? 'in' : 'out'">{{ r.type === 'income' ? '+' : '-' }}¥{{ fmt(r.amount) }}</span>
+              <button class="rec-del" @click="editStart(r); timelineMode = false" title="编辑">✎</button>
+              <button class="rec-del" @click="remove(r.id)" title="删除">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
     <p class="muted" style="font-size:11px;margin-top:10px;">记录保存在本机浏览器（localStorage），不会上传任何数据。</p>
 
     <div class="ach-panel">
@@ -1127,6 +1281,8 @@ const monthLabel = computed(() => {
   border: 1px solid var(--soft-orange-border, #fed7aa);
   border-radius: 12px;
 }
+.clean-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.active-btn { border-color: var(--primary) !important; color: var(--primary) !important; background: var(--primary-soft) !important; }
 .transfer-empty {
   font-size: 13px;
   color: #16a34a;
@@ -1378,6 +1534,17 @@ const monthLabel = computed(() => {
   cursor: pointer;
 }
 .ach-more:hover { color: var(--primary); border-color: var(--primary); }
+
+/* 全部明细时间线 */
+.timeline { display: flex; flex-direction: column; gap: 16px; }
+.timeline-day { border-left: 3px solid var(--primary); padding-left: 12px; }
+.timeline-date { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.timeline-date-text { font-size: 14px; font-weight: 800; color: var(--text); }
+.timeline-date-count { font-size: 11px; color: var(--text-sub); background: var(--primary-soft); border-radius: 8px; padding: 1px 8px; }
+.timeline-date-bal { font-size: 12px; font-weight: 700; margin-left: auto; }
+.timeline-date-bal.in { color: #b45309; }
+.timeline-date-bal.out { color: #b63a46; }
+.timeline-items { display: flex; flex-direction: column; }
 
 /* 赛博账本隐藏皮肤：霓虹渐变 + 等宽数字 */
 .budget-root.cyber .balance-banner {

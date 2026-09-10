@@ -26,8 +26,17 @@ const detailRef = ref(null)
 const showTips = ref(false)
 
 const now = ref(new Date())
-const tick = setInterval(() => { now.value = new Date() }, 1000)
+const tick = setInterval(() => { if (!previewMode.value) now.value = new Date() }, 1000)
 onUnmounted(() => clearInterval(tick))
+
+/* 时间预览功能 */
+const previewMode = ref(false)
+const previewDate = ref(new Date().toISOString().slice(0, 10))
+const previewTime = ref('09:00')
+const effectiveNow = computed(() => {
+  if (!previewMode.value) return now.value
+  return new Date(previewDate.value + 'T' + previewTime.value)
+})
 
 onMounted(() => {
   const sv = localStorage.getItem('fjnu_schedule_version')
@@ -63,16 +72,16 @@ const filteredGrouped = computed(() => groupByDate(filtered.value))
 const nextEvt = computed(() => {
   let evts = events.value
   if (selectedMajor.value) evts = evts.filter(e => audienceMajors(e.audience).includes(selectedMajor.value))
-  return nextEvent(evts, now.value)
+  return nextEvent(evts, effectiveNow.value)
 })
 const countdown = computed(() => {
   if (!nextEvt.value) return null
-  void now.value
+  void effectiveNow.value
   return timeUntil(nextEvt.value.date, nextEvt.value.time)
 })
 
-function getCD(e) { return eventCountdown(e, now.value) }
-function getImminent(e) { return isImminent(e, now.value) }
+function getCD(e) { return eventCountdown(e, effectiveNow.value) }
+function getImminent(e) { return isImminent(e, effectiveNow.value) }
 
 async function openDetail(e) {
   showDetail.value = e
@@ -82,13 +91,13 @@ async function openDetail(e) {
 
 function catInfo(k) { return EVENT_CATEGORIES[k] || EVENT_CATEGORIES.other }
 function statusLabel(e) {
-  const s = eventStatus(e, now.value)
+  const s = eventStatus(e, effectiveNow.value)
   if (s === 'ongoing') return '🔴 进行中'
   if (s === 'past') return '✅ 已结束'
   return '⏳ 即将到来'
 }
 function statusCls(e) {
-  const s = eventStatus(e, now.value)
+  const s = eventStatus(e, effectiveNow.value)
   if (s === 'ongoing') return 'st-ongoing'
   if (s === 'past') return 'st-past'
   return 'st-upcoming'
@@ -96,18 +105,18 @@ function statusCls(e) {
 function weekDay(ds) { return ['周日','周一','周二','周三','周四','周五','周六'][new Date(ds+'T00:00:00').getDay()] }
 function toggleExpand(d) { expanded.value = expanded.value === d ? null : d }
 function impIcon(i) { return i === 'critical' ? '🔴' : i === 'high' ? '🟡' : '⚪' }
-function isToday(ds) {
-  const t = new Date()
+function isToday(ds, nowDate) {
+  const t = nowDate || new Date()
   return ds === `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
 }
 
-const completedCount = computed(() => events.value.filter(e => eventStatus(e, now.value) === 'past').length)
+const completedCount = computed(() => events.value.filter(e => eventStatus(e, effectiveNow.value) === 'past').length)
 const totalCount = computed(() => events.value.length)
 const progress = computed(() => totalCount.value ? Math.round((completedCount.value / totalCount.value) * 100) : 0)
 const checkedCount = computed(() => checked.value.size)
 const todayEvents = computed(() => {
-  void now.value
-  let list = events.value.filter(e => isToday(e.date) && !e.pending)
+  void effectiveNow.value
+  let list = events.value.filter(e => isToday(e.date, effectiveNow.value) && !e.pending)
   if (selectedMajor.value) list = list.filter(e => audienceMajors(e.audience).includes(selectedMajor.value))
   return list
 })
@@ -137,6 +146,27 @@ function goClassroomNav(loc) {
       <select v-model="versionId" class="ver-select">
         <option v-for="v in SCHEDULE_VERSIONS" :key="v.id" :value="v.id">{{ v.label }}（{{ v.createdAt }}）</option>
       </select>
+    </div>
+  </div>
+
+  <!-- 时间预览 -->
+  <div class="panel preview-panel" style="margin-bottom:12px;">
+    <div class="preview-row">
+      <span class="preview-label">⏰ 时间模式</span>
+      <button class="preview-toggle" :class="{ active: !previewMode }" @click="previewMode = false">
+        <span class="preview-dot" :class="{ on: !previewMode }"></span> 实时
+      </button>
+      <button class="preview-toggle" :class="{ active: previewMode }" @click="previewMode = true">
+        <span class="preview-dot" :class="{ on: previewMode }"></span> 预览
+      </button>
+    </div>
+    <div v-if="previewMode" class="preview-ctrl">
+      <input v-model="previewDate" type="date" class="preview-input" />
+      <input v-model="previewTime" type="time" class="preview-input" />
+      <span class="preview-hint">跳转到该时间点查看页面效果</span>
+    </div>
+    <div v-if="previewMode" class="preview-now">
+      预览时间：{{ previewDate }} {{ previewTime }}（{{ weekDay(previewDate) }}）
     </div>
   </div>
 
@@ -309,6 +339,20 @@ function goClassroomNav(loc) {
 .alert-banner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: var(--radius); margin-bottom: 12px; font-size: 13px; font-weight: 600; color: #92400e; animation: alertPulse 2s ease infinite; }
 @keyframes alertPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,.3); } 50% { box-shadow: 0 0 0 8px rgba(251,191,36,0); } }
 .alert-icon { font-size: 18px; }
+
+.preview-panel { padding: 14px 16px; }
+.preview-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.preview-label { font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.preview-toggle { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; transition: all .15s; }
+.preview-toggle:hover { border-color: var(--primary); }
+.preview-toggle.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.preview-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all .15s; }
+.preview-dot.on { background: #22c55e; }
+.preview-ctrl { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.preview-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 13px; outline: none; }
+.preview-input:focus { border-color: var(--primary); }
+.preview-hint { font-size: 11px; color: var(--text-sub); }
+.preview-now { margin-top: 8px; font-size: 12px; color: var(--primary); font-weight: 600; padding: 6px 10px; background: var(--primary-soft); border-radius: 8px; }
 
 .next-banner { background: linear-gradient(135deg, var(--cat-color, var(--primary)), color-mix(in srgb, var(--cat-color, var(--primary)) 70%, #000)); color: #fff; border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 12px; }
 .next-banner.empty { background: var(--soft-fg); color: var(--text-sub); text-align: center; }

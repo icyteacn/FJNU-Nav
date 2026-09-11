@@ -147,11 +147,9 @@ function goClassroomNav(loc) {
   </div>
 
   <!-- 标签页切换 -->
-  <div class="panel seg-panel">
-    <div class="seg">
-      <button class="seg-btn" :class="{ active: activeView === 'schedule' }" @click="activeView = 'schedule'">📅 日常日程</button>
-      <button class="seg-btn" :class="{ active: activeView === 'party' }" @click="activeView = 'party'">🏛️ 入党日程</button>
-    </div>
+  <div class="tab-row" style="margin-bottom:16px;">
+    <button class="tab" :class="{ active: activeView === 'schedule' }" @click="activeView = 'schedule'">📅 日常日程</button>
+    <button class="tab" :class="{ active: activeView === 'party' }" @click="activeView = 'party'">🏛️ 入党日程</button>
   </div>
 
   <!-- 版本选择 -->
@@ -412,12 +410,6 @@ function goClassroomNav(loc) {
 .preview-input:focus { border-color: var(--primary); }
 .preview-hint { font-size: 11px; color: var(--text-sub); }
 .preview-now { margin-top: 8px; font-size: 12px; color: var(--primary); font-weight: 600; padding: 6px 10px; background: var(--primary-soft); border-radius: 8px; }
-
-.seg-panel { margin-bottom: 12px; }
-.seg { display: flex; gap: 6px; background: var(--soft-fg); border-radius: var(--radius); padding: 4px; }
-.seg-btn { flex: 1; padding: 10px; border: none; border-radius: calc(var(--radius) - 2px); background: transparent; color: var(--text-sub); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
-.seg-btn:hover { color: var(--text); }
-.seg-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 
 .next-banner { background: linear-gradient(135deg, var(--cat-color, var(--primary)), color-mix(in srgb, var(--cat-color, var(--primary)) 70%, #000)); color: #fff; border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 12px; }
 .next-banner.empty { background: var(--soft-fg); color: var(--text-sub); text-align: center; }

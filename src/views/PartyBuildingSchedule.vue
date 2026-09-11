@@ -218,6 +218,43 @@ const importantNotes = [
   }
 ]
 
+const writingWarnings = [
+  {
+    title: '入党申请书落款日期',
+    level: 'critical',
+    icon: '⚠️',
+    content: '入党申请书建议最后一行的落款日期先空着，后续确定入党积极分子的时候再填写。因为日期可能需要与"入党积极分子培养考察登记表"上的日期保持一致，如果提前写好导致日期不一致，还需要重新抄写带有落款的最后一页。',
+  },
+  {
+    title: '抄写党章原文务必准确',
+    level: 'critical',
+    icon: '⚠️',
+    content: '书写入党申请书时，如果通过抄写党章原文来凑字数，务必抄写完整的同一句话，不能漏字、错字或私自修改，否则会被视为内容有问题，需要把出现问题的段落往后的几张都重新写。',
+  },
+  {
+    title: '党的指导思想必须一字不差',
+    level: 'critical',
+    icon: '🔴',
+    content: '如果在入党申请书中写"党的指导思想"或"行动指南"，必须从头到尾一字不差地写下来。要么不写，如果写就必须完整准确。',
+    example: {
+      wrong: '党的指导思想：马克思主义，毛主席思想，邓小平理论，三个代表思想，科学发展观，新时代中国特色社会主义思想',
+      correct: '党的指导思想是马克思列宁主义、毛泽东思想、邓小平理论、"三个代表"重要思想、科学发展观、习近平新时代中国特色社会主义思想',
+      errors: [
+        '"马克思主义"应为"马克思列宁主义"',
+        '"毛主席思想"应为"毛泽东思想"',
+        '"三个代表思想"应为""三个代表"重要思想"（缺少引号和"重要"二字）',
+        '"新时代中国特色社会主义思想"应为"习近平新时代中国特色社会主义思想"（缺少"习近平"）'
+      ]
+    }
+  },
+  {
+    title: '两个先锋队必须完整表述',
+    level: 'critical',
+    icon: '🔴',
+    content: '关于"两个先锋队"的表述，必须完整写出："中国共产党是中国工人阶级的先锋队，同时是中国人民和中华民族的先锋队"。不能只写其中一个，不能私自更改顺序，不能省略"同时是"的连接词。',
+  }
+]
+
 const quickStats = [
   { 
     id: 'speed',
@@ -509,6 +546,35 @@ function goBack() { emit('back') }
           </div>
         </div>
       </div>
+
+      <!-- 入党申请书书写注意事项（标红警告） -->
+      <div class="panel writing-warning-panel">
+        <div class="section-title writing-title">🚨 入党申请书书写注意事项</div>
+        <div class="writing-warnings">
+          <div v-for="(warn, index) in writingWarnings" :key="index" class="writing-card" :class="warn.level">
+            <div class="writing-header">
+              <span class="writing-icon">{{ warn.icon }}</span>
+              <span class="writing-name">{{ warn.title }}</span>
+            </div>
+            <div class="writing-content">{{ warn.content }}</div>
+            <div v-if="warn.example" class="writing-example">
+              <div class="example-row wrong">
+                <span class="example-label">❌ 错误示例：</span>
+                <span class="example-text">{{ warn.example.wrong }}</span>
+              </div>
+              <div class="example-row correct">
+                <span class="example-label">✅ 正确写法：</span>
+                <span class="example-text">{{ warn.example.correct }}</span>
+              </div>
+              <div class="error-list">
+                <div v-for="(err, i) in warn.example.errors" :key="i" class="error-item">
+                  <span class="error-bullet">•</span> {{ err }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -624,6 +690,27 @@ function goBack() { emit('back') }
 .advice-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--soft-fg); border-radius: 8px; margin-bottom: 8px; }
 .advice-icon { font-size: 20px; }
 .advice-text { font-size: 13px; color: var(--text); flex: 1; }
+
+.writing-warning-panel { margin-bottom: 12px; border: 2px solid #dc2626; }
+.writing-title { color: #dc2626 !important; font-size: 15px !important; }
+.writing-warnings { display: flex; flex-direction: column; gap: 12px; }
+.writing-card { padding: 14px; border-radius: var(--radius); border: 1.5px solid #fca5a5; background: #fef2f2; }
+.writing-card.critical { border-color: #dc2626; background: #fee2e2; }
+.writing-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.writing-icon { font-size: 16px; }
+.writing-name { font-size: 14px; font-weight: 700; color: #dc2626; }
+.writing-content { font-size: 13px; line-height: 1.6; color: #7f1d1d; }
+.writing-example { margin-top: 12px; padding: 12px; background: rgba(255,255,255,.7); border-radius: 8px; }
+.example-row { margin-bottom: 8px; padding: 8px; border-radius: 6px; font-size: 12px; line-height: 1.5; }
+.example-row.wrong { background: #fee2e2; border: 1px solid #fca5a5; }
+.example-row.correct { background: #dcfce7; border: 1px solid #86efac; }
+.example-label { font-weight: 700; display: block; margin-bottom: 4px; }
+.example-row.wrong .example-label { color: #dc2626; }
+.example-row.correct .example-label { color: #16a34a; }
+.example-text { color: var(--text); }
+.error-list { margin-top: 8px; }
+.error-item { font-size: 12px; color: #991b1b; margin-bottom: 4px; display: flex; gap: 4px; }
+.error-bullet { color: #dc2626; font-weight: bold; }
 
 @media (max-width: 640px) {
   .flow-steps { flex-direction: column; align-items: stretch; }

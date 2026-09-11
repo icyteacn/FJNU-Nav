@@ -22,8 +22,8 @@ const batches = [
   {
     id: 1,
     label: '第一批',
-    time: '2026年9月-2028年12月',
-    description: '最早一批，2026年10-11月评选入党积极分子',
+    time: '2026年9月-2029年6月',
+    description: '2026年10-11月评选入党积极分子，2029年6月毕业前转正',
     status: 'current',
     statusLabel: '当前阶段',
     milestones: [
@@ -38,9 +38,8 @@ const batches = [
       { time: '2028年6月', event: '成为预备党员', status: 'future', icon: '🎉' },
       { time: '2029年6月', event: '转为正式党员', status: 'future', icon: '🏆' },
     ],
-    note: '最快2028年12月转为正式党员，发展全流程约2年3个月',
+    note: '2027年3月前评上积极分子，毕业前可以转为正式党员',
     target: '毕业前转为正式党员',
-    thoughtReports: '约4篇'
   },
   {
     id: 2,
@@ -62,7 +61,6 @@ const batches = [
     ],
     note: '第二批2029年6月毕业前转为正式党员',
     target: '毕业前转为正式党员',
-    thoughtReports: '约6篇'
   },
   {
     id: 3,
@@ -84,13 +82,12 @@ const batches = [
     ],
     note: '第三批2030年6月毕业后转为正式党员',
     target: '毕业后转为正式党员',
-    thoughtReports: '约8篇'
   },
   {
     id: 4,
     label: '第四批',
     time: '2028年3月-2030年6月',
-    description: '2028年3月评选入党积极分子，临毕业前转正',
+    description: '2028年3月评选入党积极分子，毕业前转为预备党员',
     status: 'future',
     statusLabel: '未来批次',
     milestones: [
@@ -104,64 +101,62 @@ const batches = [
       { time: '2029年9月', event: '成为预备党员', status: 'future', icon: '🎉' },
       { time: '2030年9月', event: '转为正式党员', status: 'future', icon: '🏆' },
     ],
-    note: '第四批2030年6月临毕业前转为正式党员',
-    target: '临毕业前转为正式党员',
-    thoughtReports: '约10篇'
+    note: '2028年3月前评上积极分子，毕业前可以转为预备党员',
+    target: '毕业前转为预备党员',
   },
   {
     id: 5,
-    label: '第五批',
-    time: '2028年9月-2030年6月+',
-    description: '2028年9月评选入党积极分子，毕业前只能有积极分子身份',
+    label: '第五/六批',
+    time: '2028年9月/2029年3月-毕业后',
+    description: '2028年9月或2029年3月评选入党积极分子，毕业前只能有积极分子身份',
     status: 'future',
     statusLabel: '最晚批次',
     milestones: [
-      { time: '2028年9月', event: '团组织"推优"评选入党积极分子', status: 'upcoming', icon: '🗳️' },
-      { time: '2028年10月', event: '党课培训（24学时）', status: 'upcoming', icon: '📚' },
-      { time: '2028年12月', event: '党章考试及格，成为入党积极分子', status: 'upcoming', icon: '✅' },
-      { time: '2029年9月', event: '被评为入党积极分子满一年，可评选发展对象', status: 'future', icon: '🎯' },
-      { time: '2029年10月', event: '参加党校培训（24学时）', status: 'future', icon: '📚' },
-      { time: '2029年11月', event: '校党委组织谈话', status: 'future', icon: '🗣️' },
-      { time: '2029年12月', event: '成为发展对象', status: 'future', icon: '🌟' },
-      { time: '2030年3月', event: '成为预备党员', status: 'future', icon: '🎉' },
-      { time: '2031年3月', event: '转为正式党员', status: 'future', icon: '🏆' },
+      { time: '2028年9月/2029年3月', event: '团组织"推优"评选入党积极分子', status: 'upcoming', icon: '🗳️' },
+      { time: '2028年10月/2029年4月', event: '党课培训（24学时）', status: 'upcoming', icon: '📚' },
+      { time: '2028年12月/2029年6月', event: '党章考试及格，成为入党积极分子', status: 'upcoming', icon: '✅' },
+      { time: '2029年9月/2030年3月', event: '被评为入党积极分子满一年，可评选发展对象', status: 'future', icon: '🎯' },
+      { time: '2029年10月/2030年4月', event: '参加党校培训（24学时）', status: 'future', icon: '📚' },
+      { time: '2029年11月/2030年5月', event: '校党委组织谈话', status: 'future', icon: '🗣️' },
+      { time: '2029年12月/2030年6月', event: '成为发展对象', status: 'future', icon: '🌟' },
+      { time: '2030年3月/2030年9月', event: '成为预备党员', status: 'future', icon: '🎉' },
+      { time: '2031年3月/2031年9月', event: '转为正式党员', status: 'future', icon: '🏆' },
     ],
-    note: '第五批毕业前只能有"入党积极分子"身份，2031年3月转正',
+    note: '第五/六批评上积极分子，毕业前只能有积极分子身份，毕业后继续发展',
     target: '毕业后转为正式党员',
-    thoughtReports: '约12篇'
   }
 ]
 
 const materials = [
   { 
     stage: '入党积极分子阶段', 
+    duration: '约1年',
     items: [
       { name: '入党申请书', note: '手写，3000字左右，师大400字方格纸' },
       { name: '群团组织推优评测表', note: '团组织推优时填写' },
       { name: '入党积极分子培养考察登记表', note: '记录培养考察情况' },
       { name: '积极分子党课结业证书', note: '党课培训合格后颁发' }
-    ],
-    duration: '约2-3个月'
+    ]
   },
   { 
     stage: '发展对象阶段', 
+    duration: '约2-3个月',
     items: [
       { name: '入党自传', note: '个人成长经历、家庭情况等' },
       { name: '政审材料', note: '政治审查相关材料' },
       { name: '思想汇报', note: '每季度一篇，积极分子期间约4-10篇' },
       { name: '党校培训结业证书', note: '确定为发展对象后参加' },
       { name: '成绩单', note: '学习成绩是评选的重要条件' }
-    ],
-    duration: '约1年'
+    ]
   },
   { 
     stage: '预备党员阶段', 
+    duration: '1年',
     items: [
       { name: '入党志愿书', note: '正式入党材料' },
       { name: '预备党员考察登记表', note: '预备期一年考察' },
       { name: '思想汇报', note: '预备党员期间4篇' }
-    ],
-    duration: '1年'
+    ]
   },
 ]
 
@@ -171,7 +166,7 @@ const thoughtReportRules = [
     requirement: '每季度一篇思想汇报', 
     count: '约4-10篇', 
     note: '积极分子培养考察登记表一共就留了填写12次思想汇报记录的页',
-    detail: '若尽早被评为积极分子，并顺利在研二第一学期秋季学期评上发展对象，思想汇报仅需约4篇；若研一第一学期评上积极分子、研三第二学期才评上发展对象，则需书写约10篇思想汇报'
+    detail: '若尽早被评为积极分子，并顺利在研二第一学期秋季学期评上发展对象，思想汇报仅需约4篇；若研一第一学期评上积极分子、研三第二学期才评上发展对象，则需书写约10篇思想汇报。具体数量取决于入党积极分子到发展对象期间的时长。'
   },
   { 
     stage: '预备党员期间', 
@@ -206,7 +201,7 @@ const importantNotes = [
     title: '入党目标建议',
     icon: '🎯',
     content: [
-      '以毕业前转为正式党员为目标',
+      '以毕业前转为正式党员为目标，建议多搞成果出来，包括学习、科研、志愿服务',
       '毕业前能够成功转为"预备党员"也算顺利入党，只不过到下一个单位提交转正材料的时候相对麻烦一点点',
       '一般在研二第二学期（2028年3月）及之前被评为入党积极分子有机会在毕业前获得"顺利入党"的机会',
       '研三也会组织评入党积极分子，但意义不大，不过也可以积极尝试，后续单位有可能认可并接收继续发展'
@@ -232,25 +227,18 @@ const quickStats = [
     detail: '从提交入党申请书到转为正式党员的最短时间。以第一批为例：2026年9月提交申请 → 2026年10-11月评为积极分子 → 2027年10-11月评为发展对象 → 2028年3月成为发展对象 → 2028年6月成为预备党员 → 2029年6月转为正式党员。实际时间可能因评选时间、个人表现等因素有所延长。'
   },
   { 
-    id: 'deadline',
-    label: '毕业前转正截止', 
+    id: 'deadline-prep',
+    label: '毕业前转预备截止', 
     value: '研二第二学期（2028年3月）', 
     icon: '🎯',
-    detail: '这是指在毕业前能够转为正式党员的最后机会。一般在研二第二学期（2028年3月）及之前被评为入党积极分子，才有机会在毕业前获得"顺利入党"的机会。如果晚于这个时间被评为积极分子，可能只能在毕业前转为预备党员，或者毕业后继续发展。'
+    detail: '2028年3月之前被评为入党积极分子，有机会在毕业前转为预备党员。如果晚于这个时间被评为积极分子，可能只能在毕业前成为发展对象，或者毕业后继续发展。'
   },
   { 
-    id: 'thought-min',
-    label: '思想汇报最少', 
-    value: '4篇（第一批）', 
-    icon: '📝',
-    detail: '第一批入党积极分子所需的思想汇报最少，约4篇。这是因为第一批最早被评为积极分子（2026年10-11月），如果顺利在研二第一学期（2027年10-11月）评为发展对象，只需要写约4篇思想汇报（每季度一篇）。但实际数量可能因评选时间有所调整。'
-  },
-  { 
-    id: 'thought-max',
-    label: '思想汇报最多', 
-    value: '12篇（第五批）', 
-    icon: '📝',
-    detail: '第五批入党积极分子所需的思想汇报最多，约12篇。这是因为第五批最晚被评为积极分子（2028年9月），到发展对象期间需要写更多的思想汇报。但实际数量可能因评选时间有所调整，积极分子培养考察登记表一共就留了填写12次思想汇报记录的页。'
+    id: 'deadline-formal',
+    label: '毕业前转正截止', 
+    value: '研一第二学期（2027年3月）', 
+    icon: '🏆',
+    detail: '2027年3月之前被评为入党积极分子，有机会在毕业前转为正式党员。这是毕业前能够转为正式党员的最后机会。如果晚于这个时间被评为积极分子，可能只能在毕业前转为预备党员，或者毕业后继续发展。'
   },
 ]
 
@@ -258,13 +246,12 @@ const batchOverview = [
   {
     id: 1,
     label: '第一批',
-    time: '2026年9月-2028年12月',
-    description: '最早一批，2026年10-11月评选入党积极分子',
+    time: '2026年9月-2029年6月',
+    description: '2026年10-11月评选入党积极分子，2029年6月毕业前转正',
     status: 'current',
     statusLabel: '当前阶段',
     target: '毕业前转为正式党员',
-    thoughtReports: '约4篇',
-    result: '最快2028年12月转为正式党员'
+    result: '2029年6月毕业前转为正式党员'
   },
   {
     id: 2,
@@ -274,7 +261,6 @@ const batchOverview = [
     status: 'upcoming',
     statusLabel: '即将开始',
     target: '毕业前转为正式党员',
-    thoughtReports: '约6篇',
     result: '2029年6月毕业前转为正式党员'
   },
   {
@@ -285,30 +271,27 @@ const batchOverview = [
     status: 'future',
     statusLabel: '未来批次',
     target: '毕业后转为正式党员',
-    thoughtReports: '约8篇',
     result: '2030年6月毕业后转为正式党员'
   },
   {
     id: 4,
     label: '第四批',
     time: '2028年3月-2030年6月',
-    description: '2028年3月评选入党积极分子，临毕业前转正',
+    description: '2028年3月评选入党积极分子，毕业前转为预备党员',
     status: 'future',
     statusLabel: '未来批次',
-    target: '临毕业前转为正式党员',
-    thoughtReports: '约10篇',
-    result: '2030年6月临毕业前转为正式党员'
+    target: '毕业前转为预备党员',
+    result: '2030年6月毕业前转为预备党员'
   },
   {
     id: 5,
-    label: '第五批',
-    time: '2028年9月-2030年6月+',
-    description: '2028年9月评选入党积极分子，毕业前只能有积极分子身份',
+    label: '第五/六批',
+    time: '2028年9月/2029年3月-毕业后',
+    description: '2028年9月或2029年3月评选入党积极分子，毕业前只能有积极分子身份',
     status: 'future',
     statusLabel: '最晚批次',
     target: '毕业后转为正式党员',
-    thoughtReports: '约12篇',
-    result: '2031年3月转为正式党员'
+    result: '毕业后继续发展，转为正式党员'
   }
 ]
 
@@ -320,206 +303,210 @@ function goBack() { emit('back') }
 </script>
 
 <template>
-  <div class="view-top">
-    <button class="back-btn" @click="goBack">← 返回日程助手</button>
-    <div class="view-title">🏛️ 入党日程表</div>
-    <div class="view-sub">入党流程指南 + 五批次时间安排 + 材料清单 + 注意事项</div>
-  </div>
-
-  <!-- 快速统计（可点击展开） -->
-  <div class="panel stats-panel">
-    <div class="section-title">关键数据</div>
-    <div class="stats-grid">
-      <div v-for="stat in quickStats" :key="stat.id" class="stat-card" :class="{ expanded: expandedStat === stat.id }" @click="toggleStat(stat.id)">
-        <div class="stat-header">
-          <div class="stat-icon">{{ stat.icon }}</div>
-          <div class="stat-content">
-            <div class="stat-label">{{ stat.label }}</div>
-            <div class="stat-value">{{ stat.value }}</div>
-          </div>
-          <div class="stat-expand">{{ expandedStat === stat.id ? '▾' : '▸' }}</div>
-        </div>
-        <div v-if="expandedStat === stat.id" class="stat-detail">
-          {{ stat.detail }}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 标签页导航 -->
-  <div class="panel tab-nav">
-    <button v-for="tab in tabs" :key="tab.id" class="tab-btn" :class="{ active: activeTab === tab.id }" @click="activeTab = tab.id">
-      <span class="tab-icon">{{ tab.icon }}</span>
-      <span class="tab-text">{{ tab.label }}</span>
-    </button>
-  </div>
-
-  <!-- 总览视图 -->
-  <div v-if="activeTab === 'overview'" class="overview-section">
-    <!-- 整体流程 -->
-    <div class="panel flow-panel">
-      <div class="section-title">入党整体流程</div>
-      <div class="flow-steps">
-        <div class="flow-step">📝 提交入党申请书</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">🗳️ 评选入党积极分子</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">🌟 评选发展对象</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">📚 党课培训与考试</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">🎉 转为预备党员</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">🏆 转为正式党员</div>
-      </div>
+  <div class="party-view">
+    <div class="view-top">
+      <button class="back-btn" @click="goBack">← 返回日程助手</button>
+      <div class="view-title">🏛️ 入党日程表</div>
+      <div class="view-sub">入党流程指南 + 五批次时间安排 + 材料清单 + 注意事项</div>
     </div>
 
-    <!-- 批次概览 -->
-    <div class="panel batch-overview">
-      <div class="section-title">五批次概览</div>
-      <div class="batch-list">
-        <div v-for="batch in batchOverview" :key="batch.id" class="batch-card" :class="[batch.status]">
-          <div class="batch-header">
-            <div class="batch-badge" :class="batch.status">{{ batch.statusLabel }}</div>
-            <h4>{{ batch.label }}</h4>
-          </div>
-          <div class="batch-time">{{ batch.time }}</div>
-          <div class="batch-desc">{{ batch.description }}</div>
-          <div class="batch-meta">
-            <span class="meta-item">🎯 {{ batch.target }}</span>
-            <span class="meta-item">📝 {{ batch.thoughtReports }}思想汇报</span>
-          </div>
-          <div class="batch-result">{{ batch.result }}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 关键提醒 -->
-    <div class="panel key-reminder">
-      <div class="section-title">关键提醒</div>
-      <div class="reminder-content">
-        <p><strong>毕业前转正截止时间：</strong>一般在研二第二学期（2028年3月）及之前被评为入党积极分子，才有机会在毕业前获得"顺利入党"的机会。如果晚于这个时间被评为积极分子，可能只能在毕业前转为预备党员，或者毕业后继续发展。</p>
-        <p><strong>最快入党时间：</strong>从提交入党申请书到转为正式党员的最短时间约为2年3个月。以第一批为例：2026年9月提交申请 → 2026年10-11月评为积极分子 → 2027年10-11月评为发展对象 → 2028年3月成为发展对象 → 2028年6月成为预备党员 → 2029年6月转为正式党员。</p>
-        <p><strong>思想汇报数量：</strong>根据成为积极分子和 development 对象的时间不同，需要4-12篇不等。积极分子培养考察登记表一共就留了填写12次思想汇报记录的页。</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- 时间线视图 -->
-  <div v-if="activeTab === 'timeline'" class="timeline-section">
-    <!-- 批次选择 -->
-    <div class="panel batch-panel">
-      <div class="section-title">五批次时间安排</div>
-      <div class="batch-tabs">
-        <button v-for="batch in batches" :key="batch.id" class="batch-tab" :class="{ active: activeBatch === batch.id }" @click="activeBatch = batch.id">
-          {{ batch.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- 当前批次详情 -->
-    <div class="panel batch-detail">
-      <div class="batch-header">
-        <div class="batch-badge" :class="batches[activeBatch - 1].status">{{ batches[activeBatch - 1].statusLabel }}</div>
-        <h3>{{ batches[activeBatch - 1].label }}</h3>
-        <div class="batch-time">{{ batches[activeBatch - 1].time }}</div>
-        <div class="batch-desc">{{ batches[activeBatch - 1].description }}</div>
-      </div>
-      
-      <div class="timeline">
-        <div v-for="(milestone, index) in batches[activeBatch - 1].milestones" :key="index" class="tl-item" :class="[milestone.status]">
-          <div class="tl-dot">{{ milestone.icon }}</div>
-          <div class="tl-content">
-            <div class="tl-time">{{ milestone.time }}</div>
-            <div class="tl-event">{{ milestone.event }}</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="batch-note">
-        <span>💡</span> {{ batches[activeBatch - 1].note }}
-      </div>
-      
-      <div class="batch-meta">
-        <span class="meta-item">🎯 目标：{{ batches[activeBatch - 1].target }}</span>
-        <span class="meta-item">📝 思想汇报：{{ batches[activeBatch - 1].thoughtReports }}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 材料清单视图 -->
-  <div v-if="activeTab === 'materials'" class="materials-section">
-    <div class="panel materials-panel">
-      <div class="section-title">党员材料明细（共不少于12种）</div>
-      
-      <div v-for="(stage, index) in materials" :key="index" class="stage-card">
-        <div class="stage-header">
-          <h4>{{ stage.stage }}</h4>
-          <div class="stage-duration">{{ stage.duration }}</div>
-        </div>
-        <div class="stage-items">
-          <div v-for="(item, i) in stage.items" :key="i" class="material-item">
-            <div class="material-main">
-              <span class="item-icon">📄</span>
-              <span class="item-name">{{ item.name }}</span>
+    <!-- 快速统计（可点击展开） -->
+    <div class="panel stats-panel">
+      <div class="section-title">关键数据</div>
+      <div class="stats-grid">
+        <div v-for="stat in quickStats" :key="stat.id" class="stat-card" :class="{ expanded: expandedStat === stat.id }" @click="toggleStat(stat.id)">
+          <div class="stat-header">
+            <div class="stat-icon">{{ stat.icon }}</div>
+            <div class="stat-content">
+              <div class="stat-label">{{ stat.label }}</div>
+              <div class="stat-value">{{ stat.value }}</div>
             </div>
-            <div class="item-note">{{ item.note }}</div>
+            <div class="stat-expand">{{ expandedStat === stat.id ? '▾' : '▸' }}</div>
+          </div>
+          <div v-if="expandedStat === stat.id" class="stat-detail">
+            {{ stat.detail }}
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 思想汇报要求 -->
-    <div class="panel thought-panel">
-      <div class="section-title">思想汇报要求</div>
-      
-      <div v-for="(rule, index) in thoughtReportRules" :key="index" class="thought-card">
-        <div class="thought-header">
-          <h4>{{ rule.stage }}</h4>
-          <div class="thought-count">{{ rule.count }}</div>
-        </div>
-        <div class="thought-requirement">{{ rule.requirement }}</div>
-        <div class="thought-detail">{{ rule.detail }}</div>
-        <div class="thought-note">{{ rule.note }}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 注意事项视图 -->
-  <div v-if="activeTab === 'notes'" class="notes-section">
-    <div v-for="(note, index) in importantNotes" :key="index" class="panel note-panel">
-      <div class="section-title">{{ note.icon }} {{ note.title }}</div>
-      <div class="note-content">
-        <div v-for="(item, i) in note.content" :key="i" class="note-item">
-          <span class="note-bullet">•</span>
-          <span>{{ item }}</span>
-        </div>
-      </div>
+    <!-- 标签页导航 -->
+    <div class="panel tab-nav">
+      <button v-for="tab in tabs" :key="tab.id" class="tab-btn" :class="{ active: activeTab === tab.id }" @click="activeTab = tab.id">
+        <span class="tab-icon">{{ tab.icon }}</span>
+        <span class="tab-text">{{ tab.label }}</span>
+      </button>
     </div>
 
-    <!-- 实用建议 -->
-    <div class="panel advice-panel">
-      <div class="section-title">实用建议</div>
-      <div class="advice-content">
-        <div class="advice-item">
-          <div class="advice-icon">📚</div>
-          <div class="advice-text">保持良好的学习成绩，这是评选的重要条件</div>
+    <!-- 总览视图 -->
+    <div v-if="activeTab === 'overview'" class="overview-section">
+      <!-- 整体流程 -->
+      <div class="panel flow-panel">
+        <div class="section-title">入党整体流程</div>
+        <div class="flow-steps">
+          <div class="flow-step">📝 提交入党申请书</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">🗳️ 评选入党积极分子</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">🌟 评选发展对象</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">📚 党课培训与考试</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">🎉 转为预备党员</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">🏆 转为正式党员</div>
         </div>
-        <div class="advice-item">
-          <div class="advice-icon">👥</div>
-          <div class="advice-text">积极参与班级工作，争取干部等任职经历</div>
+      </div>
+
+      <!-- 批次概览 -->
+      <div class="panel batch-overview">
+        <div class="section-title">五批次概览</div>
+        <div class="batch-list">
+          <div v-for="batch in batchOverview" :key="batch.id" class="batch-card" :class="[batch.status]">
+            <div class="batch-header">
+              <div class="batch-badge" :class="batch.status">{{ batch.statusLabel }}</div>
+              <h4>{{ batch.label }}</h4>
+            </div>
+            <div class="batch-time">{{ batch.time }}</div>
+            <div class="batch-desc">{{ batch.description }}</div>
+            <div class="batch-meta">
+              <span class="meta-item">🎯 {{ batch.target }}</span>
+            </div>
+            <div class="batch-result">{{ batch.result }}</div>
+          </div>
         </div>
-        <div class="advice-item">
-          <div class="advice-icon">🤝</div>
-          <div class="advice-text">积累志愿服务时长，建议40小时/学年以上</div>
+      </div>
+
+      <!-- 关键提醒 -->
+      <div class="panel key-reminder">
+        <div class="section-title">关键提醒</div>
+        <div class="reminder-content">
+          <p><strong>毕业前转正截止时间：</strong>研一第二学期（2027年3月）及之前被评为入党积极分子，才有机会在毕业前转为正式党员。</p>
+          <p><strong>毕业前转预备截止时间：</strong>研二第二学期（2028年3月）及之前被评为入党积极分子，有机会在毕业前转为预备党员。</p>
+          <p><strong>最快入党时间：</strong>从提交入党申请书到转为正式党员的最短时间约为2年3个月。以第一批为例：2026年9月提交申请 → 2026年10-11月评为积极分子 → 2027年10-11月评为发展对象 → 2028年3月成为发展对象 → 2028年6月成为预备党员 → 2029年6月转为正式党员。</p>
         </div>
-        <div class="advice-item">
-          <div class="advice-icon">📱</div>
-          <div class="advice-text">注意留档相关电子记录，勤拍证明材料保存到手机</div>
+      </div>
+    </div>
+
+    <!-- 时间线视图 -->
+    <div v-if="activeTab === 'timeline'" class="timeline-section">
+      <!-- 批次选择 -->
+      <div class="panel batch-panel">
+        <div class="section-title">五批次时间安排</div>
+        <div class="batch-tabs">
+          <button v-for="batch in batches" :key="batch.id" class="batch-tab" :class="{ active: activeBatch === batch.id }" @click="activeBatch = batch.id">
+            {{ batch.label }}
+          </button>
         </div>
-        <div class="advice-item">
-          <div class="advice-icon">⏰</div>
-          <div class="advice-text">研二第二学期（2028年3月）前被评为积极分子有机会毕业前转正</div>
+      </div>
+
+      <!-- 当前批次详情 -->
+      <div class="panel batch-detail">
+        <div class="batch-header">
+          <div class="batch-badge" :class="batches[activeBatch - 1].status">{{ batches[activeBatch - 1].statusLabel }}</div>
+          <h3>{{ batches[activeBatch - 1].label }}</h3>
+          <div class="batch-time">{{ batches[activeBatch - 1].time }}</div>
+          <div class="batch-desc">{{ batches[activeBatch - 1].description }}</div>
+        </div>
+        
+        <div class="timeline">
+          <div v-for="(milestone, index) in batches[activeBatch - 1].milestones" :key="index" class="tl-item" :class="[milestone.status]">
+            <div class="tl-dot">{{ milestone.icon }}</div>
+            <div class="tl-content">
+              <div class="tl-time">{{ milestone.time }}</div>
+              <div class="tl-event">{{ milestone.event }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="batch-note">
+          <span>💡</span> {{ batches[activeBatch - 1].note }}
+        </div>
+        
+        <div class="batch-meta">
+          <span class="meta-item">🎯 目标：{{ batches[activeBatch - 1].target }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 材料清单视图 -->
+    <div v-if="activeTab === 'materials'" class="materials-section">
+      <div class="panel materials-panel">
+        <div class="section-title">党员材料明细（共不少于12种）</div>
+        
+        <div v-for="(stage, index) in materials" :key="index" class="stage-card">
+          <div class="stage-header">
+            <h4>{{ stage.stage }}</h4>
+            <div class="stage-duration">{{ stage.duration }}</div>
+          </div>
+          <div class="stage-items">
+            <div v-for="(item, i) in stage.items" :key="i" class="material-item">
+              <div class="material-main">
+                <span class="item-icon">📄</span>
+                <span class="item-name">{{ item.name }}</span>
+              </div>
+              <div class="item-note">{{ item.note }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 思想汇报要求 -->
+      <div class="panel thought-panel">
+        <div class="section-title">思想汇报要求</div>
+        
+        <div v-for="(rule, index) in thoughtReportRules" :key="index" class="thought-card">
+          <div class="thought-header">
+            <h4>{{ rule.stage }}</h4>
+            <div class="thought-count">{{ rule.count }}</div>
+          </div>
+          <div class="thought-requirement">{{ rule.requirement }}</div>
+          <div class="thought-detail">{{ rule.detail }}</div>
+          <div class="thought-note">{{ rule.note }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 注意事项视图 -->
+    <div v-if="activeTab === 'notes'" class="notes-section">
+      <div v-for="(note, index) in importantNotes" :key="index" class="panel note-panel">
+        <div class="section-title">{{ note.icon }} {{ note.title }}</div>
+        <div class="note-content">
+          <div v-for="(item, i) in note.content" :key="i" class="note-item">
+            <span class="note-bullet">•</span>
+            <span>{{ item }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 实用建议 -->
+      <div class="panel advice-panel">
+        <div class="section-title">实用建议</div>
+        <div class="advice-content">
+          <div class="advice-item">
+            <div class="advice-icon">📚</div>
+            <div class="advice-text">保持良好的学习成绩，这是评选的重要条件</div>
+          </div>
+          <div class="advice-item">
+            <div class="advice-icon">🔬</div>
+            <div class="advice-text">积极参与科研项目，争取发表论文或参与课题</div>
+          </div>
+          <div class="advice-item">
+            <div class="advice-icon">👥</div>
+            <div class="advice-text">积极参与班级工作，争取干部等任职经历</div>
+          </div>
+          <div class="advice-item">
+            <div class="advice-icon">🤝</div>
+            <div class="advice-text">积累志愿服务时长，建议40小时/学年以上</div>
+          </div>
+          <div class="advice-item">
+            <div class="advice-icon">📱</div>
+            <div class="advice-text">注意留档相关电子记录，勤拍证明材料保存到手机</div>
+          </div>
+          <div class="advice-item">
+            <div class="advice-icon">⏰</div>
+            <div class="advice-text">研一第二学期（2027年3月）前被评为积极分子，毕业前可以转为正式党员；研二第二学期（2028年3月）前被评为积极分子，毕业前可以转为预备党员</div>
+          </div>
         </div>
       </div>
     </div>
@@ -527,6 +514,8 @@ function goBack() { emit('back') }
 </template>
 
 <style scoped>
+.party-view { padding: 0 0 20px; }
+
 .stats-panel { margin-bottom: 12px; }
 .section-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
 .stats-grid { display: flex; flex-direction: column; gap: 8px; }

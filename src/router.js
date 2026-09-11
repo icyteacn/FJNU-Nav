@@ -32,7 +32,8 @@ const VIEWS = {
   courseStats: () => import('./views/CourseStats.vue'),
   budget: () => import('./views/Budget.vue'),
   tiebaSentiment: () => import('./views/TiebaSentiment.vue'),
-  contributors: () => import('./views/Contributors.vue')
+  contributors: () => import('./views/Contributors.vue'),
+  partyBuildingSchedule: () => import('./views/PartyBuildingSchedule.vue')
 }
 
 /** 应用 id → 视图组件注册表（懒加载版，返回 Promise） */

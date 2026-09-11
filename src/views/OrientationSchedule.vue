@@ -24,6 +24,7 @@ const showDetail = ref(null)
 const checked = ref(new Set())
 const detailRef = ref(null)
 const showTips = ref(false)
+const showArchived = ref(false)
 
 const now = ref(new Date())
 const tick = setInterval(() => { if (!previewMode.value) now.value = new Date() }, 1000)
@@ -59,6 +60,9 @@ function filterByMajor(m) { selectedMajor.value = selectedMajor.value === m ? ''
 
 const filtered = computed(() => {
   let list = events.value
+  if (!showArchived.value) {
+    list = list.filter(e => !e.archived)
+  }
   if (catFilter.value) list = list.filter(e => e.category === catFilter.value)
   if (selectedMajor.value) list = list.filter(e => audienceMajors(e.audience).includes(selectedMajor.value))
   if (searchKw.value) {
@@ -228,6 +232,19 @@ function goClassroomNav(loc) {
     </div>
   </div>
 
+  <!-- 归档切换 -->
+  <div class="panel archive-panel">
+    <div class="archive-row">
+      <span class="archive-label">📦 历史归档</span>
+      <button class="archive-toggle" :class="{ active: showArchived }" @click="showArchived = !showArchived">
+        <span class="archive-dot" :class="{ on: showArchived }"></span> {{ showArchived ? '显示已归档' : '隐藏已归档' }}
+      </button>
+    </div>
+    <div v-if="showArchived" class="archive-hint">
+      已显示9月11日及之前的入学教育日程（已归档）
+    </div>
+  </div>
+
   <!-- 搜索 + 分类 -->
   <div class="panel" style="margin-bottom:12px;">
     <div class="input-row" style="margin-bottom:10px;">
@@ -321,12 +338,35 @@ function goClassroomNav(loc) {
         <div class="detail-row"><span>⚡ 重要性</span><b>{{ showDetail.importance === 'critical' ? '🔴 必须参加' : showDetail.importance === 'high' ? '🟡 重要' : '⚪ 一般' }}</b></div>
       </div>
       <div v-if="showDetail.tip" class="detail-tip">💡 {{ showDetail.tip }}</div>
+      <div v-if="showDetail.image" class="detail-image">
+        <img :src="showDetail.image" alt="相关图片" @error="e => e.target.style.display='none'" />
+      </div>
       <div v-if="showDetail.preparation?.length" class="detail-prep">
         <div class="detail-prep-title">✅ 准备清单（点击打勾）</div>
         <div v-for="(p, i) in showDetail.preparation" :key="i" class="detail-prep-item" @click="toggleCheck(showDetail.id + '-' + i)">
           <span class="prep-check">{{ checked.has(showDetail.id + '-' + i) ? '☑️' : '☐' }}</span>
           <span :class="{ 'prep-done': checked.has(showDetail.id + '-' + i) }">{{ p }}</span>
         </div>
+      </div>
+      <div v-if="showDetail.link" class="detail-link">
+        <a :href="showDetail.link" target="_blank" class="link-btn">
+          🔗 {{ showDetail.linkLabel || '查看详情' }}
+        </a>
+      </div>
+      <div v-if="showDetail.id === 'sep15-party-application'" class="detail-link">
+        <button class="link-btn" @click="openApp('partyBuildingSchedule')">
+          🏛️ 查看入党日程表
+        </button>
+      </div>
+      <div v-if="showDetail.id === 'sep14-league-transfer'" class="detail-link">
+        <button class="link-btn" @click="openApp('partyBuildingSchedule')">
+          🏛️ 查看入党日程表
+        </button>
+      </div>
+      <div v-if="showDetail.id === 'sep14-class-start'" class="detail-link">
+        <button class="link-btn" @click="openApp('graduatePlan')">
+          🎓 研究生服务
+        </button>
       </div>
       <div class="detail-actions">
         <button class="btn accent" @click="showDetail = null" style="width:100%;">关闭</button>
@@ -395,6 +435,16 @@ function goClassroomNav(loc) {
 .cat-chip { padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; transition: all .15s; }
 .cat-chip:hover { border-color: var(--chip-c, var(--primary)); }
 .cat-chip.active { background: var(--chip-c, var(--primary)); border-color: var(--chip-c, var(--primary)); color: #fff; }
+
+.archive-panel { padding: 14px 16px; }
+.archive-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.archive-label { font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.archive-toggle { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; transition: all .15s; }
+.archive-toggle:hover { border-color: var(--primary); }
+.archive-toggle.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.archive-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all .15s; }
+.archive-dot.on { background: #22c55e; }
+.archive-hint { margin-top: 8px; font-size: 12px; color: var(--text-sub); padding: 6px 10px; background: var(--primary-soft); border-radius: 8px; }
 
 .ver-row { display: flex; align-items: center; gap: 10px; }
 .ver-label { font-size: 13px; font-weight: 700; flex-shrink: 0; }
@@ -472,6 +522,13 @@ function goClassroomNav(loc) {
 .prep-check { font-size: 16px; }
 .prep-done { text-decoration: line-through; opacity: .5; }
 .detail-actions { display: flex; gap: 8px; }
+
+.detail-image { margin-bottom: 16px; text-align: center; }
+.detail-image img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+
+.detail-link { margin-bottom: 12px; }
+.link-btn { display: block; width: 100%; padding: 12px; background: var(--primary-soft); border: 1px solid var(--primary); border-radius: 8px; color: var(--primary); font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; transition: all .15s; }
+.link-btn:hover { background: var(--primary); color: #fff; }
 
 @media (max-width: 640px) {
   .next-banner { padding: 14px 16px; }

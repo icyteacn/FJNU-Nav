@@ -27,7 +27,8 @@ export const apps = [
   { id: 'timetable', title: '课程表', desc: '查看班级、教室与教师课表，支持预览下学期', icon: '📚', color: '#1565c0', group: '学习', },
   { id: 'courseStats', title: '数据洞察', desc: '从近7学期排课数据看教室/教师/课程热度', icon: '📈', color: '#00838f', group: '学习', },
   { id: 'tiebaSentiment', title: '贴吧舆情', desc: '福建师范大学吧热帖与话题舆情分析', icon: '💬', color: '#4527a0', group: '生活', },
-  { id: 'contributors', title: '贡献者墙', desc: '词云致敬每一位代码贡献者', icon: '🎖️', color: '#bf360c', group: '服务', }
+  { id: 'contributors', title: '贡献者墙', desc: '词云致敬每一位代码贡献者', icon: '🎖️', color: '#bf360c', group: '服务', },
+  { id: 'partyBuildingSchedule', title: '入党日程表', desc: '入党流程指南 + 四批次时间安排 + 材料清单', icon: '🏛️', color: '#c62828', group: '服务', }
 ]
 
 export const appGroups = ['学习', '新生', '健康', '服务', '生活', '游戏']

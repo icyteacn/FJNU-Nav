@@ -153,7 +153,7 @@ function goClassroomNav(loc) {
   </div>
 
   <!-- 日常日程内容 -->
-  <template v-if="activeView === 'schedule'">
+  <div v-if="activeView === 'schedule'" class="schedule-view">
   <!-- 版本选择 -->
   <div v-if="SCHEDULE_VERSIONS.length > 1" class="panel" style="margin-bottom:12px;">
     <div class="ver-row">
@@ -329,12 +329,12 @@ function goClassroomNav(loc) {
       <div class="tip-item" style="border:none;"><span>🧭</span><span>点击详情中的地点可跳转教室导航查看教学楼</span></div>
     </div>
   </div>
-  </template>
+  </div>
 
   <!-- 入党日程视图 -->
-  <template v-if="activeView === 'party'">
+  <div v-if="activeView === 'party'" class="party-view-wrapper">
     <PartyBuildingSchedule @back="activeView = 'schedule'" />
-  </template>
+  </div>
 
   <!-- 详情弹窗 -->
   <div v-if="showDetail" class="overlay" @click.self="showDetail = null">

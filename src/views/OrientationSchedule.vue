@@ -27,7 +27,7 @@ const checked = ref(new Set())
 const detailRef = ref(null)
 const showTips = ref(false)
 const showArchived = ref(false)
-const showPartyBuilding = ref(false)
+const activeView = ref('schedule') // 'schedule' | 'party'
 
 const now = ref(new Date())
 const tick = setInterval(() => { if (!previewMode.value) now.value = new Date() }, 1000)
@@ -146,6 +146,14 @@ function goClassroomNav(loc) {
     <div class="view-sub">{{ version.label }}</div>
   </div>
 
+  <!-- 标签页切换 -->
+  <div class="panel seg-panel">
+    <div class="seg">
+      <button class="seg-btn" :class="{ active: activeView === 'schedule' }" @click="activeView = 'schedule'">📅 日常日程</button>
+      <button class="seg-btn" :class="{ active: activeView === 'party' }" @click="activeView = 'party'">🏛️ 入党日程</button>
+    </div>
+  </div>
+
   <!-- 版本选择 -->
   <div v-if="SCHEDULE_VERSIONS.length > 1" class="panel" style="margin-bottom:12px;">
     <div class="ver-row">
@@ -236,7 +244,7 @@ function goClassroomNav(loc) {
   </div>
 
   <!-- 归档切换 -->
-  <div class="panel archive-panel">
+  <div v-if="activeView === 'schedule'" class="panel archive-panel">
     <div class="archive-row">
       <span class="archive-label">📦 历史归档</span>
       <button class="archive-toggle" :class="{ active: showArchived }" @click="showArchived = !showArchived">
@@ -245,19 +253,6 @@ function goClassroomNav(loc) {
     </div>
     <div v-if="showArchived" class="archive-hint">
       已显示9月11日及之前的入学教育日程（已归档）
-    </div>
-  </div>
-
-  <!-- 入党日程表切换 -->
-  <div class="panel party-panel">
-    <div class="party-row">
-      <span class="party-label">🏛️ 入党日程表</span>
-      <button class="party-toggle" :class="{ active: showPartyBuilding }" @click="showPartyBuilding = !showPartyBuilding">
-        <span class="party-dot" :class="{ on: showPartyBuilding }"></span> {{ showPartyBuilding ? '返回日程' : '查看入党流程' }}
-      </button>
-    </div>
-    <div v-if="showPartyBuilding" class="party-hint">
-      查看入党流程指南、五批次时间安排、材料清单和注意事项
     </div>
   </div>
 
@@ -274,8 +269,10 @@ function goClassroomNav(loc) {
     </div>
   </div>
 
+  <!-- 日常日程内容 -->
+  <template v-if="activeView === 'schedule'">
   <!-- 时间轴 -->
-  <div v-if="!showPartyBuilding" class="timeline">
+  <div class="timeline">
     <div v-for="([date, evts]) in filteredGrouped" :key="date" class="tl-day" :class="{ 'is-today': isToday(date) }">
       <button class="tl-day-head" @click="toggleExpand(date)">
         <span v-if="isToday(date)" class="tl-today-badge">今天</span>
@@ -315,12 +312,7 @@ function goClassroomNav(loc) {
     </div>
   </div>
 
-  <!-- 入党日程表视图 -->
-  <div v-if="showPartyBuilding" class="party-building-section">
-    <PartyBuildingSchedule @back="showPartyBuilding = false" />
-  </div>
-
-  <div v-if="!filteredGrouped.length && !showPartyBuilding" class="empty-state">
+  <div v-if="!filteredGrouped.length" class="empty-state">
     <div style="font-size:48px;margin-bottom:12px;">🔍</div>
     <div>没有匹配的活动</div>
   </div>
@@ -339,6 +331,12 @@ function goClassroomNav(loc) {
       <div class="tip-item" style="border:none;"><span>🧭</span><span>点击详情中的地点可跳转教室导航查看教学楼</span></div>
     </div>
   </div>
+  </template>
+
+  <!-- 入党日程视图 -->
+  <template v-if="activeView === 'party'">
+    <PartyBuildingSchedule @back="activeView = 'schedule'" />
+  </template>
 
   <!-- 详情弹窗 -->
   <div v-if="showDetail" class="overlay" @click.self="showDetail = null">
@@ -415,6 +413,12 @@ function goClassroomNav(loc) {
 .preview-hint { font-size: 11px; color: var(--text-sub); }
 .preview-now { margin-top: 8px; font-size: 12px; color: var(--primary); font-weight: 600; padding: 6px 10px; background: var(--primary-soft); border-radius: 8px; }
 
+.seg-panel { margin-bottom: 12px; }
+.seg { display: flex; gap: 6px; background: var(--soft-fg); border-radius: var(--radius); padding: 4px; }
+.seg-btn { flex: 1; padding: 10px; border: none; border-radius: calc(var(--radius) - 2px); background: transparent; color: var(--text-sub); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.seg-btn:hover { color: var(--text); }
+.seg-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
 .next-banner { background: linear-gradient(135deg, var(--cat-color, var(--primary)), color-mix(in srgb, var(--cat-color, var(--primary)) 70%, #000)); color: #fff; border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 12px; }
 .next-banner.empty { background: var(--soft-fg); color: var(--text-sub); text-align: center; }
 .next-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -466,18 +470,6 @@ function goClassroomNav(loc) {
 .archive-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all .15s; }
 .archive-dot.on { background: #22c55e; }
 .archive-hint { margin-top: 8px; font-size: 12px; color: var(--text-sub); padding: 6px 10px; background: var(--primary-soft); border-radius: 8px; }
-
-.party-panel { padding: 14px 16px; }
-.party-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.party-label { font-size: 13px; font-weight: 700; flex-shrink: 0; }
-.party-toggle { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; transition: all .15s; }
-.party-toggle:hover { border-color: var(--primary); }
-.party-toggle.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.party-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all .15s; }
-.party-dot.on { background: #22c55e; }
-.party-hint { margin-top: 8px; font-size: 12px; color: var(--text-sub); padding: 6px 10px; background: var(--primary-soft); border-radius: 8px; }
-
-.party-building-section { margin-top: 12px; }
 
 .ver-row { display: flex; align-items: center; gap: 10px; }
 .ver-label { font-size: 13px; font-weight: 700; flex-shrink: 0; }

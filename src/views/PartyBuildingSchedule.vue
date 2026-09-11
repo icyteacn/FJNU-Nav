@@ -1,20 +1,21 @@
 <script setup>
 /**
  * 入党日程表：入党流程指南 + 五批次时间安排 + 材料清单 + 注意事项
+ * 合并入日程助手应用，通过按钮切换
  */
 import { ref, computed } from 'vue'
-import { setNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
 
 const activeTab = ref('overview')
 const activeBatch = ref(1)
+const expandedStat = ref(null)
 
 const tabs = [
-  { id: 'overview', label: '📊 总览', icon: '📊' },
-  { id: 'timeline', label: '📅 时间线', icon: '📅' },
-  { id: 'materials', label: '📋 材料清单', icon: '📋' },
-  { id: 'notes', label: '⚠️ 注意事项', icon: '⚠️' },
+  { id: 'overview', label: '总览', icon: '📊' },
+  { id: 'timeline', label: '时间线', icon: '📅' },
+  { id: 'materials', label: '材料清单', icon: '📋' },
+  { id: 'notes', label: '注意事项', icon: '⚠️' },
 ]
 
 const batches = [
@@ -223,14 +224,99 @@ const importantNotes = [
 ]
 
 const quickStats = [
-  { label: '最快入党时间', value: '2年3个月', icon: '⚡' },
-  { label: '毕业前转正截止', value: '研二第二学期（2028年3月）', icon: '🎯' },
-  { label: '思想汇报最少', value: '4篇（第一批）', icon: '📝' },
-  { label: '思想汇报最多', value: '12篇（第五批）', icon: '📝' },
+  { 
+    id: 'speed',
+    label: '最快入党时间', 
+    value: '2年3个月', 
+    icon: '⚡',
+    detail: '从提交入党申请书到转为正式党员的最短时间。以第一批为例：2026年9月提交申请 → 2026年10-11月评为积极分子 → 2027年10-11月评为发展对象 → 2028年3月成为发展对象 → 2028年6月成为预备党员 → 2029年6月转为正式党员。实际时间可能因评选时间、个人表现等因素有所延长。'
+  },
+  { 
+    id: 'deadline',
+    label: '毕业前转正截止', 
+    value: '研二第二学期（2028年3月）', 
+    icon: '🎯',
+    detail: '这是指在毕业前能够转为正式党员的最后机会。一般在研二第二学期（2028年3月）及之前被评为入党积极分子，才有机会在毕业前获得"顺利入党"的机会。如果晚于这个时间被评为积极分子，可能只能在毕业前转为预备党员，或者毕业后继续发展。'
+  },
+  { 
+    id: 'thought-min',
+    label: '思想汇报最少', 
+    value: '4篇（第一批）', 
+    icon: '📝',
+    detail: '第一批入党积极分子所需的思想汇报最少，约4篇。这是因为第一批最早被评为积极分子（2026年10-11月），如果顺利在研二第一学期（2027年10-11月）评为发展对象，只需要写约4篇思想汇报（每季度一篇）。但实际数量可能因评选时间有所调整。'
+  },
+  { 
+    id: 'thought-max',
+    label: '思想汇报最多', 
+    value: '12篇（第五批）', 
+    icon: '📝',
+    detail: '第五批入党积极分子所需的思想汇报最多，约12篇。这是因为第五批最晚被评为积极分子（2028年9月），到发展对象期间需要写更多的思想汇报。但实际数量可能因评选时间有所调整，积极分子培养考察登记表一共就留了填写12次思想汇报记录的页。'
+  },
 ]
 
+const batchOverview = [
+  {
+    id: 1,
+    label: '第一批',
+    time: '2026年9月-2028年12月',
+    description: '最早一批，2026年10-11月评选入党积极分子',
+    status: 'current',
+    statusLabel: '当前阶段',
+    target: '毕业前转为正式党员',
+    thoughtReports: '约4篇',
+    result: '最快2028年12月转为正式党员'
+  },
+  {
+    id: 2,
+    label: '第二批',
+    time: '2027年3月-2029年6月',
+    description: '2027年3月评选入党积极分子，2029年6月毕业前转正',
+    status: 'upcoming',
+    statusLabel: '即将开始',
+    target: '毕业前转为正式党员',
+    thoughtReports: '约6篇',
+    result: '2029年6月毕业前转为正式党员'
+  },
+  {
+    id: 3,
+    label: '第三批',
+    time: '2027年10-11月-2030年6月',
+    description: '2027年10-11月评选入党积极分子，毕业后转正',
+    status: 'future',
+    statusLabel: '未来批次',
+    target: '毕业后转为正式党员',
+    thoughtReports: '约8篇',
+    result: '2030年6月毕业后转为正式党员'
+  },
+  {
+    id: 4,
+    label: '第四批',
+    time: '2028年3月-2030年6月',
+    description: '2028年3月评选入党积极分子，临毕业前转正',
+    status: 'future',
+    statusLabel: '未来批次',
+    target: '临毕业前转为正式党员',
+    thoughtReports: '约10篇',
+    result: '2030年6月临毕业前转为正式党员'
+  },
+  {
+    id: 5,
+    label: '第五批',
+    time: '2028年9月-2030年6月+',
+    description: '2028年9月评选入党积极分子，毕业前只能有积极分子身份',
+    status: 'future',
+    statusLabel: '最晚批次',
+    target: '毕业后转为正式党员',
+    thoughtReports: '约12篇',
+    result: '2031年3月转为正式党员'
+  }
+]
+
+function toggleStat(statId) {
+  expandedStat.value = expandedStat.value === statId ? null : statId
+}
+
 function goBack() { emit('back') }
-function openApp(id) { emit('open', id) }
 </script>
 
 <template>
@@ -240,14 +326,21 @@ function openApp(id) { emit('open', id) }
     <div class="view-sub">入党流程指南 + 五批次时间安排 + 材料清单 + 注意事项</div>
   </div>
 
-  <!-- 快速统计 -->
+  <!-- 快速统计（可点击展开） -->
   <div class="panel stats-panel">
+    <div class="section-title">关键数据</div>
     <div class="stats-grid">
-      <div v-for="stat in quickStats" :key="stat.label" class="stat-card">
-        <div class="stat-icon">{{ stat.icon }}</div>
-        <div class="stat-content">
-          <div class="stat-label">{{ stat.label }}</div>
-          <div class="stat-value">{{ stat.value }}</div>
+      <div v-for="stat in quickStats" :key="stat.id" class="stat-card" :class="{ expanded: expandedStat === stat.id }" @click="toggleStat(stat.id)">
+        <div class="stat-header">
+          <div class="stat-icon">{{ stat.icon }}</div>
+          <div class="stat-content">
+            <div class="stat-label">{{ stat.label }}</div>
+            <div class="stat-value">{{ stat.value }}</div>
+          </div>
+          <div class="stat-expand">{{ expandedStat === stat.id ? '▾' : '▸' }}</div>
+        </div>
+        <div v-if="expandedStat === stat.id" class="stat-detail">
+          {{ stat.detail }}
         </div>
       </div>
     </div>
@@ -256,7 +349,8 @@ function openApp(id) { emit('open', id) }
   <!-- 标签页导航 -->
   <div class="panel tab-nav">
     <button v-for="tab in tabs" :key="tab.id" class="tab-btn" :class="{ active: activeTab === tab.id }" @click="activeTab = tab.id">
-      {{ tab.icon }} {{ tab.label }}
+      <span class="tab-icon">{{ tab.icon }}</span>
+      <span class="tab-text">{{ tab.label }}</span>
     </button>
   </div>
 
@@ -264,7 +358,7 @@ function openApp(id) { emit('open', id) }
   <div v-if="activeTab === 'overview'" class="overview-section">
     <!-- 整体流程 -->
     <div class="panel flow-panel">
-      <div class="section-title"><span class="bar"></span>🔄 整体流程</div>
+      <div class="section-title">入党整体流程</div>
       <div class="flow-steps">
         <div class="flow-step">📝 提交入党申请书</div>
         <div class="flow-arrow">→</div>
@@ -282,9 +376,9 @@ function openApp(id) { emit('open', id) }
 
     <!-- 批次概览 -->
     <div class="panel batch-overview">
-      <div class="section-title"><span class="bar"></span>📊 五批次概览</div>
+      <div class="section-title">五批次概览</div>
       <div class="batch-list">
-        <div v-for="batch in batches" :key="batch.id" class="batch-card" :class="[batch.status]">
+        <div v-for="batch in batchOverview" :key="batch.id" class="batch-card" :class="[batch.status]">
           <div class="batch-header">
             <div class="batch-badge" :class="batch.status">{{ batch.statusLabel }}</div>
             <h4>{{ batch.label }}</h4>
@@ -295,17 +389,18 @@ function openApp(id) { emit('open', id) }
             <span class="meta-item">🎯 {{ batch.target }}</span>
             <span class="meta-item">📝 {{ batch.thoughtReports }}思想汇报</span>
           </div>
+          <div class="batch-result">{{ batch.result }}</div>
         </div>
       </div>
     </div>
 
     <!-- 关键提醒 -->
     <div class="panel key-reminder">
-      <div class="section-title"><span class="bar"></span>⚠️ 关键提醒</div>
+      <div class="section-title">关键提醒</div>
       <div class="reminder-content">
-        <p><strong>毕业前转正截止时间：</strong>研二第二学期（2028年3月）及之前被评为入党积极分子有机会在毕业前获得"顺利入党"的机会</p>
-        <p><strong>最快入党时间：</strong>2年3个月（第一批：2026年9月提交申请 → 2028年12月转正）</p>
-        <p><strong>思想汇报数量：</strong>根据成为积极分子和 development 对象的时间不同，需要4-12篇不等</p>
+        <p><strong>毕业前转正截止时间：</strong>一般在研二第二学期（2028年3月）及之前被评为入党积极分子，才有机会在毕业前获得"顺利入党"的机会。如果晚于这个时间被评为积极分子，可能只能在毕业前转为预备党员，或者毕业后继续发展。</p>
+        <p><strong>最快入党时间：</strong>从提交入党申请书到转为正式党员的最短时间约为2年3个月。以第一批为例：2026年9月提交申请 → 2026年10-11月评为积极分子 → 2027年10-11月评为发展对象 → 2028年3月成为发展对象 → 2028年6月成为预备党员 → 2029年6月转为正式党员。</p>
+        <p><strong>思想汇报数量：</strong>根据成为积极分子和 development 对象的时间不同，需要4-12篇不等。积极分子培养考察登记表一共就留了填写12次思想汇报记录的页。</p>
       </div>
     </div>
   </div>
@@ -314,7 +409,7 @@ function openApp(id) { emit('open', id) }
   <div v-if="activeTab === 'timeline'" class="timeline-section">
     <!-- 批次选择 -->
     <div class="panel batch-panel">
-      <div class="section-title"><span class="bar"></span>📅 五批次时间安排</div>
+      <div class="section-title">五批次时间安排</div>
       <div class="batch-tabs">
         <button v-for="batch in batches" :key="batch.id" class="batch-tab" :class="{ active: activeBatch === batch.id }" @click="activeBatch = batch.id">
           {{ batch.label }}
@@ -355,7 +450,7 @@ function openApp(id) { emit('open', id) }
   <!-- 材料清单视图 -->
   <div v-if="activeTab === 'materials'" class="materials-section">
     <div class="panel materials-panel">
-      <div class="section-title"><span class="bar"></span>📋 党员材料明细（共不少于12种）</div>
+      <div class="section-title">党员材料明细（共不少于12种）</div>
       
       <div v-for="(stage, index) in materials" :key="index" class="stage-card">
         <div class="stage-header">
@@ -376,7 +471,7 @@ function openApp(id) { emit('open', id) }
 
     <!-- 思想汇报要求 -->
     <div class="panel thought-panel">
-      <div class="section-title"><span class="bar"></span>📝 思想汇报要求</div>
+      <div class="section-title">思想汇报要求</div>
       
       <div v-for="(rule, index) in thoughtReportRules" :key="index" class="thought-card">
         <div class="thought-header">
@@ -393,7 +488,7 @@ function openApp(id) { emit('open', id) }
   <!-- 注意事项视图 -->
   <div v-if="activeTab === 'notes'" class="notes-section">
     <div v-for="(note, index) in importantNotes" :key="index" class="panel note-panel">
-      <div class="section-title"><span class="bar"></span>{{ note.icon }} {{ note.title }}</div>
+      <div class="section-title">{{ note.icon }} {{ note.title }}</div>
       <div class="note-content">
         <div v-for="(item, i) in note.content" :key="i" class="note-item">
           <span class="note-bullet">•</span>
@@ -404,7 +499,7 @@ function openApp(id) { emit('open', id) }
 
     <!-- 实用建议 -->
     <div class="panel advice-panel">
-      <div class="section-title"><span class="bar"></span>💡 实用建议</div>
+      <div class="section-title">实用建议</div>
       <div class="advice-content">
         <div class="advice-item">
           <div class="advice-icon">📚</div>
@@ -429,26 +524,29 @@ function openApp(id) { emit('open', id) }
       </div>
     </div>
   </div>
-
-  <!-- 返回按钮 -->
-  <div class="panel back-panel">
-    <button class="btn accent" @click="goBack" style="width:100%;">返回日程助手</button>
-  </div>
 </template>
 
 <style scoped>
 .stats-panel { margin-bottom: 12px; }
-.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.stat-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--primary-soft); border-radius: 8px; }
+.section-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+.stats-grid { display: flex; flex-direction: column; gap: 8px; }
+.stat-card { padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all .15s; }
+.stat-card:hover { border-color: var(--primary); }
+.stat-card.expanded { border-color: var(--primary); background: var(--primary-soft); }
+.stat-header { display: flex; align-items: center; gap: 10px; }
 .stat-icon { font-size: 20px; }
 .stat-content { flex: 1; }
 .stat-label { font-size: 11px; color: var(--text-sub); margin-bottom: 2px; }
 .stat-value { font-size: 13px; font-weight: 700; color: var(--primary); }
+.stat-expand { font-size: 12px; color: var(--text-sub); }
+.stat-detail { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; line-height: 1.6; color: var(--text); }
 
 .tab-nav { display: flex; gap: 8px; margin-bottom: 12px; }
-.tab-btn { flex: 1; padding: 10px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.tab-btn { flex: 1; padding: 10px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .tab-btn:hover { border-color: var(--primary); }
 .tab-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tab-icon { font-size: 16px; }
+.tab-text { font-size: 11px; }
 
 .flow-panel { margin-bottom: 12px; }
 .flow-steps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
@@ -470,7 +568,8 @@ function openApp(id) { emit('open', id) }
 .batch-header h4 { margin: 0; font-size: 16px; font-weight: 800; color: var(--text); }
 .batch-time { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; }
 .batch-desc { font-size: 13px; color: var(--text); margin-bottom: 8px; }
-.batch-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-sub); }
+.batch-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-sub); margin-bottom: 8px; }
+.batch-result { font-size: 12px; font-weight: 600; color: var(--primary); }
 .meta-item { display: flex; align-items: center; gap: 4px; }
 
 .key-reminder { margin-bottom: 12px; }
@@ -503,8 +602,6 @@ function openApp(id) { emit('open', id) }
 .tl-event { font-size: 14px; font-weight: 600; color: var(--text); }
 
 .batch-note { margin-top: 16px; padding: 12px; background: var(--soft-yellow, #fff8e1); border: 1px dashed var(--accent, #b8860b); border-radius: 8px; font-size: 13px; color: var(--text); display: flex; gap: 8px; align-items: flex-start; }
-
-.batch-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-sub); }
 
 .materials-panel { margin-bottom: 12px; }
 .stage-card { margin-bottom: 16px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
@@ -539,16 +636,14 @@ function openApp(id) { emit('open', id) }
 .advice-icon { font-size: 20px; }
 .advice-text { font-size: 13px; color: var(--text); flex: 1; }
 
-.back-panel { margin-top: 12px; }
-.btn.accent { background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
-.btn.accent:hover { opacity: .9; }
-
 @media (max-width: 640px) {
-  .stats-grid { grid-template-columns: 1fr; }
   .flow-steps { flex-direction: column; align-items: stretch; }
   .flow-arrow { transform: rotate(90deg); align-self: center; }
   .batch-tabs { flex-wrap: wrap; }
   .batch-tab { min-width: calc(33.33% - 8px); }
   .batch-meta { flex-direction: column; gap: 4px; }
+  .tab-btn { padding: 8px; }
+  .tab-icon { font-size: 14px; }
+  .tab-text { font-size: 10px; }
 }
 </style>

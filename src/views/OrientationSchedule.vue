@@ -3,6 +3,7 @@
  * 日程助手 v3：实时倒计时全覆盖 + 地点跳转地图 + 智能提醒 + 出席打卡 + 专业筛选
  */
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import PartyBuildingSchedule from './PartyBuildingSchedule.vue'
 import {
   SCHEDULE_VERSIONS, EVENT_CATEGORIES, MAJORS, audienceMajors,
   groupByDate, eventStatus, nextEvent, timeUntil, nextEventDate,
@@ -11,6 +12,7 @@ import {
 import { setNavContext } from '../stores/navContext'
 
 const emit = defineEmits(['back', 'open'])
+function openApp(id) { emit('open', id) }
 
 const versionId = ref(SCHEDULE_VERSIONS[0]?.id || '')
 const version = computed(() => SCHEDULE_VERSIONS.find(v => v.id === versionId.value) || SCHEDULE_VERSIONS[0])
@@ -25,6 +27,7 @@ const checked = ref(new Set())
 const detailRef = ref(null)
 const showTips = ref(false)
 const showArchived = ref(false)
+const showPartyBuilding = ref(false)
 
 const now = ref(new Date())
 const tick = setInterval(() => { if (!previewMode.value) now.value = new Date() }, 1000)
@@ -245,6 +248,19 @@ function goClassroomNav(loc) {
     </div>
   </div>
 
+  <!-- 入党日程表切换 -->
+  <div class="panel party-panel">
+    <div class="party-row">
+      <span class="party-label">🏛️ 入党日程表</span>
+      <button class="party-toggle" :class="{ active: showPartyBuilding }" @click="showPartyBuilding = !showPartyBuilding">
+        <span class="party-dot" :class="{ on: showPartyBuilding }"></span> {{ showPartyBuilding ? '返回日程' : '查看入党流程' }}
+      </button>
+    </div>
+    <div v-if="showPartyBuilding" class="party-hint">
+      查看入党流程指南、五批次时间安排、材料清单和注意事项
+    </div>
+  </div>
+
   <!-- 搜索 + 分类 -->
   <div class="panel" style="margin-bottom:12px;">
     <div class="input-row" style="margin-bottom:10px;">
@@ -259,7 +275,7 @@ function goClassroomNav(loc) {
   </div>
 
   <!-- 时间轴 -->
-  <div class="timeline">
+  <div v-if="!showPartyBuilding" class="timeline">
     <div v-for="([date, evts]) in filteredGrouped" :key="date" class="tl-day" :class="{ 'is-today': isToday(date) }">
       <button class="tl-day-head" @click="toggleExpand(date)">
         <span v-if="isToday(date)" class="tl-today-badge">今天</span>
@@ -299,7 +315,12 @@ function goClassroomNav(loc) {
     </div>
   </div>
 
-  <div v-if="!filteredGrouped.length" class="empty-state">
+  <!-- 入党日程表视图 -->
+  <div v-if="showPartyBuilding" class="party-building-section">
+    <PartyBuildingSchedule @back="showPartyBuilding = false" />
+  </div>
+
+  <div v-if="!filteredGrouped.length && !showPartyBuilding" class="empty-state">
     <div style="font-size:48px;margin-bottom:12px;">🔍</div>
     <div>没有匹配的活动</div>
   </div>
@@ -445,6 +466,18 @@ function goClassroomNav(loc) {
 .archive-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all .15s; }
 .archive-dot.on { background: #22c55e; }
 .archive-hint { margin-top: 8px; font-size: 12px; color: var(--text-sub); padding: 6px 10px; background: var(--primary-soft); border-radius: 8px; }
+
+.party-panel { padding: 14px 16px; }
+.party-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.party-label { font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.party-toggle { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; transition: all .15s; }
+.party-toggle:hover { border-color: var(--primary); }
+.party-toggle.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.party-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all .15s; }
+.party-dot.on { background: #22c55e; }
+.party-hint { margin-top: 8px; font-size: 12px; color: var(--text-sub); padding: 6px 10px; background: var(--primary-soft); border-radius: 8px; }
+
+.party-building-section { margin-top: 12px; }
 
 .ver-row { display: flex; align-items: center; gap: 10px; }
 .ver-label { font-size: 13px; font-weight: 700; flex-shrink: 0; }

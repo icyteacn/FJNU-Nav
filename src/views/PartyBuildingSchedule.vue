@@ -251,7 +251,7 @@ const writingWarnings = [
     title: '两个先锋队必须完整表述',
     level: 'critical',
     icon: '🔴',
-    content: '关于"两个先锋队"的表述，必须完整写出："中国共产党是中国工人阶级的先锋队，同时是中国人民和中华民族的先锋队"。不能只写其中一个，不能私自更改顺序，不能省略"同时是"的连接词。',
+    content: '关于"两个先锋队"的表述，必须完整写出："中国共产党是中国工人阶级的先锋队，同时是中国人民和中华民族的先锋队"。不能只写其中一个，不能私自更改顺序，不能省略"同时是"的连接词。建议把"一个领导核心"和"三个代表"也同时写上，最好不要单独只写两个先锋队，要写就写全套。',
   }
 ]
 
@@ -574,6 +574,9 @@ function goBack() { emit('back') }
             </div>
           </div>
         </div>
+        <a href="http://ach.xujc.com/2021/0801/c4464a130995/page.htm" target="_blank" class="writing-ref-link">
+          📄 入党申请书撰写规范说明（点击查看详细参考）
+        </a>
       </div>
     </div>
   </div>
@@ -711,6 +714,8 @@ function goBack() { emit('back') }
 .error-list { margin-top: 8px; }
 .error-item { font-size: 12px; color: #991b1b; margin-bottom: 4px; display: flex; gap: 4px; }
 .error-bullet { color: #dc2626; font-weight: bold; }
+.writing-ref-link { display: block; margin-top: 12px; padding: 12px; background: #fff; border: 1.5px dashed #dc2626; border-radius: 8px; color: #dc2626; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; transition: all .15s; }
+.writing-ref-link:hover { background: #dc2626; color: #fff; }
 
 @media (max-width: 640px) {
   .flow-steps { flex-direction: column; align-items: stretch; }

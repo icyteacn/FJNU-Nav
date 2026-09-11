@@ -152,6 +152,8 @@ function goClassroomNav(loc) {
     <button class="tab" :class="{ active: activeView === 'party' }" @click="activeView = 'party'">🏛️ 入党日程</button>
   </div>
 
+  <!-- 日常日程内容 -->
+  <template v-if="activeView === 'schedule'">
   <!-- 版本选择 -->
   <div v-if="SCHEDULE_VERSIONS.length > 1" class="panel" style="margin-bottom:12px;">
     <div class="ver-row">
@@ -242,7 +244,7 @@ function goClassroomNav(loc) {
   </div>
 
   <!-- 归档切换 -->
-  <div v-if="activeView === 'schedule'" class="panel archive-panel">
+  <div class="panel archive-panel">
     <div class="archive-row">
       <span class="archive-label">📦 历史归档</span>
       <button class="archive-toggle" :class="{ active: showArchived }" @click="showArchived = !showArchived">
@@ -267,8 +269,6 @@ function goClassroomNav(loc) {
     </div>
   </div>
 
-  <!-- 日常日程内容 -->
-  <template v-if="activeView === 'schedule'">
   <!-- 时间轴 -->
   <div class="timeline">
     <div v-for="([date, evts]) in filteredGrouped" :key="date" class="tl-day" :class="{ 'is-today': isToday(date) }">

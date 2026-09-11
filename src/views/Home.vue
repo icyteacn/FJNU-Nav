@@ -6,6 +6,7 @@ import { searchApps } from '../data/searchIndex'
 import { campuses } from '../data/campus'
 import { getCourseStats, EMPTY_STATS } from '../api/courseStats'
 import { SITE } from '../config/site'
+import VisitStats from '../components/VisitStats.vue'
 
 const emit = defineEmits(['open'])
 
@@ -193,6 +194,7 @@ function toggleCampus(name) {
         <div class="about-actions">
           <button class="btn ghost small" @click="emit('open', 'contributors')">🎖️ 查看贡献者墙 ›</button>
         </div>
+        <VisitStats />
       </div>
     </section>
   </div>

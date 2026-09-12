@@ -32,18 +32,18 @@ export const WEEKDAYS = [
 
 /** 表格行：每节课单独一行，节次和时间合并显示 */
 export const TABLE_ROWS = [
-  { period: 1, label: '1', time: '08:20', section: 'morning' },
-  { period: 2, label: '2', time: '09:15', section: 'morning' },
-  { period: 3, label: '3', time: '10:20', section: 'morning' },
-  { period: 4, label: '4', time: '11:15', section: 'morning' },
-  { period: 5, label: '5', time: '14:00', section: 'afternoon' },
-  { period: 6, label: '6', time: '14:55', section: 'afternoon' },
-  { period: 7, label: '7', time: '15:50', section: 'afternoon' },
-  { period: 8, label: '8', time: '16:45', section: 'afternoon' },
-  { period: 9, label: '9', time: '18:30', section: 'evening' },
-  { period: 10, label: '10', time: '19:25', section: 'evening' },
-  { period: 11, label: '11', time: '20:20', section: 'evening' },
-  { period: 12, label: '12', time: '21:15', section: 'evening' },
+  { period: 1, label: '1', time: '08:20', timeEnd: '09:05', section: 'morning' },
+  { period: 2, label: '2', time: '09:15', timeEnd: '10:00', section: 'morning' },
+  { period: 3, label: '3', time: '10:20', timeEnd: '11:05', section: 'morning' },
+  { period: 4, label: '4', time: '11:15', timeEnd: '12:00', section: 'morning' },
+  { period: 5, label: '5', time: '14:00', timeEnd: '14:45', section: 'afternoon' },
+  { period: 6, label: '6', time: '14:55', timeEnd: '15:40', section: 'afternoon' },
+  { period: 7, label: '7', time: '15:50', timeEnd: '16:35', section: 'afternoon' },
+  { period: 8, label: '8', time: '16:45', timeEnd: '17:30', section: 'afternoon' },
+  { period: 9, label: '9', time: '18:30', timeEnd: '19:15', section: 'evening' },
+  { period: 10, label: '10', time: '19:25', timeEnd: '20:10', section: 'evening' },
+  { period: 11, label: '11', time: '20:20', timeEnd: '21:05', section: 'evening' },
+  { period: 12, label: '12', time: '21:15', timeEnd: '22:00', section: 'evening' },
 ]
 
 /** 节次时间段（用于详情显示） */

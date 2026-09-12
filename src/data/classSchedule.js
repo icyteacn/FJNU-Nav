@@ -30,7 +30,7 @@ export const WEEKDAYS = [
   { key: 7, label: '周日', short: '日' },
 ]
 
-/** 表格行：每节课单独一行，无课间分隔 */
+/** 表格行：每节课单独一行，节次和时间合并显示 */
 export const TABLE_ROWS = [
   { period: 1, label: '1', time: '08:20', section: 'morning' },
   { period: 2, label: '2', time: '09:15', section: 'morning' },
@@ -45,6 +45,22 @@ export const TABLE_ROWS = [
   { period: 11, label: '11', time: '20:20', section: 'evening' },
   { period: 12, label: '12', time: '21:15', section: 'evening' },
 ]
+
+/** 节次时间段（用于详情显示） */
+export const PERIOD_TIMES = {
+  1: '08:20-09:05',
+  2: '09:15-10:00',
+  3: '10:20-11:05',
+  4: '11:15-12:00',
+  5: '14:00-14:45',
+  6: '14:55-15:40',
+  7: '15:50-16:35',
+  8: '16:45-17:30',
+  9: '18:30-19:15',
+  10: '19:25-20:10',
+  11: '20:20-21:05',
+  12: '21:15-22:00',
+}
 
 /** 课间休息时间段 */
 export const BREAK_TIMES = {

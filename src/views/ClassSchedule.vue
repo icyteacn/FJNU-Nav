@@ -405,10 +405,10 @@ onMounted(() => {
         <table class="schedule-table">
           <thead>
             <tr>
-              <th class="period-col">节</th>
+              <th class="period-col"></th>
               <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6 }">
                 <div class="weekday-label">{{ wd.short }}</div>
-                <div class="weekday-date">{{ showSemester ? '-' : getDateText(wd.key) }}</div>
+                <div class="weekday-date">{{ showSemester ? '' : getDateText(wd.key) }}</div>
               </th>
             </tr>
           </thead>
@@ -417,8 +417,6 @@ onMounted(() => {
               <tr :class="'section-' + row.section">
                 <td class="period-cell">
                   <div class="period-num">{{ row.label }}</div>
-                  <div class="period-time">{{ row.time }}</div>
-                  <div class="period-time-end">{{ row.timeEnd }}</div>
                 </td>
                 <template v-for="wd in weekdayHeaders" :key="wd.key">
                   <td
@@ -695,35 +693,33 @@ onMounted(() => {
 .mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; }
 
 /* 表格视图 */
-.grid-view { padding: 0 2px; }
+.grid-view { padding: 0; }
 .schedule-table-wrapper { --font-scale: 1; }
-.schedule-table { width: 100%; border-collapse: collapse; font-size: calc(10px * var(--font-scale)); table-layout: auto; }
+.schedule-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .schedule-table th, .schedule-table td { border: 1px solid var(--border); padding: 0; }
 
-.period-col { width: 32px; background: var(--soft-fg); font-weight: 700; }
+.period-col { width: 26px; background: var(--soft-fg); }
 .weekday-col { background: var(--soft-fg); font-weight: 700; }
-.weekday-col.weekend { background: #f8f8f8; width: 50px; }
-.weekday-label { padding: 4px 2px 1px; font-size: calc(11px * var(--font-scale)); font-weight: 700; }
-.weekday-date { padding: 0 2px 3px; font-size: calc(9px * var(--font-scale)); color: var(--text-sub); font-weight: 500; }
+.weekday-col.weekend { background: #f5f5f5; width: 48px; }
+.weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
+.weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
 
-.period-cell { background: var(--soft-fg); text-align: center; padding: 3px 2px; vertical-align: middle; }
-.period-num { font-weight: 800; font-size: calc(13px * var(--font-scale)); color: var(--primary); line-height: 1.2; }
-.period-time { font-size: calc(7px * var(--font-scale)); color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
-.period-time-end { font-size: calc(6.5px * var(--font-scale)); color: var(--text-sub); line-height: 1.1; }
+.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 0; vertical-align: middle; }
+.period-num { font-weight: 800; font-size: 13px; color: var(--primary); }
 
 .section-morning .period-cell { border-top: 2px solid #1565c0; }
 .section-afternoon .period-cell { border-top: 2px solid #e65100; }
 .section-evening .period-cell { border-top: 2px solid #6a1b9a; }
 
-.course-cell { padding: 1px; height: 42px; vertical-align: middle; cursor: default; }
+.course-cell { padding: 2px; height: 46px; vertical-align: middle; cursor: default; }
 .course-cell.weekend { background: #fafafa; }
-.course-cell.has-course { cursor: pointer; transition: background .15s; }
+.course-cell.has-course { cursor: pointer; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
 
-.course-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 3px; padding: 2px 4px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
-.course-name { font-weight: 700; font-size: calc(10px * var(--font-scale)); line-height: 1.25; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
+.course-card { background: var(--card); border-left: 3px solid; border-radius: 4px; padding: 4px 6px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.course-name { font-weight: 700; font-size: 11px; line-height: 1.3; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .course-info { display: flex; flex-direction: column; gap: 0; }
-.course-location, .course-teacher, .course-weeks { font-size: calc(8px * var(--font-scale)); color: var(--text-sub); line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-location, .course-teacher, .course-weeks { font-size: 9px; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .course-weeks { color: var(--primary); font-weight: 600; }
 
 /* 列表视图 */
@@ -805,20 +801,23 @@ onMounted(() => {
   .schedule-header { border-radius: 0; margin: -16px -16px 0; padding: 12px 16px 14px; }
   .header-title { font-size: 16px; }
   .stat-value { font-size: 14px; color: #fff; }
-  .today-card { margin: 16px 8px 16px; }
+  .today-card { margin: 14px 8px 14px; }
   .next-banner { padding: 10px 12px; }
   .next-name { font-size: 14px; }
   .next-meta { font-size: 11px; }
   .search-bar { padding: 0 8px; margin-bottom: 4px; }
   .week-selector, .filter-row, .control-row { padding: 0 8px; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
-  .grid-view { padding: 0; overflow-x: hidden; }
+  .grid-view { padding: 0; overflow: hidden; }
   .schedule-table-wrapper { --font-scale: v-bind(fontSize / 100); }
-  .period-col { width: 28px; }
+  .period-col { width: 24px; }
+  .period-num { font-size: 12px; }
   .weekday-col.weekend { width: 42px; }
-  .course-cell { height: 38px; padding: 1px; }
-  .course-name { font-size: calc(9px * var(--font-scale)); }
-  .course-location, .course-teacher { font-size: calc(7px * var(--font-scale)); }
+  .weekday-label { font-size: 11px; padding: 5px 0 0; }
+  .weekday-date { font-size: 8px; }
+  .course-cell { height: 40px; }
+  .course-name { font-size: 10px; }
+  .course-location, .course-teacher { font-size: 8px; }
   .list-view { padding: 0 8px; }
   .unarranged-panel { margin: 12px 0; border-radius: 0; border-left: none; border-right: none; }
   .week-chip { min-width: 45px; padding: 5px 8px; }

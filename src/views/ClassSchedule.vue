@@ -84,14 +84,18 @@ function getCurrentPeriod() {
   return 0
 }
 
-// 获取课程对应的日期（本周）
+// 获取课程对应的日期（本周或下周）
 function getCourseDate(course) {
   const today = new Date()
-  const currentDay = today.getDay() || 7
-  const diffDays = course.weekday - currentDay
+  today.setHours(0, 0, 0, 0)
+  const currentDay = today.getDay() || 7 // 1=周一, 7=周日
+  
+  // 计算到目标周几的天数差
+  let diffDays = course.weekday - currentDay
+  if (diffDays < 0) diffDays += 7 // 如果目标日已过，跳到下周
+  
   const courseDate = new Date(today)
   courseDate.setDate(today.getDate() + diffDays)
-  courseDate.setHours(0, 0, 0, 0)
   return courseDate
 }
 
@@ -100,7 +104,7 @@ const futureCourses = computed(() => {
   const curPeriod = getCurrentPeriod()
   const today = new Date()
   const currentDay = today.getDay() || 7
-  const nowTime = today.getHours() * 60 + today.getMinutes()
+  const nowMinutes = today.getHours() * 60 + today.getMinutes()
 
   const allCourses = displayCourses.value
   const result = []
@@ -110,13 +114,22 @@ const futureCourses = computed(() => {
     const startTime = SINGLE_PERIOD_TIMES[course.startPeriod]
     if (!startTime) continue
     const [sh, sm] = startTime.split('-')[0].split(':').map(Number)
-    courseDate.setHours(sh, sm, 0, 0)
-
-    if (courseDate > today || (course.weekday === currentDay && course.startPeriod > curPeriod)) {
-      result.push({ ...course, _date: new Date(courseDate) })
+    
+    // 设置课程开始时间
+    const targetDate = new Date(courseDate)
+    targetDate.setHours(sh, sm, 0, 0)
+    
+    // 判断是否是未来：日期在未来，或者今天且当前节次小于课程节次
+    const isToday = course.weekday === currentDay
+    const isAfterNow = targetDate.getTime() > today.getTime()
+    const isTodayFuture = isToday && nowMinutes < sh * 60 + sm
+    
+    if (isAfterNow || isTodayFuture) {
+      result.push({ ...course, _date: targetDate })
     }
   }
 
+  // 按日期时间排序
   result.sort((a, b) => a._date - b._date || a.startPeriod - b.startPeriod)
   return result
 })

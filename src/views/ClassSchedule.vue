@@ -702,7 +702,7 @@ onMounted(() => {
 
 .period-col { width: 38px; background: var(--soft-fg); }
 .weekday-col { background: var(--soft-fg); font-weight: 700; }
-.weekday-col.weekend { background: #f5f5f5; width: 48px; }
+.weekday-col.weekend { background: #f5f5f5; width: 40px; }
 .weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
 .weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
 
@@ -715,12 +715,12 @@ onMounted(() => {
 .section-afternoon .period-cell { border-top: 2px solid #e65100; }
 .section-evening .period-cell { border-top: 2px solid #6a1b9a; }
 
-.course-cell { padding: 2px; height: 46px; vertical-align: middle; cursor: default; }
+.course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.has-course { cursor: pointer; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
 
-.course-card { background: var(--card); border-left: 3px solid; border-radius: 4px; padding: 4px 6px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.course-card { background: var(--card); border-left: 3px solid; border-radius: 4px; padding: 4px 8px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 .course-name { font-weight: 700; font-size: calc(11px * var(--font-scale)); line-height: 1.3; color: var(--text); word-break: break-all; white-space: normal; }
 .course-info { display: flex; flex-direction: column; gap: 0; }
 .course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; word-break: break-all; white-space: normal; }
@@ -815,8 +815,9 @@ onMounted(() => {
   .grid-view { padding: 0; overflow: hidden; }
   .schedule-table-wrapper { --font-scale: v-bind(fontSize / 100); }
   .period-col { width: 34px; }
-  .weekday-col.weekend { width: 42px; }
-  .course-cell { height: 42px; }
+  .weekday-col.weekend { width: 36px; }
+  .course-cell { height: 42px; padding: 2px; }
+  .course-card { padding: 3px 6px; }
   .list-view { padding: 0 8px; }
   .unarranged-panel { margin: 12px 0; border-radius: 0; border-left: none; border-right: none; }
   .week-chip { min-width: 45px; padding: 5px 8px; }

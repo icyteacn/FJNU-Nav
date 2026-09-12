@@ -264,6 +264,7 @@ onMounted(() => {
                       <div class="course-info">
                         <span class="course-location">{{ getCourse(wd.key, row.period).location }}</span>
                         <span class="course-teacher">{{ getCourse(wd.key, row.period).teacher }}</span>
+                        <span v-if="showSemester" class="course-weeks">第{{ getCourse(wd.key, row.period).weeks }}周</span>
                       </div>
                     </div>
                   </td>
@@ -517,7 +518,8 @@ onMounted(() => {
 .course-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 4px; padding: 3px 5px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
 .course-name { font-weight: 700; font-size: 10px; line-height: 1.2; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .course-info { display: flex; flex-direction: column; gap: 0; }
-.course-location, .course-teacher { font-size: 8px; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-location, .course-teacher, .course-weeks { font-size: 8px; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-weeks { color: var(--primary); font-weight: 600; }
 
 /* 列表视图 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }

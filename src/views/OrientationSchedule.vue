@@ -4,6 +4,7 @@
  */
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import PartyBuildingSchedule from './PartyBuildingSchedule.vue'
+import ClassSchedule from './ClassSchedule.vue'
 import {
   SCHEDULE_VERSIONS, EVENT_CATEGORIES, MAJORS, audienceMajors,
   groupByDate, eventStatus, nextEvent, timeUntil, nextEventDate,
@@ -149,6 +150,7 @@ function goClassroomNav(loc) {
   <!-- 标签页切换 -->
   <div class="tab-row" style="margin-bottom:16px;">
     <button class="tab" :class="{ active: activeView === 'schedule' }" @click="activeView = 'schedule'">📅 日常日程</button>
+    <button class="tab" :class="{ active: activeView === 'class' }" @click="activeView = 'class'">📚 课表</button>
     <button class="tab" :class="{ active: activeView === 'party' }" @click="activeView = 'party'">🏛️ 入党日程</button>
   </div>
 
@@ -329,6 +331,11 @@ function goClassroomNav(loc) {
       <div class="tip-item" style="border:none;"><span>🧭</span><span>点击详情中的地点可跳转教室导航查看教学楼</span></div>
     </div>
   </div>
+  </div>
+
+  <!-- 课表视图 -->
+  <div v-if="activeView === 'class'" class="class-view-wrapper">
+    <ClassSchedule @back="activeView = 'schedule'" />
   </div>
 
   <!-- 入党日程视图 -->
@@ -517,6 +524,8 @@ function goClassroomNav(loc) {
 .tip-item span:last-child { color: var(--text-sub); }
 
 .empty-state { text-align: center; padding: 40px 0; color: var(--text-sub); font-size: 14px; }
+
+.class-view-wrapper { min-height: 60vh; }
 
 .detail-card { max-height: 85vh; overflow-y: auto; }
 .detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }

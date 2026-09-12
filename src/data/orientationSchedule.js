@@ -12,6 +12,7 @@ export const EVENT_CATEGORIES = {
   health: { label: '健康', icon: '🏥', color: '#e65100' },
   safety: { label: '安全', icon: '🛡️', color: '#00695c' },
   election: { label: '选举', icon: '🗳️', color: '#ad1457' },
+  class: { label: '课表', icon: '📖', color: '#1a73e8' },
   other: { label: '其他', icon: '📌', color: '#455a64' },
 }
 

@@ -694,36 +694,36 @@ onMounted(() => {
 /* 当前模式提示 */
 .mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; }
 
-/* 表格视图 - 固定布局，缩放只改字号不影响列宽 */
-.grid-view { padding: 0 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.schedule-table-wrapper { min-width: 420px; --font-scale: 1; }
-.schedule-table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
+/* 表格视图 */
+.grid-view { padding: 0 2px; }
+.schedule-table-wrapper { --font-scale: 1; }
+.schedule-table { width: 100%; border-collapse: collapse; font-size: calc(10px * var(--font-scale)); table-layout: auto; }
 .schedule-table th, .schedule-table td { border: 1px solid var(--border); padding: 0; }
 
-.period-col { width: 34px; background: var(--soft-fg); font-weight: 700; }
+.period-col { width: 32px; background: var(--soft-fg); font-weight: 700; }
 .weekday-col { background: var(--soft-fg); font-weight: 700; }
-.weekday-col.weekend { background: #f8f8f8; }
-.weekday-label { padding: 5px 2px 2px; font-size: calc(12px * var(--font-scale)); font-weight: 700; }
-.weekday-date { padding: 0 2px 4px; font-size: calc(10px * var(--font-scale)); color: var(--text-sub); font-weight: 500; }
+.weekday-col.weekend { background: #f8f8f8; width: 50px; }
+.weekday-label { padding: 4px 2px 1px; font-size: calc(11px * var(--font-scale)); font-weight: 700; }
+.weekday-date { padding: 0 2px 3px; font-size: calc(9px * var(--font-scale)); color: var(--text-sub); font-weight: 500; }
 
-.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; }
-.period-num { font-weight: 800; font-size: calc(14px * var(--font-scale)); color: var(--primary); line-height: 1.3; }
-.period-time { font-size: calc(8px * var(--font-scale)); color: var(--text-sub); line-height: 1.15; margin-top: 2px; }
-.period-time-end { font-size: calc(7px * var(--font-scale)); color: var(--text-sub); line-height: 1.1; }
+.period-cell { background: var(--soft-fg); text-align: center; padding: 3px 2px; vertical-align: middle; }
+.period-num { font-weight: 800; font-size: calc(13px * var(--font-scale)); color: var(--primary); line-height: 1.2; }
+.period-time { font-size: calc(7px * var(--font-scale)); color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
+.period-time-end { font-size: calc(6.5px * var(--font-scale)); color: var(--text-sub); line-height: 1.1; }
 
 .section-morning .period-cell { border-top: 2px solid #1565c0; }
 .section-afternoon .period-cell { border-top: 2px solid #e65100; }
 .section-evening .period-cell { border-top: 2px solid #6a1b9a; }
 
-.course-cell { padding: 2px; height: 50px; vertical-align: middle; cursor: default; }
+.course-cell { padding: 1px; height: 42px; vertical-align: middle; cursor: default; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.has-course { cursor: pointer; transition: background .15s; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
 
-.course-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 4px; padding: 4px 6px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
-.course-name { font-weight: 700; font-size: calc(11px * var(--font-scale)); line-height: 1.3; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
-.course-info { display: flex; flex-direction: column; gap: 1px; }
-.course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 3px; padding: 2px 4px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+.course-name { font-weight: 700; font-size: calc(10px * var(--font-scale)); line-height: 1.25; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
+.course-info { display: flex; flex-direction: column; gap: 0; }
+.course-location, .course-teacher, .course-weeks { font-size: calc(8px * var(--font-scale)); color: var(--text-sub); line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .course-weeks { color: var(--primary); font-weight: 600; }
 
 /* 列表视图 */
@@ -812,10 +812,13 @@ onMounted(() => {
   .search-bar { padding: 0 8px; margin-bottom: 4px; }
   .week-selector, .filter-row, .control-row { padding: 0 8px; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
-  .grid-view { padding: 0 0px; }
-  .schedule-table-wrapper { min-width: 380px; --font-scale: v-bind(fontSize / 100); }
-  .period-col { width: 30px; }
-  .course-cell { height: 45px; padding: 2px; }
+  .grid-view { padding: 0; overflow-x: hidden; }
+  .schedule-table-wrapper { --font-scale: v-bind(fontSize / 100); }
+  .period-col { width: 28px; }
+  .weekday-col.weekend { width: 42px; }
+  .course-cell { height: 38px; padding: 1px; }
+  .course-name { font-size: calc(9px * var(--font-scale)); }
+  .course-location, .course-teacher { font-size: calc(7px * var(--font-scale)); }
   .list-view { padding: 0 8px; }
   .unarranged-panel { margin: 12px 0; border-radius: 0; border-left: none; border-right: none; }
   .week-chip { min-width: 45px; padding: 5px 8px; }

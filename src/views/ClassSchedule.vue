@@ -250,7 +250,7 @@ onMounted(() => {
       <div class="zoom-control">
         <button class="zoom-btn" @click="setFontSize(Math.max(70, fontSize - 10))">A-</button>
         <span class="zoom-label">{{ fontSize }}%</span>
-        <button class="zoom-btn" @click="setFontSize(Math.min(150, fontSize + 10))">A+</button>
+        <button class="zoom-btn" @click="setFontSize(Math.min(200, fontSize + 10))">A+</button>
       </div>
       <button
         class="semester-btn"
@@ -664,17 +664,10 @@ onMounted(() => {
   .search-bar, .week-selector, .filter-row, .control-row { padding: 0 8px; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
   .grid-view { padding: 0 0px; }
-  .schedule-table-wrapper { min-width: 380px; }
+  .schedule-table-wrapper { min-width: 380px; --font-scale: v-bind(fontSize / 100); }
   .period-col { width: 30px; }
-  .period-num { font-size: 1.1em; }
-  .period-time { font-size: 0.65em; }
-  .period-time-end { font-size: 0.6em; }
   .weekday-col { min-width: 58px; }
-  .weekday-label { font-size: 0.95em; padding: 3px 1px 0; }
-  .weekday-date { font-size: 0.8em; }
   .course-cell { height: 34px; padding: 1px; }
-  .course-name { font-size: 0.9em; -webkit-line-clamp: 2; }
-  .course-location, .course-teacher, .course-weeks { font-size: 0.7em; }
   .list-view { padding: 0 8px; }
   .unarranged-panel { margin: 12px 0; border-radius: 0; border-left: none; border-right: none; }
   .week-chip { min-width: 45px; padding: 5px 8px; }

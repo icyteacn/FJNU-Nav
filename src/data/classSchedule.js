@@ -21,13 +21,13 @@ export const SINGLE_PERIOD_TIMES = {
 
 /** 星期映射 */
 export const WEEKDAYS = [
-  { key: 1, label: '周一', short: '一' },
-  { key: 2, label: '周二', short: '二' },
-  { key: 3, label: '周三', short: '三' },
-  { key: 4, label: '周四', short: '四' },
-  { key: 5, label: '周五', short: '五' },
-  { key: 6, label: '周六', short: '六' },
-  { key: 7, label: '周日', short: '日' },
+  { key: 1, label: '周一', short: '周一' },
+  { key: 2, label: '周二', short: '周二' },
+  { key: 3, label: '周三', short: '周三' },
+  { key: 4, label: '周四', short: '周四' },
+  { key: 5, label: '周五', short: '周五' },
+  { key: 6, label: '周六', short: '周六' },
+  { key: 7, label: '周日', short: '周日' },
 ]
 
 /** 表格行：每节课单独一行，节次和时间合并显示 */

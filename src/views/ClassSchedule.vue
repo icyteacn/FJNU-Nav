@@ -1,11 +1,11 @@
 <script setup>
 /**
- * 课程表视图 v7
- * - 当日课程实时提醒
- * - 可调节字体大小（选项+手势缩放）
- * - 优化切换按钮显示
+ * 课程表视图 v8
+ * - 当日课程 + 下一节课倒计时
+ * - 可调节字体大小（70%-200%）
+ * - 优化手机端显示
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES,
   COURSES, REQUIRED_COURSES, COURSE_TYPES,
@@ -26,13 +26,17 @@ const showUnarranged = ref(false)
 const typeFilter = ref('all')
 const showSemester = ref(false)
 const searchKw = ref('')
-const fontSize = ref(100) // 百分比
+const fontSize = ref(100)
+
+const now = ref(new Date())
+const tick = setInterval(() => { now.value = new Date() }, 1000)
+onUnmounted(() => clearInterval(tick))
 
 const weekdayHeaders = computed(() => WEEKDAYS)
 
 // 当天是周几（1-7，0表示周日转为7）
 const todayWeekday = computed(() => {
-  const d = new Date().getDay()
+  const d = now.value.getDay()
   return d === 0 ? 7 : d
 })
 
@@ -47,6 +51,73 @@ const todayCourses = computed(() => {
 
 // 是否今天有课
 const hasTodayCourses = computed(() => todayCourses.value.length > 0)
+
+// 当前节次
+function getCurrentPeriod() {
+  const h = now.value.getHours()
+  const m = now.value.getMinutes()
+  const t = h * 60 + m
+  if (t < 8 * 60 + 20) return 0
+  if (t < 9 * 60 + 5) return 1
+  if (t < 9 * 60 + 15) return 2
+  if (t < 10 * 60) return 2
+  if (t < 10 * 60 + 20) return 3
+  if (t < 11 * 60 + 5) return 3
+  if (t < 11 * 60 + 15) return 4
+  if (t < 12 * 60) return 4
+  if (t < 14 * 60) return 0
+  if (t < 14 * 60 + 45) return 5
+  if (t < 14 * 60 + 55) return 6
+  if (t < 15 * 60 + 40) return 6
+  if (t < 15 * 60 + 50) return 7
+  if (t < 16 * 60 + 35) return 7
+  if (t < 16 * 60 + 45) return 8
+  if (t < 17 * 60 + 30) return 8
+  if (t < 18 * 60 + 30) return 0
+  if (t < 19 * 60 + 15) return 9
+  if (t < 19 * 60 + 25) return 10
+  if (t < 20 * 60 + 10) return 10
+  if (t < 20 * 60 + 20) return 11
+  if (t < 21 * 60 + 5) return 11
+  if (t < 21 * 60 + 15) return 12
+  if (t < 22 * 60) return 12
+  return 0
+}
+
+// 下一节课
+const nextCourse = computed(() => {
+  const curPeriod = getCurrentPeriod()
+  return todayCourses.value.find(c => c.startPeriod > curPeriod) || null
+})
+
+// 下一节课倒计时
+const nextCountdown = computed(() => {
+  if (!nextCourse.value) return null
+  const h = now.value.getHours()
+  const m = now.value.getMinutes()
+  const s = now.value.getSeconds()
+  const nowMin = h * 60 + m
+  const startTime = SINGLE_PERIOD_TIMES[nextCourse.value.startPeriod]
+  if (!startTime) return null
+  const [sh, sm] = startTime.split('-')[0].split(':').map(Number)
+  const targetMin = sh * 60 + sm
+  const diff = targetMin - nowMin
+  if (diff <= 0) return { text: '进行中', isOngoing: true }
+  const hours = Math.floor(diff / 60)
+  const mins = diff % 60
+  if (hours > 0) return { text: `${hours}小时${mins}分`, isOngoing: false }
+  return { text: `${mins}分钟`, isOngoing: false }
+})
+
+// 下节课信息
+const nextInfo = computed(() => {
+  if (!nextCourse.value) return null
+  return {
+    course: nextCourse.value,
+    countdown: nextCountdown.value,
+    weekdayLabel: WEEKDAYS.find(w => w.key === nextCourse.value.weekday)?.label,
+  }
+})
 
 const displayCourses = computed(() => {
   let courses
@@ -186,9 +257,25 @@ onMounted(() => {
 
     <!-- 当日课程提醒卡片 -->
     <div class="today-card" :class="{ 'has-courses': hasTodayCourses }">
+      <!-- 下一节课倒计时 -->
+      <div v-if="nextInfo" class="next-banner">
+        <div class="next-top">
+          <span class="next-badge">⏰ 下一节课</span>
+          <span class="next-countdown" :class="{ ongoing: nextInfo.countdown?.isOngoing }">{{ nextInfo.countdown?.text }}</span>
+        </div>
+        <div class="next-info">
+          <span class="next-name">{{ nextInfo.course.name }}</span>
+          <span class="next-meta">第{{ nextInfo.course.startPeriod }}-{{ nextInfo.course.endPeriod }}节 · {{ nextInfo.course.location }}</span>
+        </div>
+      </div>
+      <div v-else-if="!hasTodayCourses" class="next-banner no-class">
+        <span class="next-badge">🎉 今天没有更多课了</span>
+      </div>
+
+      <!-- 今日课程列表 -->
       <div class="today-header">
-        <span class="today-badge">{{ hasTodayCourses ? '📚 今日有课' : '🎉 今天没课' }}</span>
-        <span class="today-date">{{ WEEKDAYS.find(w => w.key === todayWeekday)?.label }} {{ formatDateShort(new Date()) }}</span>
+        <span class="today-badge">{{ hasTodayCourses ? '📚 今日课程（' + todayCourses.length + '门）' : '🎉 今天没课' }}</span>
+        <span class="today-date">{{ WEEKDAYS.find(w => w.key === todayWeekday)?.label }} {{ formatDateShort(now) }}</span>
       </div>
       <div v-if="hasTodayCourses" class="today-list">
         <div v-for="course in todayCourses" :key="course.id" class="today-item" @click="openCourseDetail(course)">
@@ -491,7 +578,20 @@ onMounted(() => {
 /* 当日课程提醒卡片 */
 .today-card { margin: 14px 12px 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .today-card.has-courses { border-color: var(--primary); box-shadow: 0 2px 8px rgba(21,101,192,0.15); }
-.today-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--soft-fg); }
+
+/* 下一节课倒计时 */
+.next-banner { padding: 12px 14px; background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 75%, #000)); color: #fff; }
+.next-banner.no-class { background: var(--soft-fg); color: var(--text-sub); }
+.next-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.next-badge { font-size: 13px; font-weight: 700; }
+.next-countdown { font-size: 14px; font-weight: 800; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 999px; }
+.next-countdown.ongoing { background: #22c55e; }
+.next-info { display: flex; flex-direction: column; gap: 2px; }
+.next-name { font-size: 15px; font-weight: 700; }
+.next-meta { font-size: 12px; opacity: 0.85; }
+
+/* 今日课程列表标题 */
+.today-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--soft-fg); border-top: 1px solid var(--border); }
 .today-card.has-courses .today-header { background: var(--primary-soft); }
 .today-badge { font-weight: 700; font-size: 13px; color: var(--text); }
 .today-card.has-courses .today-badge { color: var(--primary); }
@@ -660,8 +760,12 @@ onMounted(() => {
   .schedule-header { border-radius: 0; margin: -16px -16px 0; padding: 12px 16px 14px; }
   .header-title { font-size: 16px; }
   .stat-value { font-size: 14px; color: #fff; }
-  .today-card { margin: 14px 8px 0; }
-  .search-bar, .week-selector, .filter-row, .control-row { padding: 0 8px; }
+  .today-card { margin: 16px 8px 16px; }
+  .next-banner { padding: 10px 12px; }
+  .next-name { font-size: 14px; }
+  .next-meta { font-size: 11px; }
+  .search-bar { padding: 0 8px; margin-bottom: 4px; }
+  .week-selector, .filter-row, .control-row { padding: 0 8px; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
   .grid-view { padding: 0 0px; }
   .schedule-table-wrapper { min-width: 380px; --font-scale: v-bind(fontSize / 100); }

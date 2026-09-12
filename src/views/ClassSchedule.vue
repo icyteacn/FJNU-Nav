@@ -5,7 +5,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import {
-  WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES, BREAK_TIMES,
+  WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES,
   COURSES, REQUIRED_COURSES, COURSE_TYPES,
   getCurrentWeek, isCourseInWeek,
   getCourseAtPeriod, getCourseRowSpan, isMergedCell,
@@ -101,10 +101,6 @@ function isCellMerged(weekday, period) {
     return isMergedCell(weekday, period)
   }
   return isMergedCell(weekday, period, selectedWeek.value)
-}
-
-function isBreakRow(row) {
-  return row.isBreakBefore
 }
 
 function openCourseDetail(course) {
@@ -245,15 +241,6 @@ onMounted(() => {
           </thead>
           <tbody>
             <template v-for="row in TABLE_ROWS" :key="row.period">
-              <tr v-if="isBreakRow(row)" class="break-row">
-                <td colspan="9" class="break-cell">
-                  <div class="break-divider">
-                    <span class="break-line"></span>
-                    <span class="break-text">{{ BREAK_TIMES[(row.period - 1) + '-' + row.period] || '课间休息' }}</span>
-                    <span class="break-line"></span>
-                  </div>
-                </td>
-              </tr>
               <tr :class="'section-' + row.section">
                 <td class="period-cell">
                   <div class="period-num">{{ row.label }}</div>
@@ -511,13 +498,6 @@ onMounted(() => {
 .period-num { font-weight: 800; font-size: 12px; color: var(--primary); }
 .time-cell { text-align: center; font-size: 8px; color: var(--text-sub); padding: 3px; }
 
-/* 课间休息行 */
-.break-row td { padding: 0; border-top: none; border-bottom: none; }
-.break-cell { background: linear-gradient(90deg, transparent, var(--soft-fg) 20%, var(--soft-fg) 80%, transparent); }
-.break-divider { display: flex; align-items: center; gap: 6px; padding: 2px 10px; }
-.break-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border) 50%, transparent); }
-.break-text { font-size: 8px; color: var(--text-sub); white-space: nowrap; font-weight: 500; }
-
 .section-morning .period-cell, .section-morning .time-cell { border-top-color: #1565c0; }
 .section-afternoon .period-cell, .section-afternoon .time-cell { border-top-color: #e65100; }
 .section-evening .period-cell, .section-evening .time-cell { border-top-color: #6a1b9a; }
@@ -620,7 +600,6 @@ onMounted(() => {
   .course-cell { height: 28px; padding: 1px; }
   .course-name { font-size: 9px; }
   .course-location, .course-teacher { font-size: 7px; }
-  .break-text { font-size: 7px; }
   .list-view { padding: 0 8px; }
   .unarranged-panel { margin: 12px 0; border-radius: 0; border-left: none; border-right: none; }
   .week-chip { min-width: 45px; padding: 5px 8px; }

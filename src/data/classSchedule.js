@@ -30,20 +30,20 @@ export const WEEKDAYS = [
   { key: 7, label: '周日', short: '日' },
 ]
 
-/** 表格行：每节课单独一行 */
+/** 表格行：每节课单独一行，无课间分隔 */
 export const TABLE_ROWS = [
-  { period: 1, label: '1', time: '08:20-09:05', section: 'morning', isBreakBefore: false },
-  { period: 2, label: '2', time: '09:15-10:00', section: 'morning', isBreakBefore: false },
-  { period: 3, label: '3', time: '10:20-11:05', section: 'morning', isBreakBefore: true },
-  { period: 4, label: '4', time: '11:15-12:00', section: 'morning', isBreakBefore: false },
-  { period: 5, label: '5', time: '14:00-14:45', section: 'afternoon', isBreakBefore: true },
-  { period: 6, label: '6', time: '14:55-15:40', section: 'afternoon', isBreakBefore: false },
-  { period: 7, label: '7', time: '15:50-16:35', section: 'afternoon', isBreakBefore: true },
-  { period: 8, label: '8', time: '16:45-17:30', section: 'afternoon', isBreakBefore: false },
-  { period: 9, label: '9', time: '18:30-19:15', section: 'evening', isBreakBefore: true },
-  { period: 10, label: '10', time: '19:25-20:10', section: 'evening', isBreakBefore: false },
-  { period: 11, label: '11', time: '20:20-21:05', section: 'evening', isBreakBefore: true },
-  { period: 12, label: '12', time: '21:15-22:00', section: 'evening', isBreakBefore: false },
+  { period: 1, label: '1', time: '08:20', section: 'morning' },
+  { period: 2, label: '2', time: '09:15', section: 'morning' },
+  { period: 3, label: '3', time: '10:20', section: 'morning' },
+  { period: 4, label: '4', time: '11:15', section: 'morning' },
+  { period: 5, label: '5', time: '14:00', section: 'afternoon' },
+  { period: 6, label: '6', time: '14:55', section: 'afternoon' },
+  { period: 7, label: '7', time: '15:50', section: 'afternoon' },
+  { period: 8, label: '8', time: '16:45', section: 'afternoon' },
+  { period: 9, label: '9', time: '18:30', section: 'evening' },
+  { period: 10, label: '10', time: '19:25', section: 'evening' },
+  { period: 11, label: '11', time: '20:20', section: 'evening' },
+  { period: 12, label: '12', time: '21:15', section: 'evening' },
 ]
 
 /** 课间休息时间段 */

@@ -694,36 +694,36 @@ onMounted(() => {
 /* 当前模式提示 */
 .mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; }
 
-/* 表格视图 */
+/* 表格视图 - 固定布局，缩放只改字号不影响列宽 */
 .grid-view { padding: 0 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .schedule-table-wrapper { min-width: 420px; --font-scale: 1; }
-.schedule-table { width: 100%; border-collapse: collapse; font-size: calc(10px * var(--font-scale)); }
+.schedule-table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
 .schedule-table th, .schedule-table td { border: 1px solid var(--border); padding: 0; }
 
-.period-col { width: 34px; background: var(--soft-fg); font-weight: 700; font-size: 0.9em; }
-.weekday-col { background: var(--soft-fg); font-weight: 700; min-width: 65px; }
+.period-col { width: 34px; background: var(--soft-fg); font-weight: 700; }
+.weekday-col { background: var(--soft-fg); font-weight: 700; }
 .weekday-col.weekend { background: #f8f8f8; }
-.weekday-label { padding: 4px 2px 0; font-size: 1.05em; font-weight: 700; }
-.weekday-date { padding: 0 2px 3px; font-size: 0.85em; color: var(--text-sub); font-weight: 500; }
+.weekday-label { padding: 4px 2px 0; font-size: calc(11px * var(--font-scale)); font-weight: 700; }
+.weekday-date { padding: 0 2px 3px; font-size: calc(9px * var(--font-scale)); color: var(--text-sub); font-weight: 500; }
 
 .period-cell { background: var(--soft-fg); text-align: center; padding: 3px 2px; vertical-align: middle; }
-.period-num { font-weight: 800; font-size: 1.2em; color: var(--primary); line-height: 1.2; }
-.period-time { font-size: 0.7em; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
-.period-time-end { font-size: 0.65em; color: var(--text-sub); line-height: 1.1; }
+.period-num { font-weight: 800; font-size: calc(13px * var(--font-scale)); color: var(--primary); line-height: 1.2; }
+.period-time { font-size: calc(7px * var(--font-scale)); color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
+.period-time-end { font-size: calc(6.5px * var(--font-scale)); color: var(--text-sub); line-height: 1.1; }
 
 .section-morning .period-cell { border-top: 2px solid #1565c0; }
 .section-afternoon .period-cell { border-top: 2px solid #e65100; }
 .section-evening .period-cell { border-top: 2px solid #6a1b9a; }
 
-.course-cell { padding: 1px; height: 38px; vertical-align: middle; cursor: default; }
+.course-cell { padding: 2px; vertical-align: middle; cursor: default; height: auto; min-height: 38px; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.has-course { cursor: pointer; transition: background .15s; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
 
-.course-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 3px; padding: 2px 4px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
-.course-name { font-weight: 700; font-size: 0.95em; line-height: 1.2; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
+.course-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 3px; padding: 3px 5px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.course-name { font-weight: 700; font-size: calc(10px * var(--font-scale)); line-height: 1.25; color: var(--text); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
 .course-info { display: flex; flex-direction: column; gap: 0; }
-.course-location, .course-teacher, .course-weeks { font-size: 0.75em; color: var(--text-sub); line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-location, .course-teacher, .course-weeks { font-size: calc(8px * var(--font-scale)); color: var(--text-sub); line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .course-weeks { color: var(--primary); font-weight: 600; }
 
 /* 列表视图 */
@@ -815,8 +815,7 @@ onMounted(() => {
   .grid-view { padding: 0 0px; }
   .schedule-table-wrapper { min-width: 380px; --font-scale: v-bind(fontSize / 100); }
   .period-col { width: 30px; }
-  .weekday-col { min-width: 58px; }
-  .course-cell { height: 34px; padding: 1px; }
+  .course-cell { padding: 2px; }
   .list-view { padding: 0 8px; }
   .unarranged-panel { margin: 12px 0; border-radius: 0; border-left: none; border-right: none; }
   .week-chip { min-width: 45px; padding: 5px 8px; }

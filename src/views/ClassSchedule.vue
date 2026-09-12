@@ -84,29 +84,59 @@ function getCurrentPeriod() {
   return 0
 }
 
-// 下一节课
-const nextCourse = computed(() => {
+// 获取课程对应的日期（本周）
+function getCourseDate(course) {
+  const today = new Date()
+  const currentDay = today.getDay() || 7
+  const diffDays = course.weekday - currentDay
+  const courseDate = new Date(today)
+  courseDate.setDate(today.getDate() + diffDays)
+  courseDate.setHours(0, 0, 0, 0)
+  return courseDate
+}
+
+// 未来所有课程（按时间排序）
+const futureCourses = computed(() => {
   const curPeriod = getCurrentPeriod()
-  return todayCourses.value.find(c => c.startPeriod > curPeriod) || null
+  const today = new Date()
+  const currentDay = today.getDay() || 7
+  const nowTime = today.getHours() * 60 + today.getMinutes()
+
+  const allCourses = displayCourses.value
+  const result = []
+
+  for (const course of allCourses) {
+    const courseDate = getCourseDate(course)
+    const startTime = SINGLE_PERIOD_TIMES[course.startPeriod]
+    if (!startTime) continue
+    const [sh, sm] = startTime.split('-')[0].split(':').map(Number)
+    courseDate.setHours(sh, sm, 0, 0)
+
+    if (courseDate > today || (course.weekday === currentDay && course.startPeriod > curPeriod)) {
+      result.push({ ...course, _date: new Date(courseDate) })
+    }
+  }
+
+  result.sort((a, b) => a._date - b._date || a.startPeriod - b.startPeriod)
+  return result
 })
+
+// 下一节课（未来最近的一节）
+const nextCourse = computed(() => futureCourses.value[0] || null)
 
 // 下一节课倒计时
 const nextCountdown = computed(() => {
   if (!nextCourse.value) return null
-  const h = now.value.getHours()
-  const m = now.value.getMinutes()
-  const s = now.value.getSeconds()
-  const nowMin = h * 60 + m
-  const startTime = SINGLE_PERIOD_TIMES[nextCourse.value.startPeriod]
-  if (!startTime) return null
-  const [sh, sm] = startTime.split('-')[0].split(':').map(Number)
-  const targetMin = sh * 60 + sm
-  const diff = targetMin - nowMin
+  const target = nextCourse.value._date
+  const diff = target - now.value
   if (diff <= 0) return { text: '进行中', isOngoing: true }
-  const hours = Math.floor(diff / 60)
-  const mins = diff % 60
-  if (hours > 0) return { text: `${hours}小时${mins}分`, isOngoing: false }
-  return { text: `${mins}分钟`, isOngoing: false }
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  const secs = Math.floor((diff % 60000) / 1000)
+  if (days > 0) return { text: `${days}天${hours}时${mins}分`, isOngoing: false }
+  if (hours > 0) return { text: `${hours}时${mins}分${secs}秒`, isOngoing: false }
+  return { text: `${mins}分${secs}秒`, isOngoing: false }
 })
 
 // 下节课信息
@@ -116,6 +146,7 @@ const nextInfo = computed(() => {
     course: nextCourse.value,
     countdown: nextCountdown.value,
     weekdayLabel: WEEKDAYS.find(w => w.key === nextCourse.value.weekday)?.label,
+    dateStr: formatDateShort(nextCourse.value._date),
   }
 })
 
@@ -265,11 +296,11 @@ onMounted(() => {
         </div>
         <div class="next-info">
           <span class="next-name">{{ nextInfo.course.name }}</span>
-          <span class="next-meta">第{{ nextInfo.course.startPeriod }}-{{ nextInfo.course.endPeriod }}节 · {{ nextInfo.course.location }}</span>
+          <span class="next-meta">{{ nextInfo.weekdayLabel }} {{ nextInfo.dateStr }} · 第{{ nextInfo.course.startPeriod }}-{{ nextInfo.course.endPeriod }}节 · {{ nextInfo.course.location }}</span>
         </div>
       </div>
-      <div v-else-if="!hasTodayCourses" class="next-banner no-class">
-        <span class="next-badge">🎉 今天没有更多课了</span>
+      <div v-else class="next-banner no-class">
+        <span class="next-badge">🎉 近期没有更多课程了</span>
       </div>
 
       <!-- 今日课程列表 -->

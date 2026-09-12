@@ -1,63 +1,100 @@
 <script setup>
 /**
- * 访问统计卡片：客户端 UV/PV 统计
- * 纯静态托管方案：localStorage 存储匿名访客 ID，sessionStorage 缓存当次数据
+ * 访问统计卡片：使用 Vercount 第三方统计服务
+ * 服务端持久化，支持跨设备共享真实 UV/PV
  */
 import { ref, onMounted } from 'vue'
-
-const STORAGE_KEY = 'fjnu_nav_visit_v1'
-const VID_KEY = 'fjnu_nav_vid'
 
 const uv = ref(0)
 const pv = ref(0)
 const loaded = ref(false)
 
-function getVisitorId() {
-  let vid = localStorage.getItem(VID_KEY)
-  if (!vid) {
-    vid = 'v-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10)
-    localStorage.setItem(VID_KEY, vid)
-  }
-  return vid
+const VERCOUNT_SCRIPT = 'https://vercount.one/js'
+const VERCOUNT_API = 'https://events.vercount.one/api/v2/log'
+const UV_COOKIE = 'vercount_uv_fjnu'
+const STORAGE_KEY = 'fjnu_nav_visit_cache'
+
+function getUvCookie() {
+  const m = document.cookie.match(new RegExp('(?:^|;\\s*)' + UV_COOKIE + '=([^;]*)'))
+  return m ? m[1] : null
 }
 
-function getVisitData() {
+function setUvCookie() {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() + 1)
+  document.cookie = UV_COOKIE + '=1; expires=' + d.toUTCString() + '; path=/'
+}
+
+function fetchFromAPI() {
+  const url = location.href
+  const isNewUv = !getUvCookie()
+  if (isNewUv) setUvCookie()
+
+  return fetch(VERCOUNT_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, isNewUv }),
+  }).then(r => r.json()).then(res => {
+    const data = res.data || res
+    return { pv: Number(data.site_pv) || 0, uv: Number(data.site_uv) || 0 }
+  }).catch(() => null)
+}
+
+function loadScript() {
+  return new Promise(resolve => {
+    if (document.querySelector('script[src="' + VERCOUNT_SCRIPT + '"]')) {
+      resolve(); return
+    }
+    const s = document.createElement('script')
+    s.src = VERCOUNT_SCRIPT
+    s.async = true
+    s.onload = resolve
+    s.onerror = resolve
+    document.head.appendChild(s)
+  })
+}
+
+function readFromDOM() {
+  const pvEl = document.getElementById('busuanzi_value_site_pv')
+  const uvEl = document.getElementById('busuanzi_value_site_uv')
+  const pvVal = pvEl ? parseInt(pvEl.textContent) : NaN
+  const uvVal = uvEl ? parseInt(uvEl.textContent) : NaN
+  if (!isNaN(pvVal) && !isNaN(uvVal) && pvVal > 0) {
+    return { pv: pvVal, uv: uvVal }
+  }
+  return null
+}
+
+onMounted(async () => {
+  // 1. 先用缓存快速回填
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : { visitors: [], totalPv: 0 }
-  } catch { return { visitors: [], totalPv: 0 } }
-}
-
-function saveVisitData(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch {}
-}
-
-onMounted(() => {
-  const data = getVisitData()
-  const vid = getVisitorId()
-
-  if (!data.visitors.includes(vid)) {
-    data.visitors.push(vid)
-  }
-  data.totalPv++
-  saveVisitData(data)
-
-  const cached = sessionStorage.getItem(STORAGE_KEY)
-  if (cached) {
-    try {
-      const c = JSON.parse(cached)
-      uv.value = c.uv
-      pv.value = c.pv
+    const cached = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}')
+    if (cached.pv > 0) {
+      pv.value = cached.pv
+      uv.value = cached.uv
       loaded.value = true
-    } catch {}
+    }
+  } catch {}
+
+  // 2. 加载 Vercount 脚本
+  await loadScript()
+
+  // 3. 等 DOM 锚点渲染
+  await new Promise(r => setTimeout(r, 800))
+  let data = readFromDOM()
+
+  // 4. DOM 没拿到就直连 API
+  if (!data) {
+    data = await fetchFromAPI()
   }
 
-  setTimeout(() => {
-    uv.value = data.visitors.length
-    pv.value = data.totalPv
+  // 5. 更新数据
+  if (data) {
+    pv.value = data.pv
+    uv.value = data.uv
     loaded.value = true
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ uv: uv.value, pv: pv.value }))
-  }, 300)
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  }
 })
 </script>
 
@@ -79,7 +116,7 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="vs-note">本站累计 · 本地统计</div>
+    <div class="vs-note">本站累计 · Vercount 统计</div>
   </div>
 </template>
 

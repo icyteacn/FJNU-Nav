@@ -1,40 +1,81 @@
 <script setup>
 /**
- * 课程表视图 v3
- * 优化手机端显示，参考NFS课表设计
- * - 表格视图：2节为一行，支持跨行显示
- * - 列表视图：按天分组卡片
- * - 课程卡片显示起止周、单双周
- * - 未安排课程醒目提示
- * - 与研究生服务联动
+ * 课程表视图 v4
+ * - 周次选择器（1-20周），显示对应日期
+ * - 课程类型筛选
+ * - 表格视图按周显示，周几下面显示具体日期
+ * - 列表视图按天分组
+ * - 预览全部课表
  */
 import { ref, computed, onMounted } from 'vue'
 import {
-  WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES, PERIOD_GROUP_TIMES,
-  COURSES, REQUIRED_COURSES,
-  getCurrentWeek, isCourseInWeek, getAllCourses,
-  getUnarrangedCourses, getArrangedCredits, getTotalCredits,
-  getCourseAtRow, isCourseStartAtRow, getCourseRowSpan, isMergedCell,
+  WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES,
+  COURSES, REQUIRED_COURSES, COURSE_TYPES,
+  getCurrentWeek, isCourseInWeek,
+  getCourseAtRow, getCourseRowSpan, isMergedCell,
   formatWeekdayType, getCourseTimeDetail, getCoursePeriodText,
+  getDateInWeek, formatDateShort, getWeekDateRange,
+  getArrangedCredits, getTotalCredits, getUnarrangedCourses,
 } from '../data/classSchedule'
 
 const emit = defineEmits(['open', 'back'])
 
-const currentWeek = ref(getCurrentWeek())
+const selectedWeek = ref(getCurrentWeek())
 const selectedCourse = ref(null)
 const showDetail = ref(false)
 const viewMode = ref('grid') // 'grid' | 'list'
 const showUnarranged = ref(false)
+const typeFilter = ref('all')
+const showAllWeeks = ref(false)
 
 const weekdayHeaders = computed(() => WEEKDAYS.filter(w => w.key <= 5))
 
-const weekCourses = computed(() => {
-  return COURSES.filter(c => isCourseInWeek(c, currentWeek.value))
+// 当前周显示的课程
+const displayCourses = computed(() => {
+  if (showAllWeeks.value) {
+    // 预览全部：显示所有课程
+    let courses = COURSES
+    if (typeFilter.value !== 'all') {
+      courses = courses.filter(c => c.category === typeFilter.value)
+    }
+    return courses
+  }
+  let courses = COURSES.filter(c => isCourseInWeek(c, selectedWeek.value))
+  if (typeFilter.value !== 'all') {
+    courses = courses.filter(c => c.category === typeFilter.value)
+  }
+  return courses
+})
+
+// 按天分组的课程（列表视图用）
+const coursesByDay = computed(() => {
+  const map = new Map()
+  for (let wd = 1; wd <= 5; wd++) {
+    const dayCourses = displayCourses.value.filter(c => c.weekday === wd)
+    if (dayCourses.length) map.set(wd, dayCourses)
+  }
+  return [...map.entries()]
 })
 
 const totalCredits = computed(() => getArrangedCredits())
 const allCredits = computed(() => getTotalCredits())
 const unarrangedCourses = computed(() => getUnarrangedCourses())
+
+// 获取指定周几的日期
+function getDate(weekday) {
+  return getDateInWeek(selectedWeek.value, weekday)
+}
+
+// 获取日期文本
+function getDateText(weekday) {
+  const date = getDate(weekday)
+  return `${date.getMonth() + 1}/${date.getDate()}`
+}
+
+// 获取周次日期范围
+function getWeekRange() {
+  return getWeekDateRange(selectedWeek.value)
+}
 
 function getCourse(weekday, rowStart) {
   return getCourseAtRow(weekday, rowStart)
@@ -42,10 +83,6 @@ function getCourse(weekday, rowStart) {
 
 function getCourseSpan(course) {
   return getCourseRowSpan(course)
-}
-
-function isCourseStart(course, rowStart) {
-  return isCourseStartAtRow(course, rowStart)
 }
 
 function isCellMerged(weekday, rowStart) {
@@ -78,8 +115,21 @@ function getWeekTypeInfo(course) {
   return formatWeekdayType(course.weekdayType)
 }
 
+// 周次快捷选择
+const weekShortcuts = computed(() => {
+  const weeks = []
+  for (let i = 1; i <= 20; i++) {
+    weeks.push({
+      value: i,
+      label: `${i}`,
+      dateRange: getWeekDateRange(i),
+    })
+  }
+  return weeks
+})
+
 onMounted(() => {
-  currentWeek.value = getCurrentWeek()
+  selectedWeek.value = getCurrentWeek()
 })
 </script>
 
@@ -96,18 +146,63 @@ onMounted(() => {
       </div>
       <div class="header-stats">
         <div class="stat-item">
-          <span class="stat-value">第{{ currentWeek }}周</span>
-          <span class="stat-label">教学周</span>
+          <span class="stat-value">第{{ selectedWeek }}周</span>
+          <span class="stat-label">{{ getWeekRange() }}</span>
         </div>
         <div class="stat-item">
-          <span class="stat-value">{{ weekCourses.length }}门</span>
-          <span class="stat-label">已安排</span>
+          <span class="stat-value">{{ displayCourses.length }}门</span>
+          <span class="stat-label">课程</span>
         </div>
         <div class="stat-item">
           <span class="stat-value">{{ totalCredits }}/{{ allCredits }}</span>
           <span class="stat-label">学分</span>
         </div>
       </div>
+    </div>
+
+    <!-- 周次选择器 -->
+    <div class="week-selector">
+      <div class="week-nav">
+        <button class="week-nav-btn" :disabled="selectedWeek <= 1" @click="selectedWeek--">‹</button>
+        <div class="week-current">
+          <span class="week-num">第{{ selectedWeek }}周</span>
+          <span class="week-date">{{ getWeekRange() }}</span>
+        </div>
+        <button class="week-nav-btn" :disabled="selectedWeek >= 20" @click="selectedWeek++">›</button>
+      </div>
+      <div class="week-scroll">
+        <button
+          v-for="w in weekShortcuts"
+          :key="w.value"
+          class="week-chip"
+          :class="{ active: selectedWeek === w.value }"
+          @click="selectedWeek = w.value"
+        >
+          <span class="chip-week">{{ w.value }}</span>
+          <span class="chip-date">{{ w.dateRange }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 课程类型筛选 -->
+    <div class="type-filter">
+      <button
+        v-for="t in COURSE_TYPES"
+        :key="t.key"
+        class="type-chip"
+        :class="{ active: typeFilter === t.key }"
+        :style="{ '--type-color': t.color }"
+        @click="typeFilter = t.key"
+      >
+        {{ t.label }}
+      </button>
+      <button
+        class="type-chip preview-btn"
+        :class="{ active: showAllWeeks }"
+        @click="showAllWeeks = !showAllWeeks"
+      >
+        {{ showAllWeeks ? '📅 返回当前周' : '👁️ 预览全部' }}
+      </button>
     </div>
 
     <!-- 表格视图 -->
@@ -119,6 +214,7 @@ onMounted(() => {
               <th class="period-col">节次</th>
               <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col">
                 <div class="weekday-label">{{ wd.short }}</div>
+                <div class="weekday-date">{{ getDateText(wd.key) }}</div>
               </th>
             </tr>
           </thead>
@@ -154,11 +250,14 @@ onMounted(() => {
 
     <!-- 列表视图 -->
     <div v-if="viewMode === 'list'" class="list-view">
-      <template v-for="wd in weekdayHeaders" :key="wd.key">
-        <div v-if="weekCourses.filter(c => c.weekday === wd.key).length" class="list-day">
-          <div class="list-day-header">{{ wd.label }}</div>
+      <template v-for="[wd, dayCourses] in coursesByDay" :key="wd">
+        <div class="list-day">
+          <div class="list-day-header">
+            <span class="day-name">{{ WEEKDAYS.find(w => w.key === wd)?.label }}</span>
+            <span class="day-date">{{ getDateText(wd) }}</span>
+          </div>
           <div
-            v-for="course in weekCourses.filter(c => c.weekday === wd.key)"
+            v-for="course in dayCourses"
             :key="course.id"
             class="list-card"
             :style="{ borderLeftColor: course.color }"
@@ -184,6 +283,7 @@ onMounted(() => {
           </div>
         </div>
       </template>
+      <div v-if="!coursesByDay.length" class="empty-state">本周暂无课程</div>
     </div>
 
     <!-- 未安排课程提示 -->
@@ -197,18 +297,16 @@ onMounted(() => {
         <span class="panel-arrow">{{ showUnarranged ? '▾' : '▸' }}</span>
       </div>
       <div v-show="showUnarranged" class="panel-body">
-        <!-- 进度条 -->
         <div class="progress-section">
           <div class="progress-info">
-            <span>已完成 <b>{{ weekCourses.length }}</b>/{{ REQUIRED_COURSES.length }} 门</span>
+            <span>已完成 <b>{{ displayCourses.length }}</b>/{{ REQUIRED_COURSES.length }} 门</span>
             <span><b>{{ totalCredits }}</b>/{{ allCredits }} 学分</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: (weekCourses.length / REQUIRED_COURSES.length * 100) + '%' }"></div>
+            <div class="progress-fill" :style="{ width: (displayCourses.length / REQUIRED_COURSES.length * 100) + '%' }"></div>
           </div>
         </div>
 
-        <!-- 已安排课程 -->
         <div class="course-section">
           <div class="section-title">✅ 已安排课程</div>
           <div class="course-grid">
@@ -219,7 +317,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- 未安排课程 -->
         <div class="course-section warning">
           <div class="section-title">⚠️ 未安排课程</div>
           <div class="course-grid">
@@ -230,7 +327,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- 说明 -->
         <div class="unarranged-note">
           <div class="note-icon">💡</div>
           <div class="note-content">
@@ -311,14 +407,14 @@ onMounted(() => {
   color: #fff;
   padding: 16px 20px;
   border-radius: 0 0 16px 16px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .back-btn {
@@ -351,7 +447,7 @@ onMounted(() => {
   justify-content: space-around;
   background: rgba(255, 255, 255, 0.15);
   border-radius: 12px;
-  padding: 12px 0;
+  padding: 10px 0;
 }
 
 .stat-item {
@@ -360,14 +456,167 @@ onMounted(() => {
 
 .stat-value {
   display: block;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: #fff;
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* 周次选择器 */
+.week-selector {
+  padding: 0 12px;
+  margin-bottom: 12px;
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.week-nav-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--soft-fg);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.week-nav-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: #fff;
+}
+
+.week-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.week-current {
+  text-align: center;
+}
+
+.week-num {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+  display: block;
+}
+
+.week-date {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.week-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.week-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.week-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.week-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 50px;
+}
+
+.week-chip:hover {
+  border-color: var(--primary);
+}
+
+.week-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.chip-week {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.week-chip.active .chip-week {
+  color: #fff;
+}
+
+.chip-date {
+  font-size: 9px;
+  color: var(--text-sub);
+}
+
+.week-chip.active .chip-date {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 课程类型筛选 */
+.type-filter {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.type-chip {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.type-chip:hover {
+  border-color: var(--type-color, var(--primary));
+}
+
+.type-chip.active {
+  background: var(--type-color, var(--primary));
+  border-color: var(--type-color, var(--primary));
+  color: #fff;
+}
+
+.preview-btn {
+  --type-color: #6a1b9a;
 }
 
 /* 表格视图 */
@@ -394,7 +643,7 @@ onMounted(() => {
 }
 
 .period-col {
-  width: 70px;
+  width: 60px;
   background: var(--soft-fg);
   font-weight: 700;
 }
@@ -405,8 +654,15 @@ onMounted(() => {
 }
 
 .weekday-label {
-  padding: 10px 4px;
+  padding: 8px 4px 2px;
   font-size: 14px;
+}
+
+.weekday-date {
+  padding: 0 4px 6px;
+  font-size: 10px;
+  color: var(--text-sub);
+  font-weight: 400;
 }
 
 .period-cell {
@@ -502,11 +758,22 @@ onMounted(() => {
 }
 
 .list-day-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--primary);
+}
+
+.day-name {
   font-size: 16px;
   font-weight: 800;
   color: var(--primary);
-  padding-bottom: 6px;
-  border-bottom: 2px solid var(--primary);
+}
+
+.day-date {
+  font-size: 12px;
+  color: var(--text-sub);
 }
 
 .list-card {
@@ -596,6 +863,13 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-sub);
+  font-size: 14px;
+}
+
 /* 未安排课程面板 */
 .unarranged-panel {
   margin: 16px 12px;
@@ -656,7 +930,6 @@ onMounted(() => {
   padding: 16px;
 }
 
-/* 进度条 */
 .progress-section {
   margin-bottom: 16px;
 }
@@ -682,7 +955,6 @@ onMounted(() => {
   transition: width 0.3s ease;
 }
 
-/* 课程分组 */
 .course-section {
   margin-bottom: 16px;
 }
@@ -745,7 +1017,6 @@ onMounted(() => {
   color: var(--text-sub);
 }
 
-/* 说明 */
 .unarranged-note {
   display: flex;
   gap: 10px;
@@ -911,8 +1182,8 @@ onMounted(() => {
 @media (max-width: 640px) {
   .schedule-header {
     border-radius: 0;
-    margin: -16px -16px 16px;
-    padding: 16px;
+    margin: -16px -16px 12px;
+    padding: 12px 16px;
   }
 
   .header-title {
@@ -920,12 +1191,16 @@ onMounted(() => {
   }
 
   .stat-value {
-    font-size: 16px;
+    font-size: 14px;
     color: #fff;
   }
 
-  .stat-label {
-    color: rgba(255, 255, 255, 0.8);
+  .week-selector {
+    padding: 0 8px;
+  }
+
+  .type-filter {
+    padding: 0 8px;
   }
 
   .grid-view {
@@ -958,32 +1233,6 @@ onMounted(() => {
     padding: 0 8px;
   }
 
-  .list-card-top {
-    gap: 8px;
-  }
-
-  .list-card-time {
-    min-width: 60px;
-    padding: 6px 8px;
-  }
-
-  .list-card-period {
-    font-size: 11px;
-  }
-
-  .list-card-clock {
-    font-size: 9px;
-  }
-
-  .list-card-name {
-    font-size: 14px;
-  }
-
-  .list-card-location,
-  .list-card-teacher {
-    font-size: 11px;
-  }
-
   .unarranged-panel {
     margin: 16px 0;
     border-radius: 0;
@@ -991,9 +1240,17 @@ onMounted(() => {
     border-right: none;
   }
 
-  .course-chip {
-    font-size: 11px;
-    padding: 4px 8px;
+  .week-chip {
+    min-width: 45px;
+    padding: 5px 8px;
+  }
+
+  .chip-week {
+    font-size: 13px;
+  }
+
+  .chip-date {
+    font-size: 8px;
   }
 }
 </style>

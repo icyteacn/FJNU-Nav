@@ -354,3 +354,73 @@ export function getCoursePeriodText(course) {
   if (start === end) return `第${start}节`
   return `第${start}-${end}节`
 }
+
+/** 第1周的周一日期（2026-09-07） */
+const SEMESTER_START = new Date('2026-09-07')
+
+/**
+ * 获取指定教学周的周一日期
+ * @param {number} week - 教学周（1-20）
+ * @returns {Date}
+ */
+export function getWeekStartDate(week) {
+  const date = new Date(SEMESTER_START)
+  date.setDate(date.getDate() + (week - 1) * 7)
+  return date
+}
+
+/**
+ * 获取指定教学周的周日日期
+ * @param {number} week - 教学周（1-20）
+ * @returns {Date}
+ */
+export function getWeekEndDate(week) {
+  const date = getWeekStartDate(week)
+  date.setDate(date.getDate() + 6)
+  return date
+}
+
+/**
+ * 获取指定教学周、指定周几的日期
+ * @param {number} week - 教学周（1-20）
+ * @param {number} weekday - 周几（1-7，1=周一）
+ * @returns {Date}
+ */
+export function getDateInWeek(week, weekday) {
+  const monday = getWeekStartDate(week)
+  const date = new Date(monday)
+  date.setDate(date.getDate() + (weekday - 1))
+  return date
+}
+
+/**
+ * 格式化日期为 M月D日
+ * @param {Date} date
+ * @returns {string}
+ */
+export function formatDateShort(date) {
+  return `${date.getMonth() + 1}月${date.getDate()}日`
+}
+
+/**
+ * 获取周次的日期范围文本
+ * @param {number} week - 教学周
+ * @returns {string} 如 "9.7-9.13"
+ */
+export function getWeekDateRange(week) {
+  const start = getWeekStartDate(week)
+  const end = getWeekEndDate(week)
+  const s = `${start.getMonth() + 1}.${start.getDate()}`
+  const e = `${end.getMonth() + 1}.${end.getDate()}`
+  return `${s}-${e}`
+}
+
+/**
+ * 课程类型列表（用于筛选）
+ */
+export const COURSE_TYPES = [
+  { key: 'all', label: '全部', color: '#666' },
+  { key: '专业必修课', label: '专业必修', color: '#1565c0' },
+  { key: '公共必修课', label: '公共必修', color: '#c62828' },
+  { key: '公共选修课', label: '公共选修', color: '#ad1457' },
+]

@@ -694,7 +694,7 @@ onMounted(() => {
 /* 当前模式提示 */
 .mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; }
 
-/* 表格视图 */
+/* 表格视图 - 固定布局，缩放只改卡片内字体 */
 .grid-view { padding: 0; }
 .schedule-table-wrapper { --font-scale: 1; }
 .schedule-table { width: 100%; border-collapse: collapse; font-size: 11px; }
@@ -721,9 +721,9 @@ onMounted(() => {
 .course-cell.has-course:hover { background: var(--primary-soft); }
 
 .course-card { background: var(--card); border-left: 3px solid; border-radius: 4px; padding: 4px 6px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
-.course-name { font-weight: 700; font-size: 11px; line-height: 1.3; color: var(--text); word-break: break-all; white-space: normal; }
+.course-name { font-weight: 700; font-size: calc(11px * var(--font-scale)); line-height: 1.3; color: var(--text); word-break: break-all; white-space: normal; }
 .course-info { display: flex; flex-direction: column; gap: 0; }
-.course-location, .course-teacher, .course-weeks { font-size: 9px; color: var(--text-sub); line-height: 1.2; word-break: break-all; white-space: normal; }
+.course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; word-break: break-all; white-space: normal; }
 .course-weeks { color: var(--primary); font-weight: 600; }
 
 /* 列表视图 */
@@ -815,15 +815,8 @@ onMounted(() => {
   .grid-view { padding: 0; overflow: hidden; }
   .schedule-table-wrapper { --font-scale: v-bind(fontSize / 100); }
   .period-col { width: 34px; }
-  .period-num { font-size: 12px; }
-  .period-time { font-size: 6px; }
-  .period-time-end { font-size: 5.5px; }
   .weekday-col.weekend { width: 42px; }
-  .weekday-label { font-size: 11px; padding: 5px 0 0; }
-  .weekday-date { font-size: 8px; }
   .course-cell { height: 42px; }
-  .course-name { font-size: 10px; }
-  .course-location, .course-teacher { font-size: 8px; }
   .list-view { padding: 0 8px; }
   .unarranged-panel { margin: 12px 0; border-radius: 0; border-left: none; border-right: none; }
   .week-chip { min-width: 45px; padding: 5px 8px; }

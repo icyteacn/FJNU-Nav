@@ -99,14 +99,15 @@ function getCourseDate(course) {
   return courseDate
 }
 
-// 未来所有课程（按时间排序）
+// 未来所有课程（按时间排序）- 不受selectedWeek限制，总是显示真实未来的课
 const futureCourses = computed(() => {
   const curPeriod = getCurrentPeriod()
   const today = new Date()
   const currentDay = today.getDay() || 7
   const nowMinutes = today.getHours() * 60 + today.getMinutes()
 
-  const allCourses = displayCourses.value
+  // 使用所有课程（不按selectedWeek筛选），因为要找真正的下一节课
+  const allCourses = COURSES
   const result = []
 
   for (const course of allCourses) {
@@ -119,7 +120,7 @@ const futureCourses = computed(() => {
     const targetDate = new Date(courseDate)
     targetDate.setHours(sh, sm, 0, 0)
     
-    // 判断是否是未来：日期在未来，或者今天且当前节次小于课程节次
+    // 判断是否是未来：日期在未来，或者今天且当前时间小于课程开始时间
     const isToday = course.weekday === currentDay
     const isAfterNow = targetDate.getTime() > today.getTime()
     const isTodayFuture = isToday && nowMinutes < sh * 60 + sm

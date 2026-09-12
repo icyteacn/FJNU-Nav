@@ -174,12 +174,15 @@ export const COURSE_TYPES = [
 ]
 
 /**
- * 获取指定节次的课程
+ * 获取指定节次的课程（考虑周次筛选）
  */
-export function getCourseAtPeriod(weekday, period) {
+export function getCourseAtPeriod(weekday, period, week) {
   return COURSES.find(c => {
     if (c.weekday !== weekday) return false
-    return period >= c.startPeriod && period <= c.endPeriod
+    if (period < c.startPeriod || period > c.endPeriod) return false
+    // 如果指定了周次，检查课程是否在该周上课
+    if (week !== undefined && !isCourseInWeek(c, week)) return false
+    return true
   }) || null
 }
 
@@ -200,24 +203,30 @@ export function getCourseRowSpan(course) {
 }
 
 /**
- * 判断单元格是否被合并
+ * 判断单元格是否被合并（考虑周次筛选）
  */
-export function isMergedCell(weekday, period) {
-  const courses = COURSES.filter(c => c.weekday === weekday)
+export function isMergedCell(weekday, period, week) {
+  const courses = COURSES.filter(c => {
+    if (c.weekday !== weekday) return false
+    if (week !== undefined && !isCourseInWeek(c, week)) return false
+    return true
+  })
   for (const c of courses) {
     if (period > c.startPeriod && period <= c.endPeriod) return true
   }
   return false
 }
 
+/** 第1周的周一日期（2026-08-31） */
+const SEMESTER_START = new Date('2026-08-31')
+
 /**
- * 获取当前教学周
+ * 获取当前教学周（第1周=8.31-9.6）
  */
 export function getCurrentWeek(now = new Date()) {
-  const semesterStart = new Date('2026-09-07')
-  const diffDays = Math.floor((now - semesterStart) / 86400000)
+  const diffDays = Math.floor((now - SEMESTER_START) / 86400000)
   const week = Math.floor(diffDays / 7) + 1
-  return Math.max(1, Math.min(20, week))
+  return Math.max(1, Math.min(18, week))
 }
 
 /**
@@ -233,10 +242,10 @@ export function isCourseInWeek(course, week) {
 }
 
 /**
- * 获取指定教学周的周一日期
+ * 获取指定教学周的周一日期（第1周=8.31）
  */
 export function getWeekStartDate(week) {
-  const date = new Date('2026-09-07')
+  const date = new Date(SEMESTER_START)
   date.setDate(date.getDate() + (week - 1) * 7)
   return date
 }
@@ -261,10 +270,10 @@ export function getDateInWeek(week, weekday) {
 }
 
 /**
- * 格式化日期为 M/D
+ * 格式化日期为 M-D
  */
 export function formatDateShort(date) {
-  return `${date.getMonth() + 1}/${date.getDate()}`
+  return `${date.getMonth() + 1}-${date.getDate()}`
 }
 
 /**

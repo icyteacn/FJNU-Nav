@@ -64,15 +64,22 @@ function getWeekRange() {
 }
 
 function getCourse(weekday, period) {
-  return getCourseAtPeriod(weekday, period)
+  if (showAllWeeks.value) {
+    return getCourseAtPeriod(weekday, period)
+  }
+  return getCourseAtPeriod(weekday, period, selectedWeek.value)
 }
 
 function getCourseSpan(course) {
+  if (!course) return 1
   return getCourseRowSpan(course)
 }
 
 function isCellMerged(weekday, period) {
-  return isMergedCell(weekday, period)
+  if (showAllWeeks.value) {
+    return isMergedCell(weekday, period)
+  }
+  return isMergedCell(weekday, period, selectedWeek.value)
 }
 
 function isBreakRow(row) {

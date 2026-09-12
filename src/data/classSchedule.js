@@ -1,11 +1,11 @@
 /**
- * 课程表数据
+ * 课程表数据 v3
  * 结构：周几 → 节次 → 课程信息
  * 用于日程助手的课表日程 tab
  */
 
-/** 节次时间映射（正确的上课时间） */
-export const PERIOD_TIMES = {
+/** 单节课时间映射（每节45分钟） */
+export const SINGLE_PERIOD_TIMES = {
   1: '08:20-09:05',
   2: '09:15-10:00',
   3: '10:20-11:05',
@@ -41,15 +41,15 @@ export const WEEKDAYS = [
   { key: 7, label: '周日', short: '日' },
 ]
 
-/** 节次列表（上午/下午/晚上分组） */
-export const PERIOD_GROUPS = [
-  { label: '上午', periods: ['1-2', '3-4'] },
-  { label: '下午', periods: ['5-6', '7-8'] },
-  { label: '晚上', periods: ['9-10', '11-12'] },
+/** 表格行：每2节为一行 */
+export const TABLE_ROWS = [
+  { label: '1-2', periods: [1, 2], time: '08:20-10:00' },
+  { label: '3-4', periods: [3, 4], time: '10:20-12:00' },
+  { label: '5-6', periods: [5, 6], time: '14:00-15:40' },
+  { label: '7-8', periods: [7, 8], time: '15:50-17:30' },
+  { label: '9-10', periods: [9, 10], time: '18:30-20:10' },
+  { label: '11-12', periods: [11, 12], time: '20:20-22:00' },
 ]
-
-/** 全部节次 */
-export const ALL_PERIODS = ['1-2', '3-4', '5-6', '7-8', '9-10', '11-12']
 
 /**
  * 课程表数据
@@ -58,8 +58,9 @@ export const ALL_PERIODS = ['1-2', '3-4', '5-6', '7-8', '9-10', '11-12']
  * - id: 课程编号
  * - teacher: 任课教师
  * - location: 上课地点
- * - weeks: 上课周数
- * - period: 节次（如 '9-10' 表示9-10节）
+ * - weeks: 上课周数（如 '3-14'）
+ * - weekdayType: 单双周类型（'all' | 'odd' | 'even'）
+ * - period: 起止节次（如 '9-12' 表示9到12节）
  * - weekday: 星期几（1-7）
  * - credits: 学分
  * - hours: 学时
@@ -74,6 +75,7 @@ export const COURSES = [
     teacher: '蒋宏影',
     location: '笃行1-218',
     weeks: '3-18',
+    weekdayType: 'all',
     period: '1-2',
     weekday: 1,
     credits: 2,
@@ -88,6 +90,7 @@ export const COURSES = [
     teacher: '黄正华',
     location: '知明2-202',
     weeks: '3-10',
+    weekdayType: 'all',
     period: '5-6',
     weekday: 2,
     credits: 2,
@@ -102,6 +105,7 @@ export const COURSES = [
     teacher: '黄培凯、林燊',
     location: '笃行1-113',
     weeks: '3-10',
+    weekdayType: 'all',
     period: '9-10',
     weekday: 2,
     credits: 2,
@@ -116,6 +120,7 @@ export const COURSES = [
     teacher: '陈丽萍',
     location: '笃行1-321A',
     weeks: '3-14',
+    weekdayType: 'all',
     period: '5-6',
     weekday: 4,
     credits: 3,
@@ -130,6 +135,7 @@ export const COURSES = [
     teacher: '张筱辰',
     location: '计网楼406',
     weeks: '3-14',
+    weekdayType: 'all',
     period: '5-6',
     weekday: 5,
     credits: 3,
@@ -137,14 +143,15 @@ export const COURSES = [
     category: '专业必修课',
     color: '#6a1b9a',
   },
-  // 周五 9-10节（高等工程数学）
+  // 周五 9-12节（高等工程数学 - 4节课）
   {
     name: '高等工程数学',
     id: 'XZB0270812102',
     teacher: '林劼、胡丽莹',
     location: '笃行1-201',
     weeks: '3-14',
-    period: '9-10',
+    weekdayType: 'all',
+    period: '9-12',
     weekday: 5,
     credits: 3,
     hours: 48,
@@ -181,13 +188,63 @@ export function getCoursesByWeekday(weekday) {
 }
 
 /**
- * 获取指定周几和节次的课程
+ * 获取指定节次的课程（考虑9-12节这样的跨行课程）
  * @param {number} weekday - 星期几（1-7）
- * @param {string} period - 节次（如 '9-10'）
+ * @param {number} period - 节次（1-12）
  * @returns {Object|null} 课程信息或null
  */
-export function getCourseAt(weekday, period) {
-  return COURSES.find(c => c.weekday === weekday && c.period === period) || null
+export function getCourseAtPeriod(weekday, period) {
+  return COURSES.find(c => {
+    if (c.weekday !== weekday) return false
+    const [start, end] = c.period.split('-').map(Number)
+    return period >= start && period <= end
+  }) || null
+}
+
+/**
+ * 获取指定行（2节为一行）的课程
+ * @param {number} weekday - 星期几（1-7）
+ * @param {number} rowStart - 行起始节次（1,3,5,7,9,11）
+ * @returns {Object|null} 课程信息或null
+ */
+export function getCourseAtRow(weekday, rowStart) {
+  return COURSES.find(c => {
+    if (c.weekday !== weekday) return false
+    const [start, end] = c.period.split('-').map(Number)
+    // 课程的起始节次 <= 行起始节次 且 课程结束节次 >= 行起始节次
+    return start <= rowStart && end >= rowStart
+  }) || null
+}
+
+/**
+ * 判断课程是否从当前行开始（用于rowspan计算）
+ */
+export function isCourseStartAtRow(course, rowStart) {
+  if (!course) return false
+  const [start] = course.period.split('-').map(Number)
+  return start === rowStart
+}
+
+/**
+ * 计算课程占用的行数（每行2节）
+ */
+export function getCourseRowSpan(course) {
+  if (!course) return 1
+  const [start, end] = course.period.split('-').map(Number)
+  return Math.ceil((end - start + 1) / 2)
+}
+
+/**
+ * 判断单元格是否被合并（课程从其他行开始）
+ */
+export function isMergedCell(weekday, rowStart) {
+  const courses = COURSES.filter(c => c.weekday === weekday)
+  for (const c of courses) {
+    const [start, end] = c.period.split('-').map(Number)
+    // 课程跨越多行，且当前行不是起始行
+    if (start < rowStart && end >= rowStart) return true
+  }
+  return false
 }
 
 /**
@@ -204,41 +261,12 @@ export function getAllCourses() {
 }
 
 /**
- * 生成周视图数据（周一到周五，1-12节）
- * @returns {Object} { weekday: { period: course } }
- */
-export function getWeekView() {
-  const view = {}
-  for (let wd = 1; wd <= 5; wd++) {
-    view[wd] = {}
-    for (const p of ALL_PERIODS) {
-      view[wd][p] = getCourseAt(wd, p)
-    }
-  }
-  return view
-}
-
-/**
- * 获取本周课程列表（按周几分组）
- * @returns {Array} [[weekday, courses], ...]
- */
-export function getWeekCourses() {
-  const map = new Map()
-  for (let wd = 1; wd <= 5; wd++) {
-    const courses = getCoursesByWeekday(wd)
-    if (courses.length) map.set(wd, courses)
-  }
-  return [...map.entries()]
-}
-
-/**
  * 获取当前是第几教学周（基于日期计算）
  * @param {Date} now - 当前日期
  * @returns {number} 教学周（1-20）
  */
 export function getCurrentWeek(now = new Date()) {
-  // 假设第3周从2026-09-14开始（周一）
-  const semesterStart = new Date('2026-09-07') // 第1周的周一
+  const semesterStart = new Date('2026-09-07')
   const diffDays = Math.floor((now - semesterStart) / 86400000)
   const week = Math.floor(diffDays / 7) + 1
   return Math.max(1, Math.min(20, week))
@@ -253,7 +281,11 @@ export function getCurrentWeek(now = new Date()) {
 export function isCourseInWeek(course, week) {
   if (!course.weeks) return true
   const [start, end] = course.weeks.split('-').map(Number)
-  return week >= start && week <= end
+  if (week < start || week > end) return false
+  // 检查单双周
+  if (course.weekdayType === 'odd') return week % 2 === 1
+  if (course.weekdayType === 'even') return week % 2 === 0
+  return true
 }
 
 /**
@@ -281,45 +313,44 @@ export function getTotalCredits() {
 }
 
 /**
- * 生成日程事件列表（用于日程助手）
- * @returns {Array} 事件数组
+ * 格式化单双周显示
+ * @param {string} type - 'all' | 'odd' | 'even'
+ * @returns {string}
  */
-export function generateScheduleEvents() {
-  const events = []
-  const now = new Date()
-  const currentWeek = getCurrentWeek(now)
+export function formatWeekdayType(type) {
+  if (type === 'odd') return '单周'
+  if (type === 'even') return '双周'
+  return ''
+}
 
-  for (const course of COURSES) {
-    if (!isCourseInWeek(course, currentWeek)) continue
+/**
+ * 获取节次详细时间
+ * @param {number} period - 节次（1-12）
+ * @returns {string}
+ */
+export function getPeriodTime(period) {
+  return SINGLE_PERIOD_TIMES[period] || ''
+}
 
-    const periodNum = parseInt(course.period.split('-')[0])
-    const periodEnd = parseInt(course.period.split('-')[1])
-    const startTime = PERIOD_TIMES[periodNum]?.split('-')[0] || '08:20'
-    const endTime = PERIOD_TIMES[periodEnd]?.split('-')[1] || '10:00'
+/**
+ * 获取课程显示的详细时间
+ * @param {Object} course - 课程对象
+ * @returns {string}
+ */
+export function getCourseTimeDetail(course) {
+  const [start, end] = course.period.split('-').map(Number)
+  const startTime = SINGLE_PERIOD_TIMES[start]?.split('-')[0] || ''
+  const endTime = SINGLE_PERIOD_TIMES[end]?.split('-')[1] || ''
+  return `${startTime}-${endTime}`
+}
 
-    // 计算本周对应的日期
-    const semesterStart = new Date('2026-09-07')
-    const weekOffset = (currentWeek - 1) * 7
-    const courseDate = new Date(semesterStart.getTime() + weekOffset * 86400000)
-    courseDate.setDate(courseDate.getDate() + (course.weekday - 1))
-    const dateStr = `${courseDate.getFullYear()}-${String(courseDate.getMonth() + 1).padStart(2, '0')}-${String(courseDate.getDate()).padStart(2, '0')}`
-
-    events.push({
-      id: `course-${course.id}-${currentWeek}`,
-      date: dateStr,
-      time: `${startTime}-${endTime}`,
-      endTime: endTime,
-      location: course.location,
-      topic: course.name,
-      audience: '计算机科学与技术',
-      speaker: course.teacher,
-      category: 'class',
-      importance: 'normal',
-      preparation: ['携带课本', '携带笔记本'],
-      tip: `${course.category} · ${course.credits}学分 · 教学周${course.weeks}`,
-      courseData: course,
-    })
-  }
-
-  return events
+/**
+ * 获取课程显示的节次文本
+ * @param {Object} course - 课程对象
+ * @returns {string}
+ */
+export function getCoursePeriodText(course) {
+  const [start, end] = course.period.split('-').map(Number)
+  if (start === end) return `第${start}节`
+  return `第${start}-${end}节`
 }

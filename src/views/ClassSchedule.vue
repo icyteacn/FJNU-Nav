@@ -1,25 +1,26 @@
 <script setup>
 /**
- * 课程表视图 v2
- * 参考 NFS 课表设计，优化手机端显示
- * - 手机端7天均分一屏，无需横滑
- * - 行高压缩，一屏显示全部课程
- * - 课程卡片显示关键信息
- * - 未安排课程提示
+ * 课程表视图 v3
+ * 优化手机端显示，参考NFS课表设计
+ * - 表格视图：2节为一行，支持跨行显示
+ * - 列表视图：按天分组卡片
+ * - 课程卡片显示起止周、单双周
+ * - 未安排课程醒目提示
  * - 与研究生服务联动
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
-  WEEKDAYS, ALL_PERIODS, PERIOD_TIMES, PERIOD_GROUP_TIMES, PERIOD_GROUPS,
+  WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES, PERIOD_GROUP_TIMES,
   COURSES, REQUIRED_COURSES,
-  getWeekView, getCurrentWeek, isCourseInWeek, getAllCourses,
+  getCurrentWeek, isCourseInWeek, getAllCourses,
   getUnarrangedCourses, getArrangedCredits, getTotalCredits,
+  getCourseAtRow, isCourseStartAtRow, getCourseRowSpan, isMergedCell,
+  formatWeekdayType, getCourseTimeDetail, getCoursePeriodText,
 } from '../data/classSchedule'
 
 const emit = defineEmits(['open', 'back'])
 
 const currentWeek = ref(getCurrentWeek())
-const weekView = ref(getWeekView())
 const selectedCourse = ref(null)
 const showDetail = ref(false)
 const viewMode = ref('grid') // 'grid' | 'list'
@@ -28,49 +29,27 @@ const showUnarranged = ref(false)
 const weekdayHeaders = computed(() => WEEKDAYS.filter(w => w.key <= 5))
 
 const weekCourses = computed(() => {
-  const courses = getAllCourses()
-  return courses.filter(c => isCourseInWeek(c, currentWeek.value))
+  return COURSES.filter(c => isCourseInWeek(c, currentWeek.value))
 })
 
 const totalCredits = computed(() => getArrangedCredits())
 const allCredits = computed(() => getTotalCredits())
 const unarrangedCourses = computed(() => getUnarrangedCourses())
 
-function getCourse(weekday, period) {
-  const view = weekView.value
-  if (!view[weekday]) return null
-  if (view[weekday][period]) return view[weekday][period]
-  const courses = COURSES.filter(c => c.weekday === weekday && isCourseInWeek(c, currentWeek.value))
-  for (const c of courses) {
-    const [start, end] = c.period.split('-').map(Number)
-    const periodStart = parseInt(period.split('-')[0])
-    const periodEnd = parseInt(period.split('-')[1])
-    if (periodStart >= start && periodEnd <= end) return c
-  }
-  return null
-}
-
-function getPeriodTime(period) {
-  const [start] = period.split('-').map(Number)
-  const [startTime] = PERIOD_TIMES[start]?.split('-') || ['']
-  const [, endStr] = PERIOD_TIMES[start + 1]?.split('-') || ['', '']
-  return `${startTime}-${endStr}`
+function getCourse(weekday, rowStart) {
+  return getCourseAtRow(weekday, rowStart)
 }
 
 function getCourseSpan(course) {
-  if (!course) return 1
-  const [start, end] = course.period.split('-').map(Number)
-  return Math.ceil((end - start + 1) / 2)
+  return getCourseRowSpan(course)
 }
 
-function isMergedCell(weekday, period) {
-  const courses = COURSES.filter(c => c.weekday === weekday && isCourseInWeek(c, currentWeek.value))
-  for (const c of courses) {
-    const [start, end] = c.period.split('-').map(Number)
-    const periodStart = parseInt(period.split('-')[0])
-    if (periodStart > start && periodStart <= end) return true
-  }
-  return false
+function isCourseStart(course, rowStart) {
+  return isCourseStartAtRow(course, rowStart)
+}
+
+function isCellMerged(weekday, rowStart) {
+  return isMergedCell(weekday, rowStart)
 }
 
 function openCourseDetail(course) {
@@ -84,9 +63,7 @@ function closeDetail() {
 }
 
 function goToClassroomNav() {
-  if (selectedCourse.value) {
-    emit('open', 'classroomNav')
-  }
+  emit('open', 'classroomNav')
 }
 
 function goToCanteen() {
@@ -95,6 +72,10 @@ function goToCanteen() {
 
 function goToGraduatePlan() {
   emit('open', 'graduatePlan')
+}
+
+function getWeekTypeInfo(course) {
+  return formatWeekdayType(course.weekdayType)
 }
 
 onMounted(() => {
@@ -115,11 +96,11 @@ onMounted(() => {
       </div>
       <div class="header-stats">
         <div class="stat-item">
-          <span class="stat-value">{{ currentWeek }}</span>
+          <span class="stat-value">第{{ currentWeek }}周</span>
           <span class="stat-label">教学周</span>
         </div>
         <div class="stat-item">
-          <span class="stat-value">{{ weekCourses.length }}</span>
+          <span class="stat-value">{{ weekCourses.length }}门</span>
           <span class="stat-label">已安排</span>
         </div>
         <div class="stat-item">
@@ -142,29 +123,30 @@ onMounted(() => {
             </tr>
           </thead>
           <tbody>
-            <template v-for="period in ALL_PERIODS" :key="period">
-              <tr v-if="!isMergedCell(1, period)">
-                <td class="period-cell">
-                  <div class="period-number">{{ period.split('-')[0] }}</div>
-                  <div class="period-time">{{ getPeriodTime(period) }}</div>
-                </td>
-                <template v-for="wd in weekdayHeaders" :key="wd.key">
-                  <td
-                    v-if="!isMergedCell(wd.key, period)"
-                    :rowspan="getCourseSpan(getCourse(wd.key, period))"
-                    class="course-cell"
-                    :class="{ 'has-course': getCourse(wd.key, period) }"
-                    @click="getCourse(wd.key, period) && openCourseDetail(getCourse(wd.key, period))"
-                  >
-                    <div v-if="getCourse(wd.key, period)" class="course-card" :style="{ borderLeftColor: getCourse(wd.key, period).color }">
-                      <div class="course-name">{{ getCourse(wd.key, period).name }}</div>
-                      <div class="course-location">{{ getCourse(wd.key, period).location }}</div>
-                      <div class="course-teacher">{{ getCourse(wd.key, period).teacher }}</div>
+            <tr v-for="row in TABLE_ROWS" :key="row.label">
+              <td class="period-cell">
+                <div class="period-label">{{ row.label }}</div>
+                <div class="period-time">{{ row.time }}</div>
+              </td>
+              <template v-for="wd in weekdayHeaders" :key="wd.key">
+                <td
+                  v-if="!isCellMerged(wd.key, row.periods[0])"
+                  :rowspan="getCourseSpan(getCourse(wd.key, row.periods[0]))"
+                  class="course-cell"
+                  :class="{ 'has-course': getCourse(wd.key, row.periods[0]) }"
+                  @click="getCourse(wd.key, row.periods[0]) && openCourseDetail(getCourse(wd.key, row.periods[0]))"
+                >
+                  <div v-if="getCourse(wd.key, row.periods[0])" class="course-card" :style="{ borderLeftColor: getCourse(wd.key, row.periods[0]).color }">
+                    <div class="course-name">{{ getCourse(wd.key, row.periods[0]).name }}</div>
+                    <div class="course-meta">
+                      <span class="course-location">{{ getCourse(wd.key, row.periods[0]).location }}</span>
+                      <span class="course-teacher">{{ getCourse(wd.key, row.periods[0]).teacher }}</span>
                     </div>
-                  </td>
-                </template>
-              </tr>
-            </template>
+                    <div class="course-weeks">第{{ getCourse(wd.key, row.periods[0]).weeks }}周</div>
+                  </div>
+                </td>
+              </template>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -172,64 +154,91 @@ onMounted(() => {
 
     <!-- 列表视图 -->
     <div v-if="viewMode === 'list'" class="list-view">
-      <div v-for="course in weekCourses" :key="course.id" class="list-card" :style="{ borderLeftColor: course.color }" @click="openCourseDetail(course)">
-        <div class="list-header">
-          <div class="list-name">{{ course.name }}</div>
-          <div class="list-badge" :style="{ background: course.color }">{{ course.category }}</div>
+      <template v-for="wd in weekdayHeaders" :key="wd.key">
+        <div v-if="weekCourses.filter(c => c.weekday === wd.key).length" class="list-day">
+          <div class="list-day-header">{{ wd.label }}</div>
+          <div
+            v-for="course in weekCourses.filter(c => c.weekday === wd.key)"
+            :key="course.id"
+            class="list-card"
+            :style="{ borderLeftColor: course.color }"
+            @click="openCourseDetail(course)"
+          >
+            <div class="list-card-top">
+              <div class="list-card-time">
+                <div class="list-card-period">{{ course.period }}节</div>
+                <div class="list-card-clock">{{ getCourseTimeDetail(course) }}</div>
+              </div>
+              <div class="list-card-info">
+                <div class="list-card-name">{{ course.name }}</div>
+                <div class="list-card-location">{{ course.location }}</div>
+                <div class="list-card-teacher">{{ course.teacher }}</div>
+              </div>
+            </div>
+            <div class="list-card-bottom">
+              <span class="list-card-badge" :style="{ background: course.color }">{{ course.category }}</span>
+              <span class="list-card-weeks">第{{ course.weeks }}周</span>
+              <span v-if="getWeekTypeInfo(course)" class="list-card-type">{{ getWeekTypeInfo(course) }}</span>
+              <span class="list-card-credits">{{ course.credits }}学分</span>
+            </div>
+          </div>
         </div>
-        <div class="list-info">
-          <div class="info-row">
-            <span class="info-icon">📅</span>
-            <span>{{ WEEKDAYS.find(w => w.key === course.weekday)?.label }} · 第{{ course.period }}节</span>
-          </div>
-          <div class="info-row">
-            <span class="info-icon">🕐</span>
-            <span>{{ PERIOD_GROUP_TIMES[course.period] || course.period }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-icon">📍</span>
-            <span>{{ course.location }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-icon">👤</span>
-            <span>{{ course.teacher }}</span>
-          </div>
-        </div>
-        <div class="list-footer">
-          <span class="credits-badge">{{ course.credits }}学分</span>
-          <span class="weeks-badge">教学周 {{ course.weeks }}</span>
-        </div>
-      </div>
+      </template>
     </div>
 
     <!-- 未安排课程提示 -->
-    <div class="unarranged-panel">
+    <div class="unarranged-panel" :class="{ 'has-warning': unarrangedCourses.length > 0 }">
       <div class="panel-header" @click="showUnarranged = !showUnarranged">
-        <span class="panel-title">📋 培养方案课程对比</span>
+        <div class="panel-title-row">
+          <span class="panel-icon">📋</span>
+          <span class="panel-title">培养方案课程对比</span>
+          <span v-if="unarrangedCourses.length" class="panel-badge">{{ unarrangedCourses.length }}门未安排</span>
+        </div>
         <span class="panel-arrow">{{ showUnarranged ? '▾' : '▸' }}</span>
       </div>
       <div v-show="showUnarranged" class="panel-body">
-        <div class="arranged-info">
-          <span>已安排 <b>{{ weekCourses.length }}</b> 门课程（<b>{{ totalCredits }}</b>学分）</span>
-          <span>共需 <b>{{ allCredits }}</b> 学分</span>
-        </div>
-        <div class="unarranged-list">
-          <div class="unarranged-header">⚠️ 以下课程尚未安排上课时间：</div>
-          <div v-for="course in unarrangedCourses" :key="course.name" class="unarranged-item">
-            <span class="unarranged-name">{{ course.name }}</span>
-            <span class="unarranged-credits">{{ course.credits }}学分</span>
+        <!-- 进度条 -->
+        <div class="progress-section">
+          <div class="progress-info">
+            <span>已完成 <b>{{ weekCourses.length }}</b>/{{ REQUIRED_COURSES.length }} 门</span>
+            <span><b>{{ totalCredits }}</b>/{{ allCredits }} 学分</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: (weekCourses.length / REQUIRED_COURSES.length * 100) + '%' }"></div>
           </div>
         </div>
+
+        <!-- 已安排课程 -->
+        <div class="course-section">
+          <div class="section-title">✅ 已安排课程</div>
+          <div class="course-grid">
+            <div v-for="course in REQUIRED_COURSES.filter(c => c.arranged)" :key="course.name" class="course-chip arranged">
+              <span class="chip-name">{{ course.arrangedName || course.name }}</span>
+              <span class="chip-credits">{{ course.credits }}学分</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 未安排课程 -->
+        <div class="course-section warning">
+          <div class="section-title">⚠️ 未安排课程</div>
+          <div class="course-grid">
+            <div v-for="course in unarrangedCourses" :key="course.name" class="course-chip unarranged">
+              <span class="chip-name">{{ course.name }}</span>
+              <span class="chip-credits">{{ course.credits }}学分</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 说明 -->
         <div class="unarranged-note">
-          <div class="note-title">💡 说明</div>
+          <div class="note-icon">💡</div>
           <div class="note-content">
-            以上课程尚未在教务系统中显示上课时间，可能是因为官网系统更新不及时。
-            <br><br>
+            <b>说明</b>：以上未安排课程尚未在教务系统中显示上课时间，可能是因为官网系统更新不及时。
             <b>建议</b>：先按8月31日发布的Excel课表去上课，后续教务系统会陆续更新选修课、公共必修课（政治课）等课程安排。
-            <br><br>
-            如有疑问，请咨询研究生院或辅导员。
           </div>
         </div>
+
         <button class="btn-more" @click="goToGraduatePlan">🎓 查看研究生服务</button>
       </div>
     </div>
@@ -256,15 +265,19 @@ onMounted(() => {
           </div>
           <div class="detail-row">
             <span class="detail-label">上课时间</span>
-            <span class="detail-value">{{ WEEKDAYS.find(w => w.key === selectedCourse?.weekday)?.label }} · 第{{ selectedCourse?.period }}节</span>
+            <span class="detail-value">{{ WEEKDAYS.find(w => w.key === selectedCourse?.weekday)?.label }} · {{ getCoursePeriodText(selectedCourse) }}</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">具体时间</span>
-            <span class="detail-value">{{ PERIOD_GROUP_TIMES[selectedCourse?.period] }}</span>
+            <span class="detail-value">{{ getCourseTimeDetail(selectedCourse) }}</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">上课周数</span>
             <span class="detail-value">第{{ selectedCourse?.weeks }}周</span>
+          </div>
+          <div v-if="getWeekTypeInfo(selectedCourse)" class="detail-row">
+            <span class="detail-label">单双周</span>
+            <span class="detail-value">{{ getWeekTypeInfo(selectedCourse) }}</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">上课地点</span>
@@ -292,6 +305,7 @@ onMounted(() => {
   padding: 0;
 }
 
+/* 顶部信息栏 */
 .schedule-header {
   background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 80%, #000));
   color: #fff;
@@ -346,13 +360,14 @@ onMounted(() => {
 
 .stat-value {
   display: block;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 800;
+  color: #fff;
 }
 
 .stat-label {
   font-size: 11px;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* 表格视图 */
@@ -363,7 +378,7 @@ onMounted(() => {
 }
 
 .schedule-table-wrapper {
-  min-width: 580px;
+  min-width: 540px;
 }
 
 .schedule-table {
@@ -379,7 +394,7 @@ onMounted(() => {
 }
 
 .period-col {
-  width: 60px;
+  width: 70px;
   background: var(--soft-fg);
   font-weight: 700;
 }
@@ -391,6 +406,7 @@ onMounted(() => {
 
 .weekday-label {
   padding: 10px 4px;
+  font-size: 14px;
 }
 
 .period-cell {
@@ -400,9 +416,9 @@ onMounted(() => {
   vertical-align: middle;
 }
 
-.period-number {
+.period-label {
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--primary);
 }
 
@@ -413,9 +429,10 @@ onMounted(() => {
 }
 
 .course-cell {
-  padding: 6px;
-  height: 70px;
+  padding: 4px;
+  height: 80px;
   vertical-align: middle;
+  cursor: default;
 }
 
 .course-cell.has-course {
@@ -431,18 +448,27 @@ onMounted(() => {
   background: var(--card);
   border: 1px solid var(--border);
   border-left: 3px solid;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 6px;
   height: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .course-name {
   font-weight: 700;
   font-size: 11px;
   line-height: 1.3;
-  margin-bottom: 2px;
   color: var(--text);
+  margin-bottom: 2px;
+}
+
+.course-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .course-location,
@@ -455,20 +481,40 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.course-weeks {
+  font-size: 8px;
+  color: var(--primary);
+  margin-top: 2px;
+}
+
 /* 列表视图 */
 .list-view {
   padding: 0 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+}
+
+.list-day {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list-day-header {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--primary);
 }
 
 .list-card {
   background: var(--card);
   border: 1px solid var(--border);
   border-left: 4px solid;
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -478,59 +524,72 @@ onMounted(() => {
   box-shadow: var(--shadow-hover);
 }
 
-.list-header {
+.list-card-top {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.list-name {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text);
-  flex: 1;
+.list-card-time {
+  background: var(--primary-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+  min-width: 70px;
 }
 
-.list-badge {
+.list-card-period {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.list-card-clock {
   font-size: 10px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  color: #fff;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.list-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.info-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
   color: var(--text-sub);
+  margin-top: 2px;
 }
 
-.info-icon {
-  font-size: 14px;
+.list-card-info {
+  flex: 1;
+  min-width: 0;
 }
 
-.list-footer {
+.list-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.list-card-location,
+.list-card-teacher {
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.4;
+}
+
+.list-card-bottom {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 8px;
   border-top: 1px dashed var(--border);
 }
 
-.credits-badge,
-.weeks-badge {
-  font-size: 11px;
-  padding: 4px 10px;
+.list-card-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.list-card-weeks,
+.list-card-type,
+.list-card-credits {
+  font-size: 10px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: var(--soft-fg);
   color: var(--text-sub);
@@ -546,6 +605,11 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.unarranged-panel.has-warning {
+  border-color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;
@@ -555,9 +619,32 @@ onMounted(() => {
   background: var(--soft-fg);
 }
 
+.unarranged-panel.has-warning .panel-header {
+  background: #fffbeb;
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-icon {
+  font-size: 16px;
+}
+
 .panel-title {
   font-weight: 700;
   font-size: 14px;
+}
+
+.panel-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #fff;
+  font-weight: 600;
 }
 
 .panel-arrow {
@@ -569,59 +656,108 @@ onMounted(() => {
   padding: 16px;
 }
 
-.arranged-info {
+/* 进度条 */
+.progress-section {
+  margin-bottom: 16px;
+}
+
+.progress-info {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px dashed var(--border);
+  margin-bottom: 8px;
 }
 
-.unarranged-list {
+.progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+/* 课程分组 */
+.course-section {
   margin-bottom: 16px;
 }
 
-.unarranged-header {
+.course-section.warning {
+  background: #fffbeb;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #fbbf24;
+}
+
+.section-title {
   font-weight: 700;
   font-size: 13px;
   margin-bottom: 10px;
-  color: #e65100;
+  color: var(--text);
 }
 
-.unarranged-item {
+.course-section.warning .section-title {
+  color: #b45309;
+}
+
+.course-grid {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #fffbeb;
-  border: 1px solid #fbbf24;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  font-size: 13px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.unarranged-name {
+.course-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.course-chip.arranged {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+.course-chip.arranged .chip-name {
+  color: #166534;
+  font-weight: 600;
+}
+
+.course-chip.unarranged {
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+}
+
+.course-chip.unarranged .chip-name {
   color: #92400e;
   font-weight: 600;
 }
 
-.unarranged-credits {
-  color: #b45309;
-  font-size: 12px;
+.chip-credits {
+  font-size: 10px;
+  color: var(--text-sub);
 }
 
+/* 说明 */
 .unarranged-note {
+  display: flex;
+  gap: 10px;
   background: var(--soft-fg);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
 }
 
-.note-title {
-  font-weight: 700;
-  font-size: 13px;
-  margin-bottom: 8px;
+.note-icon {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .note-content {
@@ -784,23 +920,25 @@ onMounted(() => {
   }
 
   .stat-value {
-    font-size: 20px;
+    font-size: 16px;
+    color: #fff;
   }
 
-  .list-view {
-    padding: 0 0 16px;
+  .stat-label {
+    color: rgba(255, 255, 255, 0.8);
   }
 
-  .list-card {
-    border-radius: 0;
-    border-left: none;
-    border-left-width: 4px;
-    border-left-style: solid;
+  .grid-view {
+    padding: 0 8px;
+  }
+
+  .schedule-table-wrapper {
+    min-width: 480px;
   }
 
   .course-cell {
-    height: 60px;
-    padding: 4px;
+    height: 70px;
+    padding: 3px;
   }
 
   .course-name {
@@ -812,11 +950,50 @@ onMounted(() => {
     font-size: 8px;
   }
 
+  .course-weeks {
+    font-size: 7px;
+  }
+
+  .list-view {
+    padding: 0 8px;
+  }
+
+  .list-card-top {
+    gap: 8px;
+  }
+
+  .list-card-time {
+    min-width: 60px;
+    padding: 6px 8px;
+  }
+
+  .list-card-period {
+    font-size: 11px;
+  }
+
+  .list-card-clock {
+    font-size: 9px;
+  }
+
+  .list-card-name {
+    font-size: 14px;
+  }
+
+  .list-card-location,
+  .list-card-teacher {
+    font-size: 11px;
+  }
+
   .unarranged-panel {
     margin: 16px 0;
     border-radius: 0;
     border-left: none;
     border-right: none;
+  }
+
+  .course-chip {
+    font-size: 11px;
+    padding: 4px 8px;
   }
 }
 </style>

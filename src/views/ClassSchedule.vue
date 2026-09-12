@@ -269,7 +269,7 @@ onMounted(() => {
 
     <!-- 表格视图 -->
     <div v-if="viewMode === 'grid'" class="grid-view">
-      <div class="schedule-table-wrapper" :style="{ fontSize: fontSize + '%' }">
+      <div class="schedule-table-wrapper" :style="{ '--font-scale': fontSize / 100 }">
         <table class="schedule-table">
           <thead>
             <tr>
@@ -550,19 +550,19 @@ onMounted(() => {
 
 /* 表格视图 */
 .grid-view { padding: 0 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.schedule-table-wrapper { min-width: 460px; }
-.schedule-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.schedule-table-wrapper { min-width: 460px; --font-scale: 1; }
+.schedule-table { width: 100%; border-collapse: collapse; font-size: calc(10px * var(--font-scale)); }
 .schedule-table th, .schedule-table td { border: 1px solid var(--border); padding: 0; }
 
-.period-col { width: 36px; background: var(--soft-fg); font-weight: 700; font-size: 9px; }
+.period-col { width: 36px; background: var(--soft-fg); font-weight: 700; font-size: 0.9em; }
 .weekday-col { background: var(--soft-fg); font-weight: 700; min-width: 70px; }
 .weekday-col.weekend { background: #f8f8f8; }
-.weekday-label { padding: 4px 2px 0; font-size: 11px; font-weight: 700; }
-.weekday-date { padding: 0 2px 3px; font-size: 9px; color: var(--text-sub); font-weight: 500; }
+.weekday-label { padding: 4px 2px 0; font-size: 1.1em; font-weight: 700; }
+.weekday-date { padding: 0 2px 3px; font-size: 0.9em; color: var(--text-sub); font-weight: 500; }
 
 .period-cell { background: var(--soft-fg); text-align: center; padding: 2px; vertical-align: middle; }
-.period-num { font-weight: 800; font-size: 12px; color: var(--primary); line-height: 1.3; }
-.period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
+.period-num { font-weight: 800; font-size: 1.2em; color: var(--primary); line-height: 1.3; }
+.period-time { font-size: 0.7em; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
 
 .section-morning .period-cell { border-top: 2px solid #1565c0; }
 .section-afternoon .period-cell { border-top: 2px solid #e65100; }
@@ -574,9 +574,9 @@ onMounted(() => {
 .course-cell.has-course:hover { background: var(--primary-soft); }
 
 .course-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid; border-radius: 3px; padding: 2px 4px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
-.course-name { font-weight: 700; font-size: 10px; line-height: 1.25; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
+.course-name { font-weight: 700; font-size: 1em; line-height: 1.25; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
 .course-info { display: flex; flex-direction: column; gap: 0; }
-.course-location, .course-teacher, .course-weeks { font-size: 8px; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-location, .course-teacher, .course-weeks { font-size: 0.8em; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .course-weeks { color: var(--primary); font-weight: 600; }
 
 /* 列表视图 */

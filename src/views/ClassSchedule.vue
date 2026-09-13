@@ -590,8 +590,8 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
 
 /* 4-5节和8-9节分隔线 */
-tr.section-afternoon td { border-top: 1px solid var(--border); }
-tr.section-evening td { border-top: 1px solid var(--border); }
+tr.section-afternoon td:first-child { border-top: 1px solid var(--border); }
+tr.section-evening td:first-child { border-top: 1px solid var(--border); }
 .course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }

@@ -728,10 +728,14 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .next-card, .today-section { margin: 10px 8px 0; }
   .search-bar { padding: 10px 8px 0; }
   .week-selector { padding: 0 8px; }
-  .control-row { padding: 0 8px; flex-wrap: wrap; gap: 6px; }
+  .control-row { padding: 0 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
   .grid-view { padding: 0; overflow-x: auto; }
   .period-col { width: 30px; }
+  .period-cell { padding: 3px 2px; }
+  .period-num { font-size: 12px; }
+  .period-time { font-size: 6px; }
+  .period-time-end { font-size: 5.5px; }
   .course-cell { height: 44px; padding: 2px; }
   .course-card { padding: 3px 5px; }
   .course-name { font-size: 10px; }

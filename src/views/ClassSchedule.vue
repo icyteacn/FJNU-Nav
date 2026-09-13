@@ -420,6 +420,50 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
       <div v-if="!coursesByDay.length" class="empty-state">没有找到匹配的课程</div>
     </div>
 
+    <!-- 奖学金评审计分课程目录 -->
+    <div class="unarranged-panel" :class="{ 'has-warning': unarrangedCourses.length > 0 }">
+      <div class="panel-header" @click="showUnarranged = !showUnarranged">
+        <div class="panel-title-row">
+          <span class="panel-icon">📋</span>
+          <span class="panel-title">奖学金评审计分课程目录</span>
+          <span v-if="unarrangedCourses.length" class="panel-badge">{{ unarrangedCourses.length }}门未安排</span>
+        </div>
+        <span class="panel-arrow">{{ showUnarranged ? '▾' : '▸' }}</span>
+      </div>
+      <div v-show="showUnarranged" class="panel-body">
+        <div class="progress-section">
+          <div class="progress-info">
+            <span>已安排 <b>{{ REQUIRED_COURSES.filter(c => c.arranged).length }}</b>/{{ REQUIRED_COURSES.length }} 门</span>
+            <span><b>{{ totalCredits }}</b>/{{ allCredits }} 学分</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" :style="{ width: (REQUIRED_COURSES.filter(c => c.arranged).length / REQUIRED_COURSES.length * 100) + '%' }"></div></div>
+        </div>
+        <div class="course-section">
+          <div class="section-title">✅ 已安排课程</div>
+          <div class="course-grid">
+            <div v-for="course in REQUIRED_COURSES.filter(c => c.arranged)" :key="course.name" class="course-chip arranged"><span class="chip-name">{{ course.arrangedName || course.name }}</span><span class="chip-credits">{{ course.credits }}学分</span></div>
+          </div>
+        </div>
+        <div class="course-section warning">
+          <div class="section-title">⚠️ 未安排课程</div>
+          <div class="course-grid">
+            <div v-for="course in unarrangedCourses" :key="course.name" class="course-chip unarranged"><span class="chip-name">{{ course.name }}</span><span class="chip-credits">{{ course.credits }}学分</span></div>
+          </div>
+        </div>
+        <div v-if="extraCourses.length" class="course-section extra">
+          <div class="section-title">📌 课表额外课程</div>
+          <div class="course-grid">
+            <div v-for="course in extraCourses" :key="course.name" class="course-chip extra"><span class="chip-name">{{ course.name }}</span><span class="chip-credits">{{ course.credits }}学分</span></div>
+          </div>
+        </div>
+        <div class="unarranged-note">
+          <div class="note-icon">💡</div>
+          <div class="note-content"><b>说明</b>：本目录为《奖学金评审细则》计分课程。未安排课程可能因教务系统更新不及时，<b>建议</b>先按8月31日发布的Excel课表去上课。</div>
+        </div>
+        <button class="btn-more" @click="goToGraduatePlan">🎓 查看研究生服务</button>
+      </div>
+    </div>
+
     <!-- 保存弹窗 -->
     <div v-if="showSaveModal" class="overlay" @click.self="showSaveModal = false">
       <div class="save-modal">
@@ -582,7 +626,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 /* 时间射线 - 只在当日列内显示 */
 .time-line { position: absolute; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
 .time-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
-.time-label { position: absolute; right: 0; top: -8px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; white-space: nowrap; line-height: 1; }
+.time-label { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; white-space: nowrap; line-height: 1; }
 
 /* 列表 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }
@@ -604,6 +648,42 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .list-card-badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; color: #fff; font-weight: 600; }
 .list-card-weeks, .list-card-type, .list-card-credits { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: var(--soft-fg); color: var(--text-sub); font-weight: 600; }
 .empty-state { text-align: center; padding: 40px 0; color: var(--text-sub); }
+
+/* 奖学金评审计分课程目录面板 */
+.unarranged-panel { margin: 16px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.unarranged-panel.has-warning { border-color: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.15); }
+.panel-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; cursor: pointer; background: var(--soft-fg); }
+.unarranged-panel.has-warning .panel-header { background: #fffbeb; }
+.panel-title-row { display: flex; align-items: center; gap: 8px; }
+.panel-icon { font-size: 16px; }
+.panel-title { font-weight: 700; font-size: 13px; }
+.panel-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #f59e0b; color: #fff; font-weight: 600; }
+.panel-arrow { font-size: 12px; color: var(--text-sub); }
+.panel-body { padding: 16px; }
+.progress-section { margin-bottom: 16px; }
+.progress-info { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+.progress-bar { height: 8px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 999px; background: var(--primary); transition: width .3s ease; }
+.course-section { margin-bottom: 16px; }
+.course-section.warning { background: #fffbeb; padding: 12px; border-radius: 8px; border: 1px solid #fbbf24; }
+.course-section.extra { background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; }
+.section-title { font-weight: 700; font-size: 13px; margin-bottom: 10px; color: var(--text); }
+.course-section.warning .section-title { color: #b45309; }
+.course-section.extra .section-title { color: #0369a1; }
+.course-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.course-chip { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 8px; font-size: 12px; }
+.course-chip.arranged { background: #dcfce7; border: 1px solid #86efac; }
+.course-chip.arranged .chip-name { color: #166534; font-weight: 600; }
+.course-chip.unarranged { background: #fef3c7; border: 1px solid #fbbf24; }
+.course-chip.unarranged .chip-name { color: #92400e; font-weight: 600; }
+.course-chip.extra { background: #e0f2fe; border: 1px solid #7dd3fc; }
+.course-chip.extra .chip-name { color: #0c4a6e; font-weight: 600; }
+.chip-credits { font-size: 10px; color: var(--text-sub); }
+.unarranged-note { display: flex; gap: 10px; background: var(--soft-fg); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.note-icon { font-size: 16px; flex-shrink: 0; }
+.note-content { font-size: 12px; color: var(--text-sub); line-height: 1.6; }
+.btn-more { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.btn-more:hover { background: color-mix(in srgb, var(--primary) 80%, #000); }
 
 /* 保存弹窗 */
 .save-modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 320px; padding: 20px; }
@@ -652,6 +732,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
   .save-btn { padding: 5px 8px; font-size: 10px; }
   .opt-btn { padding: 5px 8px; font-size: 10px; }
   .time-line::before { width: 8px; height: 8px; left: -4px; top: -3px; }
-  .time-label { font-size: 9px; padding: 1px 4px; top: -7px; }
+  .time-label { font-size: 9px; padding: 1px 4px; }
+  .unarranged-panel { margin: 12px 0; border-radius: 0; border-left: none; border-right: none; }
 }
 </style>

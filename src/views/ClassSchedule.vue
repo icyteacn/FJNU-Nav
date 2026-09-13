@@ -333,19 +333,13 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
       <div class="week-scroll"><button v-for="w in weekShortcuts" :key="w.value" class="week-chip" :class="{ active: selectedWeek === w.value }" @click="selectedWeek = w.value"><span class="chip-week">{{ w.value }}</span><span class="chip-date">{{ w.dateRange }}</span></button></div>
     </div>
 
-    <!-- 控制行1：筛选按钮 -->
+    <!-- 控制行 -->
     <div class="control-row">
       <button v-for="t in COURSE_TYPES" :key="t.key" class="type-chip" :class="{ active: typeFilter === t.key }" :style="{ '--type-color': t.color }" @click="typeFilter = t.key">{{ t.label }}</button>
-    </div>
-    <!-- 控制行2：功能按钮 -->
-    <div class="control-row">
       <button class="opt-btn" :class="{ active: colorMode === 'color' }" @click="colorMode = colorMode === 'white' ? 'color' : 'white'">{{ colorMode === 'white' ? '🎨 彩色' : '📄 白色' }}</button>
       <button class="opt-btn" :class="{ active: showOtherWeek }" @click="showOtherWeek = !showOtherWeek">{{ showOtherWeek ? '📅 仅本周' : '📆 全部' }}</button>
       <button class="opt-btn" :class="{ active: highlightToday }" @click="highlightToday = !highlightToday">{{ highlightToday ? '✨ 高亮' : '⬜ 高亮' }}</button>
       <button class="semester-btn" :class="{ active: showSemester }" @click="showSemester = !showSemester">{{ showSemester ? '→ 周课表' : '→ 学期课表' }}</button>
-    </div>
-    <!-- 控制行3：缩放 + 保存 -->
-    <div class="control-row">
       <div class="zoom-group">
         <button class="zoom-btn" @click="fontSize = Math.max(70, fontSize - 10)">A-</button>
         <span class="zoom-label">{{ fontSize }}%</span>
@@ -583,7 +577,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 /* 表头样式 */
 .schedule-table thead th { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
 .schedule-table thead th:last-child { border-right: none; }
-.period-col { width: 38px; background: var(--soft-fg); border-right: 1px solid var(--border); }
+.period-col { width: 38px; background: var(--soft-fg); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 
 /* 节次列 - 格子样式，每节课之间有横线 */
 .period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); box-sizing: border-box; }
@@ -728,7 +722,8 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .next-card, .today-section { margin: 10px 8px 0; }
   .search-bar { padding: 10px 8px 0; }
   .week-selector { padding: 0 8px; }
-  .control-row { padding: 0 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .control-row { padding: 0 8px; flex-wrap: wrap; gap: 6px; }
+  .control-row .type-chip, .control-row .opt-btn, .control-row .semester-btn, .control-row .zoom-group, .control-row .save-btn { flex: 0 0 calc(33.333% - 4px); box-sizing: border-box; text-align: center; justify-content: center; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
   .grid-view { padding: 0; overflow-x: auto; }
   .period-col { width: 30px; }

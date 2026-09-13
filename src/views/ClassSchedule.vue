@@ -206,6 +206,52 @@ async function doSave() {
 }
 
 const weekShortcuts = computed(() => Array.from({ length: 18 }, (_, i) => ({ value: i + 1, dateRange: getWeekDateRange(i + 1) })))
+
+// 时间射线位置计算
+const timeLinePos = computed(() => {
+  if (!highlightToday.value) return null
+  const today = new Date()
+  const h = today.getHours(), m = today.getMinutes()
+  // 上午 8:20-12:00，下午 14:00-17:30，晚上 18:30-22:00
+  const t = h * 60 + m
+  if (t < 8 * 60 + 20 || t >= 22 * 60) return null // 不在上课时间
+  
+  // 计算在表格中的位置（每行高度约46px + 边框1px）
+  const rowHeight = 47 // 46px + 1px border
+  const headerHeight = 40 // 表头高度
+  
+  let row = 0
+  if (t < 12 * 60) {
+    // 上午：8:20-12:00，对应第1-4节
+    const mins = t - (8 * 60 + 20)
+    row = Math.floor(mins / 45) // 每节45分钟
+    const offset = (mins % 45) / 45
+    return headerHeight + (row + offset) * rowHeight
+  } else if (t < 14 * 60) {
+    return null // 午休
+  } else if (t < 17 * 60 + 30) {
+    // 下午：14:00-17:30，对应第5-8节
+    const mins = t - (14 * 60)
+    row = Math.floor(mins / 45) + 4
+    const offset = (mins % 45) / 45
+    return headerHeight + (row + offset) * rowHeight
+  } else {
+    // 晚上：18:30-22:00，对应第9-12节
+    const mins = t - (18 * 60 + 30)
+    row = Math.floor(mins / 45) + 8
+    const offset = (mins % 45) / 45
+    return headerHeight + (row + offset) * rowHeight
+  }
+})
+
+// 当前是周几（用于时间射线定位到正确的列）
+const timeLineWeekday = computed(() => {
+  if (!highlightToday.value) return null
+  const today = new Date()
+  const day = today.getDay()
+  return day === 0 ? 7 : day
+})
+
 onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selectedWeek.value })
 </script>
 
@@ -309,6 +355,8 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
             </template>
           </tbody>
         </table>
+        <!-- 时间射线 -->
+        <div v-if="timeLinePos !== null && isToday(timeLineWeekday)" class="time-line" :style="{ top: timeLinePos + 'px' }"></div>
       </div>
     </div>
 
@@ -441,6 +489,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 
 /* 表格 */
 .grid-view { padding: 0; }
+.schedule-table-wrapper { --font-scale: 1; position: relative; }
 .schedule-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .schedule-table th, .schedule-table td { border: 1px solid var(--border); padding: 0; }
 .period-col { width: 38px; background: var(--soft-fg); }
@@ -462,15 +511,19 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .course-cell.has-course { cursor: pointer; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
 .course-cell.other-week { opacity: 0.5; }
-.course-cell.is-flashing { animation: flash 0.5s ease 3; }
-@keyframes flash { 0%, 100% { background: transparent; } 50% { background: #fef08a; } }
+.course-cell.is-flashing { animation: flashHighlight 0.5s ease 3; z-index: 1; }
+@keyframes flashHighlight { 0%, 100% { background: inherit; } 50% { background: #fde047 !important; } }
 .course-card { border-left: 3px solid; border-radius: 4px; padding: 4px 8px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 .course-card.white { background: var(--card); }
 .course-card.color { backdrop-filter: blur(8px); }
-.course-name { font-weight: 700; font-size: calc(11px * var(--font-scale)); line-height: 1.3; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.course-name { font-weight: 700; font-size: calc(11px * var(--font-scale)); line-height: 1.3; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
 .course-info { display: flex; flex-direction: column; gap: 0; }
-.course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
 .course-weeks { color: var(--primary); font-weight: 600; }
+
+/* 时间射线 */
+.time-line { position: absolute; left: 0; right: 0; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
+.time-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
 
 /* 列表 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }
@@ -524,16 +577,19 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
   .header-title { font-size: 16px; }
   .stat-value { font-size: 14px; color: #fff; }
   .next-card, .today-section { margin: 10px 8px 0; }
-  .search-bar { padding: 0 8px; margin-top: 10px; }
+  .search-bar { padding: 10px 8px 0; }
+  .search-input { background: var(--card); }
   .week-selector, .control-row { padding: 0 8px; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
-  .grid-view { padding: 0; overflow: hidden; }
-  .period-col { width: 34px; }
+  .grid-view { padding: 0; overflow-x: auto; }
+  .period-col { width: 30px; }
+  .weekday-col.weekend { display: table-cell; }
   .course-cell { height: 42px; padding: 2px; }
-  .course-card { padding: 3px 6px; }
-  .course-name { font-size: 10px; }
-  .course-location, .course-teacher { font-size: 8px; white-space: normal; word-break: break-all; }
+  .course-card { padding: 3px 5px; }
+  .course-name { font-size: 10px; -webkit-line-clamp: 2; }
+  .course-location, .course-teacher { font-size: 8px; -webkit-line-clamp: 1; }
   .list-view { padding: 0 8px; }
   .week-chip { min-width: 45px; padding: 5px 8px; }
+  .save-btn { padding: 5px 10px; font-size: 11px; }
 }
 </style>

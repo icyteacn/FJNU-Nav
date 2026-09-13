@@ -351,7 +351,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
         <span class="zoom-label">{{ fontSize }}%</span>
         <button class="zoom-btn" @click="fontSize = Math.min(200, fontSize + 10)">A+</button>
       </div>
-      <button class="save-btn" @click="saveScreenshot">📷 保存截图</button>
+      <button class="save-btn" @click="saveScreenshot">📷 保存课表</button>
     </div>
 
     <div class="mode-hint">
@@ -582,10 +582,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 /* 表头样式 */
 .schedule-table thead th { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
 .schedule-table thead th:last-child { border-right: none; }
-.period-col { width: 38px; background: var(--soft-fg); }
+.period-col { width: 38px; background: var(--soft-fg); border-right: 1px solid var(--border); }
 
-/* 节次列 - 每节课之间都要有横线 */
-.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-bottom: 1px solid var(--border); }
+/* 节次列 - 格子样式，每节课之间有横线 */
+.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
 .period-num { font-weight: 800; font-size: 14px; color: var(--primary); line-height: 1.2; }
 .period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
@@ -726,7 +726,8 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .stat-value { font-size: 14px; color: #fff; }
   .next-card, .today-section { margin: 10px 8px 0; }
   .search-bar { padding: 10px 8px 0; }
-  .week-selector, .control-row { padding: 0 8px; }
+  .week-selector { padding: 0 8px; }
+  .control-row { padding: 0 8px; flex-wrap: wrap; gap: 6px; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
   .grid-view { padding: 0; overflow-x: auto; }
   .period-col { width: 30px; }

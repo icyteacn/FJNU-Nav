@@ -1,5 +1,6 @@
 /**
- * 课程表数据 v5
+ * 课程表数据 v6
+ * 支持多专业/班级课表查看
  * 每节课单独一行，课间用分界线隔开
  */
 
@@ -30,7 +31,7 @@ export const WEEKDAYS = [
   { key: 7, label: '周日', short: '周日' },
 ]
 
-/** 表格行：每节课单独一行，节次和时间合并显示 */
+/** 表格行：每节课单独一行 */
 export const TABLE_ROWS = [
   { period: 1, label: '1', time: '08:20', timeEnd: '09:05', section: 'morning' },
   { period: 2, label: '2', time: '09:15', timeEnd: '10:00', section: 'morning' },
@@ -46,203 +47,196 @@ export const TABLE_ROWS = [
   { period: 12, label: '12', time: '21:15', timeEnd: '22:00', section: 'evening' },
 ]
 
-/** 节次时间段（用于详情显示） */
+/** 节次时间段 */
 export const PERIOD_TIMES = {
-  1: '08:20-09:05',
-  2: '09:15-10:00',
-  3: '10:20-11:05',
-  4: '11:15-12:00',
-  5: '14:00-14:45',
-  6: '14:55-15:40',
-  7: '15:50-16:35',
-  8: '16:45-17:30',
-  9: '18:30-19:15',
-  10: '19:25-20:10',
-  11: '20:20-21:05',
-  12: '21:15-22:00',
+  1: '08:20-09:05', 2: '09:15-10:00', 3: '10:20-11:05', 4: '11:15-12:00',
+  5: '14:00-14:45', 6: '14:55-15:40', 7: '15:50-16:35', 8: '16:45-17:30',
+  9: '18:30-19:15', 10: '19:25-20:10', 11: '20:20-21:05', 12: '21:15-22:00',
 }
 
-/** 课间休息时间段 */
-export const BREAK_TIMES = {
-  '2-3': '10:00-10:20 (课间20分钟)',
-  '4-5': '12:00-14:00 (午休)',
-  '6-7': '15:40-15:50 (课间10分钟)',
-  '8-9': '17:30-18:30 (晚饭时间)',
-  '10-11': '20:10-20:20 (课间10分钟)',
-}
-
-/**
- * 课程表数据（修正版）
- * 节次为起止单节课（如9-12表示第9、10、11、12节）
- */
-export const COURSES = [
-  {
-    name: '研究生英语B',
-    id: 'ENG-B-001',
-    teacher: '蒋宏影',
-    location: '笃行1-218',
-    weeks: '3-18',
-    weekdayType: 'all',
-    startPeriod: 1,
-    endPeriod: 2,
-    weekday: 1,
-    credits: 2,
-    hours: 32,
-    category: '公共必修课',
-    color: '#c62828',
-  },
-  {
-    name: '当代科技',
-    id: 'TECH-001',
-    teacher: '黄正华',
-    location: '知明2-202',
-    weeks: '3-10',
-    weekdayType: 'all',
-    startPeriod: 5,
-    endPeriod: 6,
-    weekday: 2,
-    credits: 2,
-    hours: 32,
-    category: '公共选修课',
-    color: '#ad1457',
-  },
-  {
-    name: '人工智能通识课',
-    id: 'ZSZX027085410049',
-    teacher: '黄培凯、林燊',
-    location: '笃行1-113',
-    weeks: '3-10',
-    weekdayType: 'all',
-    startPeriod: 9,
-    endPeriod: 12,
-    weekday: 2,
-    credits: 2,
-    hours: 32,
-    category: '专业必修课',
-    color: '#e65100',
-  },
-  {
-    name: '机器学习',
-    id: 'XZB0270812104',
-    teacher: '陈丽萍',
-    location: '笃行1-321A',
-    weeks: '3-14',
-    weekdayType: 'all',
-    startPeriod: 5,
-    endPeriod: 8,
-    weekday: 4,
-    credits: 3,
-    hours: 48,
-    category: '专业必修课',
-    color: '#00695c',
-  },
-  {
-    name: '高级算法设计与分析',
-    id: 'XZB0270812103',
-    teacher: '张筱辰',
-    location: '计网楼406',
-    weeks: '3-14',
-    weekdayType: 'all',
-    startPeriod: 5,
-    endPeriod: 8,
-    weekday: 5,
-    credits: 3,
-    hours: 48,
-    category: '专业必修课',
-    color: '#6a1b9a',
-  },
-  {
-    name: '高等工程数学',
-    id: 'XZB0270812102',
-    teacher: '林劼、胡丽莹',
-    location: '笃行1-201',
-    weeks: '3-14',
-    weekdayType: 'all',
-    startPeriod: 9,
-    endPeriod: 12,
-    weekday: 5,
-    credits: 3,
-    hours: 48,
-    category: '专业必修课',
-    color: '#1565c0',
-  },
+/** 专业/班级列表 */
+export const MAJORS = [
+  { key: 'cs-master', label: '计算机科学与技术（学术硕士）', short: '计科学硕', color: '#1565c0' },
+  { key: 'cyber-master', label: '网络空间安全（学术硕士）', short: '网安学硕', color: '#00695c' },
+  { key: 'cyber-phd', label: '网络空间安全（博士）', short: '网安博士', color: '#6a1b9a' },
+  { key: 'se-master', label: '软件工程（专业硕士）', short: '软工专硕', color: '#e65100' },
+  { key: 'ai-master', label: '人工智能（专业硕士）', short: 'AI专硕', color: '#ad1457' },
+  { key: 'nis-master', label: '网络与信息安全（专业硕士）', short: '网信专硕', color: '#c62828' },
 ]
 
-/** 培养方案课程列表 */
-export const REQUIRED_COURSES = [
-  { name: '新时代中国特色社会主义理论与实践研究', credits: 2, category: '公共必修课', arranged: false },
-  { name: '自然辩证法概论', credits: 1, category: '公共必修课', arranged: false },
-  { name: '硕士生第一外国语', credits: 4, category: '公共必修课', arranged: true, arrangedName: '研究生英语B' },
-  { name: '科研伦理与学术规范', credits: 1, category: '公共必修课', arranged: false },
-  { name: '实验室安全知识', credits: 1, category: '专业必修课', arranged: false },
-  { name: '学术论文写作', credits: 2, category: '专业必修课', arranged: false },
-  { name: '高等工程数学', credits: 3, category: '专业必修课', arranged: true },
-  { name: '高级算法设计与分析', credits: 3, category: '专业必修课', arranged: true },
-  { name: '机器学习', credits: 3, category: '专业必修课', arranged: true },
-]
-
-/** 课程类型列表 */
+/** 课程类别 */
 export const COURSE_TYPES = [
   { key: 'all', label: '全部', color: '#666' },
   { key: '专业必修课', label: '专业必修', color: '#1565c0' },
+  { key: '专业选修课', label: '专业选修', color: '#00695c' },
   { key: '公共必修课', label: '公共必修', color: '#c62828' },
   { key: '公共选修课', label: '公共选修', color: '#ad1457' },
 ]
 
 /**
- * 获取指定节次的课程（考虑周次筛选）
+ * 2026级研究生课程表
+ * major: 专业/班级key
+ * shared: 是否与其他专业合班
  */
-export function getCourseAtPeriod(weekday, period, week) {
-  return COURSES.find(c => {
-    if (c.weekday !== weekday) return false
-    if (period < c.startPeriod || period > c.endPeriod) return false
-    // 如果指定了周次，检查课程是否在该周上课
-    if (week !== undefined && !isCourseInWeek(c, week)) return false
-    return true
-  }) || null
-}
+export const COURSES = [
+  // ===== 计算机科学与技术（学术硕士）=====
+  {
+    name: '研究生英语B', id: 'ENG-B-001', teacher: '蒋宏影', location: '笃行1-218',
+    weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
+    credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'cs-master',
+  },
+  {
+    name: '当代科技', id: 'TECH-001', teacher: '黄正华', location: '知明2-202',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 5, endPeriod: 6, weekday: 2,
+    credits: 2, hours: 32, category: '公共选修课', color: '#ad1457', major: 'cs-master',
+  },
+  {
+    name: '人工智能通识课', id: 'ZSZX027085410049', teacher: '黄培凯、林燊', location: '笃行1-113',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 2,
+    credits: 2, hours: 32, category: '专业必修课', color: '#e65100', major: 'cs-master',
+  },
+  {
+    name: '机器学习', id: 'XZB0270812104', teacher: '陈丽萍', location: '笃行1-321A',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 5, endPeriod: 8, weekday: 4,
+    credits: 3, hours: 48, category: '专业必修课', color: '#00695c', major: 'cs-master',
+  },
+  {
+    name: '高级算法设计与分析', id: 'XZB0270812103', teacher: '张筱辰', location: '计网楼406',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 5, endPeriod: 8, weekday: 5,
+    credits: 3, hours: 48, category: '专业必修课', color: '#6a1b9a', major: 'cs-master',
+  },
+  {
+    name: '高等工程数学', id: 'XZB0270812102', teacher: '林劼、胡丽莹', location: '笃行1-201',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'cs-master',
+  },
+
+  // ===== 网络空间安全（学术硕士）=====
+  {
+    name: '学术论文写作', id: 'XZB027083900001', teacher: '许胜民、马金花', location: '笃行1-204',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 3,
+    credits: 2, hours: 32, category: '专业必修课', color: '#00695c', major: 'cyber-master', shared: '与网信专硕、博士生合班',
+  },
+  {
+    name: '网络空间安全导论', id: 'XZB027083900002', teacher: '林丽美、汪晓丁、许力、方定邦', location: '科技楼1004',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 4,
+    credits: 2, hours: 32, category: '专业必修课', color: '#00695c', major: 'cyber-master', shared: '与博士生合班',
+  },
+  {
+    name: '人工智能通识课', id: 'ZSZX027085410049', teacher: '黄培凯、林燊', location: '笃行1-113',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 2,
+    credits: 2, hours: 32, category: '专业必修课', color: '#e65100', major: 'cyber-master',
+  },
+  {
+    name: '研究生英语B', id: 'ENG-B-001', teacher: '蒋宏影', location: '笃行1-218',
+    weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
+    credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'cyber-master',
+  },
+
+  // ===== 网络空间安全（博士）=====
+  {
+    name: '学术论文写作', id: 'BZB027083900001', teacher: '许胜民、马金花', location: '笃行1-204',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 3,
+    credits: 2, hours: 32, category: '专业必修课', color: '#6a1b9a', major: 'cyber-phd',
+  },
+  {
+    name: '网络空间安全导论', id: 'BZB027083900002', teacher: '林丽美、汪晓丁、许力、方定邦', location: '科技楼1004',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 4,
+    credits: 2, hours: 32, category: '专业必修课', color: '#6a1b9a', major: 'cyber-phd',
+  },
+  {
+    name: '人工智能通识课', id: 'ZSZX027085410049', teacher: '黄培凯、林燊', location: '笃行1-113',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 2,
+    credits: 2, hours: 32, category: '专业必修课', color: '#e65100', major: 'cyber-phd',
+  },
+
+  // ===== 软件工程（专业硕士）=====
+  {
+    name: '论文写作指导', id: 'ZSZB027085405401', teacher: '倪友聪、张仕、杜欣、林立', location: '知明1-315',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 4,
+    credits: 2, hours: 32, category: '专业必修课', color: '#e65100', major: 'se-master',
+  },
+  {
+    name: '高等工程数学', id: 'ZSZB027085405402', teacher: '林劼、胡丽莹', location: '笃行1-201',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'se-master',
+  },
+  {
+    name: '高级算法设计与分析', id: 'ZSZB027085405403', teacher: '张仕', location: '计网楼402b',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 5, endPeriod: 8, weekday: 2,
+    credits: 3, hours: 48, category: '专业必修课', color: '#6a1b9a', major: 'se-master',
+  },
+  {
+    name: '软件体系结构', id: 'ZSZB027085405404', teacher: '肖如良', location: '知明1-411',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 5,
+    credits: 2, hours: 48, category: '专业必修课', color: '#00695c', major: 'se-master',
+  },
+  {
+    name: '人工智能通识课', id: 'ZSZX027085410049', teacher: '黄培凯、林燊', location: '笃行1-113',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 2,
+    credits: 2, hours: 32, category: '专业必修课', color: '#e65100', major: 'se-master',
+  },
+  {
+    name: '研究生英语B', id: 'ENG-B-001', teacher: '蒋宏影', location: '笃行1-218',
+    weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
+    credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'se-master',
+  },
+
+  // ===== 人工智能（专业硕士）=====
+  {
+    name: '机器学习', id: 'ZSZB027085410005', teacher: '陈丽萍', location: '笃行1-321A',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 5, endPeriod: 8, weekday: 4,
+    credits: 3, hours: 48, category: '专业必修课', color: '#00695c', major: 'ai-master',
+  },
+  {
+    name: '高等工程数学', id: 'ZSZB027085410002', teacher: '林劼、胡丽莹', location: '笃行1-201',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'ai-master',
+  },
+  {
+    name: '高级人工智能原理与应用', id: 'ZSZB027085410004', teacher: '林佳胤', location: '知明1-309',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 5,
+    credits: 3, hours: 48, category: '专业必修课', color: '#ad1457', major: 'ai-master',
+  },
+  {
+    name: '人工智能通识课', id: 'ZSZX027085410049', teacher: '黄培凯、林燊', location: '笃行1-113',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 2,
+    credits: 2, hours: 32, category: '专业必修课', color: '#e65100', major: 'ai-master',
+  },
+  {
+    name: '研究生英语B', id: 'ENG-B-001', teacher: '蒋宏影', location: '笃行1-218',
+    weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
+    credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'ai-master',
+  },
+
+  // ===== 网络与信息安全（专业硕士）=====
+  {
+    name: '论文写作指导', id: 'ZSZB027085412301', teacher: '许胜民、马金花', location: '笃行1-204',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 3,
+    credits: 2, hours: 32, category: '专业必修课', color: '#c62828', major: 'nis-master',
+  },
+  {
+    name: '算法设计与分析', id: 'ZSZB027085412303', teacher: '陈丽萍、周赵斌', location: '计网楼207',
+    weeks: '3-14', weekdayType: 'all', startPeriod: 5, endPeriod: 8, weekday: 5,
+    credits: 3, hours: 48, category: '专业必修课', color: '#6a1b9a', major: 'nis-master',
+  },
+  {
+    name: '人工智能通识课', id: 'ZSZX027085410049', teacher: '黄培凯、林燊', location: '笃行1-113',
+    weeks: '3-10', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 2,
+    credits: 2, hours: 32, category: '专业必修课', color: '#e65100', major: 'nis-master',
+  },
+  {
+    name: '研究生英语B', id: 'ENG-B-001', teacher: '蒋宏影', location: '笃行1-218',
+    weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
+    credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'nis-master',
+  },
+]
 
 /**
- * 判断课程是否从该节开始（用于合并单元格）
+ * 按专业获取课程
  */
-export function isCourseStartAtPeriod(course, period) {
-  if (!course) return false
-  return course.startPeriod === period
-}
-
-/**
- * 计算课程占用的行数
- */
-export function getCourseRowSpan(course) {
-  if (!course) return 1
-  return course.endPeriod - course.startPeriod + 1
-}
-
-/**
- * 判断单元格是否被合并（考虑周次筛选）
- */
-export function isMergedCell(weekday, period, week) {
-  const courses = COURSES.filter(c => {
-    if (c.weekday !== weekday) return false
-    if (week !== undefined && !isCourseInWeek(c, week)) return false
-    return true
-  })
-  for (const c of courses) {
-    if (period > c.startPeriod && period <= c.endPeriod) return true
-  }
-  return false
-}
-
-/** 第1周的周一日期（2026-08-31） */
-const SEMESTER_START = new Date('2026-08-31')
-
-/**
- * 获取当前教学周（第1周=8.31-9.6）
- */
-export function getCurrentWeek(now = new Date()) {
-  const diffDays = Math.floor((now - SEMESTER_START) / 86400000)
-  const week = Math.floor(diffDays / 7) + 1
-  return Math.max(1, Math.min(18, week))
+export function getCoursesByMajor(majorKey) {
+  return COURSES.filter(c => c.major === majorKey)
 }
 
 /**
@@ -258,10 +252,20 @@ export function isCourseInWeek(course, week) {
 }
 
 /**
- * 获取指定教学周的周一日期（第1周=8.31）
+ * 获取当前是第几教学周
+ */
+export function getCurrentWeek(now = new Date()) {
+  const semesterStart = new Date('2026-08-31')
+  const diffDays = Math.floor((now - semesterStart) / 86400000)
+  const week = Math.floor(diffDays / 7) + 1
+  return Math.max(1, Math.min(18, week))
+}
+
+/**
+ * 获取指定教学周的周一日期
  */
 export function getWeekStartDate(week) {
-  const date = new Date(SEMESTER_START)
+  const date = new Date('2026-08-31')
   date.setDate(date.getDate() + (week - 1) * 7)
   return date
 }
@@ -276,6 +280,15 @@ export function getWeekEndDate(week) {
 }
 
 /**
+ * 获取指定教学周的日期范围
+ */
+export function getWeekDateRange(week) {
+  const start = getWeekStartDate(week)
+  const end = getWeekEndDate(week)
+  return `${start.getMonth() + 1}.${start.getDate()}-${end.getMonth() + 1}.${end.getDate()}`
+}
+
+/**
  * 获取指定教学周、指定周几的日期
  */
 export function getDateInWeek(week, weekday) {
@@ -286,28 +299,10 @@ export function getDateInWeek(week, weekday) {
 }
 
 /**
- * 格式化日期为 M-D
+ * 格式化日期
  */
 export function formatDateShort(date) {
   return `${date.getMonth() + 1}-${date.getDate()}`
-}
-
-/**
- * 获取周次的日期范围文本
- */
-export function getWeekDateRange(week) {
-  const start = getWeekStartDate(week)
-  const end = getWeekEndDate(week)
-  return `${start.getMonth() + 1}.${start.getDate()}-${end.getMonth() + 1}.${end.getDate()}`
-}
-
-/**
- * 格式化单双周显示
- */
-export function formatWeekdayType(type) {
-  if (type === 'odd') return '单周'
-  if (type === 'even') return '双周'
-  return ''
 }
 
 /**
@@ -328,22 +323,10 @@ export function getCoursePeriodText(course) {
 }
 
 /**
- * 获取未安排的课程列表
+ * 格式化单双周
  */
-export function getUnarrangedCourses() {
-  return REQUIRED_COURSES.filter(c => !c.arranged)
-}
-
-/**
- * 获取已安排的学分
- */
-export function getArrangedCredits() {
-  return REQUIRED_COURSES.filter(c => c.arranged).reduce((sum, c) => sum + c.credits, 0)
-}
-
-/**
- * 获取总学分
- */
-export function getTotalCredits() {
-  return REQUIRED_COURSES.reduce((sum, c) => sum + c.credits, 0)
+export function formatWeekdayType(type) {
+  if (type === 'odd') return '单周'
+  if (type === 'even') return '双周'
+  return ''
 }

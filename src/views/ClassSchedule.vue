@@ -371,7 +371,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
           </tr></thead>
           <tbody>
             <template v-for="row in TABLE_ROWS" :key="row.period">
-              <tr :class="'section-' + row.section">
+              <tr :class="'section-' + row.section" :data-period="row.period">
                 <td class="period-cell"><div class="period-num">{{ row.label }}</div><div class="period-time">{{ row.time }}</div><div class="period-time-end">{{ row.timeEnd }}</div></td>
                 <template v-for="wd in weekdayHeaders" :key="wd.key">
                   <td v-if="!isCellMerged(wd.key, row.period)" :rowspan="getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
@@ -597,10 +597,9 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
 .weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
 
-/* 课表内容区：只在4-5节和8-9节之间有横线 */
-.course-cell { border-top: none; }
-tr.section-afternoon .course-cell { border-top: 1px solid var(--border); }
-tr.section-evening .course-cell { border-top: 1px solid var(--border); }
+/* 课表内容区：只在第5节和第9节有横线 */
+tr[data-period="5"] .course-cell { border-top: 1px solid var(--border); }
+tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }

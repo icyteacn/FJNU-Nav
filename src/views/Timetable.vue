@@ -1,5 +1,5 @@
 <script setup>
-/** 课程表：班级/教室/教师课表查询 + 官方课程总表入口
+/** 课程表：班级/教室/教师课表查询 + 研究生课表 + 官方课程总表入口
  *  数据来自本地快照（loadSnap），网关可用时用网关补充元信息
  *  灵感参考：https://nfs.pcdawn.cn/app/timetable（NextFStar 周视图网格 + 实时时间线）
  *  本项目保留原有班级/教室/教师三维查询 + 周视图/列表视图切换，未完全复刻课程编辑器和分享功能。
@@ -11,9 +11,11 @@ import { loadTimetableMeta, loadTermRows } from '../api/termTimetable'
 import { normRoom, clsSplit, profOf, gradeOf, parseWeeks } from '../utils/course'
 import { fmtTime } from '../utils/format'
 import { setNavContext } from '../stores/navContext'
+import ClassSchedule from './ClassSchedule.vue'
 
 const emit = defineEmits(['back', 'open'])
 
+const mainTab = ref('graduate') // 'graduate' | 'school'
 const tab = ref('class')
 const kw = ref('')
 const snap = ref(null)
@@ -280,9 +282,20 @@ function goCanteen() {
 <div class="view-top">
       <button class="back-btn" @click="emit('back')">← 返回首页</button>
       <div class="view-title">课程表</div>
-      <div class="view-sub">真实课表 · {{ term || semester }}《课程总表》，{{ curRows.length }} 条排课（含 {{ semesters.length }} 个学期并集）</div>
+      <div class="view-sub">{{ mainTab === 'graduate' ? '2026级研究生课表' : '真实课表 · ' + (term || semester) + '《课程总表》，' + curRows.length + ' 条排课' }}</div>
     </div>
 
+  <!-- 主标签页：研究生课表 / 全校课表 -->
+  <div class="main-tabs">
+    <button class="main-tab" :class="{ active: mainTab === 'graduate' }" @click="mainTab = 'graduate'">📚 2026级研究生课表</button>
+    <button class="main-tab" :class="{ active: mainTab === 'school' }" @click="mainTab = 'school'">🏫 全校课程总表</button>
+  </div>
+
+  <!-- 研究生课表 -->
+  <ClassSchedule v-if="mainTab === 'graduate'" @back="emit('back')" />
+
+  <!-- 全校课程总表 -->
+  <template v-if="mainTab === 'school'">
   <div v-if="loading" class="skeleton-list">
     <div v-for="i in 4" :key="i" class="skeleton-row"><div class="skeleton" style="width: 90%; height: 48px"></div></div>
   </div>
@@ -473,9 +486,39 @@ function goCanteen() {
       </div>
     </div>
   </div>
+  </template>
 </template>
 
 <style scoped>
+/* 主标签页 */
+.main-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0 12px 12px;
+  background: var(--soft-fg);
+  border-radius: 10px;
+  padding: 4px;
+}
+.main-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.main-tab:hover {
+  background: var(--card);
+}
+.main-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+
 .pager {
   display: flex;
   flex-wrap: wrap;

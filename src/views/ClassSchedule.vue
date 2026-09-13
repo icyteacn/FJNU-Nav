@@ -588,9 +588,9 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .period-num { font-weight: 800; font-size: 14px; color: var(--primary); line-height: 1.2; }
 .period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
-.section-morning .period-cell { border-top: 2px solid #1565c0; }
-.section-afternoon .period-cell { border-top: 2px solid #e65100; }
-.section-evening .period-cell { border-top: 2px solid #6a1b9a; }
+.section-morning tr:first-child td { border-top: 2px solid #1565c0; }
+.section-afternoon tr:first-child td { border-top: 3px solid #e65100; }
+.section-evening tr:first-child td { border-top: 3px solid #6a1b9a; }
 .course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }

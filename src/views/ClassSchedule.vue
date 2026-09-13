@@ -579,7 +579,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .schedule-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .schedule-table th, .schedule-table td { border: none; padding: 0; }
 
-/* 表头样式 - 横线+竖线 */
+/* 表头样式 */
 .schedule-table thead th { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
 .schedule-table thead th:last-child { border-right: none; }
 .period-col { width: 38px; background: var(--soft-fg); }
@@ -597,9 +597,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
 .weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
 
-/* 4-5节和8-9节分隔线（课表内容区也要显示） */
-tr.section-afternoon td { border-top: 1px solid var(--border); }
-tr.section-evening td { border-top: 1px solid var(--border); }
+/* 课表内容区：只在4-5节和8-9节之间有横线 */
+.course-cell { border-top: none; }
+tr.section-afternoon .course-cell { border-top: 1px solid var(--border); }
+tr.section-evening .course-cell { border-top: 1px solid var(--border); }
 .course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }

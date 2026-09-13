@@ -112,6 +112,7 @@ function getCourseColor(course, alpha = 1) { if (!course) return 'transparent'; 
 function getDateText(weekday) { return formatDateShort(getDateInWeek(selectedWeek.value, weekday)) }
 function getWeekRange() { return getWeekDateRange(selectedWeek.value) }
 function getWeekTypeInfo(course) { return formatWeekdayType(course.weekdayType) }
+function openCourseDetail(course) { selectedCourse.value = course; showDetail.value = true }
 
 let flashTimer = null
 function jumpToCourse(course) {

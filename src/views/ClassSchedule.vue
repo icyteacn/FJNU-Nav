@@ -588,9 +588,13 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .period-num { font-weight: 800; font-size: 14px; color: var(--primary); line-height: 1.2; }
 .period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
-.section-morning tr:first-child td { border-top: 2px solid #1565c0; }
-.section-afternoon tr:first-child td { border-top: 3px solid #e65100; }
-.section-evening tr:first-child td { border-top: 3px solid #6a1b9a; }
+
+/* 上午/下午/晚上分隔线 */
+tr.section-morning:first-child td,
+tr.section-afternoon td,
+tr.section-evening td { border-top: none; }
+tr.section-afternoon td { border-top: 3px solid #e65100 !important; }
+tr.section-evening td { border-top: 3px solid #6a1b9a !important; }
 .course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }

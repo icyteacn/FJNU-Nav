@@ -569,13 +569,6 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .opt-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 .semester-btn { flex-shrink: 0; padding: 6px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 700; white-space: nowrap; }
 .semester-btn.active { background: #6a1b9a; border-color: #6a1b9a; color: #fff; }
-.zoom-label { font-size: 11px; color: var(--text-sub); min-width: 32px; text-align: center; }
-.save-btn { flex-shrink: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; }
-.save-btn:hover { background: color-mix(in srgb, var(--primary) 80%, #000); }
-.opt-btn { flex-shrink: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 600; }
-.opt-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.semester-btn { flex-shrink: 0; padding: 6px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 700; white-space: nowrap; }
-.semester-btn.active { background: #6a1b9a; border-color: #6a1b9a; color: #fff; }
 
 .mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .hint-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #fef3c7; color: #92400e; }

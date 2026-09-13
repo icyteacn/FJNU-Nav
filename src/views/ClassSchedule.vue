@@ -582,7 +582,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 /* 时间射线 - 只在当日列内显示 */
 .time-line { position: absolute; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
 .time-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
-.time-label { position: absolute; right: 4px; top: -12px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.time-label { position: absolute; right: 0; top: -8px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; white-space: nowrap; line-height: 1; }
 
 /* 列表 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }
@@ -651,5 +651,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
   .zoom-btn { width: 22px; height: 22px; font-size: 10px; }
   .save-btn { padding: 5px 8px; font-size: 10px; }
   .opt-btn { padding: 5px 8px; font-size: 10px; }
+  .time-line::before { width: 8px; height: 8px; left: -4px; top: -3px; }
+  .time-label { font-size: 9px; padding: 1px 4px; top: -7px; }
 }
 </style>

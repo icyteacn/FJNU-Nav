@@ -305,17 +305,21 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
       <div class="week-scroll"><button v-for="w in weekShortcuts" :key="w.value" class="week-chip" :class="{ active: selectedWeek === w.value }" @click="selectedWeek = w.value"><span class="chip-week">{{ w.value }}</span><span class="chip-date">{{ w.dateRange }}</span></button></div>
     </div>
 
-    <!-- 控制行1：类型筛选 + 截图 -->
+    <!-- 控制行1：筛选 + 缩放 + 保存 -->
     <div class="control-row">
       <button v-for="t in COURSE_TYPES" :key="t.key" class="type-chip" :class="{ active: typeFilter === t.key }" :style="{ '--type-color': t.color }" @click="typeFilter = t.key">{{ t.label }}</button>
-      <button class="save-btn" @click="saveScreenshot">📷 保存</button>
     </div>
-    <!-- 控制行2：功能按钮 -->
     <div class="control-row">
       <button class="opt-btn" :class="{ active: colorMode === 'color' }" @click="colorMode = colorMode === 'white' ? 'color' : 'white'">{{ colorMode === 'white' ? '🎨 彩色' : '📄 白色' }}</button>
       <button class="opt-btn" :class="{ active: showOtherWeek }" @click="showOtherWeek = !showOtherWeek">{{ showOtherWeek ? '📅 仅本周' : '📆 全部' }}</button>
       <button class="opt-btn" :class="{ active: highlightToday }" @click="highlightToday = !highlightToday">{{ highlightToday ? '✨ 高亮' : '⬜ 高亮' }}</button>
-      <button class="semester-btn" :class="{ active: showSemester }" @click="showSemester = !showSemester">{{ showSemester ? '→ 周课表' : '→ 学期课表' }}</button>
+      <div class="zoom-group">
+        <button class="zoom-btn" @click="fontSize = Math.max(70, fontSize - 10)">A-</button>
+        <span class="zoom-label">{{ fontSize }}%</span>
+        <button class="zoom-btn" @click="fontSize = Math.min(200, fontSize + 10)">A+</button>
+      </div>
+      <button class="save-btn" @click="saveScreenshot">📷 保存</button>
+      <button class="semester-btn" :class="{ active: showSemester }" @click="showSemester = !showSemester">{{ showSemester ? '→ 周' : '→ 学期' }}</button>
     </div>
 
     <div class="mode-hint">
@@ -355,8 +359,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
             </template>
           </tbody>
         </table>
-        <!-- 时间射线 -->
-        <div v-if="timeLinePos !== null && isToday(timeLineWeekday)" class="time-line" :style="{ top: timeLinePos + 'px' }"></div>
+        <!-- 时间射线 - 只在当日列显示 -->
+        <div v-if="timeLinePos !== null && isToday(timeLineWeekday)" class="time-line" :style="{ top: timeLinePos + 'px' }">
+          <span class="time-label">{{ now.getHours() }}:{{ String(now.getMinutes()).padStart(2, '0') }}</span>
+        </div>
       </div>
     </div>
 
@@ -474,14 +480,18 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .chip-date { font-size: 9px; color: var(--text-sub); }
 
 /* 控制行 */
-.control-row { display: flex; gap: 6px; padding: 0 12px; margin-bottom: 6px; overflow-x: auto; flex-wrap: nowrap; }
+.control-row { display: flex; gap: 6px; padding: 0 12px; margin-bottom: 6px; overflow-x: auto; flex-wrap: nowrap; align-items: center; }
 .type-chip { flex-shrink: 0; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; }
 .type-chip.active { background: var(--type-color, var(--primary)); border-color: var(--type-color, var(--primary)); color: #fff; }
-.save-btn { flex-shrink: 0; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+.zoom-group { display: flex; align-items: center; gap: 4px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 2px 6px; }
+.zoom-btn { width: 24px; height: 24px; border: none; border-radius: 4px; background: var(--soft-fg); color: var(--text); font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.zoom-btn:hover { background: var(--primary); color: #fff; }
+.zoom-label { font-size: 11px; color: var(--text-sub); min-width: 32px; text-align: center; }
+.save-btn { flex-shrink: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; }
 .save-btn:hover { background: color-mix(in srgb, var(--primary) 80%, #000); }
-.opt-btn { flex-shrink: 0; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 600; }
+.opt-btn { flex-shrink: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 600; }
 .opt-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.semester-btn { flex: 1; padding: 6px 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; font-weight: 700; text-align: center; white-space: nowrap; }
+.semester-btn { flex-shrink: 0; padding: 6px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 700; white-space: nowrap; }
 .semester-btn.active { background: #6a1b9a; border-color: #6a1b9a; color: #fff; }
 
 .mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -512,18 +522,19 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .course-cell.has-course:hover { background: var(--primary-soft); }
 .course-cell.other-week { opacity: 0.5; }
 .course-cell.is-flashing { animation: flashHighlight 0.5s ease 3; z-index: 1; }
-@keyframes flashHighlight { 0%, 100% { background: inherit; } 50% { background: #fde047 !important; } }
+@keyframes flashHighlight { 0%, 100% { box-shadow: none; } 50% { box-shadow: inset 0 0 0 3px #facc15, inset 0 0 20px rgba(250, 204, 21, 0.3); } }
 .course-card { border-left: 3px solid; border-radius: 4px; padding: 4px 8px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 .course-card.white { background: var(--card); }
 .course-card.color { backdrop-filter: blur(8px); }
-.course-name { font-weight: 700; font-size: calc(11px * var(--font-scale)); line-height: 1.3; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+.course-name { font-weight: 700; font-size: calc(11px * var(--font-scale)); line-height: 1.3; color: var(--text); }
 .course-info { display: flex; flex-direction: column; gap: 0; }
-.course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+.course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; }
 .course-weeks { color: var(--primary); font-weight: 600; }
 
 /* 时间射线 */
 .time-line { position: absolute; left: 0; right: 0; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
-.time-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
+.time-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
+.time-label { position: absolute; right: 0; top: -10px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
 
 /* 列表 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }
@@ -578,18 +589,19 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
   .stat-value { font-size: 14px; color: #fff; }
   .next-card, .today-section { margin: 10px 8px 0; }
   .search-bar { padding: 10px 8px 0; }
-  .search-input { background: var(--card); }
   .week-selector, .control-row { padding: 0 8px; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
   .grid-view { padding: 0; overflow-x: auto; }
   .period-col { width: 30px; }
-  .weekday-col.weekend { display: table-cell; }
-  .course-cell { height: 42px; padding: 2px; }
+  .course-cell { height: 44px; padding: 2px; }
   .course-card { padding: 3px 5px; }
-  .course-name { font-size: 10px; -webkit-line-clamp: 2; }
-  .course-location, .course-teacher { font-size: 8px; -webkit-line-clamp: 1; }
+  .course-name { font-size: 10px; }
+  .course-location, .course-teacher { font-size: 8px; }
   .list-view { padding: 0 8px; }
   .week-chip { min-width: 45px; padding: 5px 8px; }
-  .save-btn { padding: 5px 10px; font-size: 11px; }
+  .zoom-group { padding: 2px 4px; }
+  .zoom-btn { width: 22px; height: 22px; font-size: 10px; }
+  .save-btn { padding: 5px 8px; font-size: 10px; }
+  .opt-btn { padding: 5px 8px; font-size: 10px; }
 }
 </style>

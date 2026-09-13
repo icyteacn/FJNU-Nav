@@ -84,10 +84,14 @@ const nextCountdown = computed(() => {
   if (!nextCourse.value) return null
   const diff = nextCourse.value._date - now.value
   if (diff <= 0) return { text: '进行中', isOngoing: true }
-  const days = Math.floor(diff / 86400000), hours = Math.floor((diff % 86400000) / 3600000), mins = Math.floor((diff % 3600000) / 60000)
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  const secs = Math.floor((diff % 60000) / 1000)
   if (days > 0) return { text: `${days}天${hours}时${mins}分`, isOngoing: false }
-  if (hours > 0) return { text: `${hours}时${mins}分`, isOngoing: false }
-  return { text: `${mins}分钟`, isOngoing: false }
+  if (hours > 0) return { text: `${hours}时${mins}分${secs}秒`, isOngoing: false }
+  if (mins > 0) return { text: `${mins}分${secs}秒`, isOngoing: false }
+  return { text: `${secs}秒`, isOngoing: false }
 })
 const nextInfo = computed(() => {
   if (!nextCourse.value) return null
@@ -162,19 +166,27 @@ watch(selectedWeek, (val) => { if (!showSemester.value) savedWeek.value = val })
 // 闪烁效果
 let flashTimer = null
 function jumpToCourse(course) {
+  // 确保显示表格视图
+  viewMode.value = 'grid'
+  // 切换到课程所在的周次
   for (let w = 1; w <= 18; w++) { if (isCourseInWeek(course, w)) { selectedWeek.value = w; break } }
+  // 如果是学期课表模式，切换到周课表
+  if (showSemester.value) showSemester.value = false
   showDetail.value = false
+  // 等待DOM更新后闪烁
   nextTick(() => {
-    flashingCourse.value = `${course.weekday}-${course.startPeriod}`
-    const el = document.querySelector(`[data-key="${course.weekday}-${course.startPeriod}"]`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    clearTimeout(flashTimer)
-    flashTimer = setTimeout(() => { flashingCourse.value = null }, 2000)
+    setTimeout(() => {
+      flashingCourse.value = `${course.weekday}-${course.startPeriod}`
+      const el = document.querySelector(`[data-key="${course.weekday}-${course.startPeriod}"]`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      clearTimeout(flashTimer)
+      flashTimer = setTimeout(() => { flashingCourse.value = null }, 2000)
+    }, 100)
   })
 }
 
-// 截图
-const showSaveModal = ref(false), saveType = ref('current')
+// 截图 - 保存当前页面显示的内容
+const showSaveModal = ref(false)
 function saveScreenshot() { showSaveModal.value = true }
 async function doSave() {
   try {
@@ -186,7 +198,9 @@ async function doSave() {
     if (!el) return
     const canvas = await window.html2canvas(el, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
     const link = document.createElement('a')
-    link.download = `课表_${saveType.value === 'semester' ? '学期' : '第' + (saveType.value === 'current' ? selectedWeek.value : savedWeek.value) + '周'}_${new Date().toISOString().slice(0, 10)}.png`
+    // 自动识别当前显示的是学期课表还是周课表
+    const typeLabel = showSemester.value ? '学期课表' : `第${selectedWeek.value}周课表`
+    link.download = `课表_${typeLabel}_${new Date().toISOString().slice(0, 10)}.png`
     link.href = canvas.toDataURL('image/png'); link.click(); showSaveModal.value = false
   } catch (e) { console.error('截图失败:', e) }
 }
@@ -323,10 +337,11 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
     <!-- 保存弹窗 -->
     <div v-if="showSaveModal" class="overlay" @click.self="showSaveModal = false">
       <div class="save-modal">
-        <div class="save-title">📷 保存课程表</div>
-        <div class="save-options">
-          <button class="save-opt" :class="{ active: saveType === 'current' }" @click="saveType = 'current'"><span class="save-opt-icon">📅</span><span class="save-opt-label">当前周</span><span class="save-opt-desc">第{{ savedWeek }}周</span></button>
-          <button class="save-opt" :class="{ active: saveType === 'semester' }" @click="saveType = 'semester'"><span class="save-opt-icon">📚</span><span class="save-opt-label">学期课表</span><span class="save-opt-desc">全部课程</span></button>
+        <div class="save-title">📷 保存课程表截图</div>
+        <div class="save-hint">💡 提示：只能保存当前页面显示的课表形式</div>
+        <div class="save-current">
+          <span v-if="showSemester">📚 当前显示：学期课表</span>
+          <span v-else>📅 当前显示：第{{ selectedWeek }}周课表</span>
         </div>
         <div class="save-actions"><button class="btn-cancel" @click="showSaveModal = false">取消</button><button class="btn-save" @click="doSave">保存</button></div>
       </div>
@@ -480,13 +495,9 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 
 /* 保存弹窗 */
 .save-modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 320px; padding: 20px; }
-.save-title { font-size: 16px; font-weight: 800; text-align: center; margin-bottom: 16px; }
-.save-options { display: flex; gap: 10px; margin-bottom: 16px; }
-.save-opt { flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: var(--card); cursor: pointer; text-align: center; }
-.save-opt.active { border-color: var(--primary); background: var(--primary-soft); }
-.save-opt-icon { font-size: 24px; display: block; margin-bottom: 6px; }
-.save-opt-label { font-size: 13px; font-weight: 700; color: var(--text); display: block; }
-.save-opt-desc { font-size: 11px; color: var(--text-sub); display: block; margin-top: 2px; }
+.save-title { font-size: 16px; font-weight: 800; text-align: center; margin-bottom: 12px; }
+.save-hint { font-size: 12px; color: var(--text-sub); text-align: center; margin-bottom: 12px; padding: 8px; background: var(--soft-fg); border-radius: 8px; }
+.save-current { font-size: 14px; font-weight: 600; text-align: center; margin-bottom: 16px; padding: 10px; background: var(--primary-soft); border-radius: 8px; color: var(--primary); }
 .save-actions { display: flex; gap: 10px; }
 .btn-cancel { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; }
 .btn-save { flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }

@@ -556,12 +556,19 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .chip-date { font-size: 9px; color: var(--text-sub); }
 
 /* 控制行 */
-.control-row { display: flex; gap: 6px; padding: 0 12px; margin-bottom: 6px; overflow-x: auto; flex-wrap: nowrap; align-items: center; }
+.control-row { display: flex; gap: 6px; padding: 0 12px; margin-bottom: 6px; align-items: center; }
 .type-chip { flex-shrink: 0; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; }
 .type-chip.active { background: var(--type-color, var(--primary)); border-color: var(--type-color, var(--primary)); color: #fff; }
 .zoom-group { display: flex; align-items: center; gap: 4px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 2px 6px; }
 .zoom-btn { width: 24px; height: 24px; border: none; border-radius: 4px; background: var(--soft-fg); color: var(--text); font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .zoom-btn:hover { background: var(--primary); color: #fff; }
+.zoom-label { font-size: 11px; color: var(--text-sub); min-width: 32px; text-align: center; }
+.save-btn { flex-shrink: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; }
+.save-btn:hover { background: color-mix(in srgb, var(--primary) 80%, #000); }
+.opt-btn { flex-shrink: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 600; }
+.opt-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.semester-btn { flex-shrink: 0; padding: 6px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 700; white-space: nowrap; }
+.semester-btn.active { background: #6a1b9a; border-color: #6a1b9a; color: #fff; }
 .zoom-label { font-size: 11px; color: var(--text-sub); min-width: 32px; text-align: center; }
 .save-btn { flex-shrink: 0; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; }
 .save-btn:hover { background: color-mix(in srgb, var(--primary) 80%, #000); }
@@ -577,7 +584,8 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .grid-view { padding: 0; }
 .schedule-table-wrapper { --font-scale: 1; position: relative; }
 .schedule-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-.schedule-table th, .schedule-table td { border: none; padding: 0; }
+.schedule-table th { border: none; padding: 0; }
+.schedule-table td { border: none; padding: 0; }
 
 /* 表头样式 */
 .schedule-table thead th { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
@@ -585,7 +593,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .period-col { width: 38px; background: var(--soft-fg); border-right: 1px solid var(--border); }
 
 /* 节次列 - 格子样式，每节课之间有横线 */
-.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); box-sizing: border-box; }
 .period-num { font-weight: 800; font-size: 14px; color: var(--primary); line-height: 1.2; }
 .period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }

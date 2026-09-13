@@ -549,8 +549,8 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .week-chip.active .chip-week { color: #fff; }
 .chip-date { font-size: 9px; color: var(--text-sub); }
 
-/* 控制行 */
-.control-row { display: flex; gap: 6px; padding: 0 12px; margin-bottom: 6px; align-items: center; }
+/* 控制行 - 电脑端同一行 */
+.control-row { display: flex; flex-wrap: nowrap; gap: 6px; padding: 0 12px; margin-bottom: 6px; align-items: center; overflow-x: auto; }
 .type-chip { flex-shrink: 0; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; }
 .type-chip.active { background: var(--type-color, var(--primary)); border-color: var(--type-color, var(--primary)); color: #fff; }
 .zoom-group { display: flex; align-items: center; gap: 4px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 2px 6px; }
@@ -572,7 +572,6 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .schedule-table-wrapper { --font-scale: 1; position: relative; }
 .schedule-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .schedule-table th { border: none; padding: 0; }
-.schedule-table td { border: none; padding: 0; }
 
 /* 表头样式 */
 .schedule-table thead th { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
@@ -580,7 +579,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .period-col { width: 38px; background: var(--soft-fg); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 
 /* 节次列 - 格子样式，每节课之间有横线 */
-.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); box-sizing: border-box; }
+.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
 .period-num { font-weight: 800; font-size: 14px; color: var(--primary); line-height: 1.2; }
 .period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }

@@ -577,21 +577,21 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .grid-view { padding: 0; }
 .schedule-table-wrapper { --font-scale: 1; position: relative; }
 .schedule-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-.schedule-table th, .schedule-table td { border: 1px solid var(--border); padding: 0; }
-.period-col { width: 38px; background: var(--soft-fg); }
-.weekday-col { background: var(--soft-fg); font-weight: 700; }
+.schedule-table th, .schedule-table td { border: none; padding: 0; }
+.period-col { width: 38px; background: var(--soft-fg); border-right: 1px solid var(--border); }
+.weekday-col { background: var(--soft-fg); font-weight: 700; border-bottom: 1px solid var(--border); }
 .weekday-col.weekend { background: #f5f5f5; }
 .weekday-col.is-today { background: #dbeafe; }
 .weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
 .weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
-.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; }
+.period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-right: 1px solid var(--border); }
 .period-num { font-weight: 800; font-size: 14px; color: var(--primary); line-height: 1.2; }
 .period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
 
-/* 4-5节和8-9节分隔线（加粗） */
-tr.section-afternoon td { border-top: 2px solid var(--text) !important; }
-tr.section-evening td { border-top: 2px solid var(--text) !important; }
+/* 4-5节和8-9节分隔线 */
+tr.section-afternoon td { border-top: 1px solid var(--border); }
+tr.section-evening td { border-top: 1px solid var(--border); }
 .course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }

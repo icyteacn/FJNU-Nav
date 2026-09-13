@@ -491,13 +491,13 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
   .period-col { width: 30px; }
   .period-cell { padding: 3px 2px; }
-  .period-num { font-size: 12px; }
-  .period-time { font-size: 6px; }
-  .period-time-end { font-size: 5.5px; }
+  .period-num { font-size: calc(12px * var(--font-scale)); }
+  .period-time { font-size: calc(6px * var(--font-scale)); }
+  .period-time-end { font-size: calc(5.5px * var(--font-scale)); }
   .course-cell { height: 44px; padding: 2px; }
   .course-card { padding: 3px 5px; }
-  .course-name { font-size: 10px; }
-  .course-location, .course-teacher { font-size: 8px; }
+  .course-name { font-size: calc(10px * var(--font-scale)); }
+  .course-location, .course-teacher { font-size: calc(8px * var(--font-scale)); }
   .list-view { padding: 0 8px; }
   .time-line::before { width: 8px; height: 8px; left: -4px; top: -3px; }
   .time-label { font-size: 9px; padding: 1px 4px; }

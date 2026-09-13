@@ -252,6 +252,34 @@ const timeLineWeekday = computed(() => {
   return day === 0 ? 7 : day
 })
 
+// 获取当日列的左边距
+function getTodayColumnLeft() {
+  const table = document.querySelector('.schedule-table')
+  if (!table) return 0
+  const periodCol = table.querySelector('.period-col')
+  if (!periodCol) return 0
+  const periodWidth = periodCol.offsetWidth
+  const todayIndex = weekdayHeaders.value.findIndex(w => w.key === timeLineWeekday.value)
+  if (todayIndex === -1) return periodWidth
+  const cols = table.querySelectorAll('.weekday-col')
+  if (cols[todayIndex]) {
+    return cols[todayIndex].offsetLeft
+  }
+  return periodWidth + todayIndex * 80
+}
+
+// 获取当日列的宽度
+function getTodayColumnWidth() {
+  const table = document.querySelector('.schedule-table')
+  if (!table) return 80
+  const todayIndex = weekdayHeaders.value.findIndex(w => w.key === timeLineWeekday.value)
+  const cols = table.querySelectorAll('.weekday-col')
+  if (cols[todayIndex]) {
+    return cols[todayIndex].offsetWidth
+  }
+  return 80
+}
+
 onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selectedWeek.value })
 </script>
 
@@ -305,21 +333,25 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
       <div class="week-scroll"><button v-for="w in weekShortcuts" :key="w.value" class="week-chip" :class="{ active: selectedWeek === w.value }" @click="selectedWeek = w.value"><span class="chip-week">{{ w.value }}</span><span class="chip-date">{{ w.dateRange }}</span></button></div>
     </div>
 
-    <!-- 控制行1：筛选 + 缩放 + 保存 -->
+    <!-- 控制行1：筛选按钮 -->
     <div class="control-row">
       <button v-for="t in COURSE_TYPES" :key="t.key" class="type-chip" :class="{ active: typeFilter === t.key }" :style="{ '--type-color': t.color }" @click="typeFilter = t.key">{{ t.label }}</button>
     </div>
+    <!-- 控制行2：功能按钮 -->
     <div class="control-row">
       <button class="opt-btn" :class="{ active: colorMode === 'color' }" @click="colorMode = colorMode === 'white' ? 'color' : 'white'">{{ colorMode === 'white' ? '🎨 彩色' : '📄 白色' }}</button>
       <button class="opt-btn" :class="{ active: showOtherWeek }" @click="showOtherWeek = !showOtherWeek">{{ showOtherWeek ? '📅 仅本周' : '📆 全部' }}</button>
       <button class="opt-btn" :class="{ active: highlightToday }" @click="highlightToday = !highlightToday">{{ highlightToday ? '✨ 高亮' : '⬜ 高亮' }}</button>
+      <button class="semester-btn" :class="{ active: showSemester }" @click="showSemester = !showSemester">{{ showSemester ? '→ 周课表' : '→ 学期课表' }}</button>
+    </div>
+    <!-- 控制行3：缩放 + 保存 -->
+    <div class="control-row">
       <div class="zoom-group">
         <button class="zoom-btn" @click="fontSize = Math.max(70, fontSize - 10)">A-</button>
         <span class="zoom-label">{{ fontSize }}%</span>
         <button class="zoom-btn" @click="fontSize = Math.min(200, fontSize + 10)">A+</button>
       </div>
-      <button class="save-btn" @click="saveScreenshot">📷 保存</button>
-      <button class="semester-btn" :class="{ active: showSemester }" @click="showSemester = !showSemester">{{ showSemester ? '→ 周' : '→ 学期' }}</button>
+      <button class="save-btn" @click="saveScreenshot">📷 保存截图</button>
     </div>
 
     <div class="mode-hint">
@@ -359,8 +391,8 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
             </template>
           </tbody>
         </table>
-        <!-- 时间射线 - 只在当日列显示 -->
-        <div v-if="timeLinePos !== null && isToday(timeLineWeekday)" class="time-line" :style="{ top: timeLinePos + 'px' }">
+        <!-- 时间射线 - 只在当日列内显示 -->
+        <div v-if="timeLinePos !== null && isToday(timeLineWeekday)" class="time-line" :style="{ top: timeLinePos + 'px', left: getTodayColumnLeft() + 'px', width: getTodayColumnWidth() + 'px' }">
           <span class="time-label">{{ now.getHours() }}:{{ String(now.getMinutes()).padStart(2, '0') }}</span>
         </div>
       </div>
@@ -521,8 +553,24 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .course-cell.has-course { cursor: pointer; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
 .course-cell.other-week { opacity: 0.5; }
-.course-cell.is-flashing { animation: flashHighlight 0.5s ease 3; z-index: 1; }
-@keyframes flashHighlight { 0%, 100% { box-shadow: none; } 50% { box-shadow: inset 0 0 0 3px #facc15, inset 0 0 20px rgba(250, 204, 21, 0.3); } }
+.course-cell.is-flashing { animation: flashHighlight 0.6s ease 4; z-index: 1; position: relative; }
+@keyframes flashHighlight {
+  0%, 100% { background-color: transparent; }
+  25%, 75% { background-color: #fef08a; }
+  50% { background-color: #fde047; }
+}
+.course-cell.is-flashing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px solid #eab308;
+  border-radius: 4px;
+  animation: flashBorder 0.6s ease 4;
+}
+@keyframes flashBorder {
+  0%, 100% { border-color: transparent; }
+  50% { border-color: #eab308; }
+}
 .course-card { border-left: 3px solid; border-radius: 4px; padding: 4px 8px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 .course-card.white { background: var(--card); }
 .course-card.color { backdrop-filter: blur(8px); }
@@ -531,10 +579,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); savedWeek.value = selec
 .course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; }
 .course-weeks { color: var(--primary); font-weight: 600; }
 
-/* 时间射线 */
-.time-line { position: absolute; left: 0; right: 0; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
+/* 时间射线 - 只在当日列内显示 */
+.time-line { position: absolute; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
 .time-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
-.time-label { position: absolute; right: 0; top: -10px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.time-label { position: absolute; right: 4px; top: -12px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
 
 /* 列表 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }

@@ -17,12 +17,19 @@ import {
 import { setNavContext } from '../stores/navContext'
 
 const CUSTOM_KEY = 'fjnu_custom_courses'
+const DELETED_KEY = 'fjnu_deleted_courses'
 
 function loadCustomCourses() {
   try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]') } catch { return [] }
 }
 function saveCustomCourses(list) {
   try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(list)) } catch {}
+}
+function loadDeletedCourses() {
+  try { return JSON.parse(localStorage.getItem(DELETED_KEY) || '[]') } catch { return [] }
+}
+function saveDeletedCourses(list) {
+  try { localStorage.setItem(DELETED_KEY, JSON.stringify(list)) } catch {}
 }
 
 const emit = defineEmits(['open', 'back'])
@@ -42,6 +49,7 @@ const highlightToday = ref(true)
 const flashingCourse = ref(null)
 const mounted = ref(false)
 const customCourses = ref(loadCustomCourses())
+const deletedCourses = ref(loadDeletedCourses())
 
 const now = ref(new Date())
 const tick = setInterval(() => { now.value = new Date() }, 1000)
@@ -51,7 +59,7 @@ const weekdayHeaders = computed(() => WEEKDAYS)
 const todayWeekday = computed(() => { const d = now.value.getDay(); return d === 0 ? 7 : d })
 const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
 
-const allCourses = computed(() => [...COURSES, ...customCourses.value.filter(c => c.major === selectedMajor.value)])
+const allCourses = computed(() => [...COURSES, ...customCourses.value.filter(c => c.major === selectedMajor.value)].filter(c => !deletedCourses.value.includes(c.id)))
 const majorCourses = computed(() => allCourses.value.filter(c => c.major === selectedMajor.value))
 
 const todayCourses = computed(() => {
@@ -66,7 +74,11 @@ const todayCourses = computed(() => {
 const hasTodayCourses = computed(() => todayCourses.value.length > 0)
 
 const displayCourses = computed(() => {
-  let courses = showSemester.value || showOtherWeek.value ? majorCourses.value : majorCourses.value.filter(c => isCourseInWeek(c, selectedWeek.value))
+  let courses = showSemester.value || showOtherWeek.value ? majorCourses.value : majorCourses.value.filter(c => {
+    if (!isCourseInWeek(c, selectedWeek.value)) return false
+    if (deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
+    return true
+  })
   if (typeFilter.value !== 'all') courses = courses.filter(c => c.category === typeFilter.value)
   if (searchKw.value) {
     const kw = searchKw.value.toLowerCase()
@@ -375,21 +387,38 @@ function confirmDeleteCourse(course) {
 }
 function doDeleteCourse() {
   const c = deleteTarget.value
-  if (!c?._custom) { showDeleteConfirm.value = false; return }
-  if (deleteScope.value === 'all') {
-    customCourses.value = customCourses.value.filter(x => x._id !== c._id)
-  } else {
-    const [s, e] = (c.weeks || '1-18').split('-').map(Number)
-    const newWeeks = []
-    for (let w = s; w <= e; w++) { if (w !== selectedWeek.value) newWeeks.push(w) }
-    if (newWeeks.length) {
-      const idx = customCourses.value.findIndex(x => x._id === c._id)
-      if (idx !== -1) customCourses.value[idx] = { ...customCourses.value[idx], weeks: newWeeks[0] + '-' + newWeeks[newWeeks.length - 1] }
-    } else {
+  if (!c) { showDeleteConfirm.value = false; return }
+  if (c._custom) {
+    if (deleteScope.value === 'all') {
       customCourses.value = customCourses.value.filter(x => x._id !== c._id)
+    } else {
+      const [s, e] = (c.weeks || '1-18').split('-').map(Number)
+      const newWeeks = []
+      for (let w = s; w <= e; w++) { if (w !== selectedWeek.value) newWeeks.push(w) }
+      if (newWeeks.length) {
+        const idx = customCourses.value.findIndex(x => x._id === c._id)
+        if (idx !== -1) customCourses.value[idx] = { ...customCourses.value[idx], weeks: newWeeks[0] + '-' + newWeeks[newWeeks.length - 1] }
+      } else {
+        customCourses.value = customCourses.value.filter(x => x._id !== c._id)
+      }
     }
+    saveCustomCourses(customCourses.value)
+  } else {
+    if (deleteScope.value === 'all') {
+      deletedCourses.value = [...deletedCourses.value, c.id]
+    } else {
+      const delKey = c.id + '_wk' + selectedWeek.value
+      const [s, e] = (c.weeks || '1-18').split('-').map(Number)
+      const newWeeks = []
+      for (let w = s; w <= e; w++) { if (w !== selectedWeek.value) newWeeks.push(w) }
+      if (newWeeks.length) {
+        deletedCourses.value = [...deletedCourses.value, delKey]
+      } else {
+        deletedCourses.value = [...deletedCourses.value, c.id]
+      }
+    }
+    saveDeletedCourses(deletedCourses.value)
   }
-  saveCustomCourses(customCourses.value)
   showDeleteConfirm.value = false
   showDetail.value = false
 }
@@ -619,7 +648,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
           <button class="detail-action-btn eat-what-btn" @click="goWhatToEat()">🍽️ 吃什么</button>
         </div>
         <div class="detail-footer">
-          <button v-if="selectedCourse?._custom" class="btn-delete" @click="confirmDeleteCourse(selectedCourse)">🗑️ 删除课程</button>
+          <button class="btn-delete" @click="confirmDeleteCourse(selectedCourse)">🗑️ 删除课程</button>
           <button class="btn-close" @click="showDetail = false">关闭</button>
         </div>
       </div>

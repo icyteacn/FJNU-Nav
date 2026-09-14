@@ -445,8 +445,8 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
                   <td v-if="isHoliday(wd.key) && row.period === 1" :rowspan="12" class="course-cell is-holiday-col holiday-empty-cell">
                     <div class="holiday-empty"><span class="holiday-empty-icon">🎉</span><span class="holiday-empty-text">{{ getHolidayInfo(wd.key)?.name }}</span><span class="holiday-empty-sub">假期停课</span></div>
                   </td>
-                  <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
-                    :class="{ 'has-course': getCourse(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key), 'other-week': showOtherWeek && getCourse(wd.key, row.period) && !isCourseInWeek(getCourse(wd.key, row.period), selectedWeek), 'is-flashing': flashingCourse === wd.key + '-' + row.period }"
+                  <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getOverride(wd.key, row.period) ? getOverride(wd.key, row.period).srcPeriods.length : getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
+                    :class="{ 'has-course': getCourse(wd.key, row.period) || getOverride(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key), 'other-week': showOtherWeek && getCourse(wd.key, row.period) && !isCourseInWeek(getCourse(wd.key, row.period), selectedWeek), 'is-flashing': flashingCourse === wd.key + '-' + row.period }"
                     @click="getOverride(wd.key, row.period) ? jumpToOverride(wd.key, row.period) : getCourse(wd.key, row.period) && openCourseDetail(getCourse(wd.key, row.period))">
                     <div v-if="getOverride(wd.key, row.period)" class="moved-badge" :title="'点击跳转至' + getOverride(wd.key, row.period).destDate.slice(5)">
                       <span class="moved-icon">↗️</span>
@@ -654,11 +654,11 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .course-info { display: flex; flex-direction: column; gap: 0; }
 .course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; }
 .course-weeks { color: var(--primary); font-weight: 600; }
-.moved-badge { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; text-align: center; background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); border-radius: 6px; border-left: 3px solid #7c3aed; height: 100%; justify-content: center; cursor: pointer; transition: all .15s; }
+.moved-badge { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; text-align: center; background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); border-radius: 6px; border-left: 3px solid #7c3aed; height: 100%; justify-content: center; cursor: pointer; transition: all .15s; box-sizing: border-box; }
 .moved-badge:hover { background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%); transform: scale(1.02); }
-.moved-icon { font-size: 14px; }
-.moved-text { font-size: 9px; font-weight: 700; color: #6d28d9; line-height: 1.2; }
-.moved-loc { font-size: 8px; font-weight: 600; color: #7c3aed; background: #ede9fe; padding: 1px 4px; border-radius: 3px; }
+.moved-icon { font-size: 18px; }
+.moved-text { font-size: 10px; font-weight: 700; color: #6d28d9; line-height: 1.3; }
+.moved-loc { font-size: 9px; font-weight: 600; color: #7c3aed; background: #ede9fe; padding: 2px 6px; border-radius: 3px; }
 .course-card.is-incoming { border-left-style: dashed !important; position: relative; }
 .incoming-badge { font-size: 8px; font-weight: 700; color: #0369a1; background: #e0f2fe; padding: 1px 4px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; }
 .course-location.new-location { color: #dc2626; font-weight: 700; }
@@ -734,10 +734,10 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .holiday-badge { padding: 1px 4px; font-size: 8px; gap: 1px; margin: 2px auto 3px; }
   .holiday-icon { font-size: 9px; }
   .holiday-text { font-size: 8px; }
-  .moved-badge { padding: 2px; gap: 1px; }
-  .moved-icon { font-size: 12px; }
-  .moved-text { font-size: 8px; }
-  .moved-loc { font-size: 7px; }
+  .moved-badge { padding: 4px; gap: 2px; }
+  .moved-icon { font-size: 14px; }
+  .moved-text { font-size: 9px; }
+  .moved-loc { font-size: 8px; padding: 1px 4px; }
   .holiday-empty-icon { font-size: 24px; }
   .holiday-empty-text { font-size: 12px; }
   .incoming-badge { font-size: 7px; padding: 0 3px; }

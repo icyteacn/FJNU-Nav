@@ -1,7 +1,7 @@
 <script setup>
 /**
- * 课程表视图 v11
- * 支持多专业/班级课表查看
+ * 课程表视图 v12
+ * 支持多专业/班级课表查看 + 自定义课程编辑
  */
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import {
@@ -14,7 +14,16 @@ import {
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
 } from '../data/classSchedule'
+import { setNavContext } from '../stores/navContext'
 
+const CUSTOM_KEY = 'fjnu_custom_courses'
+
+function loadCustomCourses() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]') } catch { return [] }
+}
+function saveCustomCourses(list) {
+  try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(list)) } catch {}
+}
 
 const emit = defineEmits(['open', 'back'])
 
@@ -32,6 +41,7 @@ const showOtherWeek = ref(false)
 const highlightToday = ref(true)
 const flashingCourse = ref(null)
 const mounted = ref(false)
+const customCourses = ref(loadCustomCourses())
 
 const now = ref(new Date())
 const tick = setInterval(() => { now.value = new Date() }, 1000)
@@ -41,10 +51,9 @@ const weekdayHeaders = computed(() => WEEKDAYS)
 const todayWeekday = computed(() => { const d = now.value.getDay(); return d === 0 ? 7 : d })
 const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
 
-// 当前专业的课程
-const majorCourses = computed(() => getCoursesByMajor(selectedMajor.value))
+const allCourses = computed(() => [...COURSES, ...customCourses.value.filter(c => c.major === selectedMajor.value)])
+const majorCourses = computed(() => allCourses.value.filter(c => c.major === selectedMajor.value))
 
-// 今日课程（处理调休/假日）
 const todayCourses = computed(() => {
   const scheduleWd = getTodayScheduleWeekday()
   if (scheduleWd === null) return []
@@ -56,7 +65,6 @@ const todayCourses = computed(() => {
 })
 const hasTodayCourses = computed(() => todayCourses.value.length > 0)
 
-// 显示的课程列表
 const displayCourses = computed(() => {
   let courses = showSemester.value || showOtherWeek.value ? majorCourses.value : majorCourses.value.filter(c => isCourseInWeek(c, selectedWeek.value))
   if (typeFilter.value !== 'all') courses = courses.filter(c => c.category === typeFilter.value)
@@ -355,6 +363,88 @@ async function doSave() {
 const weekShortcuts = computed(() => Array.from({ length: 18 }, (_, i) => ({ value: i + 1, dateRange: getWeekDateRange(i + 1) })))
 const currentMajor = computed(() => MAJORS.find(m => m.key === selectedMajor.value))
 
+// ========== 自定义课程编辑 ==========
+const showDeleteConfirm = ref(false)
+const deleteTarget = ref(null)
+const deleteScope = ref('all')
+
+function confirmDeleteCourse(course) {
+  deleteTarget.value = course
+  deleteScope.value = 'all'
+  showDeleteConfirm.value = true
+}
+function doDeleteCourse() {
+  const c = deleteTarget.value
+  if (!c?._custom) { showDeleteConfirm.value = false; return }
+  if (deleteScope.value === 'all') {
+    customCourses.value = customCourses.value.filter(x => x._id !== c._id)
+  } else {
+    const [s, e] = (c.weeks || '1-18').split('-').map(Number)
+    const newWeeks = []
+    for (let w = s; w <= e; w++) { if (w !== selectedWeek.value) newWeeks.push(w) }
+    if (newWeeks.length) {
+      const idx = customCourses.value.findIndex(x => x._id === c._id)
+      if (idx !== -1) customCourses.value[idx] = { ...customCourses.value[idx], weeks: newWeeks[0] + '-' + newWeeks[newWeeks.length - 1] }
+    } else {
+      customCourses.value = customCourses.value.filter(x => x._id !== c._id)
+    }
+  }
+  saveCustomCourses(customCourses.value)
+  showDeleteConfirm.value = false
+  showDetail.value = false
+}
+
+// ========== 添加课程 ==========
+const showAddModal = ref(false)
+const addForm = ref({ name: '', location: '', teacher: '', weekday: 1, startPeriod: 1, endPeriod: 2, weekStart: 1, weekEnd: 18, weekdayType: 'all', id: '', category: '自定义课程', credits: 2, hours: 32 })
+
+function openAddModal(weekday, period) {
+  addForm.value = { name: '', location: '', teacher: '', weekday: weekday || 1, startPeriod: period || 1, endPeriod: (period || 1) + 1, weekStart: 1, weekEnd: 18, weekdayType: 'all', id: '', category: '自定义课程', credits: 2, hours: 32 }
+  showAddModal.value = true
+}
+function doAddCourse() {
+  const f = addForm.value
+  if (!f.name.trim() || !f.location.trim()) return
+  const colors = ['#1565c0', '#00695c', '#6a1b9a', '#e65100', '#ad1457', '#c62828', '#2e7d32', '#0277bd']
+  const newCourse = {
+    _id: 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    _custom: true,
+    name: f.name.trim(),
+    id: f.id.trim() || 'CUSTOM-' + Date.now(),
+    teacher: f.teacher.trim() || '待定',
+    location: f.location.trim(),
+    weeks: f.weekStart + '-' + f.weekEnd,
+    weekdayType: f.weekdayType,
+    startPeriod: f.startPeriod,
+    endPeriod: f.endPeriod,
+    weekday: f.weekday,
+    credits: f.credits || 2,
+    hours: f.hours || 32,
+    category: f.category || '自定义课程',
+    color: colors[Math.floor(Math.random() * colors.length)],
+    major: selectedMajor.value,
+  }
+  customCourses.value.push(newCourse)
+  saveCustomCourses(customCourses.value)
+  showAddModal.value = false
+}
+
+// ========== 联动跳转 ==========
+function goClassroomNav(room) {
+  setNavContext({ room })
+  emit('open', 'classroomNav')
+}
+function goCanteen() {
+  emit('open', 'canteen')
+}
+function goBudget(foodName) {
+  setNavContext({ category: 'food', amount: 0, note: foodName || '' })
+  emit('open', 'budget')
+}
+function goWhatToEat() {
+  emit('open', 'whatToEat')
+}
+
 onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounted.value = true }) })
 </script>
 
@@ -447,7 +537,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
                   </td>
                   <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getOverride(wd.key, row.period) ? getOverride(wd.key, row.period).srcPeriods.length : getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
                     :class="{ 'has-course': getCourse(wd.key, row.period) || getOverride(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key), 'other-week': showOtherWeek && getCourse(wd.key, row.period) && !isCourseInWeek(getCourse(wd.key, row.period), selectedWeek), 'is-flashing': flashingCourse === wd.key + '-' + row.period }"
-                    @click="getOverride(wd.key, row.period) ? jumpToOverride(wd.key, row.period) : getCourse(wd.key, row.period) && openCourseDetail(getCourse(wd.key, row.period))">
+                    @click="getOverride(wd.key, row.period) ? jumpToOverride(wd.key, row.period) : getCourse(wd.key, row.period) ? openCourseDetail(getCourse(wd.key, row.period)) : openAddModal(wd.key, row.period)">
                     <div v-if="getOverride(wd.key, row.period)" class="moved-badge" :title="'点击跳转至' + getOverride(wd.key, row.period).destDate.slice(5)">
                       <span class="moved-icon">↗️</span>
                       <span class="moved-text">{{ getOverride(wd.key, row.period).destDate.slice(5) }} 第{{ getOverride(wd.key, row.period).destPeriods[0] }}-{{ getOverride(wd.key, row.period).destPeriods.at(-1) }}节</span>
@@ -522,7 +612,112 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
           <div class="detail-row"><span class="detail-label">任课教师</span><span class="detail-value">{{ selectedCourse?.teacher }}</span></div>
           <div v-if="selectedCourse?.shared" class="detail-row"><span class="detail-label">备注</span><span class="detail-value">{{ selectedCourse.shared }}</span></div>
         </div>
-        <div class="detail-footer"><button class="btn-close" @click="showDetail = false">关闭</button></div>
+        <div class="detail-actions">
+          <button class="detail-action-btn nav-btn" @click="goClassroomNav(selectedCourse?.location)">🧭 教室导航</button>
+          <button class="detail-action-btn eat-btn" @click="goCanteen()">🍚 去哪吃</button>
+          <button class="detail-action-btn budget-btn" @click="goBudget(selectedCourse?.name)">💰 记一笔</button>
+          <button class="detail-action-btn eat-what-btn" @click="goWhatToEat()">🍽️ 吃什么</button>
+        </div>
+        <div class="detail-footer">
+          <button v-if="selectedCourse?._custom" class="btn-delete" @click="confirmDeleteCourse(selectedCourse)">🗑️ 删除课程</button>
+          <button class="btn-close" @click="showDetail = false">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 删除确认 -->
+    <div v-if="showDeleteConfirm" class="overlay" @click.self="showDeleteConfirm = false">
+      <div class="confirm-modal">
+        <div class="confirm-title">🗑️ 删除课程</div>
+        <div class="confirm-desc">确定要删除「{{ deleteTarget?.name }}」吗？</div>
+        <div class="confirm-scope">
+          <label class="scope-option"><input type="radio" v-model="deleteScope" value="all"><span>删除全部学期的该课程</span></label>
+          <label class="scope-option"><input type="radio" v-model="deleteScope" value="week"><span>仅删除第{{ selectedWeek }}周的该课程</span></label>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="showDeleteConfirm = false">取消</button>
+          <button class="btn-danger" @click="doDeleteCourse">确认删除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加课程 -->
+    <div v-if="showAddModal" class="overlay" @click.self="showAddModal = false">
+      <div class="add-modal">
+        <div class="add-header">➕ 添加课程</div>
+        <div class="add-body">
+          <div class="form-section"><div class="form-label">必填信息</div></div>
+          <div class="form-row"><label>课程名称</label><input v-model="addForm.name" placeholder="如：高等数学"></div>
+          <div class="form-row"><label>上课地点</label><input v-model="addForm.location" placeholder="如：笃行1-201"></div>
+          <div class="form-row">
+            <label>星期几</label>
+            <div class="select-grid">
+              <button v-for="d in 7" :key="d" class="select-btn" :class="{ active: addForm.weekday === d }" @click="addForm.weekday = d">{{ ['一','二','三','四','五','六','日'][d-1] }}</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>节次</label>
+            <div class="period-select">
+              <div class="select-group">
+                <span class="select-label">开始</span>
+                <div class="select-grid compact">
+                  <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: addForm.startPeriod === p }" @click="addForm.startPeriod = p; if(addForm.endPeriod < p) addForm.endPeriod = p">{{ p }}</button>
+                </div>
+              </div>
+              <div class="select-group">
+                <span class="select-label">结束</span>
+                <div class="select-grid compact">
+                  <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: addForm.endPeriod === p }" :disabled="p < addForm.startPeriod" @click="addForm.endPeriod = p">{{ p }}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>上课周次</label>
+            <div class="week-range-select">
+              <div class="select-group">
+                <span class="select-label">第</span>
+                <div class="select-grid compact scroll">
+                  <button v-for="w in 18" :key="w" class="select-btn sm" :class="{ active: addForm.weekStart === w }" @click="addForm.weekStart = w; if(addForm.weekEnd < w) addForm.weekEnd = w">{{ w }}</button>
+                </div>
+                <span class="select-label">周</span>
+              </div>
+              <div class="select-group">
+                <span class="select-label">至 第</span>
+                <div class="select-grid compact scroll">
+                  <button v-for="w in 18" :key="w" class="select-btn sm" :class="{ active: addForm.weekEnd === w }" :disabled="w < addForm.weekStart" @click="addForm.weekEnd = w">{{ w }}</button>
+                </div>
+                <span class="select-label">周</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>单双周</label>
+            <div class="select-grid three">
+              <button class="select-btn" :class="{ active: addForm.weekdayType === 'all' }" @click="addForm.weekdayType = 'all'">全部</button>
+              <button class="select-btn" :class="{ active: addForm.weekdayType === 'odd' }" @click="addForm.weekdayType = 'odd'">单周</button>
+              <button class="select-btn" :class="{ active: addForm.weekdayType === 'even' }" @click="addForm.weekdayType = 'even'">双周</button>
+            </div>
+          </div>
+          <div class="form-section"><div class="form-label">选填信息</div></div>
+          <div class="form-row"><label>任课教师</label><input v-model="addForm.teacher" placeholder="选填"></div>
+          <div class="form-row"><label>课程编号</label><input v-model="addForm.id" placeholder="选填"></div>
+          <div class="form-row"><label>课程类别</label>
+            <div class="select-grid three">
+              <button class="select-btn" :class="{ active: addForm.category === '专业必修课' }" @click="addForm.category = '专业必修课'">专业必修</button>
+              <button class="select-btn" :class="{ active: addForm.category === '专业选修课' }" @click="addForm.category = '专业选修课'">专业选修</button>
+              <button class="select-btn" :class="{ active: addForm.category === '公共必修课' }" @click="addForm.category = '公共必修课'">公共必修</button>
+            </div>
+          </div>
+          <div class="form-row inline">
+            <div class="inline-field"><label>学分</label><input v-model.number="addForm.credits" type="number" min="0" step="0.5"></div>
+            <div class="inline-field"><label>学时</label><input v-model.number="addForm.hours" type="number" min="0" step="2"></div>
+          </div>
+        </div>
+        <div class="add-footer">
+          <button class="btn-cancel" @click="showAddModal = false">取消</button>
+          <button class="btn-save" @click="doAddCourse" :disabled="!addForm.name.trim() || !addForm.location.trim()">添加课程</button>
+        </div>
       </div>
     </div>
   </div>
@@ -642,6 +837,8 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .course-cell.is-makeup-col { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
 .course-cell.has-course { cursor: pointer; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
+.course-cell:not(.has-course):not(.is-holiday-col):not(.holiday-empty-cell) { cursor: pointer; }
+.course-cell:not(.has-course):not(.is-holiday-col):not(.holiday-empty-cell):hover { background: #f0fdf4; outline: 2px dashed #86efac; outline-offset: -2px; }
 .course-cell.other-week { opacity: 0.5; }
 .course-cell.is-flashing { animation: flashHighlight 0.6s ease 4; z-index: 1; position: relative; }
 @keyframes flashHighlight { 0%, 100% { background-color: transparent; } 25%, 75% { background-color: #fef08a; } 50% { background-color: #fde047; } }
@@ -708,8 +905,58 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .detail-row:last-child { border-bottom: none; }
 .detail-label { width: 80px; font-size: 13px; color: var(--text-sub); flex-shrink: 0; }
 .detail-value { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
-.detail-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
-.btn-close { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--soft-fg); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
+.detail-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+.btn-close { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--soft-fg); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn-delete { padding: 12px 16px; border: none; border-radius: 8px; background: #fee2e2; color: #dc2626; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-delete:hover { background: #fecaca; }
+.detail-actions { padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px dashed var(--border); }
+.detail-action-btn { flex: 1; min-width: calc(50% - 3px); padding: 10px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.detail-action-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.nav-btn { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+.eat-btn { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.budget-btn { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+.eat-what-btn { background: #fce7f3; color: #9d174d; border-color: #fbcfe8; }
+
+/* 删除确认弹窗 */
+.confirm-modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 360px; padding: 24px; }
+.confirm-title { font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 8px; }
+.confirm-desc { font-size: 14px; color: var(--text); text-align: center; margin-bottom: 16px; }
+.confirm-scope { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.scope-option { display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; }
+.scope-option:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+.scope-option input { margin: 0; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; }
+.btn-danger { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #dc2626; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-danger:hover { background: #b91c1c; }
+
+/* 添加课程弹窗 */
+.add-modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 480px; max-height: 85vh; display: flex; flex-direction: column; }
+.add-header { padding: 20px 24px 0; font-size: 18px; font-weight: 800; }
+.add-body { padding: 16px 24px; overflow-y: auto; flex: 1; }
+.form-section { margin: 12px 0 8px; }
+.form-label { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
+.form-row { margin-bottom: 12px; }
+.form-row label { display: block; font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 4px; }
+.form-row input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; outline: none; box-sizing: border-box; }
+.form-row input:focus { border-color: var(--primary); }
+.form-row.inline { display: flex; gap: 12px; }
+.inline-field { flex: 1; }
+.select-grid { display: flex; gap: 4px; flex-wrap: wrap; }
+.select-grid.three { display: flex; gap: 4px; }
+.select-grid.compact { gap: 3px; }
+.select-grid.scroll { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+.select-btn { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; transition: all .12s; }
+.select-btn.sm { padding: 6px 8px; font-size: 12px; min-width: 30px; text-align: center; }
+.select-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.select-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.period-select, .week-range-select { display: flex; flex-direction: column; gap: 6px; }
+.select-group { display: flex; align-items: center; gap: 4px; }
+.select-label { font-size: 12px; color: var(--text-sub); flex-shrink: 0; }
+.add-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+.add-footer .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; }
+.add-footer .btn-save { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+.add-footer .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* 手机端 */
 @media (max-width: 640px) {
@@ -745,5 +992,12 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .list-view { padding: 0 8px; }
   .time-line::before { width: 8px; height: 8px; left: -4px; top: -3px; }
   .time-label { font-size: 9px; padding: 1px 4px; border-radius: 3px 0 0 3px; }
+  .detail-actions { padding: 10px 12px; gap: 4px; }
+  .detail-action-btn { min-width: calc(50% - 2px); padding: 8px 6px; font-size: 11px; }
+  .add-modal { max-width: 100%; max-height: 90vh; border-radius: 12px; }
+  .add-body { padding: 12px 16px; }
+  .add-header { padding: 16px 16px 0; }
+  .add-footer { padding: 12px 16px; }
+  .select-btn.sm { padding: 5px 6px; font-size: 11px; min-width: 26px; }
 }
 </style>

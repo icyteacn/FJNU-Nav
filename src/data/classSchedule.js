@@ -349,8 +349,19 @@ export const HOLIDAY_MAP = {
   '2026-10-06': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
   '2026-10-07': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
   // —— 调休补课日 ——
-  '2026-09-20': { type: 'makeup', scheduleWeekday: 2, label: '补课', icon: '📅', desc: '补周二(10/6)课程' },
-  '2026-10-10': { type: 'makeup', scheduleWeekday: 3, label: '补课', icon: '📅', desc: '补周三(10/7)课程' },
+  '2026-09-20': {
+    type: 'makeup', scheduleWeekday: 2, icon: '📅',
+    descShort: '补周二课',
+    desc: '补周二(10/6)',
+    overrides: [
+      { srcPeriods: [9, 10, 11, 12], destDate: '2026-10-08', destPeriods: [9, 10, 11, 12], destLocation: '笃行1-114', courseHint: '人工智能通识' },
+    ],
+  },
+  '2026-10-10': {
+    type: 'makeup', scheduleWeekday: 3, icon: '📅',
+    descShort: '补周三课',
+    desc: '补周三(10/7)',
+  },
 }
 
 /**
@@ -374,4 +385,42 @@ export function getScheduleWeekday(originalWeekday, dateStr) {
   if (info.type === 'holiday') return null
   if (info.type === 'makeup') return info.scheduleWeekday
   return originalWeekday
+}
+
+/**
+ * 获取调休日某节次的调课信息
+ */
+export function getCourseOverride(dateStr, period) {
+  const info = HOLIDAY_MAP[dateStr]
+  if (!info?.overrides) return null
+  return info.overrides.find(o => o.srcPeriods.includes(period)) || null
+}
+
+/**
+ * 检查某日某节次是否被调走（不在此日上课）
+ */
+export function isPeriodMoved(dateStr, period) {
+  return !!getCourseOverride(dateStr, period)
+}
+
+/**
+ * 查找某日某节次是否有调入的课程（从别处调来）
+ * @param {string} dateStr 目标日期 YYYY-MM-DD
+ * @param {number} period 节次 1-12
+ * @param {Function} findCourse 查找课程的回调 (weekday, startPeriod) => course | null
+ * @returns {{ course, srcDate, srcPeriods, destLocation } | null}
+ */
+export function getIncomingInfo(dateStr, period, findCourse) {
+  for (const key of Object.keys(HOLIDAY_MAP)) {
+    const info = HOLIDAY_MAP[key]
+    if (!info?.overrides) continue
+    for (const o of info.overrides) {
+      if (o.destDate === dateStr && period >= o.destPeriods[0] && period <= o.destPeriods.at(-1)) {
+        const srcWd = info.scheduleWeekday
+        const course = findCourse(srcWd, o.srcPeriods[0])
+        return course ? { course, srcDate: key, srcPeriods: o.srcPeriods, destLocation: o.destLocation } : null
+      }
+    }
+  }
+  return null
 }

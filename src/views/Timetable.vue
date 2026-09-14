@@ -12,6 +12,7 @@ import { normRoom, clsSplit, profOf, gradeOf, parseWeeks } from '../utils/course
 import { fmtTime } from '../utils/format'
 import { setNavContext } from '../stores/navContext'
 import ClassSchedule from './ClassSchedule.vue'
+import { COURSES as GRAD_COURSES, MAJORS, SINGLE_PERIOD_TIMES, TABLE_ROWS } from '../data/classSchedule'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -28,6 +29,18 @@ const weekFilter = ref('')
 
 const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 const PERIOD = 12
+
+/** 研究生课程转为全校总表行格式 */
+const GRAD_SEMESTER = '2026-2027学年第一学期'
+const gradRows = GRAD_COURSES.map(c => {
+  const major = MAJORS.find(m => m.key === c.major)
+  const clsName = major ? major.short : c.major
+  return {
+    c: c.name, cls: clsName, d: c.weekday, s: c.startPeriod, e: c.endPeriod,
+    r: c.location, t: c.teacher, w: c.weeks, campus: '旗山校区',
+    cat: c.category, credit: c.credits, _color: c.color, _major: c.major,
+  }
+})
 
 onMounted(async () => {
   const mm = await loadTimetableMeta()
@@ -49,12 +62,13 @@ onMounted(async () => {
 const semester = computed(() => snap.value?.courseTable?.semester || '')
 
 const semesters = computed(() => {
-  const s = snap.value?.courseTables?.map((t) => t.semester) || []
-  return s.length ? s : [semester.value]
+  const s = snap.value?.semesters?.map((t) => t.semester) || []
+  const base = s.length ? s : [semester.value]
+  return [GRAD_SEMESTER, ...base]
 })
 
 /** termRows 始终是「当前选中学期」的 rows（onMounted/switchTerm 已按学期载入），直接返回省去重复 filter */
-const curRows = computed(() => termRows.value)
+const curRows = computed(() => term.value === GRAD_SEMESTER ? gradRows : termRows.value)
 
 const rooms = computed(() => [...new Set(curRows.value.map((r) => r.r && normRoom(r.r)).filter(Boolean))].sort())
 const teachers = computed(() => [...new Set(curRows.value.map((r) => r.t).filter(Boolean))])
@@ -160,6 +174,7 @@ async function switchTerm(t) {
   opened.value = null
   page.value = 1
   expandAll.value = false
+  if (t === GRAD_SEMESTER) return
   const mm = snap.value
   const cur = mm?.semesters?.find((s) => s.semester === t)
   if (cur) {
@@ -219,6 +234,25 @@ function subOf(co) {
   return [co.t, co.r].filter(Boolean).join(' · ') || co.cls
 }
 
+/** 表格视图辅助函数 */
+function getCourseCell(weekday, period) {
+  if (!opened.value) return null
+  const list = opened.value.days?.[weekday] || []
+  return list.find(co => period >= co.s && period <= co.e && (!weekFilter.value || parseWeeks(co.w).has(+weekFilter.value))) || null
+}
+function getCourseSpan(co) { return co ? (co.e - co.s + 1) : 1 }
+function isCellMerged(weekday, period) {
+  if (!opened.value) return false
+  const list = opened.value.days?.[weekday] || []
+  return list.some(co => period > co.s && period <= co.e && (!weekFilter.value || parseWeeks(co.w).has(+weekFilter.value)))
+}
+function getCourseColor(co, alpha = 1) {
+  if (!co?._color) return alpha === 1 ? 'var(--primary)' : 'var(--primary-soft)'
+  const hex = co._color
+  return `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${alpha})`
+}
+const TABLE_ROWS_TIMETABLE = TABLE_ROWS
+
 /** 周课表视图：网格 / 列表；点击课程弹出详情 */
 const viewMode = ref('grid')
 const detail = ref(null)
@@ -252,12 +286,6 @@ function clsNote(co) {
   if (raw === opened.value.name) return ''
   return '合班 ' + raw
 }
-
-const posStyle = (co) => ({
-  left: 'calc(var(--tc,40px) + (100% - var(--tc,40px)) * ' + (co.d - 1) + ' / 7)',
-  top: 'calc(var(--row,46px) * ' + (co.s - 1) + ')',
-  height: 'calc(var(--row,46px) * ' + (co.e - co.s + 1) + ' - 3px)'
-})
 
 // 官方课程总表
 const courses = ref(null)
@@ -319,22 +347,30 @@ function goCanteen() {
       </div>
     </div>
     <div class="panel">
-      <div v-if="viewMode === 'grid'" class="week-grid">
-        <div class="wg-head-row">
-          <div class="wg-head wg-time-col">节次</div>
-          <div v-for="d in dayNames" :key="d" class="wg-head">{{ d }}</div>
-        </div>
-        <div class="wg-body">
-          <div v-for="p in PERIOD" :key="p" class="wg-time" :style="{ top: 'calc(var(--row,46px) * ' + (p - 1) + ')' }">
-            {{ p }}
-          </div>
-          <div v-for="(d, i) in dayNames" :key="d">
-            <div v-for="co in dayCourses(i + 1)" :key="co.c + co.s + co.r" class="wg-cell" :style="posStyle(co)" @click="showCourse(co)">
-              <b>{{ co.c }}</b>
-              <div class="wg-sub">{{ subOf(co) }}</div>
-              <div class="wg-sub muted">{{ co.campus && co.campus !== '未标注' ? co.campus + ' · ' : '' }}第{{ co.w }}周</div>
-            </div>
-          </div>
+      <div v-if="viewMode === 'grid'" class="tt-grid">
+        <div class="tt-table-wrap">
+          <table class="tt-table">
+            <thead><tr>
+              <th class="tt-period-col">节</th>
+              <th v-for="d in dayNames" :key="d" class="tt-weekday-col">{{ d }}</th>
+            </tr></thead>
+            <tbody>
+              <template v-for="row in TABLE_ROWS_TIMETABLE" :key="row.period">
+                <tr :class="'tt-section-' + row.section">
+                  <td class="tt-period-cell"><div class="tt-period-num">{{ row.label }}</div><div class="tt-period-time">{{ row.time }}</div><div class="tt-period-time-end">{{ row.timeEnd }}</div></td>
+                  <template v-for="(d, di) in dayNames" :key="di">
+                    <td v-if="!isCellMerged(di + 1, row.period)" :rowspan="getCourseSpan(getCourseCell(di + 1, row.period))" class="tt-course-cell" :class="{ 'has-course': getCourseCell(di + 1, row.period) }" @click="getCourseCell(di + 1, row.period) && showCourse(getCourseCell(di + 1, row.period))">
+                      <div v-if="getCourseCell(di + 1, row.period)" class="tt-course-card" :style="{ borderLeftColor: getCourseColor(getCourseCell(di + 1, row.period)), background: getCourseColor(getCourseCell(di + 1, row.period), 0.12) }">
+                        <div class="tt-course-name">{{ getCourseCell(di + 1, row.period).c }}</div>
+                        <div class="tt-course-info">{{ getCourseCell(di + 1, row.period).r }}</div>
+                        <div class="tt-course-info">{{ getCourseCell(di + 1, row.period).t }} · 第{{ getCourseCell(di + 1, row.period).w }}周</div>
+                      </div>
+                    </td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -546,37 +582,40 @@ function goCanteen() {
   padding: 5px 8px;
   text-align: center;
 }
-.week-grid { position: relative; --row: 46px; --tc: 40px; }
-.wg-head-row { display: grid; grid-template-columns: var(--tc,40px) repeat(7, 1fr); }
-.wg-head { text-align: center; font-size: 12px; font-weight: 700; padding: 4px 0; box-sizing: border-box; }
-.wg-body {
-  position: relative;
-  height: calc(var(--row,46px) * 12);
-  border-top: 1px solid var(--border);
+/* 表格视图 — 统一课程表风格 */
+.tt-grid { padding: 0; overflow-x: auto; }
+.tt-table-wrap { position: relative; }
+.tt-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.tt-table th { border: none; padding: 0; }
+.tt-table thead th { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); background: var(--soft-fg); font-weight: 700; }
+.tt-table thead th:last-child { border-right: none; }
+.tt-period-col { width: 38px; background: var(--soft-fg); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.tt-period-cell { background: var(--soft-fg); text-align: center; padding: 4px 2px; vertical-align: middle; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+.tt-period-num { font-weight: 800; font-size: 14px; color: var(--primary); line-height: 1.2; }
+.tt-period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
+.tt-period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
+.tt-weekday-col { background: var(--soft-fg); font-weight: 700; }
+.tt-weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
+.tt-section-afternoon .tt-period-cell { border-top: 2px solid var(--border); }
+.tt-section-evening .tt-period-cell { border-top: 2px solid var(--border); }
+.tt-course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
+.tt-course-cell.has-course { cursor: pointer; }
+.tt-course-cell.has-course:hover { background: var(--primary-soft); }
+.tt-course-card { border-left: 3px solid; border-radius: 4px; padding: 4px 8px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.tt-course-name { font-weight: 700; font-size: 11px; line-height: 1.3; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tt-course-info { font-size: 9px; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .tt-period-col { width: 30px; }
+  .tt-period-cell { padding: 3px 2px; }
+  .tt-period-num { font-size: 12px; }
+  .tt-period-time { font-size: 6px; }
+  .tt-period-time-end { font-size: 5.5px; }
+  .tt-course-cell { height: 44px; padding: 2px; }
+  .tt-course-card { padding: 3px 5px; }
+  .tt-course-name { font-size: 10px; }
+  .tt-course-info { font-size: 8px; }
 }
-.wg-time {
-  position: absolute;
-  left: 0;
-  width: var(--tc,40px);
-  font-size: 11px;
-  color: var(--text-light);
-  text-align: center;
-}
-.wg-cell {
-  position: absolute;
-  width: calc((100% - var(--tc,40px)) / 7 - 5px);
-  box-sizing: border-box;
-  background: var(--soft-blue);
-  border-left: 3px solid var(--primary);
-  border-radius: 6px;
-  padding: 3px 5px;
-  overflow: hidden;
-  font-size: 11px;
-  line-height: 1.35;
-  cursor: pointer;
-}
-.wg-cell b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wg-sub { font-size: 10px; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 列表视图 */
 .wg-list { display: flex; flex-direction: column; gap: 12px; }
@@ -632,26 +671,12 @@ function goCanteen() {
 .course-detail-row b { flex: 1; color: var(--text); font-weight: 600; word-break: break-all; }
 .course-detail-actions { display: flex; gap: 8px; margin-top: 12px; }
 @media (max-width: 640px) {
-  /* 手机端：隐藏节次时间列，7 天均分一屏，无需左右拖拽；每卡只显示课程名，点卡片看详情 */
-  .week-grid { --row: 30px; --tc: 0px; }
-  .wg-head-row { grid-template-columns: repeat(7, 1fr); }
-  .wg-time-col, .wg-time { display: none; }
-  .wg-head { font-size: 10px; padding: 3px 0; }
-  .wg-cell {
-    font-size: 9px;
-    padding: 2px 3px;
-    border-left-width: 2px;
-    border-radius: 4px;
-    line-height: 1.25;
-  }
-  .wg-cell b {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    white-space: normal;
-    word-break: break-all;
-  }
-  .wg-sub, .wg-sub.muted { display: none; }
+  /* 手机端：隐藏节次时间列，7 天均分一屏 */
+  .tt-grid { overflow-x: auto; }
+  .tt-period-col { width: 30px; }
+  .tt-course-cell { height: 44px; padding: 2px; }
+  .tt-course-card { padding: 3px 5px; }
+  .tt-course-name { font-size: 10px; }
+  .tt-course-info { font-size: 8px; }
 }
 </style>

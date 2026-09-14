@@ -13,6 +13,7 @@ import {
   formatWeekdayType,
 } from '../data/classSchedule'
 
+
 const emit = defineEmits(['open', 'back'])
 
 const selectedMajor = ref('cs-master')
@@ -28,6 +29,7 @@ const colorMode = ref('white')
 const showOtherWeek = ref(false)
 const highlightToday = ref(true)
 const flashingCourse = ref(null)
+const mounted = ref(false)
 
 const now = ref(new Date())
 const tick = setInterval(() => { now.value = new Date() }, 1000)
@@ -114,6 +116,90 @@ function getWeekRange() { return getWeekDateRange(selectedWeek.value) }
 function getWeekTypeInfo(course) { return formatWeekdayType(course.weekdayType) }
 function openCourseDetail(course) { selectedCourse.value = course; showDetail.value = true }
 
+// 时间射线位置计算 — 通过 DOM 实际测量行高
+function getRowTop(period) {
+  const table = document.querySelector('.schedule-table')
+  if (!table) return null
+  const tr = table.querySelector(`tr[data-period="${period}"]`)
+  if (!tr) return null
+  const wrapper = document.querySelector('.schedule-table-wrapper')
+  if (!wrapper) return null
+  return tr.getBoundingClientRect().top - wrapper.getBoundingClientRect().top
+}
+
+function getHeaderBottom() {
+  const table = document.querySelector('.schedule-table')
+  if (!table) return 0
+  const thead = table.querySelector('thead')
+  if (!thead) return 0
+  const wrapper = document.querySelector('.schedule-table-wrapper')
+  if (!wrapper) return 0
+  return thead.getBoundingClientRect().bottom - wrapper.getBoundingClientRect().top
+}
+
+const timeLinePos = computed(() => {
+  if (!highlightToday.value || !mounted.value) return null
+  const today = new Date()
+  const h = today.getHours(), m = today.getMinutes()
+  const t = h * 60 + m
+  if (t < 8 * 60 + 20 || t >= 22 * 60) return null
+
+  const p5Top = getRowTop(5)
+  const headerBottom = getHeaderBottom()
+  if (p5Top === null || !headerBottom) return null
+
+  const rowHeight = (p5Top - headerBottom) / 4
+  const lunchBoundary = p5Top
+
+  if (t < 12 * 60) {
+    const mins = t - (8 * 60 + 20)
+    const row = Math.floor(mins / 45)
+    const offset = (mins % 45) / 45
+    return headerBottom + (row + offset) * rowHeight
+  } else if (t < 14 * 60) {
+    return lunchBoundary
+  } else if (t < 17 * 60 + 30) {
+    const mins = t - (14 * 60)
+    const row = Math.floor(mins / 45) + 4
+    const offset = (mins % 45) / 45
+    return headerBottom + (row + offset) * rowHeight
+  } else {
+    const mins = t - (18 * 60 + 30)
+    const row = Math.floor(mins / 45) + 8
+    const offset = (mins % 45) / 45
+    return headerBottom + (row + offset) * rowHeight
+  }
+})
+
+const timeLineWeekday = computed(() => {
+  if (!highlightToday.value || !mounted.value) return null
+  const today = new Date()
+  const day = today.getDay()
+  return day === 0 ? 7 : day
+})
+
+function getTodayColumnLeft() {
+  const table = document.querySelector('.schedule-table')
+  if (!table) return 0
+  const periodCol = table.querySelector('.period-col')
+  if (!periodCol) return 0
+  const periodWidth = periodCol.offsetWidth
+  const todayIndex = weekdayHeaders.value.findIndex(w => w.key === timeLineWeekday.value)
+  if (todayIndex === -1) return periodWidth
+  const cols = table.querySelectorAll('.weekday-col')
+  if (cols[todayIndex]) return cols[todayIndex].offsetLeft
+  return periodWidth + todayIndex * 80
+}
+
+function getTodayColumnWidth() {
+  const table = document.querySelector('.schedule-table')
+  if (!table) return 80
+  const todayIndex = weekdayHeaders.value.findIndex(w => w.key === timeLineWeekday.value)
+  const cols = table.querySelectorAll('.weekday-col')
+  if (cols[todayIndex]) return cols[todayIndex].offsetWidth
+  return 80
+}
+
 let flashTimer = null
 function jumpToCourse(course) {
   viewMode.value = 'grid'
@@ -150,7 +236,7 @@ async function doSave() {
 const weekShortcuts = computed(() => Array.from({ length: 18 }, (_, i) => ({ value: i + 1, dateRange: getWeekDateRange(i + 1) })))
 const currentMajor = computed(() => MAJORS.find(m => m.key === selectedMajor.value))
 
-onMounted(() => { selectedWeek.value = getCurrentWeek() })
+onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounted.value = true }) })
 </script>
 
 <template>
@@ -166,13 +252,6 @@ onMounted(() => { selectedWeek.value = getCurrentWeek() })
         <div class="stat-item"><span class="stat-value">{{ displayCourses.length }}门</span><span class="stat-label">课程</span></div>
         <div class="stat-item"><span class="stat-value">{{ displayCourses.reduce((s, c) => s + c.credits, 0) }}</span><span class="stat-label">学分</span></div>
       </div>
-    </div>
-
-    <!-- 专业选择 -->
-    <div class="major-selector">
-      <button v-for="m in MAJORS" :key="m.key" class="major-chip" :class="{ active: selectedMajor === m.key }" :style="{ '--major-color': m.color }" @click="selectedMajor = m.key">
-        {{ m.short }}
-      </button>
     </div>
 
     <!-- 下一节课 -->
@@ -252,7 +331,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek() })
             </template>
           </tbody>
         </table>
-        <div v-if="timeLinePos !== null && isToday(todayWeekday)" class="time-line" :style="{ top: timeLinePos + 'px' }">
+        <div v-if="timeLinePos !== null && isToday(timeLineWeekday)" class="time-line" :style="{ top: timeLinePos + 'px', left: getTodayColumnLeft() + 'px', width: getTodayColumnWidth() + 'px' }">
           <span class="time-label">{{ now.getHours() }}:{{ String(now.getMinutes()).padStart(2, '0') }}</span>
         </div>
       </div>
@@ -323,12 +402,6 @@ onMounted(() => { selectedWeek.value = getCurrentWeek() })
 .stat-item { text-align: center; }
 .stat-value { display: block; font-size: 16px; font-weight: 800; color: #fff; }
 .stat-label { font-size: 10px; color: rgba(255,255,255,0.8); }
-
-/* 专业选择器 */
-.major-selector { display: flex; gap: 6px; padding: 12px 12px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.major-chip { flex-shrink: 0; padding: 8px 14px; border: 2px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
-.major-chip:hover { border-color: var(--major-color); }
-.major-chip.active { background: var(--major-color); border-color: var(--major-color); color: #fff; }
 
 /* 下一节课 */
 .next-card { margin: 12px 12px 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; }
@@ -428,10 +501,10 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; }
 .course-weeks { color: var(--primary); font-weight: 600; }
 
-/* 时间射线 */
+/* 时间射线 - 只在当日列内显示 */
 .time-line { position: absolute; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
 .time-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
-.time-label { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; white-space: nowrap; line-height: 1; }
+.time-label { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
 
 /* 列表 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }
@@ -481,8 +554,6 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .schedule-header { border-radius: 0; margin: -16px -16px 0; padding: 12px 16px 14px; }
   .header-title { font-size: 16px; }
   .stat-value { font-size: 14px; color: #fff; }
-  .major-selector { padding: 10px 8px 0; gap: 4px; }
-  .major-chip { padding: 6px 10px; font-size: 11px; }
   .next-card, .today-section { margin: 10px 8px 0; }
   .search-bar { padding: 10px 8px 0; }
   .week-selector { padding: 0 8px; }

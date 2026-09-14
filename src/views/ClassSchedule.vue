@@ -73,6 +73,7 @@ const todayCourses = computed(() => {
   return majorCourses.value.filter(c => {
     if (c.weekday !== scheduleWd) return false
     if (!showSemester.value && !isCourseInWeek(c, selectedWeek.value)) return false
+    if (!showSemester.value && deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
     return true
   }).sort((a, b) => a.startPeriod - b.startPeriod)
 })
@@ -542,6 +543,16 @@ function doConfirmEdit() {
   pendingEditData.value = null
 }
 
+// ========== 恢复默认 ==========
+const showResetConfirm = ref(false)
+function doResetAll() {
+  customCourses.value = []
+  deletedCourses.value = []
+  saveCustomCourses([])
+  saveDeletedCourses([])
+  showResetConfirm.value = false
+}
+
 // ========== 联动跳转 ==========
 function goClassroomNav(room) {
   setNavContext({ room })
@@ -623,6 +634,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 
     <div class="mode-hint">
       <span>{{ currentMajor?.short }} · {{ showSemester ? '学期课表' : '第' + selectedWeek + '周课表' }}</span>
+      <button v-if="customCourses.length || deletedCourses.length" class="reset-btn" @click="showResetConfirm = true">🔄 恢复默认</button>
     </div>
 
     <!-- 表格 -->
@@ -767,6 +779,18 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
         <div class="confirm-actions">
           <button class="btn-cancel" @click="showEditScopeConfirm = false">取消</button>
           <button class="btn-primary" @click="doConfirmEdit">确认修改</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 恢复默认确认 -->
+    <div v-if="showResetConfirm" class="overlay" @click.self="showResetConfirm = false">
+      <div class="confirm-modal">
+        <div class="confirm-title">🔄 恢复默认课表</div>
+        <div class="confirm-desc">将清除所有自定义添加、编辑和删除的课程数据，恢复为系统默认课表。</div>
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="showResetConfirm = false">取消</button>
+          <button class="btn-danger" @click="doResetAll">确认恢复</button>
         </div>
       </div>
     </div>
@@ -1004,7 +1028,9 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .semester-btn { flex-shrink: 0; padding: 6px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 700; white-space: nowrap; }
 .semester-btn.active { background: #6a1b9a; border-color: #6a1b9a; color: #fff; }
 
-.mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; }
+.mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.reset-btn { padding: 4px 10px; border: 1px solid var(--primary); border-radius: 6px; background: transparent; color: var(--primary); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.reset-btn:hover { background: var(--primary); color: #fff; }
 
 /* 表格 */
 .grid-view { padding: 0; overflow-x: auto; }

@@ -11,6 +11,7 @@ import {
   getCourseTimeDetail, getCoursePeriodText,
   getDateInWeek, formatDateShort, getWeekDateRange,
   formatWeekdayType,
+  getDateHolidayInfo, getScheduleWeekday,
 } from '../data/classSchedule'
 
 
@@ -42,10 +43,12 @@ const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullY
 // 当前专业的课程
 const majorCourses = computed(() => getCoursesByMajor(selectedMajor.value))
 
-// 今日课程
+// 今日课程（处理调休/假日）
 const todayCourses = computed(() => {
+  const scheduleWd = getTodayScheduleWeekday()
+  if (scheduleWd === null) return []
   return majorCourses.value.filter(c => {
-    if (c.weekday !== todayWeekday.value) return false
+    if (c.weekday !== scheduleWd) return false
     if (!showSemester.value && !isCourseInWeek(c, selectedWeek.value)) return false
     return true
   }).sort((a, b) => a.startPeriod - b.startPeriod)
@@ -105,16 +108,49 @@ const nextInfo = computed(() => {
 })
 
 function getCourse(weekday, period) {
-  return displayCourses.value.find(c => c.weekday === weekday && period >= c.startPeriod && period <= c.endPeriod) || null
+  if (isHoliday(weekday)) return null
+  const effectiveWd = getMakeupWeekday(weekday)
+  return displayCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
 }
 function getCourseSpan(course) { return course ? (course.endPeriod - course.startPeriod + 1) : 1 }
-function isCellMerged(weekday, period) { return displayCourses.value.some(c => c.weekday === weekday && period > c.startPeriod && period <= c.endPeriod) }
+function isCellMerged(weekday, period) {
+  if (isHoliday(weekday)) return false
+  const effectiveWd = getMakeupWeekday(weekday)
+  return displayCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
+}
 function isToday(weekday) { if (!highlightToday.value) return false; const date = getDateInWeek(selectedWeek.value, weekday); return date.toISOString().slice(0, 10) === todayDateStr.value }
 function getCourseColor(course, alpha = 1) { if (!course) return 'transparent'; const hex = course.color || '#1565c0'; return `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${alpha})` }
 function getDateText(weekday) { return formatDateShort(getDateInWeek(selectedWeek.value, weekday)) }
 function getWeekRange() { return getWeekDateRange(selectedWeek.value) }
 function getWeekTypeInfo(course) { return formatWeekdayType(course.weekdayType) }
 function openCourseDetail(course) { selectedCourse.value = course; showDetail.value = true }
+
+/** 日期字符串 YYYY-MM-DD */
+function dateStrOf(weekday) {
+  const d = getDateInWeek(selectedWeek.value, weekday)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+/** 获取某天的节假日信息 */
+function getHolidayInfo(weekday) { return getDateHolidayInfo(dateStrOf(weekday)) }
+/** 该天是否为法定假日（停课） */
+function isHoliday(weekday) { const h = getHolidayInfo(weekday); return h?.type === 'holiday' }
+/** 该天是否为调休补课日 */
+function isMakeup(weekday) { const h = getHolidayInfo(weekday); return h?.type === 'makeup' }
+/** 获取调休日实际应上的课表周几 */
+function getMakeupWeekday(weekday) {
+  const h = getHolidayInfo(weekday)
+  if (h?.type === 'makeup') return h.scheduleWeekday
+  return weekday
+}
+
+/** 今天是否为调休/假日（用于今日课程卡片判断） */
+function getTodayScheduleWeekday() {
+  const info = getDateHolidayInfo(todayDateStr.value)
+  if (!info) return todayWeekday.value
+  if (info.type === 'holiday') return null
+  if (info.type === 'makeup') return info.scheduleWeekday
+  return todayWeekday.value
+}
 
 // 时间射线位置计算 — 通过 DOM 实际测量行高
 function getRowTop(period) {
@@ -309,8 +345,13 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
         <table class="schedule-table">
           <thead><tr>
             <th class="period-col">节</th>
-            <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6, 'is-today': isToday(wd.key) }">
-              <div class="weekday-label">{{ wd.short }}</div><div class="weekday-date">{{ showSemester ? '' : getDateText(wd.key) }}</div>
+            <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday': isHoliday(wd.key), 'is-makeup': isMakeup(wd.key) }">
+              <div class="weekday-label">{{ wd.short }}</div>
+              <div class="weekday-date">{{ showSemester ? '' : getDateText(wd.key) }}</div>
+              <div v-if="getHolidayInfo(wd.key)" class="holiday-badge" :class="getHolidayInfo(wd.key).type">
+                <span class="holiday-icon">{{ getHolidayInfo(wd.key).icon }}</span>
+                <span class="holiday-text">{{ getHolidayInfo(wd.key).type === 'holiday' ? getHolidayInfo(wd.key).name : getHolidayInfo(wd.key).desc }}</span>
+              </div>
             </th>
           </tr></thead>
           <tbody>
@@ -318,8 +359,11 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
               <tr :class="'section-' + row.section" :data-period="row.period">
                 <td class="period-cell"><div class="period-num">{{ row.label }}</div><div class="period-time">{{ row.time }}</div><div class="period-time-end">{{ row.timeEnd }}</div></td>
                 <template v-for="wd in weekdayHeaders" :key="wd.key">
-                  <td v-if="!isCellMerged(wd.key, row.period)" :rowspan="getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
-                    :class="{ 'has-course': getCourse(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'other-week': showOtherWeek && getCourse(wd.key, row.period) && !isCourseInWeek(getCourse(wd.key, row.period), selectedWeek), 'is-flashing': flashingCourse === wd.key + '-' + row.period }"
+                  <td v-if="isHoliday(wd.key) && row.period === 1" :rowspan="12" class="course-cell is-holiday-col holiday-empty-cell">
+                    <div class="holiday-empty"><span class="holiday-empty-icon">🎉</span><span class="holiday-empty-text">{{ getHolidayInfo(wd.key)?.name }}</span><span class="holiday-empty-sub">假期停课</span></div>
+                  </td>
+                  <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
+                    :class="{ 'has-course': getCourse(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key), 'other-week': showOtherWeek && getCourse(wd.key, row.period) && !isCourseInWeek(getCourse(wd.key, row.period), selectedWeek), 'is-flashing': flashingCourse === wd.key + '-' + row.period }"
                     @click="getCourse(wd.key, row.period) && openCourseDetail(getCourse(wd.key, row.period))">
                     <div v-if="getCourse(wd.key, row.period)" class="course-card" :class="[colorMode]" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">
                       <div class="course-name">{{ getCourse(wd.key, row.period).name }}</div>
@@ -479,6 +523,22 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .weekday-col { background: var(--soft-fg); font-weight: 700; }
 .weekday-col.weekend { background: #f5f5f5; }
 .weekday-col.is-today { background: #dbeafe; }
+.weekday-col.is-holiday { background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); }
+.weekday-col.is-holiday .weekday-label { color: #dc2626; font-weight: 800; }
+.weekday-col.is-makeup { background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%); }
+.weekday-col.is-makeup .weekday-label { color: #b45309; font-weight: 800; }
+.holiday-badge { display: inline-flex; align-items: center; gap: 3px; margin: 3px auto 5px; padding: 2px 8px; border-radius: 999px; font-size: 9px; font-weight: 700; line-height: 1.4; white-space: nowrap; letter-spacing: 0.3px; }
+.holiday-badge.holiday { background: #fca5a5; color: #991b1b; }
+.holiday-badge.makeup { background: #fbbf24; color: #78350f; }
+.holiday-icon { font-size: 11px; }
+.holiday-text { font-size: 9px; }
+.holiday-empty-cell { text-align: center; vertical-align: middle; background: repeating-linear-gradient(45deg, #fef2f2, #fef2f2 10px, #fff5f5 10px, #fff5f5 20px); border-left: 2px dashed #fca5a5; border-right: 2px dashed #fca5a5; }
+.holiday-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; }
+.holiday-empty-icon { font-size: 32px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.1)); }
+.holiday-empty-text { font-size: 14px; font-weight: 800; color: #dc2626; letter-spacing: 1px; }
+.holiday-empty-sub { font-size: 11px; color: #9ca3af; font-weight: 500; }
+.makeup-cell { position: relative; }
+.makeup-cell::after { content: '📅 补'; position: absolute; top: 2px; right: 2px; font-size: 8px; font-weight: 700; color: #92400e; background: #fef3c7; padding: 0 4px; border-radius: 3px; pointer-events: none; opacity: 0.9; border: 1px solid #fbbf24; }
 .weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
 .weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
 tr[data-period="5"] .course-cell { border-top: 1px solid var(--border); }
@@ -486,6 +546,8 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }
+.course-cell.is-holiday-col { background: #fef2f2; }
+.course-cell.is-makeup-col { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
 .course-cell.has-course { cursor: pointer; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
 .course-cell.other-week { opacity: 0.5; }

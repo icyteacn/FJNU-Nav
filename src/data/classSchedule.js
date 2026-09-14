@@ -330,3 +330,48 @@ export function formatWeekdayType(type) {
   if (type === 'even') return '双周'
   return ''
 }
+
+/**
+ * 2026-2027学年节假日与调休日历
+ * type: 'holiday' = 法定假日停课, 'makeup' = 调休补课（按指定周几课表上课）
+ */
+export const HOLIDAY_MAP = {
+  // —— 中秋节 ——
+  '2026-09-25': { type: 'holiday', name: '中秋节', icon: '🥮' },
+  '2026-09-26': { type: 'holiday', name: '中秋节', icon: '🥮' },
+  '2026-09-27': { type: 'holiday', name: '中秋节', icon: '🥮' },
+  // —— 国庆节 ——
+  '2026-10-01': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-02': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-03': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-04': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-05': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-06': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-07': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  // —— 调休补课日 ——
+  '2026-09-20': { type: 'makeup', scheduleWeekday: 2, label: '补课', icon: '📅', desc: '补周二(10/6)课程' },
+  '2026-10-10': { type: 'makeup', scheduleWeekday: 3, label: '补课', icon: '📅', desc: '补周三(10/7)课程' },
+}
+
+/**
+ * 获取日期的节假日/调休信息
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {{ type, name?, label?, icon?, desc?, scheduleWeekday? } | null}
+ */
+export function getDateHolidayInfo(dateStr) {
+  return HOLIDAY_MAP[dateStr] || null
+}
+
+/**
+ * 获取某日实际应上的课表周几（处理调休）
+ * @param {number} originalWeekday 1-7（真实星期几）
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {number|null} 返回课表周几，null 表示该天停课
+ */
+export function getScheduleWeekday(originalWeekday, dateStr) {
+  const info = HOLIDAY_MAP[dateStr]
+  if (!info) return originalWeekday
+  if (info.type === 'holiday') return null
+  if (info.type === 'makeup') return info.scheduleWeekday
+  return originalWeekday
+}

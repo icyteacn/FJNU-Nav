@@ -152,7 +152,7 @@ function getTodayScheduleWeekday() {
   return todayWeekday.value
 }
 
-// 时间射线位置计算 — 通过 DOM 实际测量行高
+// 时间射线位置计算 — 基于真实课表时间精确映射，课间停在分界线
 function getRowTop(period) {
   const table = document.querySelector('.schedule-table')
   if (!table) return null
@@ -161,6 +161,16 @@ function getRowTop(period) {
   const wrapper = document.querySelector('.schedule-table-wrapper')
   if (!wrapper) return null
   return tr.getBoundingClientRect().top - wrapper.getBoundingClientRect().top
+}
+
+function getRowBottom(period) {
+  const top = getRowTop(period)
+  if (top === null) return null
+  const table = document.querySelector('.schedule-table')
+  if (!table) return null
+  const tr = table.querySelector(`tr[data-period="${period}"]`)
+  if (!tr) return null
+  return top + tr.offsetHeight
 }
 
 function getHeaderBottom() {
@@ -173,6 +183,22 @@ function getHeaderBottom() {
   return thead.getBoundingClientRect().bottom - wrapper.getBoundingClientRect().top
 }
 
+// 课表时间边界定义（分钟数，从0:00起算）
+const PERIOD_BOUNDS = [
+  { start: 8*60+20, end: 9*60+5,   row: 1 },   // 第1节 08:20-09:05
+  { start: 9*60+15, end: 10*60,     row: 2 },   // 第2节 09:15-10:00
+  { start: 10*60+20, end: 11*60+5,  row: 3 },   // 第3节 10:20-11:05
+  { start: 11*60+15, end: 12*60,     row: 4 },   // 第4节 11:15-12:00
+  { start: 14*60,     end: 14*60+45, row: 5 },   // 第5节 14:00-14:45
+  { start: 14*60+55, end: 15*60+40, row: 6 },   // 第6节 14:55-15:40
+  { start: 15*60+50, end: 16*60+35, row: 7 },   // 第7节 15:50-16:35
+  { start: 16*60+45, end: 17*60+30, row: 8 },   // 第8节 16:45-17:30
+  { start: 18*60+30, end: 19*60+15, row: 9 },   // 第9节 18:30-19:15
+  { start: 19*60+25, end: 20*60+10, row: 10 },  // 第10节 19:25-20:10
+  { start: 20*60+20, end: 21*60+5,  row: 11 },  // 第11节 20:20-21:05
+  { start: 21*60+15, end: 22*60,     row: 12 },  // 第12节 21:15-22:00
+]
+
 const timeLinePos = computed(() => {
   if (!highlightToday.value || !mounted.value) return null
   const today = new Date()
@@ -180,31 +206,35 @@ const timeLinePos = computed(() => {
   const t = h * 60 + m
   if (t < 8 * 60 + 20 || t >= 22 * 60) return null
 
-  const p5Top = getRowTop(5)
   const headerBottom = getHeaderBottom()
-  if (p5Top === null || !headerBottom) return null
+  if (!headerBottom) return null
 
-  const rowHeight = (p5Top - headerBottom) / 4
-  const lunchBoundary = p5Top
+  const now = new Date()
 
-  if (t < 12 * 60) {
-    const mins = t - (8 * 60 + 20)
-    const row = Math.floor(mins / 45)
-    const offset = (mins % 45) / 45
-    return headerBottom + (row + offset) * rowHeight
-  } else if (t < 14 * 60) {
-    return lunchBoundary
-  } else if (t < 17 * 60 + 30) {
-    const mins = t - (14 * 60)
-    const row = Math.floor(mins / 45) + 4
-    const offset = (mins % 45) / 45
-    return headerBottom + (row + offset) * rowHeight
-  } else {
-    const mins = t - (18 * 60 + 30)
-    const row = Math.floor(mins / 45) + 8
-    const offset = (mins % 45) / 45
-    return headerBottom + (row + offset) * rowHeight
+  // 查找当前时间所在的节次
+  for (const bound of PERIOD_BOUNDS) {
+    if (t >= bound.start && t < bound.end) {
+      // 在上课中 — 精确计算节内位置
+      const top = getRowTop(bound.row)
+      const bottom = getRowBottom(bound.row)
+      if (top === null || bottom === null) return null
+      const progress = (t - bound.start) / (bound.end - bound.start)
+      return top + progress * (bottom - top)
+    }
   }
+
+  // 课间/午休/晚休 — 停在上一节的底部（分界线）
+  // 找到当前时间之前最近的那节课
+  for (let i = PERIOD_BOUNDS.length - 1; i >= 0; i--) {
+    const bound = PERIOD_BOUNDS[i]
+    if (t >= bound.end) {
+      const bottom = getRowBottom(bound.row)
+      if (bottom === null) return null
+      return bottom
+    }
+  }
+
+  return headerBottom
 })
 
 const timeLineWeekday = computed(() => {
@@ -566,7 +596,7 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 /* 时间射线 - 只在当日列内显示 */
 .time-line { position: absolute; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
 .time-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
-.time-label { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.time-label { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px 0 0 4px; white-space: nowrap; }
 
 /* 列表 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }
@@ -633,6 +663,6 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .course-location, .course-teacher { font-size: calc(8px * var(--font-scale)); }
   .list-view { padding: 0 8px; }
   .time-line::before { width: 8px; height: 8px; left: -4px; top: -3px; }
-  .time-label { font-size: 9px; padding: 1px 4px; }
+  .time-label { font-size: 9px; padding: 1px 4px; border-radius: 3px 0 0 3px; }
 }
 </style>

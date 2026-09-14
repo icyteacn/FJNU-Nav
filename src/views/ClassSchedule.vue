@@ -458,6 +458,69 @@ function doAddCourse() {
   showAddModal.value = false
 }
 
+// ========== 编辑课程 ==========
+const showEditModal = ref(false)
+const editForm = ref({})
+const editTarget = ref(null)
+
+function openEditModal(course) {
+  if (!course) return
+  editTarget.value = course
+  const [ws, we] = (course.weeks || '1-18').split('-').map(Number)
+  editForm.value = {
+    name: course.name,
+    location: course.location,
+    teacher: course.teacher || '',
+    weekday: course.weekday,
+    startPeriod: course.startPeriod,
+    endPeriod: course.endPeriod,
+    weekStart: ws,
+    weekEnd: we,
+    weekdayType: course.weekdayType || 'all',
+    id: course.id || '',
+    category: course.category || '自定义课程',
+    credits: course.credits || 2,
+    hours: course.hours || 32,
+  }
+  showDetail.value = false
+  showEditModal.value = true
+}
+function doEditCourse() {
+  const f = editForm.value
+  const c = editTarget.value
+  if (!f.name.trim() || !f.location.trim() || !c) return
+  const updated = {
+    ...c,
+    name: f.name.trim(),
+    id: f.id.trim() || c.id,
+    teacher: f.teacher.trim() || '待定',
+    location: f.location.trim(),
+    weeks: f.weekStart + '-' + f.weekEnd,
+    weekdayType: f.weekdayType,
+    startPeriod: f.startPeriod,
+    endPeriod: f.endPeriod,
+    weekday: f.weekday,
+    credits: f.credits || 2,
+    hours: f.hours || 32,
+    category: f.category || '自定义课程',
+  }
+  if (c._custom) {
+    const idx = customCourses.value.findIndex(x => x._id === c._id)
+    if (idx !== -1) customCourses.value[idx] = updated
+    saveCustomCourses(customCourses.value)
+  } else {
+    const existing = customCourses.value.find(x => x._editId === c.id && x.major === c.major)
+    if (existing) {
+      const idx = customCourses.value.findIndex(x => x._editId === c.id && x.major === c.major)
+      customCourses.value[idx] = updated
+    } else {
+      customCourses.value.push({ ...updated, _editId: c.id, _custom: true })
+    }
+    saveCustomCourses(customCourses.value)
+  }
+  showEditModal.value = false
+}
+
 // ========== 联动跳转 ==========
 function goClassroomNav(room) {
   setNavContext({ room })
@@ -648,6 +711,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
           <button class="detail-action-btn eat-what-btn" @click="goWhatToEat()">🍽️ 吃什么</button>
         </div>
         <div class="detail-footer">
+          <button class="btn-edit" @click="openEditModal(selectedCourse)">✏️ 编辑课程</button>
           <button class="btn-delete" @click="confirmDeleteCourse(selectedCourse)">🗑️ 删除课程</button>
           <button class="btn-close" @click="showDetail = false">关闭</button>
         </div>
@@ -746,6 +810,86 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
         <div class="add-footer">
           <button class="btn-cancel" @click="showAddModal = false">取消</button>
           <button class="btn-save" @click="doAddCourse" :disabled="!addForm.name.trim() || !addForm.location.trim()">添加课程</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑课程 -->
+    <div v-if="showEditModal" class="overlay" @click.self="showEditModal = false">
+      <div class="add-modal">
+        <div class="add-header">✏️ 编辑课程</div>
+        <div class="add-body">
+          <div class="form-section"><div class="form-label">必填信息</div></div>
+          <div class="form-row"><label>课程名称</label><input v-model="editForm.name" placeholder="如：高等数学"></div>
+          <div class="form-row"><label>上课地点</label><input v-model="editForm.location" placeholder="如：笃行1-201"></div>
+          <div class="form-row">
+            <label>星期几</label>
+            <div class="select-grid">
+              <button v-for="d in 7" :key="d" class="select-btn" :class="{ active: editForm.weekday === d }" @click="editForm.weekday = d">{{ ['一','二','三','四','五','六','日'][d-1] }}</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>节次</label>
+            <div class="period-select">
+              <div class="select-group">
+                <span class="select-label">开始</span>
+                <div class="select-grid compact">
+                  <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: editForm.startPeriod === p }" @click="editForm.startPeriod = p; if(editForm.endPeriod < p) editForm.endPeriod = p">{{ p }}</button>
+                </div>
+              </div>
+              <div class="select-group">
+                <span class="select-label">结束</span>
+                <div class="select-grid compact">
+                  <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: editForm.endPeriod === p }" :disabled="p < editForm.startPeriod" @click="editForm.endPeriod = p">{{ p }}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>上课周次</label>
+            <div class="week-range-select">
+              <div class="select-group">
+                <span class="select-label">第</span>
+                <div class="select-grid compact scroll">
+                  <button v-for="w in 18" :key="w" class="select-btn sm" :class="{ active: editForm.weekStart === w }" @click="editForm.weekStart = w; if(editForm.weekEnd < w) editForm.weekEnd = w">{{ w }}</button>
+                </div>
+                <span class="select-label">周</span>
+              </div>
+              <div class="select-group">
+                <span class="select-label">至 第</span>
+                <div class="select-grid compact scroll">
+                  <button v-for="w in 18" :key="w" class="select-btn sm" :class="{ active: editForm.weekEnd === w }" :disabled="w < editForm.weekStart" @click="editForm.weekEnd = w">{{ w }}</button>
+                </div>
+                <span class="select-label">周</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>单双周</label>
+            <div class="select-grid three">
+              <button class="select-btn" :class="{ active: editForm.weekdayType === 'all' }" @click="editForm.weekdayType = 'all'">全部</button>
+              <button class="select-btn" :class="{ active: editForm.weekdayType === 'odd' }" @click="editForm.weekdayType = 'odd'">单周</button>
+              <button class="select-btn" :class="{ active: editForm.weekdayType === 'even' }" @click="editForm.weekdayType = 'even'">双周</button>
+            </div>
+          </div>
+          <div class="form-section"><div class="form-label">选填信息</div></div>
+          <div class="form-row"><label>任课教师</label><input v-model="editForm.teacher" placeholder="选填"></div>
+          <div class="form-row"><label>课程编号</label><input v-model="editForm.id" placeholder="选填"></div>
+          <div class="form-row"><label>课程类别</label>
+            <div class="select-grid three">
+              <button class="select-btn" :class="{ active: editForm.category === '专业必修课' }" @click="editForm.category = '专业必修课'">专业必修</button>
+              <button class="select-btn" :class="{ active: editForm.category === '专业选修课' }" @click="editForm.category = '专业选修课'">专业选修</button>
+              <button class="select-btn" :class="{ active: editForm.category === '公共必修课' }" @click="editForm.category = '公共必修课'">公共必修</button>
+            </div>
+          </div>
+          <div class="form-row inline">
+            <div class="inline-field"><label>学分</label><input v-model.number="editForm.credits" type="number" min="0" step="0.5"></div>
+            <div class="inline-field"><label>学时</label><input v-model.number="editForm.hours" type="number" min="0" step="2"></div>
+          </div>
+        </div>
+        <div class="add-footer">
+          <button class="btn-cancel" @click="showEditModal = false">取消</button>
+          <button class="btn-save" @click="doEditCourse" :disabled="!editForm.name.trim() || !editForm.location.trim()">保存修改</button>
         </div>
       </div>
     </div>
@@ -938,6 +1082,8 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .btn-close { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--soft-fg); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn-delete { padding: 12px 16px; border: none; border-radius: 8px; background: #fee2e2; color: #dc2626; font-size: 14px; font-weight: 700; cursor: pointer; }
 .btn-delete:hover { background: #fecaca; }
+.btn-edit { padding: 12px 16px; border: none; border-radius: 8px; background: #e0f2fe; color: #0369a1; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-edit:hover { background: #bae6fd; }
 .detail-actions { padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px dashed var(--border); }
 .detail-action-btn { flex: 1; min-width: calc(50% - 3px); padding: 10px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
 .detail-action-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }

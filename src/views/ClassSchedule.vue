@@ -59,7 +59,12 @@ const weekdayHeaders = computed(() => WEEKDAYS)
 const todayWeekday = computed(() => { const d = now.value.getDay(); return d === 0 ? 7 : d })
 const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
 
-const allCourses = computed(() => [...COURSES, ...customCourses.value.filter(c => c.major === selectedMajor.value)].filter(c => !deletedCourses.value.includes(c.id)))
+const allCourses = computed(() => {
+  const editedIds = new Set(customCourses.value.filter(c => c._editId).map(c => c._editId))
+  const base = COURSES.filter(c => !editedIds.has(c.id))
+  const custom = customCourses.value.filter(c => c.major === selectedMajor.value)
+  return [...base, ...custom].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
+})
 const majorCourses = computed(() => allCourses.value.filter(c => c.major === selectedMajor.value))
 
 const todayCourses = computed(() => {
@@ -462,6 +467,9 @@ function doAddCourse() {
 const showEditModal = ref(false)
 const editForm = ref({})
 const editTarget = ref(null)
+const editScope = ref('all')
+const showEditScopeConfirm = ref(false)
+const pendingEditData = ref(null)
 
 function openEditModal(course) {
   if (!course) return
@@ -495,7 +503,6 @@ function doEditCourse() {
     id: f.id.trim() || c.id,
     teacher: f.teacher.trim() || '待定',
     location: f.location.trim(),
-    weeks: f.weekStart + '-' + f.weekEnd,
     weekdayType: f.weekdayType,
     startPeriod: f.startPeriod,
     endPeriod: f.endPeriod,
@@ -504,21 +511,35 @@ function doEditCourse() {
     hours: f.hours || 32,
     category: f.category || '自定义课程',
   }
+  pendingEditData.value = updated
+  showEditModal.value = false
+  showEditScopeConfirm.value = true
+  editScope.value = 'all'
+}
+function doConfirmEdit() {
+  const updated = pendingEditData.value
+  const c = editTarget.value
+  if (!updated || !c) { showEditScopeConfirm.value = false; return }
+  if (editScope.value === 'week') {
+    updated.weeks = selectedWeek.value + '-' + selectedWeek.value
+  } else {
+    updated.weeks = editForm.value.weekStart + '-' + editForm.value.weekEnd
+  }
   if (c._custom) {
     const idx = customCourses.value.findIndex(x => x._id === c._id)
-    if (idx !== -1) customCourses.value[idx] = updated
-    saveCustomCourses(customCourses.value)
+    if (idx !== -1) customCourses.value[idx] = { ...updated, _custom: true, _id: c._id }
+    else customCourses.value.push({ ...updated, _custom: true, _id: c._id })
   } else {
-    const existing = customCourses.value.find(x => x._editId === c.id && x.major === c.major)
-    if (existing) {
-      const idx = customCourses.value.findIndex(x => x._editId === c.id && x.major === c.major)
-      customCourses.value[idx] = updated
+    const existingIdx = customCourses.value.findIndex(x => x._editId === c.id && x.major === c.major)
+    if (existingIdx !== -1) {
+      customCourses.value[existingIdx] = { ...updated, _custom: true, _editId: c.id }
     } else {
-      customCourses.value.push({ ...updated, _editId: c.id, _custom: true })
+      customCourses.value.push({ ...updated, _custom: true, _editId: c.id })
     }
-    saveCustomCourses(customCourses.value)
   }
-  showEditModal.value = false
+  saveCustomCourses(customCourses.value)
+  showEditScopeConfirm.value = false
+  pendingEditData.value = null
 }
 
 // ========== 联动跳转 ==========
@@ -730,6 +751,22 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
         <div class="confirm-actions">
           <button class="btn-cancel" @click="showDeleteConfirm = false">取消</button>
           <button class="btn-danger" @click="doDeleteCourse">确认删除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑范围确认 -->
+    <div v-if="showEditScopeConfirm" class="overlay" @click.self="showEditScopeConfirm = false">
+      <div class="confirm-modal">
+        <div class="confirm-title">✏️ 编辑课程</div>
+        <div class="confirm-desc">确定要修改「{{ pendingEditData?.name }}」吗？</div>
+        <div class="confirm-scope">
+          <label class="scope-option"><input type="radio" v-model="editScope" value="all"><span>修改整个学期的该课程</span></label>
+          <label class="scope-option"><input type="radio" v-model="editScope" value="week"><span>仅修改第{{ selectedWeek }}周的该课程</span></label>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="showEditScopeConfirm = false">取消</button>
+          <button class="btn-primary" @click="doConfirmEdit">确认修改</button>
         </div>
       </div>
     </div>
@@ -1104,6 +1141,8 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .confirm-actions .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; }
 .btn-danger { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #dc2626; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
 .btn-danger:hover { background: #b91c1c; }
+.btn-primary { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-primary:hover { background: color-mix(in srgb, var(--primary) 80%, #000); }
 
 /* 添加课程弹窗 */
 .add-modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 480px; max-height: 85vh; display: flex; flex-direction: column; }

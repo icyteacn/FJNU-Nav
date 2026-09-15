@@ -161,9 +161,6 @@ function getCourse(weekday, period) {
   const incoming = getIncomingCourse(ds, period)
   if (incoming) return incoming
   const effectiveWd = getMakeupWeekday(weekday)
-  if (effectiveWd !== weekday) {
-    return allCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
-  }
   return displayCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
 }
 function getCourseSpan(course) { return course ? (course.endPeriod - course.startPeriod + 1) : 1 }
@@ -175,9 +172,6 @@ function isCellMerged(weekday, period) {
     return displayCourses.value.some(c => c.weekday === incoming.weekday && period > c.startPeriod && period <= c.endPeriod)
   }
   const effectiveWd = getMakeupWeekday(weekday)
-  if (effectiveWd !== weekday) {
-    return allCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
-  }
   return displayCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
 }
 function isToday(weekday) { if (!highlightToday.value) return false; const date = getDateInWeek(selectedWeek.value, weekday); return date.toISOString().slice(0, 10) === todayDateStr.value }

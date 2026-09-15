@@ -1068,7 +1068,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
 .weekday-col { background: var(--soft-fg); font-weight: 700; }
 .weekday-col.weekend { background: #f5f5f5; }
-.weekday-col.is-today { background: #dbeafe; border-left: 3px solid var(--primary); }
+.weekday-col.is-today { background: #dbeafe; }
 .weekday-col.is-holiday { background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); }
 .weekday-col.is-holiday .weekday-label { color: #dc2626; font-weight: 800; }
 .weekday-col.is-makeup { background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%); }
@@ -1088,10 +1088,9 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
 tr[data-period="5"] .course-cell { border-top: 1px solid var(--border); }
 tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
-.course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; position: relative; }
+.course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }
-.course-cell.is-today::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); border-radius: 0 2px 2px 0; }
 .course-cell.is-holiday-col { background: #fef2f2; }
 .course-cell.is-makeup-col { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
 .course-cell.has-course { cursor: pointer; }

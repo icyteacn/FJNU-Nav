@@ -66,8 +66,8 @@ const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullY
 
 const allCourses = computed(() => {
   const editedIds = new Set(customCourses.value.filter(c => c._editId).map(c => c._editId))
-  const base = COURSES.filter(c => !editedIds.has(c.id) && (props.showMajorSelector ? c.major === selectedMajor.value : true))
-  const custom = customCourses.value.filter(c => props.showMajorSelector ? c.major === selectedMajor.value : true)
+  const base = COURSES.filter(c => !editedIds.has(c.id) && c.major === selectedMajor.value)
+  const custom = customCourses.value.filter(c => c.major === selectedMajor.value)
   return [...base, ...custom].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
 })
 const majorCourses = computed(() => allCourses.value.filter(c => c.major === selectedMajor.value))

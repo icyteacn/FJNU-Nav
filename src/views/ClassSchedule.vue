@@ -631,7 +631,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
       <div class="header-top">
         <button class="back-btn" @click="emit('back')">← 返回</button>
         <div class="header-title">📚 课程表</div>
-        <button class="view-toggle" @click="viewMode = viewMode === 'grid' ? '📋 列表' : '📊 表格'">{{ viewMode === 'grid' ? '📋 列表' : '📊 表格' }}</button>
+        <button class="view-toggle" @click="viewMode = viewMode === 'grid' ? 'list' : 'grid'">{{ viewMode === 'grid' ? '📋 列表' : '📊 表格' }}</button>
       </div>
       <div class="header-stats">
         <div class="stat-item"><span class="stat-value">{{ showSemester ? '学期' : '第' + selectedWeek + '周' }}</span><span class="stat-label">{{ showSemester ? '全部课程' : getWeekRange() }}</span></div>
@@ -1088,7 +1088,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .search-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); font-size: 14px; outline: none; box-sizing: border-box; }
 .search-input:focus { border-color: var(--primary); }
 
-.week-selector { padding: 0 12px; margin-top: 10px; margin-bottom: 8px; }
+.week-selector { padding: 0 12px; margin-top: 10px; margin-bottom: 4px; }
 .week-nav { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; }
 .week-nav-btn { width: 32px; height: 32px; border: none; border-radius: 50%; background: var(--soft-fg); color: var(--text); font-size: 18px; cursor: pointer; }
 .week-nav-btn:hover:not(:disabled) { background: var(--primary); color: #fff; }

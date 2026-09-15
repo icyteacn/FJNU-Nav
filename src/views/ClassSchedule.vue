@@ -379,6 +379,8 @@ async function doSave() {
     if (!el) return
     const timeLine = el.querySelector('.time-line')
     if (timeLine) timeLine.style.display = 'none'
+    const badgeEls = el.querySelectorAll('.holiday-badge')
+    badgeEls.forEach(b => { b.style.cssText = 'display:inline-flex!important;visibility:visible!important;overflow:visible!important;opacity:1!important;' })
     const restoredCells = []
     el.querySelectorAll('td[rowspan]').forEach(cell => {
       const rs = parseInt(cell.getAttribute('rowspan'))
@@ -405,6 +407,7 @@ async function doSave() {
     const canvas = await window.html2canvas(el, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
     restoredCells.forEach(cell => { cell.setAttribute('rowspan', cell.getAttribute('data-ors')); cell.removeAttribute('data-ors') })
     el.querySelectorAll('[data-ph]').forEach(td => td.remove())
+    badgeEls.forEach(b => { b.style.cssText = '' })
     if (timeLine) timeLine.style.display = ''
     const link = document.createElement('a')
     const majorLabel = MAJORS.find(m => m.key === selectedMajor.value)?.short || '课表'
@@ -1098,7 +1101,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .weekday-col.is-holiday .weekday-label { color: #dc2626; font-weight: 800; }
 .weekday-col.is-makeup { background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%); }
 .weekday-col.is-makeup .weekday-label { color: #b45309; font-weight: 800; }
-.holiday-badge { display: inline-flex; align-items: center; gap: 3px; margin: 3px auto 5px; padding: 2px 8px; border-radius: 999px; font-size: 9px; font-weight: 700; line-height: 1.4; white-space: nowrap; letter-spacing: 0.3px; }
+.holiday-badge { display: inline-flex; align-items: center; gap: 3px; margin: 3px auto 5px; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1.4; white-space: nowrap; letter-spacing: 0.3px; position: relative; z-index: 1; }
 .holiday-badge.holiday { background: #fca5a5; color: #991b1b; }
 .holiday-badge.makeup { background: #fbbf24; color: #78350f; }
 .holiday-icon { font-size: 11px; }

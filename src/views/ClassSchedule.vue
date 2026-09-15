@@ -641,7 +641,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     </div>
 
     <!-- 专业选择 -->
-    <div v-if="showMajorSelector" class="major-selector">
+    <div v-if="showMajorSelector" class="major-selector" data-tour="tt-major-selector">
       <button v-for="m in MAJORS" :key="m.key" class="major-chip" :class="{ active: selectedMajor === m.key }" :style="{ '--chip-color': m.color }" @click="selectedMajor = m.key">{{ m.short }}</button>
     </div>
 
@@ -671,7 +671,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     <div class="search-bar"><input class="search-input" v-model="searchKw" placeholder="🔍 搜索课程、教师、教室…" /></div>
 
     <!-- 周次选择 -->
-    <div v-if="!showSemester" class="week-selector">
+    <div v-if="!showSemester" class="week-selector" data-tour="tt-week-selector">
       <div class="week-nav">
         <button class="week-nav-btn" :disabled="selectedWeek <= 1" @click="selectedWeek--">‹</button>
         <div class="week-current"><span class="week-num">第{{ selectedWeek }}周</span><span class="week-date">{{ getWeekRange() }}</span></div>
@@ -681,7 +681,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     </div>
 
     <!-- 控制行 -->
-    <div class="control-row">
+    <div class="control-row" data-tour="tt-controls">
       <button v-for="t in COURSE_TYPES" :key="t.key" class="type-chip" :class="{ active: typeFilter === t.key }" :style="{ '--type-color': t.color }" @click="typeFilter = t.key">{{ t.label }}</button>
       <button class="opt-btn" :class="{ active: colorMode === 'color' }" @click="colorMode = colorMode === 'white' ? 'color' : 'white'">{{ colorMode === 'white' ? '🎨 彩色' : '📄 白色' }}</button>
       <button class="opt-btn" :class="{ active: highlightToday }" @click="highlightToday = !highlightToday">{{ highlightToday ? '✨ 高亮' : '⬜ 高亮' }}</button>
@@ -697,7 +697,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 
     <!-- 表格 -->
     <div v-if="viewMode === 'grid'" class="grid-view">
-      <div class="schedule-table-wrapper" :style="{ '--font-scale': fontSize / 100 }">
+      <div class="schedule-table-wrapper" :style="{ '--font-scale': fontSize / 100 }" data-tour="tt-table">
         <table class="schedule-table">
           <thead><tr>
             <th class="period-col">节</th>

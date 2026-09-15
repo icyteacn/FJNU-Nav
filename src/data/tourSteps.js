@@ -192,13 +192,56 @@ export const timetableTour = [
     content: '点击这里可以随时返回首页。',
     placement: 'bottom',
     icon: '🏠'
+  }
+]
+
+/** 课程表 - 研究生课表子页面引导 */
+export const timetableGraduateTour = [
+  {
+    target: '[data-tour="tt-major-selector"]',
+    title: '专业选择',
+    content: '切换不同研究生专业的课表，默认显示计科学硕。',
+    placement: 'bottom',
+    icon: '🎓'
   },
   {
-    target: '.panel',
+    target: '[data-tour="tt-week-selector"]',
+    title: '周次切换',
+    content: '选择不同教学周查看当周课表，支持快捷跳转。',
+    placement: 'bottom',
+    icon: '📅'
+  },
+  {
+    target: '[data-tour="tt-controls"]',
+    title: '课表控制',
+    content: '彩色/白色模式、高亮今日、学期/周课表切换、字体缩放、保存截图。',
+    placement: 'top',
+    icon: '⚙️'
+  },
+  {
+    target: '[data-tour="tt-table"]',
+    title: '课表网格',
+    content: '点击空格可添加课程，点击课程查看详情。支持编辑、删除、教室导航联动。',
+    placement: 'top',
+    icon: '📊'
+  }
+]
+
+/** 课程表 - 全校总表子页面引导 */
+export const timetableSchoolTour = [
+  {
+    target: '[data-tour="tt-search"]',
     title: '查询课程',
     content: '输入班级、教室或教师姓名，快速查询课程安排。',
     placement: 'bottom',
     icon: '🔍'
+  },
+  {
+    target: '[data-tour="tt-filters"]',
+    title: '筛选条件',
+    content: '按年级、专业、周次筛选，支持班级/教室/教师三种查询维度。',
+    placement: 'bottom',
+    icon: '🏷️'
   }
 ]
 
@@ -457,7 +500,20 @@ export const tourMap = {
   leaderTest: leaderTestTour
 }
 
+/** 子页面引导映射：key = 页面ID，value = { [subPageId]: steps } */
+export const subTourMap = {
+  timetable: {
+    graduate: timetableGraduateTour,
+    school: timetableSchoolTour
+  }
+}
+
 /** 获取某个页面的引导步骤 */
 export function getTourSteps(pageId) {
   return tourMap[pageId] || null
+}
+
+/** 获取某个页面子页面的引导步骤 */
+export function getSubTourSteps(pageId, subPageId) {
+  return subTourMap[pageId]?.[subPageId] || null
 }

@@ -5,15 +5,33 @@
  * 视图注册、路由解析、导航逻辑集中在 src/router.js；
  * 品牌、版权、文案集中在 src/config/site.js。此处只做组装。
  */
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick, provide } from 'vue'
 import Welcome from './views/Welcome.vue'
 import TourOverlay from './components/TourOverlay.vue'
 import { SITE } from './config/site'
 import { NAV_APPS, useViewState, preloadPopular } from './router'
 import { useTour } from './utils/useTour'
-import { getTourSteps } from './data/tourSteps'
+import { getTourSteps, getSubTourSteps } from './data/tourSteps'
 
-const { startTour, isTourCompleted, isActive } = useTour()
+const { startTour, isTourCompleted, isActive, markTourCompleted } = useTour()
+
+/** 子页面引导：子组件通过 provide 注入的函数报告当前子页面 */
+const currentSubPage = ref(null)
+function setSubTour(subPageId) {
+  currentSubPage.value = subPageId
+  if (!isActive.value && current.value && isTourCompleted(current.value) && subPageId) {
+    const subKey = current.value + '.' + subPageId
+    if (!isTourCompleted(subKey)) {
+      const steps = getSubTourSteps(current.value, subPageId)
+      if (steps) {
+        nextTick(() => {
+          setTimeout(() => startTour(subKey, steps), 400)
+        })
+      }
+    }
+  }
+}
+provide('setSubTour', setSubTour)
 
 /** 会话级初始页：每次新开浏览器先展示欢迎页，进入后本会话不再打扰 */
 const stage = ref(sessionStorage.getItem('fjnu_welcome_seen') ? 'main' : 'welcome')
@@ -59,9 +77,16 @@ const { current, currentComp, openApp, goHome, loadingView } = useViewState()
 
 /** 新手引导：首次访问自动触发，之后可通过按钮触发 */
 function triggerTour() {
-  const steps = getTourSteps(current.value)
-  if (steps) {
-    startTour(current.value, steps)
+  const page = current.value
+  const steps = getTourSteps(page)
+  if (steps && !isTourCompleted(page)) {
+    startTour(page, steps)
+  } else if (page && isTourCompleted(page) && currentSubPage.value) {
+    const subKey = page + '.' + currentSubPage.value
+    if (!isTourCompleted(subKey)) {
+      const subSteps = getSubTourSteps(page, currentSubPage.value)
+      if (subSteps) startTour(subKey, subSteps)
+    }
   }
 }
 

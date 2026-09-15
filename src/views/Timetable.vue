@@ -4,7 +4,7 @@
  *  灵感参考：https://nfs.pcdawn.cn/app/timetable（NextFStar 周视图网格 + 实时时间线）
  *  本项目保留原有班级/教室/教师三维查询 + 周视图/列表视图切换，未完全复刻课程编辑器和分享功能。
  */
-import { ref, shallowRef, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted, onUnmounted, nextTick, inject } from 'vue'
 import { apiFetch } from '../api/index'
 import { loadSnap } from '../api/localCourse'
 import { loadTimetableMeta, loadTermRows } from '../api/termTimetable'
@@ -16,10 +16,14 @@ import { COURSES as GRAD_COURSES, MAJORS, SINGLE_PERIOD_TIMES, TABLE_ROWS } from
 
 const emit = defineEmits(['back', 'open'])
 
+const setSubTour = inject('setSubTour', () => {})
+
 const mainTab = ref('graduate') // 'graduate' | 'school'
 const tab = ref('class')
 const kw = ref('')
 const snap = ref(null)
+
+watch(mainTab, (val) => { setSubTour(val) }, { immediate: true })
 
 const now = ref(new Date())
 const tick = setInterval(() => { now.value = new Date() }, 1000)
@@ -439,7 +443,7 @@ function goCanteen() {
     </div>
 
   <!-- 主标签页：研究生课表 / 全校课表 -->
-  <div class="main-tabs">
+  <div class="main-tabs" data-tour="tt-tabs">
     <button class="main-tab" :class="{ active: mainTab === 'graduate' }" @click="mainTab = 'graduate'">📚 2026级研究生课表</button>
     <button class="main-tab" :class="{ active: mainTab === 'school' }" @click="mainTab = 'school'">🏫 全校课程总表</button>
   </div>
@@ -553,7 +557,7 @@ function goCanteen() {
       <div v-if="semesters.length > 1" class="tab-row" style="margin-top:10px;">
         <button v-for="t in semesters" :key="t" class="tab" :class="{ active: term === t }" @click="switchTerm(t)">{{ t }}</button>
       </div>
-      <div class="tab-row" style="margin-top:10px;">
+      <div class="tab-row" style="margin-top:10px;" data-tour="tt-search">
         <button class="tab" :class="{ active: tab === 'class' }" @click="switchTab('class')">班级课表</button>
         <button class="tab" :class="{ active: tab === 'room' }" @click="switchTab('room')">教室课表</button>
         <button class="tab" :class="{ active: tab === 'teacher' }" @click="switchTab('teacher')">教师课表</button>
@@ -565,7 +569,7 @@ function goCanteen() {
         可直接点选下方{{ sourceName }}，或用关键字搜索。例如班级「23高材」、教室「博学楼307」。
       </div>
       <template v-if="tab === 'class'">
-        <div class="tab-row" style="flex-wrap:wrap;gap:6px;margin-top:10px;">
+        <div class="tab-row" style="flex-wrap:wrap;gap:6px;margin-top:10px;" data-tour="tt-filters">
           <button class="tab" :class="{ active: gradeFilter === '' }" @click="gradeFilter = ''">全部年级</button>
           <button v-for="y in years" :key="y" class="tab" :class="{ active: gradeFilter === y }" @click="gradeFilter = y">{{ y }}级</button>
         </div>

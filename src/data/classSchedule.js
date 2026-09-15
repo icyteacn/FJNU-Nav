@@ -365,12 +365,27 @@ export const HOLIDAY_MAP = {
 }
 
 /**
- * 获取日期的节假日/调休信息
+ * 获取日期的节假日/调休信息（合并用户自定义覆盖）
  * @param {string} dateStr YYYY-MM-DD
  * @returns {{ type, name?, label?, icon?, desc?, scheduleWeekday? } | null}
  */
 export function getDateHolidayInfo(dateStr) {
+  const userOverride = loadUserOverrides()[dateStr]
+  if (userOverride) return userOverride
   return HOLIDAY_MAP[dateStr] || null
+}
+
+const USER_OVERRIDE_KEY = 'fjnu_day_overrides'
+export function loadUserOverrides() {
+  try { return JSON.parse(localStorage.getItem(USER_OVERRIDE_KEY) || '{}') } catch { return {} }
+}
+export function saveUserOverride(dateStr, override) {
+  const all = loadUserOverrides()
+  if (override === null) { delete all[dateStr] } else { all[dateStr] = override }
+  try { localStorage.setItem(USER_OVERRIDE_KEY, JSON.stringify(all)) } catch {}
+}
+export function clearUserOverrides() {
+  try { localStorage.removeItem(USER_OVERRIDE_KEY) } catch {}
 }
 
 /**

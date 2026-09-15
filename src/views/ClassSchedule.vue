@@ -13,6 +13,7 @@ import {
   formatWeekdayType,
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
+  loadUserOverrides, saveUserOverride,
 } from '../data/classSchedule'
 import { setNavContext } from '../stores/navContext'
 
@@ -567,6 +568,44 @@ function doResetAll() {
   showResetConfirm.value = false
 }
 
+// ========== 编辑周几（补课/停课） ==========
+const showDayEdit = ref(false)
+const dayEditTarget = ref(null)
+const dayEditType = ref('none')
+const dayEditMakeupWd = ref(2)
+const dayEditName = ref('')
+
+function openDayEdit(weekday) {
+  dayEditTarget.value = weekday
+  const ds = dateStrOf(weekday)
+  const existing = loadUserOverrides()[ds]
+  if (existing) {
+    dayEditType.value = existing.type || 'none'
+    dayEditMakeupWd.value = existing.scheduleWeekday || 2
+    dayEditName.value = existing.name || ''
+  } else {
+    dayEditType.value = 'none'
+    dayEditMakeupWd.value = 2
+    dayEditName.value = ''
+  }
+  showDayEdit.value = true
+}
+function doDayEdit() {
+  const wd = dayEditTarget.value
+  if (!wd) return
+  const ds = dateStrOf(wd)
+  if (dayEditType.value === 'none') {
+    saveUserOverride(ds, null)
+  } else if (dayEditType.value === 'holiday') {
+    saveUserOverride(ds, { type: 'holiday', name: dayEditName.value || '停课', icon: '🚫' })
+  } else if (dayEditType.value === 'makeup') {
+    const labels = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    const label = labels[dayEditMakeupWd.value] || '周一'
+    saveUserOverride(ds, { type: 'makeup', scheduleWeekday: dayEditMakeupWd.value, icon: '📅', descShort: '补' + label + '课', desc: '补' + label })
+  }
+  showDayEdit.value = false
+}
+
 // ========== 联动跳转 ==========
 function goClassroomNav(room) {
   setNavContext({ room })
@@ -662,7 +701,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
         <table class="schedule-table">
           <thead><tr>
             <th class="period-col">节</th>
-            <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday': isHoliday(wd.key), 'is-makeup': isMakeup(wd.key) }">
+            <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday': isHoliday(wd.key), 'is-makeup': isMakeup(wd.key) }" @click.stop="openDayEdit(wd.key)" style="cursor:pointer;">
               <div class="weekday-label">{{ wd.short }}</div>
               <div class="weekday-date">{{ showSemester ? '' : getDateText(wd.key) }}</div>
               <div v-if="getHolidayInfo(wd.key)" class="holiday-badge" :class="getHolidayInfo(wd.key).type">
@@ -810,6 +849,32 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
         <div class="confirm-actions">
           <button class="btn-cancel" @click="showResetConfirm = false">取消</button>
           <button class="btn-danger" @click="doResetAll">确认恢复</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑周几（补课/停课） -->
+    <div v-if="showDayEdit" class="overlay" @click.self="showDayEdit = false">
+      <div class="confirm-modal">
+        <div class="confirm-title">📅 编辑{{ ['','周一','周二','周三','周四','周五','周六','周日'][dayEditTarget] }}</div>
+        <div class="confirm-desc">设置该天为停课、调休补课，或恢复正常。</div>
+        <div class="day-edit-options">
+          <label class="scope-option"><input type="radio" v-model="dayEditType" value="none"><span>✅ 正常上课（恢复默认）</span></label>
+          <label class="scope-option"><input type="radio" v-model="dayEditType" value="holiday"><span>🚫 停课（节假日/因事停课）</span></label>
+          <label class="scope-option"><input type="radio" v-model="dayEditType" value="makeup"><span>📅 调休补课（补某天的课）</span></label>
+        </div>
+        <div v-if="dayEditType === 'holiday'" class="form-row" style="margin-top:10px;">
+          <label>备注名称</label><input v-model="dayEditName" placeholder="如：运动会、调休">
+        </div>
+        <div v-if="dayEditType === 'makeup'" class="form-row" style="margin-top:10px;">
+          <label>补周几的课</label>
+          <div class="select-grid">
+            <button v-for="w in [1,2,3,4,5]" :key="w" class="select-btn" :class="{ active: dayEditMakeupWd === w }" @click="dayEditMakeupWd = w">{{ ['','一','二','三','四','五'][w] }}</button>
+          </div>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="showDayEdit = false">取消</button>
+          <button class="btn-primary" @click="doDayEdit">确认</button>
         </div>
       </div>
     </div>

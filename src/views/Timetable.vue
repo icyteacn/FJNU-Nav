@@ -4,7 +4,7 @@
  *  灵感参考：https://nfs.pcdawn.cn/app/timetable（NextFStar 周视图网格 + 实时时间线）
  *  本项目保留原有班级/教室/教师三维查询 + 周视图/列表视图切换，未完全复刻课程编辑器和分享功能。
  */
-import { ref, shallowRef, computed, watch, onMounted } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { apiFetch } from '../api/index'
 import { loadSnap } from '../api/localCourse'
 import { loadTimetableMeta, loadTermRows } from '../api/termTimetable'
@@ -20,6 +20,19 @@ const mainTab = ref('graduate') // 'graduate' | 'school'
 const tab = ref('class')
 const kw = ref('')
 const snap = ref(null)
+
+const now = ref(new Date())
+const tick = setInterval(() => { now.value = new Date() }, 1000)
+onUnmounted(() => clearInterval(tick))
+const mounted = ref(false)
+
+const todayDateStr = computed(() => {
+  const d = now.value
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+})
+const todayWeekday = computed(() => { const d = now.value.getDay(); return d === 0 ? 7 : d })
+
+const highlightToday = ref(true)
 /** 当前学期排课（shallowRef：数据只读，避免 Vue 深度代理 5k+ 元素数组拖慢遍历） */
 const termRows = shallowRef([])
 const loading = ref(true)
@@ -57,6 +70,7 @@ onMounted(async () => {
     term.value = d?.courseTable?.semester || ''
   }
   loading.value = false
+  nextTick(() => { mounted.value = true })
 })
 
 const semester = computed(() => snap.value?.courseTable?.semester || '')
@@ -181,6 +195,117 @@ async function switchTerm(t) {
     const d = await loadTermRows(cur.file)
     termRows.value = d.rows || []
   }
+}
+
+// ===== 时间射线 — 全校课程总表 =====
+const PERIOD_BOUNDS = [
+  { start: 8*60+20, end: 9*60+5,   row: 1 },
+  { start: 9*60+15, end: 10*60,     row: 2 },
+  { start: 10*60+20, end: 11*60+5,  row: 3 },
+  { start: 11*60+15, end: 12*60,     row: 4 },
+  { start: 14*60,     end: 14*60+45, row: 5 },
+  { start: 14*60+55, end: 15*60+40, row: 6 },
+  { start: 15*60+50, end: 16*60+35, row: 7 },
+  { start: 16*60+45, end: 17*60+30, row: 8 },
+  { start: 18*60+30, end: 19*60+15, row: 9 },
+  { start: 19*60+25, end: 20*60+10, row: 10 },
+  { start: 20*60+20, end: 21*60+5,  row: 11 },
+  { start: 21*60+15, end: 22*60,     row: 12 },
+]
+
+function getRowTop(period) {
+  const table = document.querySelector('.tt-table')
+  if (!table) return null
+  const tr = table.querySelector(`tr[data-period="${period}"]`)
+  if (!tr) return null
+  const wrapper = document.querySelector('.tt-table-wrap')
+  if (!wrapper) return null
+  return tr.getBoundingClientRect().top - wrapper.getBoundingClientRect().top
+}
+
+function getRowBottom(period) {
+  const top = getRowTop(period)
+  if (top === null) return null
+  const table = document.querySelector('.tt-table')
+  if (!table) return null
+  const tr = table.querySelector(`tr[data-period="${period}"]`)
+  if (!tr) return null
+  return top + tr.offsetHeight
+}
+
+function getHeaderBottom() {
+  const table = document.querySelector('.tt-table')
+  if (!table) return 0
+  const thead = table.querySelector('thead')
+  if (!thead) return 0
+  const wrapper = document.querySelector('.tt-table-wrap')
+  if (!wrapper) return 0
+  return thead.getBoundingClientRect().bottom - wrapper.getBoundingClientRect().top
+}
+
+const timeLinePos = computed(() => {
+  if (!highlightToday.value || !mounted.value || mainTab.value !== 'school' || !opened.value) return null
+  const cur = now.value
+  const h = cur.getHours(), m = cur.getMinutes()
+  const t = h * 60 + m
+  if (t < 8 * 60 + 20 || t >= 22 * 60) return null
+
+  const headerBottom = getHeaderBottom()
+  if (!headerBottom) return null
+
+  for (const bound of PERIOD_BOUNDS) {
+    if (t >= bound.start && t < bound.end) {
+      const top = getRowTop(bound.row)
+      const bottom = getRowBottom(bound.row)
+      if (top === null || bottom === null) return null
+      const progress = (t - bound.start) / (bound.end - bound.start)
+      return top + progress * (bottom - top)
+    }
+  }
+
+  for (let i = PERIOD_BOUNDS.length - 1; i >= 0; i--) {
+    const bound = PERIOD_BOUNDS[i]
+    if (t >= bound.end) {
+      const bottom = getRowBottom(bound.row)
+      if (bottom === null) return null
+      return bottom
+    }
+  }
+
+  return headerBottom
+})
+
+const timeLineWeekday = computed(() => {
+  if (!highlightToday.value || !mounted.value || mainTab.value !== 'school' || !opened.value) return null
+  const day = now.value.getDay()
+  return day === 0 ? 7 : day
+})
+
+function getTodayColumnLeft() {
+  const table = document.querySelector('.tt-table')
+  if (!table) return 0
+  const periodCol = table.querySelector('.tt-period-col')
+  if (!periodCol) return 0
+  const periodWidth = periodCol.offsetWidth
+  const todayIndex = dayNames.findIndex((d, i) => i + 1 === timeLineWeekday.value)
+  if (todayIndex === -1) return periodWidth
+  const cols = table.querySelectorAll('.tt-weekday-col')
+  if (cols[todayIndex]) return cols[todayIndex].offsetLeft
+  return periodWidth + todayIndex * 80
+}
+
+function getTodayColumnWidth() {
+  const table = document.querySelector('.tt-table')
+  if (!table) return 80
+  const todayIndex = dayNames.findIndex((d, i) => i + 1 === timeLineWeekday.value)
+  const cols = table.querySelectorAll('.tt-weekday-col')
+  if (cols[todayIndex]) return cols[todayIndex].offsetWidth
+  return 80
+}
+
+function isTodayCol(d) {
+  if (!highlightToday.value || !mounted.value) return false
+  return d === todayWeekday.value
 }
 
 /** 各班级/教室/教师的一次性计数表（遍历一次 curRows 建 Map，供 resultItems O(1) 查询） */
@@ -347,19 +472,19 @@ function goCanteen() {
       </div>
     </div>
     <div class="panel">
-      <div v-if="viewMode === 'grid'" class="tt-grid">
+        <div v-if="viewMode === 'grid'" class="tt-grid">
         <div class="tt-table-wrap">
           <table class="tt-table">
             <thead><tr>
               <th class="tt-period-col">节</th>
-              <th v-for="d in dayNames" :key="d" class="tt-weekday-col">{{ d }}</th>
+              <th v-for="d in dayNames" :key="d" class="tt-weekday-col" :class="{ 'is-today': isTodayCol(dayNames.indexOf(d) + 1) }">{{ d }}</th>
             </tr></thead>
             <tbody>
               <template v-for="row in TABLE_ROWS_TIMETABLE" :key="row.period">
-                <tr :class="'tt-section-' + row.section">
+                <tr :class="'tt-section-' + row.section" :data-period="row.period">
                   <td class="tt-period-cell"><div class="tt-period-num">{{ row.label }}</div><div class="tt-period-time">{{ row.time }}</div><div class="tt-period-time-end">{{ row.timeEnd }}</div></td>
                   <template v-for="(d, di) in dayNames" :key="di">
-                    <td v-if="!isCellMerged(di + 1, row.period)" :rowspan="getCourseSpan(getCourseCell(di + 1, row.period))" class="tt-course-cell" :class="{ 'has-course': getCourseCell(di + 1, row.period) }" @click="getCourseCell(di + 1, row.period) && showCourse(getCourseCell(di + 1, row.period))">
+                    <td v-if="!isCellMerged(di + 1, row.period)" :rowspan="getCourseSpan(getCourseCell(di + 1, row.period))" class="tt-course-cell" :class="{ 'has-course': getCourseCell(di + 1, row.period), 'is-today': isTodayCol(di + 1) }" @click="getCourseCell(di + 1, row.period) && showCourse(getCourseCell(di + 1, row.period))">
                       <div v-if="getCourseCell(di + 1, row.period)" class="tt-course-card" :style="{ borderLeftColor: getCourseColor(getCourseCell(di + 1, row.period)), background: getCourseColor(getCourseCell(di + 1, row.period), 0.12) }">
                         <div class="tt-course-name">{{ getCourseCell(di + 1, row.period).c }}</div>
                         <div class="tt-course-info">{{ getCourseCell(di + 1, row.period).r }}</div>
@@ -371,6 +496,9 @@ function goCanteen() {
               </template>
             </tbody>
           </table>
+          <div v-if="timeLinePos !== null && timeLineWeekday && opened" class="time-line" :style="{ top: timeLinePos + 'px', left: getTodayColumnLeft() + 'px', width: getTodayColumnWidth() + 'px' }">
+            <span class="time-label">{{ now.getHours() }}:{{ String(now.getMinutes()).padStart(2, '0') }}</span>
+          </div>
         </div>
       </div>
 
@@ -595,15 +723,22 @@ function goCanteen() {
 .tt-period-time { font-size: 7px; color: var(--text-sub); line-height: 1.1; margin-top: 1px; }
 .tt-period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
 .tt-weekday-col { background: var(--soft-fg); font-weight: 700; }
+.tt-weekday-col.is-today { background: #dbeafe; }
 .tt-weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
 .tt-section-afternoon .tt-period-cell { border-top: 2px solid var(--border); }
 .tt-section-evening .tt-period-cell { border-top: 2px solid var(--border); }
 .tt-course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
+.tt-course-cell.is-today { background: #eff6ff; }
 .tt-course-cell.has-course { cursor: pointer; }
 .tt-course-cell.has-course:hover { background: var(--primary-soft); }
 .tt-course-card { border-left: 3px solid; border-radius: 4px; padding: 4px 8px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 .tt-course-name { font-weight: 700; font-size: 11px; line-height: 1.3; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tt-course-info { font-size: 9px; color: var(--text-sub); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 时间射线 */
+.time-line { position: absolute; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
+.time-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
+.time-label { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px 0 0 4px; white-space: nowrap; }
 
 @media (max-width: 640px) {
   .tt-period-col { width: 30px; }
@@ -615,6 +750,8 @@ function goCanteen() {
   .tt-course-card { padding: 3px 5px; }
   .tt-course-name { font-size: 10px; }
   .tt-course-info { font-size: 8px; }
+  .time-line::before { width: 8px; height: 8px; left: -4px; top: -3px; }
+  .time-label { font-size: 9px; padding: 1px 4px; border-radius: 3px 0 0 3px; }
 }
 
 /* 列表视图 */

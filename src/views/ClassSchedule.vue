@@ -256,15 +256,13 @@ const PERIOD_BOUNDS = [
 
 const timeLinePos = computed(() => {
   if (!highlightToday.value || !mounted.value) return null
-  const today = now.value
-  const h = today.getHours(), m = today.getMinutes()
+  const cur = now.value
+  const h = cur.getHours(), m = cur.getMinutes()
   const t = h * 60 + m
   if (t < 8 * 60 + 20 || t >= 22 * 60) return null
 
   const headerBottom = getHeaderBottom()
   if (!headerBottom) return null
-
-  const now = new Date()
 
   // 查找当前时间所在的节次
   for (const bound of PERIOD_BOUNDS) {
@@ -294,8 +292,7 @@ const timeLinePos = computed(() => {
 
 const timeLineWeekday = computed(() => {
   if (!highlightToday.value || !mounted.value) return null
-  const today = new Date()
-  const day = today.getDay()
+  const day = now.value.getDay()
   return day === 0 ? 7 : day
 })
 

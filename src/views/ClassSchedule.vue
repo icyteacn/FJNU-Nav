@@ -16,8 +16,12 @@ import {
 } from '../data/classSchedule'
 import { setNavContext } from '../stores/navContext'
 
-const CUSTOM_KEY = 'fjnu_custom_courses'
-const DELETED_KEY = 'fjnu_deleted_courses'
+const props = defineProps({
+  storagePrefix: { type: String, default: '' }
+})
+
+const CUSTOM_KEY = (props.storagePrefix || '') + 'fjnu_custom_courses'
+const DELETED_KEY = (props.storagePrefix || '') + 'fjnu_deleted_courses'
 
 function loadCustomCourses() {
   try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]') } catch { return [] }
@@ -60,10 +64,15 @@ const todayWeekday = computed(() => { const d = now.value.getDay(); return d ===
 const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
 
 const allCourses = computed(() => {
-  const editedIds = new Set(customCourses.value.filter(c => c._editId).map(c => c._editId))
-  const base = COURSES.filter(c => !editedIds.has(c.id))
-  const custom = customCourses.value.filter(c => c.major === selectedMajor.value)
-  return [...base, ...custom].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
+  const curMajorEdits = new Map()
+  for (const c of customCourses.value) {
+    if (c._editId && c.major === selectedMajor.value) {
+      curMajorEdits.set(c._editId, c)
+    }
+  }
+  const base = COURSES.filter(c => !curMajorEdits.has(c.id))
+  const custom = customCourses.value.filter(c => c.major === selectedMajor.value && !c._editId)
+  return [...base, ...custom, ...curMajorEdits.values()].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
 })
 const majorCourses = computed(() => allCourses.value.filter(c => c.major === selectedMajor.value))
 
@@ -136,16 +145,16 @@ const nextInfo = computed(() => {
 
 /** 查找某日某节次是否有调入的课程（从别处调来） */
 function getIncomingCourse(dateStr, period) {
-  const info = getIncomingInfoFromData(dateStr, period, (wd, sp, ep) => {
-    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
+  const info = getIncomingInfoFromData(dateStr, period, (wd, sp) => {
+    return allCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
   })
   return info?.course || null
 }
 
 /** 获取某日某节次的调入信息（用于显示来源标记） */
 function getIncomingInfoLocal(dateStr, period) {
-  return getIncomingInfoFromData(dateStr, period, (wd, sp, ep) => {
-    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
+  return getIncomingInfoFromData(dateStr, period, (wd, sp) => {
+    return allCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
   })
 }
 
@@ -156,7 +165,7 @@ function getCourse(weekday, period) {
   const incoming = getIncomingCourse(ds, period)
   if (incoming) return incoming
   const effectiveWd = getMakeupWeekday(weekday)
-  return displayCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
+  return allCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
 }
 function getCourseSpan(course) { return course ? (course.endPeriod - course.startPeriod + 1) : 1 }
 function isCellMerged(weekday, period) {
@@ -164,10 +173,10 @@ function isCellMerged(weekday, period) {
   const ds = dateStrOf(weekday)
   const incoming = getIncomingCourse(ds, period)
   if (incoming) {
-    return displayCourses.value.some(c => c.weekday === incoming.weekday && period > c.startPeriod && period <= c.endPeriod)
+    return allCourses.value.some(c => c.weekday === incoming.weekday && period > c.startPeriod && period <= c.endPeriod)
   }
   const effectiveWd = getMakeupWeekday(weekday)
-  return displayCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
+  return allCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
 }
 function isToday(weekday) { if (!highlightToday.value) return false; const date = getDateInWeek(selectedWeek.value, weekday); return date.toISOString().slice(0, 10) === todayDateStr.value }
 function getCourseColor(course, alpha = 1) { if (!course) return 'transparent'; const hex = course.color || '#1565c0'; return `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${alpha})` }
@@ -366,7 +375,10 @@ async function doSave() {
     if (!window.html2canvas) { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; document.head.appendChild(s); await new Promise((r, j) => { s.onload = r; s.onerror = j }) }
     const el = document.querySelector('.schedule-table-wrapper')
     if (!el) return
+    const timeLine = el.querySelector('.time-line')
+    if (timeLine) timeLine.style.display = 'none'
     const canvas = await window.html2canvas(el, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
+    if (timeLine) timeLine.style.display = ''
     const link = document.createElement('a')
     const majorLabel = MAJORS.find(m => m.key === selectedMajor.value)?.short || '课表'
     const typeLabel = showSemester.value ? '学期' : `第${selectedWeek.value}周`
@@ -582,6 +594,11 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
         <div class="stat-item"><span class="stat-value">{{ displayCourses.length }}门</span><span class="stat-label">课程</span></div>
         <div class="stat-item"><span class="stat-value">{{ displayCourses.reduce((s, c) => s + c.credits, 0) }}</span><span class="stat-label">学分</span></div>
       </div>
+    </div>
+
+    <!-- 专业选择 -->
+    <div class="major-selector">
+      <button v-for="m in MAJORS" :key="m.key" class="major-chip" :class="{ active: selectedMajor === m.key }" :style="{ '--chip-color': m.color }" @click="selectedMajor = m.key">{{ m.short }}</button>
     </div>
 
     <!-- 下一节课 -->
@@ -965,6 +982,12 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .stat-item { text-align: center; }
 .stat-value { display: block; font-size: 16px; font-weight: 800; color: #fff; }
 .stat-label { font-size: 10px; color: rgba(255,255,255,0.8); }
+
+/* 专业选择器 */
+.major-selector { display: flex; gap: 8px; padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.major-chip { flex-shrink: 0; padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.major-chip:hover { border-color: var(--chip-color, var(--primary)); color: var(--chip-color, var(--primary)); }
+.major-chip.active { background: var(--chip-color, var(--primary)); border-color: var(--chip-color, var(--primary)); color: #fff; }
 
 /* 下一节课 */
 .next-card { margin: 12px 12px 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; }

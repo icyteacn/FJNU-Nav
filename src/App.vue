@@ -79,14 +79,8 @@ const { current, currentComp, openApp, goHome, loadingView } = useViewState()
 function triggerTour() {
   const page = current.value
   const steps = getTourSteps(page)
-  if (steps && !isTourCompleted(page)) {
+  if (steps) {
     startTour(page, steps)
-  } else if (page && isTourCompleted(page) && currentSubPage.value) {
-    const subKey = page + '.' + currentSubPage.value
-    if (!isTourCompleted(subKey)) {
-      const subSteps = getSubTourSteps(page, currentSubPage.value)
-      if (subSteps) startTour(subKey, subSteps)
-    }
   }
 }
 

@@ -1,0 +1,19 @@
+{
+  "appId": "com.feike.schedule",
+  "appName": "🩸课表",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#c62828",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#c62828"
+    }
+  }
+}

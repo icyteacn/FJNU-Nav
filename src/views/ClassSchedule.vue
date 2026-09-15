@@ -256,7 +256,7 @@ const PERIOD_BOUNDS = [
 
 const timeLinePos = computed(() => {
   if (!highlightToday.value || !mounted.value) return null
-  const today = new Date()
+  const today = now.value
   const h = today.getHours(), m = today.getMinutes()
   const t = h * 60 + m
   if (t < 8 * 60 + 20 || t >= 22 * 60) return null

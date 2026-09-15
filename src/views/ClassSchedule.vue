@@ -17,7 +17,8 @@ import {
 import { setNavContext } from '../stores/navContext'
 
 const props = defineProps({
-  storagePrefix: { type: String, default: '' }
+  storagePrefix: { type: String, default: '' },
+  showMajorSelector: { type: Boolean, default: true }
 })
 
 const CUSTOM_KEY = (props.storagePrefix || '') + 'fjnu_custom_courses'
@@ -64,15 +65,10 @@ const todayWeekday = computed(() => { const d = now.value.getDay(); return d ===
 const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
 
 const allCourses = computed(() => {
-  const curMajorEdits = new Map()
-  for (const c of customCourses.value) {
-    if (c._editId && c.major === selectedMajor.value) {
-      curMajorEdits.set(c._editId, c)
-    }
-  }
-  const base = COURSES.filter(c => !curMajorEdits.has(c.id))
-  const custom = customCourses.value.filter(c => c.major === selectedMajor.value && !c._editId)
-  return [...base, ...custom, ...curMajorEdits.values()].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
+  const editedIds = new Set(customCourses.value.filter(c => c._editId).map(c => c._editId))
+  const base = COURSES.filter(c => !editedIds.has(c.id) && (props.showMajorSelector ? c.major === selectedMajor.value : true))
+  const custom = customCourses.value.filter(c => props.showMajorSelector ? c.major === selectedMajor.value : true)
+  return [...base, ...custom].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
 })
 const majorCourses = computed(() => allCourses.value.filter(c => c.major === selectedMajor.value))
 
@@ -146,7 +142,7 @@ const nextInfo = computed(() => {
 /** 查找某日某节次是否有调入的课程（从别处调来） */
 function getIncomingCourse(dateStr, period) {
   const info = getIncomingInfoFromData(dateStr, period, (wd, sp) => {
-    return allCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
+    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
   })
   return info?.course || null
 }
@@ -154,7 +150,7 @@ function getIncomingCourse(dateStr, period) {
 /** 获取某日某节次的调入信息（用于显示来源标记） */
 function getIncomingInfoLocal(dateStr, period) {
   return getIncomingInfoFromData(dateStr, period, (wd, sp) => {
-    return allCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
+    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
   })
 }
 
@@ -165,7 +161,10 @@ function getCourse(weekday, period) {
   const incoming = getIncomingCourse(ds, period)
   if (incoming) return incoming
   const effectiveWd = getMakeupWeekday(weekday)
-  return allCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
+  if (effectiveWd !== weekday) {
+    return allCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
+  }
+  return displayCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
 }
 function getCourseSpan(course) { return course ? (course.endPeriod - course.startPeriod + 1) : 1 }
 function isCellMerged(weekday, period) {
@@ -173,10 +172,13 @@ function isCellMerged(weekday, period) {
   const ds = dateStrOf(weekday)
   const incoming = getIncomingCourse(ds, period)
   if (incoming) {
-    return allCourses.value.some(c => c.weekday === incoming.weekday && period > c.startPeriod && period <= c.endPeriod)
+    return displayCourses.value.some(c => c.weekday === incoming.weekday && period > c.startPeriod && period <= c.endPeriod)
   }
   const effectiveWd = getMakeupWeekday(weekday)
-  return allCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
+  if (effectiveWd !== weekday) {
+    return allCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
+  }
+  return displayCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
 }
 function isToday(weekday) { if (!highlightToday.value) return false; const date = getDateInWeek(selectedWeek.value, weekday); return date.toISOString().slice(0, 10) === todayDateStr.value }
 function getCourseColor(course, alpha = 1) { if (!course) return 'transparent'; const hex = course.color || '#1565c0'; return `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${alpha})` }
@@ -597,7 +599,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     </div>
 
     <!-- 专业选择 -->
-    <div class="major-selector">
+    <div v-if="showMajorSelector" class="major-selector">
       <button v-for="m in MAJORS" :key="m.key" class="major-chip" :class="{ active: selectedMajor === m.key }" :style="{ '--chip-color': m.color }" @click="selectedMajor = m.key">{{ m.short }}</button>
     </div>
 
@@ -1066,7 +1068,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .period-time-end { font-size: 6.5px; color: var(--text-sub); line-height: 1.1; }
 .weekday-col { background: var(--soft-fg); font-weight: 700; }
 .weekday-col.weekend { background: #f5f5f5; }
-.weekday-col.is-today { background: #dbeafe; }
+.weekday-col.is-today { background: #dbeafe; border-left: 3px solid var(--primary); }
 .weekday-col.is-holiday { background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); }
 .weekday-col.is-holiday .weekday-label { color: #dc2626; font-weight: 800; }
 .weekday-col.is-makeup { background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%); }
@@ -1086,9 +1088,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
 tr[data-period="5"] .course-cell { border-top: 1px solid var(--border); }
 tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
-.course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
+.course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; position: relative; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }
+.course-cell.is-today::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); border-radius: 0 2px 2px 0; }
 .course-cell.is-holiday-col { background: #fef2f2; }
 .course-cell.is-makeup-col { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
 .course-cell.has-course { cursor: pointer; }

@@ -335,7 +335,7 @@ function goClassroomNav(loc) {
 
   <!-- 课表视图 -->
   <div v-if="activeView === 'class'" class="class-view-wrapper">
-    <ClassSchedule @back="activeView = 'schedule'" storage-prefix="fjnu_schedule_" />
+    <ClassSchedule @back="activeView = 'schedule'" storage-prefix="fjnu_schedule_" :show-major-selector="false" />
   </div>
 
   <!-- 入党日程视图 -->

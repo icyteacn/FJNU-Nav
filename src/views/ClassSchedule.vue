@@ -379,7 +379,10 @@ async function doSave() {
     if (!el) return
     const timeLine = el.querySelector('.time-line')
     if (timeLine) timeLine.style.display = 'none'
+    const badges = el.querySelectorAll('.holiday-badge')
+    badges.forEach(b => b.classList.add('badge-for-save'))
     const canvas = await window.html2canvas(el, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
+    badges.forEach(b => b.classList.remove('badge-for-save'))
     if (timeLine) timeLine.style.display = ''
     const link = document.createElement('a')
     const majorLabel = MAJORS.find(m => m.key === selectedMajor.value)?.short || '课表'
@@ -1074,6 +1077,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .weekday-col.is-makeup { background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%); }
 .weekday-col.is-makeup .weekday-label { color: #b45309; font-weight: 800; }
 .holiday-badge { display: inline-flex; align-items: center; gap: 3px; margin: 3px auto 5px; padding: 2px 8px; border-radius: 999px; font-size: 9px; font-weight: 700; line-height: 1.4; white-space: nowrap; letter-spacing: 0.3px; }
+.holiday-badge.badge-for-save { display: block !important; text-align: center; font-size: 11px; padding: 3px 6px; }
 .holiday-badge.holiday { background: #fca5a5; color: #991b1b; }
 .holiday-badge.makeup { background: #fbbf24; color: #78350f; }
 .holiday-icon { font-size: 11px; }

@@ -379,7 +379,32 @@ async function doSave() {
     if (!el) return
     const timeLine = el.querySelector('.time-line')
     if (timeLine) timeLine.style.display = 'none'
+    const restoredCells = []
+    el.querySelectorAll('td[rowspan]').forEach(cell => {
+      const rs = parseInt(cell.getAttribute('rowspan'))
+      if (rs <= 1) return
+      const tr = cell.closest('tr')
+      const table = tr.closest('table')
+      const allRows = Array.from(table.querySelectorAll('tr'))
+      const trIdx = allRows.indexOf(tr)
+      const tdIdx = Array.from(tr.children).indexOf(cell)
+      cell.setAttribute('data-ors', String(rs))
+      cell.setAttribute('rowspan', '1')
+      for (let i = 1; i < rs; i++) {
+        const targetRow = allRows[trIdx + i]
+        if (!targetRow) continue
+        const ph = document.createElement('td')
+        ph.className = cell.className
+        ph.setAttribute('data-ph', '1')
+        const children = Array.from(targetRow.children)
+        if (tdIdx < children.length) targetRow.insertBefore(ph, children[tdIdx])
+        else targetRow.appendChild(ph)
+      }
+      restoredCells.push(cell)
+    })
     const canvas = await window.html2canvas(el, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
+    restoredCells.forEach(cell => { cell.setAttribute('rowspan', cell.getAttribute('data-ors')); cell.removeAttribute('data-ors') })
+    el.querySelectorAll('[data-ph]').forEach(td => td.remove())
     if (timeLine) timeLine.style.display = ''
     const link = document.createElement('a')
     const majorLabel = MAJORS.find(m => m.key === selectedMajor.value)?.short || '课表'

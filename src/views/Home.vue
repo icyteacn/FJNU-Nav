@@ -74,12 +74,12 @@ function toggleCampus(name) {
     </section>
 
     <section class="section">
-      <a href="downloads/feike-schedule.apk" class="app-download-card" download>
+      <a href="https://github.com/icyteacn/FJNU-Nav/releases/latest" class="app-download-card" target="_blank" rel="noopener">
         <div class="download-left">
           <span class="download-icon">🐔🩸</span>
           <div>
             <div class="download-title">课表 App · 安卓版</div>
-            <div class="download-desc">独立课表应用，离线可用，支持6个研究生专业</div>
+            <div class="download-desc">独立课表应用，离线可用，仅 1.5MB</div>
           </div>
         </div>
         <span class="download-btn">下载 APK ↗</span>

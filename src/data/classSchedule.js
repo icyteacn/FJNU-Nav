@@ -332,12 +332,23 @@ export function formatWeekdayType(type) {
 }
 
 /**
- * 节假日/调休日信息
- * type: 'holiday' | 'makeup'
- * makeup 日 scheduleWeekday 表示按星期几的课表排课
- * overrides 记录该日被调走的课程明细
+ * 2026-2027学年节假日与调休日历
+ * type: 'holiday' = 法定假日停课, 'makeup' = 调休补课（按指定周几课表上课）
  */
-const HOLIDAY_MAP = {
+export const HOLIDAY_MAP = {
+  // —— 中秋节 ——
+  '2026-09-25': { type: 'holiday', name: '中秋节', icon: '🥮' },
+  '2026-09-26': { type: 'holiday', name: '中秋节', icon: '🥮' },
+  '2026-09-27': { type: 'holiday', name: '中秋节', icon: '🥮' },
+  // —— 国庆节 ——
+  '2026-10-01': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-02': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-03': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-04': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-05': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-06': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  '2026-10-07': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
+  // —— 调休补课日 ——
   '2026-09-20': {
     type: 'makeup', scheduleWeekday: 2, icon: '📅',
     descShort: '补周二课',
@@ -346,14 +357,49 @@ const HOLIDAY_MAP = {
       { srcPeriods: [9, 10, 11, 12], destDate: '2026-10-08', destPeriods: [9, 10, 11, 12], destLocation: '笃行1-114', courseHint: '人工智能通识' },
     ],
   },
-  '2026-10-05': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
-  '2026-10-06': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
-  '2026-10-07': { type: 'holiday', name: '国庆节', icon: '🇨🇳' },
   '2026-10-10': {
     type: 'makeup', scheduleWeekday: 3, icon: '📅',
     descShort: '补周三课',
     desc: '补周三(10/7)',
   },
+}
+
+/**
+ * 获取日期的节假日/调休信息（合并用户自定义覆盖）
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {{ type, name?, label?, icon?, desc?, scheduleWeekday? } | null}
+ */
+export function getDateHolidayInfo(dateStr) {
+  const userOverride = loadUserOverrides()[dateStr]
+  if (userOverride) return userOverride
+  return HOLIDAY_MAP[dateStr] || null
+}
+
+const USER_OVERRIDE_KEY = 'fjnu_day_overrides'
+export function loadUserOverrides() {
+  try { return JSON.parse(localStorage.getItem(USER_OVERRIDE_KEY) || '{}') } catch { return {} }
+}
+export function saveUserOverride(dateStr, override) {
+  const all = loadUserOverrides()
+  if (override === null) { delete all[dateStr] } else { all[dateStr] = override }
+  try { localStorage.setItem(USER_OVERRIDE_KEY, JSON.stringify(all)) } catch {}
+}
+export function clearUserOverrides() {
+  try { localStorage.removeItem(USER_OVERRIDE_KEY) } catch {}
+}
+
+/**
+ * 获取某日实际应上的课表周几（处理调休）
+ * @param {number} originalWeekday 1-7（真实星期几）
+ * @param {string} dateStr YYYY-MM-DD
+ * @returns {number|null} 返回课表周几，null 表示该天停课
+ */
+export function getScheduleWeekday(originalWeekday, dateStr) {
+  const info = HOLIDAY_MAP[dateStr]
+  if (!info) return originalWeekday
+  if (info.type === 'holiday') return null
+  if (info.type === 'makeup') return info.scheduleWeekday
+  return originalWeekday
 }
 
 /**
@@ -369,21 +415,27 @@ export function getCourseOverride(dateStr, period) {
  * 检查某日某节次是否被调走（不在此日上课）
  */
 export function isPeriodMoved(dateStr, period) {
-  const o = getCourseOverride(dateStr, period)
-  return !!o
+  return !!getCourseOverride(dateStr, period)
 }
 
 /**
- * 获取日期的节假日/调休信息
+ * 查找某日某节次是否有调入的课程（从别处调来）
+ * @param {string} dateStr 目标日期 YYYY-MM-DD
+ * @param {number} period 节次 1-12
+ * @param {Function} findCourse 查找课程的回调 (weekday, startPeriod) => course | null
+ * @returns {{ course, srcDate, srcPeriods, destLocation } | null}
  */
-export function getDateHolidayInfo(dateStr) {
-  return HOLIDAY_MAP[dateStr] || null
-}
-
-/**
- * 获取调休日应按星期几排课
- */
-export function getScheduleWeekday(dateStr) {
-  const info = HOLIDAY_MAP[dateStr]
-  return info?.scheduleWeekday || null
+export function getIncomingInfo(dateStr, period, findCourse) {
+  for (const key of Object.keys(HOLIDAY_MAP)) {
+    const info = HOLIDAY_MAP[key]
+    if (!info?.overrides) continue
+    for (const o of info.overrides) {
+      if (o.destDate === dateStr && period >= o.destPeriods[0] && period <= o.destPeriods.at(-1)) {
+        const srcWd = info.scheduleWeekday
+        const course = findCourse(srcWd, o.srcPeriods[0])
+        return course ? { course, srcDate: key, srcPeriods: o.srcPeriods, destLocation: o.destLocation } : null
+      }
+    }
+  }
+  return null
 }

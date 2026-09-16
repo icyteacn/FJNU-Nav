@@ -745,45 +745,47 @@
       renderSchedule();
     }
 
-    const SITE_URL = 'https://icyteacn.github.io/FJNU-Nav/';
+    const SITE_URL = 'https://icyteacn.github.io/FJNU-Nav/#/app/timetable';
     function openWebsite() {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s;';
       overlay.innerHTML = `
-        <div style="background:#fff;border-radius:16px;padding:24px;max-width:300px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
-          <div style="font-size:32px;margin-bottom:8px;">🌐</div>
-          <div style="font-size:16px;font-weight:700;margin-bottom:4px;">正在跳转网页版…</div>
-          <div style="font-size:12px;color:#888;margin-bottom:16px;">将打开福star导航网站的课程表应用</div>
-          <div id="loadingDots" style="font-size:14px;color:#c62828;margin-bottom:16px;">请稍候...</div>
-          <button onclick="this.parentElement.parentElement.remove()" style="padding:8px 24px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:13px;cursor:pointer;">取消</button>
+        <div style="background:#fff;border-radius:16px;padding:24px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+          <div style="font-size:36px;margin-bottom:8px;">🌐</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:6px;">跳转网页版课表？</div>
+          <div style="font-size:12px;color:#888;line-height:1.5;margin-bottom:16px;">将打开福star导航网站的课程表应用<br>需要网络连接</div>
+          <div style="display:flex;gap:10px;">
+            <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:14px;cursor:pointer;">取消</button>
+            <button onclick="this.closest('[style*=fixed]').remove();doOpenWebsite()" style="flex:1;padding:10px;border:none;border-radius:10px;background:#c62828;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">确认跳转</button>
+          </div>
         </div>
       `;
       document.body.appendChild(overlay);
       overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-      const timer = setTimeout(() => {
-        overlay.remove();
-        showNetworkError();
-      }, 8000);
-      const w = window.open(SITE_URL, '_blank');
-      if (!w || w.closed) {
-        clearTimeout(timer);
-        overlay.remove();
-        showNetworkError();
-      } else {
-        setTimeout(() => { clearTimeout(timer); overlay.remove(); }, 3000);
-      }
+    }
+    function doOpenWebsite() {
+      const loading = document.createElement('div');
+      loading.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      loading.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.25);"><div style="font-size:28px;margin-bottom:8px;">⏳</div><div style="font-size:14px;color:#666;">正在打开网页版…</div></div>';
+      document.body.appendChild(loading);
+      const timer = setTimeout(() => { loading.remove(); showNetworkError(); }, 8000);
+      try {
+        const w = window.open(SITE_URL, '_blank');
+        if (!w || w.closed) { clearTimeout(timer); loading.remove(); showNetworkError(); return; }
+      } catch { clearTimeout(timer); loading.remove(); showNetworkError(); return; }
+      setTimeout(() => { clearTimeout(timer); loading.remove(); }, 3000);
     }
     function showNetworkError() {
       const t = document.createElement('div');
-      t.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;padding:24px;max-width:300px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:10000;animation:fadeIn .3s;';
+      t.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;padding:28px;max-width:300px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:10000;animation:fadeIn .3s;';
       t.innerHTML = `
-        <div style="font-size:40px;margin-bottom:8px;">📡</div>
-        <div style="font-size:15px;font-weight:700;margin-bottom:6px;">网络连接不佳</div>
-        <div style="font-size:12px;color:#888;line-height:1.5;margin-bottom:16px;">无法打开网页版课表<br>请检查网络连接后重试<br><span style="font-size:11px;color:#aaa;">${SITE_URL}</span></div>
-        <button onclick="this.parentElement.remove()" style="padding:8px 24px;border:none;border-radius:8px;background:#c62828;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">知道了</button>
+        <div style="font-size:44px;margin-bottom:10px;">📡</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;">网络连接不佳</div>
+        <div style="font-size:12px;color:#888;line-height:1.6;margin-bottom:16px;">无法打开网页版课表<br>请检查网络后重试</div>
+        <button onclick="this.parentElement.remove()" style="padding:10px 28px;border:none;border-radius:10px;background:#c62828;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">知道了</button>
       `;
       document.body.appendChild(t);
-      setTimeout(() => { if (t.parentElement) t.remove(); }, 6000);
+      setTimeout(() => { if (t.parentElement) t.remove(); }, 8000);
     }
 
     function toggleFilter() {

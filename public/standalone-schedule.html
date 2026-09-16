@@ -1253,26 +1253,54 @@ function takeScreenshot(){
   showToast('正在生成截图...');
   function doCapture(canvas){
     const dataUrl=canvas.toDataURL('image/png');
-    if(window.Capacitor){
-      const {Camera,Filesystem}=window.Capacitor.Plugins||{};
-      if(Filesystem){
-        const base64=dataUrl.split(',')[1];
-        const fileName='课表_'+state.selectedWeek+'周_'+Date.now()+'.png';
-        Filesystem.writeFile({path:fileName,data:base64,directory:'Pictures'}).then(()=>{
-          showToast('✅ 截图已保存到相册');
-        }).catch(err=>{
-          console.error(err);
-          fallbackDownload(dataUrl,fileName);
-        });
+    if(window.Capacitor&&window.Capacitor.Plugins){
+      const {Camera,Filesystem,Share}=window.Capacitor.Plugins;
+      // 方案1: 用Camera API保存到相册（最可靠）
+      if(Camera&&Camera.savePhoto){
+        canvas.toBlob(blob=>{
+          const reader=new FileReader();
+          reader.onload=()=>{
+            const base64=reader.result.split(',')[1];
+            Camera.savePhoto(base64,{album:'🐔🩸课表'}).then(()=>{
+              showToast('✅ 截图已保存到相册');
+            }).catch(()=>saveWithFilesystem(dataUrl));
+          };
+          reader.readAsDataURL(blob);
+        },'image/png');
         return;
       }
+      // 方案2: 用Filesystem写入Download目录
+      saveWithFilesystem(dataUrl);
+      return;
     }
+    // 方案3: 浏览器下载
     fallbackDownload(dataUrl,'课表_'+state.selectedWeek+'周.png');
+  }
+  function saveWithFilesystem(dataUrl){
+    const {Filesystem}=window.Capacitor.Plugins;
+    const base64=dataUrl.split(',')[1];
+    const fileName='课表_'+state.selectedWeek+'周_'+Date.now()+'.png';
+    // 尝试多个目录
+    const dirs=['Downloads','Documents','Cache'];
+    let saved=false;
+    function tryDir(i){
+      if(i>=dirs.length){
+        if(!saved)fallbackDownload(dataUrl,fileName);
+        return;
+      }
+      Filesystem.writeFile({path:fileName,data:base64,directory:dirs[i]}).then(()=>{
+        saved=true;
+        showToast('✅ 截图已保存到 '+dirs[i]+' 目录');
+        // 尝试复制到Pictures
+        Filesystem.writeFile({path:fileName,data:base64,directory:'Pictures'}).catch(()=>{});
+      }).catch(()=>tryDir(i+1));
+    }
+    tryDir(0);
   }
   function fallbackDownload(dataUrl,name){
     const link=document.createElement('a');
     link.download=name;link.href=dataUrl;link.click();
-    showToast('截图已下载');
+    showToast('📷 截图已下载，请在下载文件夹中查看');
   }
   if(typeof html2canvas!=='undefined'){
     html2canvas(document.getElementById('scheduleTable'),{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(doCapture);

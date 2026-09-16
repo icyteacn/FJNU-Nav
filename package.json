@@ -11,6 +11,12 @@
     "start": "npm run build && node server/index.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "pdfjs-dist": "^6.3.289",
     "vue": "^3.5.13"
   },

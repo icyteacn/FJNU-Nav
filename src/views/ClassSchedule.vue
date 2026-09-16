@@ -1,7 +1,7 @@
 <script setup>
 /**
- * 课程表视图 v12
- * 支持多专业/班级课表查看 + 自定义课程编辑
+ * 课程表视图 v11
+ * 支持多专业/班级课表查看
  */
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import {
@@ -12,31 +12,7 @@ import {
   getDateInWeek, formatDateShort, getWeekDateRange,
   formatWeekdayType,
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
-  getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
-  loadUserOverrides, saveUserOverride,
 } from '../data/classSchedule'
-import { setNavContext } from '../stores/navContext'
-
-const props = defineProps({
-  storagePrefix: { type: String, default: '' },
-  showMajorSelector: { type: Boolean, default: true }
-})
-
-const CUSTOM_KEY = (props.storagePrefix || '') + 'fjnu_custom_courses'
-const DELETED_KEY = (props.storagePrefix || '') + 'fjnu_deleted_courses'
-
-function loadCustomCourses() {
-  try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]') } catch { return [] }
-}
-function saveCustomCourses(list) {
-  try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(list)) } catch {}
-}
-function loadDeletedCourses() {
-  try { return JSON.parse(localStorage.getItem(DELETED_KEY) || '[]') } catch { return [] }
-}
-function saveDeletedCourses(list) {
-  try { localStorage.setItem(DELETED_KEY, JSON.stringify(list)) } catch {}
-}
 
 const emit = defineEmits(['open', 'back'])
 
@@ -53,9 +29,6 @@ const colorMode = ref('white')
 const showOtherWeek = ref(false)
 const highlightToday = ref(true)
 const flashingCourse = ref(null)
-const mounted = ref(false)
-const customCourses = ref(loadCustomCourses())
-const deletedCourses = ref(loadDeletedCourses())
 
 const now = ref(new Date())
 const tick = setInterval(() => { now.value = new Date() }, 1000)
@@ -65,32 +38,22 @@ const weekdayHeaders = computed(() => WEEKDAYS)
 const todayWeekday = computed(() => { const d = now.value.getDay(); return d === 0 ? 7 : d })
 const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
 
-const allCourses = computed(() => {
-  const editedIds = new Set(customCourses.value.filter(c => c._editId).map(c => c._editId))
-  const base = COURSES.filter(c => !editedIds.has(c.id) && c.major === selectedMajor.value)
-  const custom = customCourses.value.filter(c => c.major === selectedMajor.value)
-  return [...base, ...custom].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
-})
-const majorCourses = computed(() => allCourses.value.filter(c => c.major === selectedMajor.value))
+// 当前专业的课程
+const majorCourses = computed(() => getCoursesByMajor(selectedMajor.value))
 
+// 今日课程
 const todayCourses = computed(() => {
-  const scheduleWd = getTodayScheduleWeekday()
-  if (scheduleWd === null) return []
   return majorCourses.value.filter(c => {
-    if (c.weekday !== scheduleWd) return false
+    if (c.weekday !== todayWeekday.value) return false
     if (!showSemester.value && !isCourseInWeek(c, selectedWeek.value)) return false
-    if (!showSemester.value && deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
     return true
   }).sort((a, b) => a.startPeriod - b.startPeriod)
 })
 const hasTodayCourses = computed(() => todayCourses.value.length > 0)
 
+// 显示的课程列表
 const displayCourses = computed(() => {
-  let courses = showSemester.value || showOtherWeek.value ? majorCourses.value : majorCourses.value.filter(c => {
-    if (!isCourseInWeek(c, selectedWeek.value)) return false
-    if (deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
-    return true
-  })
+  let courses = showSemester.value || showOtherWeek.value ? majorCourses.value : majorCourses.value.filter(c => isCourseInWeek(c, selectedWeek.value))
   if (typeFilter.value !== 'all') courses = courses.filter(c => c.category === typeFilter.value)
   if (searchKw.value) {
     const kw = searchKw.value.toLowerCase()
@@ -140,47 +103,15 @@ const nextInfo = computed(() => {
   return { course: nextCourse.value, countdown: nextCountdown.value, weekdayLabel: WEEKDAYS.find(w => w.key === nextCourse.value.weekday)?.label, dateStr: formatDateShort(nextCourse.value._date) }
 })
 
-/** 查找某日某节次是否有调入的课程（从别处调来） */
-function getIncomingCourse(dateStr, period) {
-  const info = getIncomingInfoFromData(dateStr, period, (wd, sp) => {
-    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
-  })
-  return info?.course || null
-}
-
-/** 获取某日某节次的调入信息（用于显示来源标记） */
-function getIncomingInfoLocal(dateStr, period) {
-  return getIncomingInfoFromData(dateStr, period, (wd, sp) => {
-    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
-  })
-}
-
 function getCourse(weekday, period) {
   if (isHoliday(weekday)) return null
   const ds = dateStrOf(weekday)
   if (isPeriodMoved(ds, period)) return null
-  const incoming = getIncomingCourse(ds, period)
-  if (incoming) return incoming
   const effectiveWd = getMakeupWeekday(weekday)
-  if (effectiveWd !== weekday) {
-    return majorCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
-  }
   return displayCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
 }
 function getCourseSpan(course) { return course ? (course.endPeriod - course.startPeriod + 1) : 1 }
-function isCellMerged(weekday, period) {
-  if (isHoliday(weekday)) return false
-  const ds = dateStrOf(weekday)
-  const incoming = getIncomingCourse(ds, period)
-  if (incoming) {
-    return displayCourses.value.some(c => c.weekday === incoming.weekday && period > c.startPeriod && period <= c.endPeriod)
-  }
-  const effectiveWd = getMakeupWeekday(weekday)
-  if (effectiveWd !== weekday) {
-    return majorCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
-  }
-  return displayCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
-}
+function isCellMerged(weekday, period) { return displayCourses.value.some(c => c.weekday === weekday && period > c.startPeriod && period <= c.endPeriod) }
 function isToday(weekday) { if (!highlightToday.value) return false; const date = getDateInWeek(selectedWeek.value, weekday); return date.toISOString().slice(0, 10) === todayDateStr.value }
 function getCourseColor(course, alpha = 1) { if (!course) return 'transparent'; const hex = course.color || '#1565c0'; return `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${alpha})` }
 function getDateText(weekday) { return formatDateShort(getDateInWeek(selectedWeek.value, weekday)) }
@@ -188,146 +119,26 @@ function getWeekRange() { return getWeekDateRange(selectedWeek.value) }
 function getWeekTypeInfo(course) { return formatWeekdayType(course.weekdayType) }
 function openCourseDetail(course) { selectedCourse.value = course; showDetail.value = true }
 
-/** 日期字符串 YYYY-MM-DD */
 function dateStrOf(weekday) {
   const d = getDateInWeek(selectedWeek.value, weekday)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-/** 获取某天的节假日信息 */
-function getHolidayInfo(weekday) { return getDateHolidayInfo(dateStrOf(weekday)) }
-/** 该天是否为法定假日（停课） */
-function isHoliday(weekday) { const h = getHolidayInfo(weekday); return h?.type === 'holiday' }
-/** 该天是否为调休补课日 */
-function isMakeup(weekday) { const h = getHolidayInfo(weekday); return h?.type === 'makeup' }
-/** 获取调休日实际应上的课表周几 */
+function isHoliday(weekday) {
+  const h = getDateHolidayInfo(dateStrOf(weekday))
+  return h?.type === 'holiday'
+}
+function isMakeup(weekday) {
+  const h = getDateHolidayInfo(dateStrOf(weekday))
+  return h?.type === 'makeup'
+}
 function getMakeupWeekday(weekday) {
-  const h = getHolidayInfo(weekday)
+  const h = getDateHolidayInfo(dateStrOf(weekday))
   if (h?.type === 'makeup') return h.scheduleWeekday
   return weekday
 }
-/** 获取某节课的调课信息 */
+function getHolidayInfo(weekday) { return getDateHolidayInfo(dateStrOf(weekday)) }
 function getOverride(weekday, period) {
   return getCourseOverride(dateStrOf(weekday), period) || null
-}
-
-/** 今天是否为调休/假日（用于今日课程卡片判断） */
-function getTodayScheduleWeekday() {
-  const info = getDateHolidayInfo(todayDateStr.value)
-  if (!info) return todayWeekday.value
-  if (info.type === 'holiday') return null
-  if (info.type === 'makeup') return info.scheduleWeekday
-  return todayWeekday.value
-}
-
-// 时间射线位置计算 — 基于真实课表时间精确映射，课间停在分界线
-function getRowTop(period) {
-  const table = document.querySelector('.schedule-table')
-  if (!table) return null
-  const tr = table.querySelector(`tr[data-period="${period}"]`)
-  if (!tr) return null
-  const wrapper = document.querySelector('.schedule-table-wrapper')
-  if (!wrapper) return null
-  return tr.getBoundingClientRect().top - wrapper.getBoundingClientRect().top
-}
-
-function getRowBottom(period) {
-  const top = getRowTop(period)
-  if (top === null) return null
-  const table = document.querySelector('.schedule-table')
-  if (!table) return null
-  const tr = table.querySelector(`tr[data-period="${period}"]`)
-  if (!tr) return null
-  return top + tr.offsetHeight
-}
-
-function getHeaderBottom() {
-  const table = document.querySelector('.schedule-table')
-  if (!table) return 0
-  const thead = table.querySelector('thead')
-  if (!thead) return 0
-  const wrapper = document.querySelector('.schedule-table-wrapper')
-  if (!wrapper) return 0
-  return thead.getBoundingClientRect().bottom - wrapper.getBoundingClientRect().top
-}
-
-// 课表时间边界定义（分钟数，从0:00起算）
-const PERIOD_BOUNDS = [
-  { start: 8*60+20, end: 9*60+5,   row: 1 },   // 第1节 08:20-09:05
-  { start: 9*60+15, end: 10*60,     row: 2 },   // 第2节 09:15-10:00
-  { start: 10*60+20, end: 11*60+5,  row: 3 },   // 第3节 10:20-11:05
-  { start: 11*60+15, end: 12*60,     row: 4 },   // 第4节 11:15-12:00
-  { start: 14*60,     end: 14*60+45, row: 5 },   // 第5节 14:00-14:45
-  { start: 14*60+55, end: 15*60+40, row: 6 },   // 第6节 14:55-15:40
-  { start: 15*60+50, end: 16*60+35, row: 7 },   // 第7节 15:50-16:35
-  { start: 16*60+45, end: 17*60+30, row: 8 },   // 第8节 16:45-17:30
-  { start: 18*60+30, end: 19*60+15, row: 9 },   // 第9节 18:30-19:15
-  { start: 19*60+25, end: 20*60+10, row: 10 },  // 第10节 19:25-20:10
-  { start: 20*60+20, end: 21*60+5,  row: 11 },  // 第11节 20:20-21:05
-  { start: 21*60+15, end: 22*60,     row: 12 },  // 第12节 21:15-22:00
-]
-
-const timeLinePos = computed(() => {
-  if (!highlightToday.value || !mounted.value) return null
-  const cur = now.value
-  const h = cur.getHours(), m = cur.getMinutes()
-  const t = h * 60 + m
-  if (t < 8 * 60 + 20 || t >= 22 * 60) return null
-
-  const headerBottom = getHeaderBottom()
-  if (!headerBottom) return null
-
-  // 查找当前时间所在的节次
-  for (const bound of PERIOD_BOUNDS) {
-    if (t >= bound.start && t < bound.end) {
-      // 在上课中 — 精确计算节内位置
-      const top = getRowTop(bound.row)
-      const bottom = getRowBottom(bound.row)
-      if (top === null || bottom === null) return null
-      const progress = (t - bound.start) / (bound.end - bound.start)
-      return top + progress * (bottom - top)
-    }
-  }
-
-  // 课间/午休/晚休 — 停在上一节的底部（分界线）
-  // 找到当前时间之前最近的那节课
-  for (let i = PERIOD_BOUNDS.length - 1; i >= 0; i--) {
-    const bound = PERIOD_BOUNDS[i]
-    if (t >= bound.end) {
-      const bottom = getRowBottom(bound.row)
-      if (bottom === null) return null
-      return bottom
-    }
-  }
-
-  return headerBottom
-})
-
-const timeLineWeekday = computed(() => {
-  if (!highlightToday.value || !mounted.value) return null
-  const day = now.value.getDay()
-  return day === 0 ? 7 : day
-})
-
-function getTodayColumnLeft() {
-  const table = document.querySelector('.schedule-table')
-  if (!table) return 0
-  const periodCol = table.querySelector('.period-col')
-  if (!periodCol) return 0
-  const periodWidth = periodCol.offsetWidth
-  const todayIndex = weekdayHeaders.value.findIndex(w => w.key === timeLineWeekday.value)
-  if (todayIndex === -1) return periodWidth
-  const cols = table.querySelectorAll('.weekday-col')
-  if (cols[todayIndex]) return cols[todayIndex].offsetLeft
-  return periodWidth + todayIndex * 80
-}
-
-function getTodayColumnWidth() {
-  const table = document.querySelector('.schedule-table')
-  if (!table) return 80
-  const todayIndex = weekdayHeaders.value.findIndex(w => w.key === timeLineWeekday.value)
-  const cols = table.querySelectorAll('.weekday-col')
-  if (cols[todayIndex]) return cols[todayIndex].offsetWidth
-  return 80
 }
 
 let flashTimer = null
@@ -378,13 +189,7 @@ async function doSave() {
     if (!window.html2canvas) { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; document.head.appendChild(s); await new Promise((r, j) => { s.onload = r; s.onerror = j }) }
     const el = document.querySelector('.schedule-table-wrapper')
     if (!el) return
-    const timeLine = el.querySelector('.time-line')
-    if (timeLine) timeLine.style.display = 'none'
-    const badges = el.querySelectorAll('.holiday-badge')
-    badges.forEach(b => b.classList.add('badge-for-save'))
     const canvas = await window.html2canvas(el, { backgroundColor: '#ffffff', scale: 2, useCORS: true })
-    badges.forEach(b => b.classList.remove('badge-for-save'))
-    if (timeLine) timeLine.style.display = ''
     const link = document.createElement('a')
     const majorLabel = MAJORS.find(m => m.key === selectedMajor.value)?.short || '课表'
     const typeLabel = showSemester.value ? '学期' : `第${selectedWeek.value}周`
@@ -396,233 +201,33 @@ async function doSave() {
 const weekShortcuts = computed(() => Array.from({ length: 18 }, (_, i) => ({ value: i + 1, dateRange: getWeekDateRange(i + 1) })))
 const currentMajor = computed(() => MAJORS.find(m => m.key === selectedMajor.value))
 
-// ========== 自定义课程编辑 ==========
-const showDeleteConfirm = ref(false)
-const deleteTarget = ref(null)
-const deleteScope = ref('all')
-
-function confirmDeleteCourse(course) {
-  deleteTarget.value = course
-  deleteScope.value = 'all'
-  showDeleteConfirm.value = true
-}
-function doDeleteCourse() {
-  const c = deleteTarget.value
-  if (!c) { showDeleteConfirm.value = false; return }
-  if (c._custom) {
-    if (deleteScope.value === 'all') {
-      customCourses.value = customCourses.value.filter(x => x._id !== c._id)
-    } else {
-      const [s, e] = (c.weeks || '1-18').split('-').map(Number)
-      const newWeeks = []
-      for (let w = s; w <= e; w++) { if (w !== selectedWeek.value) newWeeks.push(w) }
-      if (newWeeks.length) {
-        const idx = customCourses.value.findIndex(x => x._id === c._id)
-        if (idx !== -1) customCourses.value[idx] = { ...customCourses.value[idx], weeks: newWeeks[0] + '-' + newWeeks[newWeeks.length - 1] }
-      } else {
-        customCourses.value = customCourses.value.filter(x => x._id !== c._id)
-      }
-    }
-    saveCustomCourses(customCourses.value)
-  } else {
-    if (deleteScope.value === 'all') {
-      deletedCourses.value = [...deletedCourses.value, c.id]
-    } else {
-      const delKey = c.id + '_wk' + selectedWeek.value
-      const [s, e] = (c.weeks || '1-18').split('-').map(Number)
-      const newWeeks = []
-      for (let w = s; w <= e; w++) { if (w !== selectedWeek.value) newWeeks.push(w) }
-      if (newWeeks.length) {
-        deletedCourses.value = [...deletedCourses.value, delKey]
-      } else {
-        deletedCourses.value = [...deletedCourses.value, c.id]
-      }
-    }
-    saveDeletedCourses(deletedCourses.value)
-  }
-  showDeleteConfirm.value = false
-  showDetail.value = false
-}
-
-// ========== 添加课程 ==========
-const showAddModal = ref(false)
-const addForm = ref({ name: '', location: '', teacher: '', weekday: 1, startPeriod: 1, endPeriod: 2, weekStart: 1, weekEnd: 18, weekdayType: 'all', id: '', category: '自定义课程', credits: 2, hours: 32 })
-
-function openAddModal(weekday, period) {
-  addForm.value = { name: '', location: '', teacher: '', weekday: weekday || 1, startPeriod: period || 1, endPeriod: (period || 1) + 1, weekStart: 1, weekEnd: 18, weekdayType: 'all', id: '', category: '自定义课程', credits: 2, hours: 32 }
-  showAddModal.value = true
-}
-function doAddCourse() {
-  const f = addForm.value
-  if (!f.name.trim() || !f.location.trim()) return
-  const colors = ['#1565c0', '#00695c', '#6a1b9a', '#e65100', '#ad1457', '#c62828', '#2e7d32', '#0277bd']
-  const newCourse = {
-    _id: 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    _custom: true,
-    name: f.name.trim(),
-    id: f.id.trim() || 'CUSTOM-' + Date.now(),
-    teacher: f.teacher.trim() || '待定',
-    location: f.location.trim(),
-    weeks: f.weekStart + '-' + f.weekEnd,
-    weekdayType: f.weekdayType,
-    startPeriod: f.startPeriod,
-    endPeriod: f.endPeriod,
-    weekday: f.weekday,
-    credits: f.credits || 2,
-    hours: f.hours || 32,
-    category: f.category || '自定义课程',
-    color: colors[Math.floor(Math.random() * colors.length)],
-    major: selectedMajor.value,
-  }
-  customCourses.value.push(newCourse)
-  saveCustomCourses(customCourses.value)
-  showAddModal.value = false
-}
-
-// ========== 编辑课程 ==========
-const showEditModal = ref(false)
-const editForm = ref({})
-const editTarget = ref(null)
-const editScope = ref('all')
-const showEditScopeConfirm = ref(false)
-const pendingEditData = ref(null)
-
-function openEditModal(course) {
-  if (!course) return
-  editTarget.value = course
-  const [ws, we] = (course.weeks || '1-18').split('-').map(Number)
-  editForm.value = {
-    name: course.name,
-    location: course.location,
-    teacher: course.teacher || '',
-    weekday: course.weekday,
-    startPeriod: course.startPeriod,
-    endPeriod: course.endPeriod,
-    weekStart: ws,
-    weekEnd: we,
-    weekdayType: course.weekdayType || 'all',
-    id: course.id || '',
-    category: course.category || '自定义课程',
-    credits: course.credits || 2,
-    hours: course.hours || 32,
-  }
-  showDetail.value = false
-  showEditModal.value = true
-}
-function doEditCourse() {
-  const f = editForm.value
-  const c = editTarget.value
-  if (!f.name.trim() || !f.location.trim() || !c) return
-  const updated = {
-    ...c,
-    name: f.name.trim(),
-    id: f.id.trim() || c.id,
-    teacher: f.teacher.trim() || '待定',
-    location: f.location.trim(),
-    weekdayType: f.weekdayType,
-    startPeriod: f.startPeriod,
-    endPeriod: f.endPeriod,
-    weekday: f.weekday,
-    credits: f.credits || 2,
-    hours: f.hours || 32,
-    category: f.category || '自定义课程',
-  }
-  pendingEditData.value = updated
-  showEditModal.value = false
-  showEditScopeConfirm.value = true
-  editScope.value = 'all'
-}
-function doConfirmEdit() {
-  const updated = pendingEditData.value
-  const c = editTarget.value
-  if (!updated || !c) { showEditScopeConfirm.value = false; return }
-  if (editScope.value === 'week') {
-    updated.weeks = selectedWeek.value + '-' + selectedWeek.value
-  } else {
-    updated.weeks = editForm.value.weekStart + '-' + editForm.value.weekEnd
-  }
-  if (c._custom) {
-    const idx = customCourses.value.findIndex(x => x._id === c._id)
-    if (idx !== -1) customCourses.value[idx] = { ...updated, _custom: true, _id: c._id }
-    else customCourses.value.push({ ...updated, _custom: true, _id: c._id })
-  } else {
-    const existingIdx = customCourses.value.findIndex(x => x._editId === c.id && x.major === c.major)
-    if (existingIdx !== -1) {
-      customCourses.value[existingIdx] = { ...updated, _custom: true, _editId: c.id }
-    } else {
-      customCourses.value.push({ ...updated, _custom: true, _editId: c.id })
+const timeLinePos = computed(() => {
+  if (!highlightToday.value) return null
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  if (todayStr !== todayDateStr.value) return null
+  const nowMinutes = today.getHours() * 60 + today.getMinutes()
+  const wrapper = document.querySelector('.schedule-table-wrapper')
+  if (!wrapper) return null
+  const headerH = 30
+  const rows = wrapper.querySelectorAll('tbody tr[data-period]')
+  for (const tr of rows) {
+    const period = Number(tr.dataset.period)
+    const time = SINGLE_PERIOD_TIMES[period]
+    if (!time) continue
+    const [sh, sm] = time.split('-')[0].split(':').map(Number)
+    const [eh, em] = time.split('-')[1].split(':').map(Number)
+    const startMin = sh * 60 + sm
+    const endMin = eh * 60 + em
+    if (nowMinutes >= startMin && nowMinutes <= endMin) {
+      const ratio = (nowMinutes - startMin) / (endMin - startMin)
+      return headerH + tr.offsetTop + tr.offsetHeight * ratio
     }
   }
-  saveCustomCourses(customCourses.value)
-  showEditScopeConfirm.value = false
-  pendingEditData.value = null
-}
+  return null
+})
 
-// ========== 恢复默认 ==========
-const showResetConfirm = ref(false)
-function doResetAll() {
-  customCourses.value = []
-  deletedCourses.value = []
-  saveCustomCourses([])
-  saveDeletedCourses([])
-  showResetConfirm.value = false
-}
-
-// ========== 编辑周几（补课/停课） ==========
-const showDayEdit = ref(false)
-const dayEditTarget = ref(null)
-const dayEditType = ref('none')
-const dayEditMakeupWd = ref(2)
-const dayEditName = ref('')
-
-function openDayEdit(weekday) {
-  dayEditTarget.value = weekday
-  const ds = dateStrOf(weekday)
-  const existing = loadUserOverrides()[ds]
-  if (existing) {
-    dayEditType.value = existing.type || 'none'
-    dayEditMakeupWd.value = existing.scheduleWeekday || 2
-    dayEditName.value = existing.name || ''
-  } else {
-    dayEditType.value = 'none'
-    dayEditMakeupWd.value = 2
-    dayEditName.value = ''
-  }
-  showDayEdit.value = true
-}
-function doDayEdit() {
-  const wd = dayEditTarget.value
-  if (!wd) return
-  const ds = dateStrOf(wd)
-  if (dayEditType.value === 'none') {
-    saveUserOverride(ds, null)
-  } else if (dayEditType.value === 'holiday') {
-    saveUserOverride(ds, { type: 'holiday', name: dayEditName.value || '停课', icon: '🚫' })
-  } else if (dayEditType.value === 'makeup') {
-    const labels = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日']
-    const label = labels[dayEditMakeupWd.value] || '周一'
-    saveUserOverride(ds, { type: 'makeup', scheduleWeekday: dayEditMakeupWd.value, icon: '📅', descShort: '补' + label + '课', desc: '补' + label })
-  }
-  showDayEdit.value = false
-}
-
-// ========== 联动跳转 ==========
-function goClassroomNav(room) {
-  setNavContext({ room })
-  emit('open', 'classroomNav')
-}
-function goCanteen() {
-  emit('open', 'canteen')
-}
-function goBudget(foodName) {
-  setNavContext({ category: 'food', amount: 0, note: foodName || '' })
-  emit('open', 'budget')
-}
-function goWhatToEat() {
-  emit('open', 'whatToEat')
-}
-
-onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounted.value = true }) })
+onMounted(() => { selectedWeek.value = getCurrentWeek() })
 </script>
 
 <template>
@@ -631,7 +236,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
       <div class="header-top">
         <button class="back-btn" @click="emit('back')">← 返回</button>
         <div class="header-title">📚 课程表</div>
-        <button class="view-toggle" @click="viewMode = viewMode === 'grid' ? 'list' : 'grid'">{{ viewMode === 'grid' ? '📋 列表' : '📊 表格' }}</button>
+        <button class="view-toggle" @click="viewMode = viewMode === 'grid' ? '📋 列表' : '📊 表格'">{{ viewMode === 'grid' ? '📋 列表' : '📊 表格' }}</button>
       </div>
       <div class="header-stats">
         <div class="stat-item"><span class="stat-value">{{ showSemester ? '学期' : '第' + selectedWeek + '周' }}</span><span class="stat-label">{{ showSemester ? '全部课程' : getWeekRange() }}</span></div>
@@ -641,8 +246,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     </div>
 
     <!-- 专业选择 -->
-    <div v-if="showMajorSelector" class="major-selector" data-tour="tt-major-selector">
-      <button v-for="m in MAJORS" :key="m.key" class="major-chip" :class="{ active: selectedMajor === m.key }" :style="{ '--chip-color': m.color }" @click="selectedMajor = m.key">{{ m.short }}</button>
+    <div class="major-selector">
+      <button v-for="m in MAJORS" :key="m.key" class="major-chip" :class="{ active: selectedMajor === m.key }" :style="{ '--major-color': m.color }" @click="selectedMajor = m.key">
+        {{ m.short }}
+      </button>
     </div>
 
     <!-- 下一节课 -->
@@ -671,7 +278,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     <div class="search-bar"><input class="search-input" v-model="searchKw" placeholder="🔍 搜索课程、教师、教室…" /></div>
 
     <!-- 周次选择 -->
-    <div v-if="!showSemester" class="week-selector" data-tour="tt-week-selector">
+    <div v-if="!showSemester" class="week-selector">
       <div class="week-nav">
         <button class="week-nav-btn" :disabled="selectedWeek <= 1" @click="selectedWeek--">‹</button>
         <div class="week-current"><span class="week-num">第{{ selectedWeek }}周</span><span class="week-date">{{ getWeekRange() }}</span></div>
@@ -681,7 +288,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     </div>
 
     <!-- 控制行 -->
-    <div class="control-row" data-tour="tt-controls">
+    <div class="control-row">
       <button v-for="t in COURSE_TYPES" :key="t.key" class="type-chip" :class="{ active: typeFilter === t.key }" :style="{ '--type-color': t.color }" @click="typeFilter = t.key">{{ t.label }}</button>
       <button class="opt-btn" :class="{ active: colorMode === 'color' }" @click="colorMode = colorMode === 'white' ? 'color' : 'white'">{{ colorMode === 'white' ? '🎨 彩色' : '📄 白色' }}</button>
       <button class="opt-btn" :class="{ active: highlightToday }" @click="highlightToday = !highlightToday">{{ highlightToday ? '✨ 高亮' : '⬜ 高亮' }}</button>
@@ -692,21 +299,20 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 
     <div class="mode-hint">
       <span>{{ currentMajor?.short }} · {{ showSemester ? '学期课表' : '第' + selectedWeek + '周课表' }}</span>
-      <button v-if="customCourses.length || deletedCourses.length" class="reset-btn" @click="showResetConfirm = true">🔄 恢复默认</button>
     </div>
 
     <!-- 表格 -->
     <div v-if="viewMode === 'grid'" class="grid-view">
-      <div class="schedule-table-wrapper" :style="{ '--font-scale': fontSize / 100 }" data-tour="tt-table">
+      <div class="schedule-table-wrapper" :style="{ '--font-scale': fontSize / 100 }">
         <table class="schedule-table">
           <thead><tr>
             <th class="period-col">节</th>
-            <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday': isHoliday(wd.key), 'is-makeup': isMakeup(wd.key) }" @click.stop="openDayEdit(wd.key)" style="cursor:pointer;">
+            <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key) }">
               <div class="weekday-label">{{ wd.short }}</div>
               <div class="weekday-date">{{ showSemester ? '' : getDateText(wd.key) }}</div>
               <div v-if="getHolidayInfo(wd.key)" class="holiday-badge" :class="getHolidayInfo(wd.key).type">
                 <span class="holiday-icon">{{ getHolidayInfo(wd.key).icon }}</span>
-                <span class="holiday-text">{{ getHolidayInfo(wd.key).type === 'holiday' ? getHolidayInfo(wd.key).name : getHolidayInfo(wd.key).descShort || getHolidayInfo(wd.key).desc }}</span>
+                <span class="holiday-text">{{ getHolidayInfo(wd.key).type === 'holiday' ? getHolidayInfo(wd.key).name : getHolidayInfo(wd.key).descShort }}</span>
               </div>
             </th>
           </tr></thead>
@@ -715,25 +321,22 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
               <tr :class="'section-' + row.section" :data-period="row.period">
                 <td class="period-cell"><div class="period-num">{{ row.label }}</div><div class="period-time">{{ row.time }}</div><div class="period-time-end">{{ row.timeEnd }}</div></td>
                 <template v-for="wd in weekdayHeaders" :key="wd.key">
-                  <td v-if="isHoliday(wd.key) && row.period === 1" :rowspan="12" class="course-cell is-holiday-col holiday-empty-cell">
-                    <div class="holiday-empty"><span class="holiday-empty-icon">🎉</span><span class="holiday-empty-text">{{ getHolidayInfo(wd.key)?.name }}</span><span class="holiday-empty-sub">假期停课</span></div>
-                  </td>
-                  <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getOverride(wd.key, row.period) ? getOverride(wd.key, row.period).srcPeriods.length : getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
-                    :class="{ 'has-course': getCourse(wd.key, row.period) || getOverride(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key), 'other-week': showOtherWeek && getCourse(wd.key, row.period) && !isCourseInWeek(getCourse(wd.key, row.period), selectedWeek), 'is-flashing': flashingCourse === wd.key + '-' + row.period }"
-                    @click="getOverride(wd.key, row.period) ? jumpToOverride(wd.key, row.period) : getCourse(wd.key, row.period) ? openCourseDetail(getCourse(wd.key, row.period)) : openAddModal(wd.key, row.period)">
+                  <td v-if="!isCellMerged(wd.key, row.period)" :rowspan="getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
+                    :class="{ 'has-course': getCourse(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key), 'other-week': showOtherWeek && getCourse(wd.key, row.period) && !isCourseInWeek(getCourse(wd.key, row.period), selectedWeek), 'is-flashing': flashingCourse === wd.key + '-' + row.period }"
+                    @click="getOverride(wd.key, row.period) ? jumpToOverride(wd.key, row.period) : getCourse(wd.key, row.period) && openCourseDetail(getCourse(wd.key, row.period))">
                     <div v-if="getOverride(wd.key, row.period)" class="moved-badge" :title="'点击跳转至' + getOverride(wd.key, row.period).destDate.slice(5)">
                       <span class="moved-icon">↗️</span>
                       <span class="moved-text">{{ getOverride(wd.key, row.period).destDate.slice(5) }} 第{{ getOverride(wd.key, row.period).destPeriods[0] }}-{{ getOverride(wd.key, row.period).destPeriods.at(-1) }}节</span>
                       <span class="moved-loc">📍{{ getOverride(wd.key, row.period).destLocation }}</span>
                     </div>
-                    <div v-else-if="getCourse(wd.key, row.period)" class="course-card" :class="[colorMode, { 'is-incoming': getIncomingInfoLocal(dateStrOf(wd.key), row.period) }]" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">
-                      <div v-if="getIncomingInfoLocal(dateStrOf(wd.key), row.period)" class="incoming-badge">⬅️ 调入 {{ getIncomingInfoLocal(dateStrOf(wd.key), row.period).srcDate.slice(5) }}第{{ getIncomingInfoLocal(dateStrOf(wd.key), row.period).srcPeriods[0] }}节</div>
+                    <div v-else-if="getCourse(wd.key, row.period)" class="course-card" :class="[colorMode]" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">
                       <div class="course-name">{{ getCourse(wd.key, row.period).name }}</div>
-                      <div class="course-info">
-                        <span class="course-location" :class="{ 'new-location': getIncomingInfoLocal(dateStrOf(wd.key), row.period)?.destLocation !== getCourse(wd.key, row.period)?.location }">{{ getIncomingInfoLocal(dateStrOf(wd.key), row.period)?.destLocation || getCourse(wd.key, row.period).location }}</span>
-                        <span class="course-teacher">{{ getCourse(wd.key, row.period).teacher }}</span>
-                        <span v-if="showSemester" class="course-weeks">第{{ getCourse(wd.key, row.period).weeks }}周</span>
-                      </div>
+                      <div class="course-info"><span class="course-location">{{ getCourse(wd.key, row.period).location }}</span><span class="course-teacher">{{ getCourse(wd.key, row.period).teacher }}</span><span v-if="showSemester" class="course-weeks">第{{ getCourse(wd.key, row.period).weeks }}周</span></div>
+                    </div>
+                    <div v-else-if="isHoliday(wd.key)" class="holiday-empty">
+                      <div class="holiday-empty-icon">🇨🇳</div>
+                      <div class="holiday-empty-text">国庆节</div>
+                      <div class="holiday-empty-sub">假期</div>
                     </div>
                   </td>
                 </template>
@@ -741,7 +344,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
             </template>
           </tbody>
         </table>
-        <div v-if="timeLinePos !== null && isToday(timeLineWeekday)" class="time-line" :style="{ top: timeLinePos + 'px', left: getTodayColumnLeft() + 'px', width: getTodayColumnWidth() + 'px' }">
+        <div v-if="timeLinePos !== null && isToday(todayWeekday)" class="time-line" :style="{ top: timeLinePos + 'px' }">
           <span class="time-label">{{ now.getHours() }}:{{ String(now.getMinutes()).padStart(2, '0') }}</span>
         </div>
       </div>
@@ -795,247 +398,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
           <div class="detail-row"><span class="detail-label">任课教师</span><span class="detail-value">{{ selectedCourse?.teacher }}</span></div>
           <div v-if="selectedCourse?.shared" class="detail-row"><span class="detail-label">备注</span><span class="detail-value">{{ selectedCourse.shared }}</span></div>
         </div>
-        <div class="detail-actions">
-          <button class="detail-action-btn nav-btn" @click="goClassroomNav(selectedCourse?.location)">🧭 教室导航</button>
-          <button class="detail-action-btn eat-btn" @click="goCanteen()">🍚 去哪吃</button>
-          <button class="detail-action-btn budget-btn" @click="goBudget(selectedCourse?.name)">💰 记一笔</button>
-          <button class="detail-action-btn eat-what-btn" @click="goWhatToEat()">🍽️ 吃什么</button>
-        </div>
-        <div class="detail-footer">
-          <button class="btn-edit" @click="openEditModal(selectedCourse)">✏️ 编辑课程</button>
-          <button class="btn-delete" @click="confirmDeleteCourse(selectedCourse)">🗑️ 删除课程</button>
-          <button class="btn-close" @click="showDetail = false">关闭</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 删除确认 -->
-    <div v-if="showDeleteConfirm" class="overlay" @click.self="showDeleteConfirm = false">
-      <div class="confirm-modal">
-        <div class="confirm-title">🗑️ 删除课程</div>
-        <div class="confirm-desc">确定要删除「{{ deleteTarget?.name }}」吗？</div>
-        <div class="confirm-scope">
-          <label class="scope-option"><input type="radio" v-model="deleteScope" value="all"><span>删除全部学期的该课程</span></label>
-          <label class="scope-option"><input type="radio" v-model="deleteScope" value="week"><span>仅删除第{{ selectedWeek }}周的该课程</span></label>
-        </div>
-        <div class="confirm-actions">
-          <button class="btn-cancel" @click="showDeleteConfirm = false">取消</button>
-          <button class="btn-danger" @click="doDeleteCourse">确认删除</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 编辑范围确认 -->
-    <div v-if="showEditScopeConfirm" class="overlay" @click.self="showEditScopeConfirm = false">
-      <div class="confirm-modal">
-        <div class="confirm-title">✏️ 编辑课程</div>
-        <div class="confirm-desc">确定要修改「{{ pendingEditData?.name }}」吗？</div>
-        <div class="confirm-scope">
-          <label class="scope-option"><input type="radio" v-model="editScope" value="all"><span>修改整个学期的该课程</span></label>
-          <label class="scope-option"><input type="radio" v-model="editScope" value="week"><span>仅修改第{{ selectedWeek }}周的该课程</span></label>
-        </div>
-        <div class="confirm-actions">
-          <button class="btn-cancel" @click="showEditScopeConfirm = false">取消</button>
-          <button class="btn-primary" @click="doConfirmEdit">确认修改</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 恢复默认确认 -->
-    <div v-if="showResetConfirm" class="overlay" @click.self="showResetConfirm = false">
-      <div class="confirm-modal">
-        <div class="confirm-title">🔄 恢复默认课表</div>
-        <div class="confirm-desc">将清除所有自定义添加、编辑和删除的课程数据，恢复为系统默认课表。</div>
-        <div class="confirm-actions">
-          <button class="btn-cancel" @click="showResetConfirm = false">取消</button>
-          <button class="btn-danger" @click="doResetAll">确认恢复</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 编辑周几（补课/停课） -->
-    <div v-if="showDayEdit" class="overlay" @click.self="showDayEdit = false">
-      <div class="confirm-modal">
-        <div class="confirm-title">📅 编辑{{ ['','周一','周二','周三','周四','周五','周六','周日'][dayEditTarget] }}</div>
-        <div class="confirm-desc">设置该天为停课、调休补课，或恢复正常。</div>
-        <div class="day-edit-options">
-          <label class="scope-option"><input type="radio" v-model="dayEditType" value="none"><span>✅ 正常上课（恢复默认）</span></label>
-          <label class="scope-option"><input type="radio" v-model="dayEditType" value="holiday"><span>🚫 停课（节假日/因事停课）</span></label>
-          <label class="scope-option"><input type="radio" v-model="dayEditType" value="makeup"><span>📅 调休补课（补某天的课）</span></label>
-        </div>
-        <div v-if="dayEditType === 'holiday'" class="form-row" style="margin-top:10px;">
-          <label>备注名称</label><input v-model="dayEditName" placeholder="如：运动会、调休">
-        </div>
-        <div v-if="dayEditType === 'makeup'" class="form-row" style="margin-top:10px;">
-          <label>补周几的课</label>
-          <div class="select-grid">
-            <button v-for="w in [1,2,3,4,5]" :key="w" class="select-btn" :class="{ active: dayEditMakeupWd === w }" @click="dayEditMakeupWd = w">{{ ['','一','二','三','四','五'][w] }}</button>
-          </div>
-        </div>
-        <div class="confirm-actions">
-          <button class="btn-cancel" @click="showDayEdit = false">取消</button>
-          <button class="btn-primary" @click="doDayEdit">确认</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 添加课程 -->
-    <div v-if="showAddModal" class="overlay" @click.self="showAddModal = false">
-      <div class="add-modal">
-        <div class="add-header">➕ 添加课程</div>
-        <div class="add-body">
-          <div class="form-section"><div class="form-label">必填信息</div></div>
-          <div class="form-row"><label>课程名称</label><input v-model="addForm.name" placeholder="如：高等数学"></div>
-          <div class="form-row"><label>上课地点</label><input v-model="addForm.location" placeholder="如：笃行1-201"></div>
-          <div class="form-row">
-            <label>星期几</label>
-            <div class="select-grid">
-              <button v-for="d in 7" :key="d" class="select-btn" :class="{ active: addForm.weekday === d }" @click="addForm.weekday = d">{{ ['一','二','三','四','五','六','日'][d-1] }}</button>
-            </div>
-          </div>
-          <div class="form-row">
-            <label>节次</label>
-            <div class="period-select">
-              <div class="select-group">
-                <span class="select-label">开始</span>
-                <div class="select-grid compact">
-                  <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: addForm.startPeriod === p }" @click="addForm.startPeriod = p; if(addForm.endPeriod < p) addForm.endPeriod = p">{{ p }}</button>
-                </div>
-              </div>
-              <div class="select-group">
-                <span class="select-label">结束</span>
-                <div class="select-grid compact">
-                  <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: addForm.endPeriod === p }" :disabled="p < addForm.startPeriod" @click="addForm.endPeriod = p">{{ p }}</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="form-row">
-            <label>上课周次</label>
-            <div class="week-range-select">
-              <div class="select-group">
-                <span class="select-label">第</span>
-                <div class="select-grid compact scroll">
-                  <button v-for="w in 18" :key="w" class="select-btn sm" :class="{ active: addForm.weekStart === w }" @click="addForm.weekStart = w; if(addForm.weekEnd < w) addForm.weekEnd = w">{{ w }}</button>
-                </div>
-                <span class="select-label">周</span>
-              </div>
-              <div class="select-group">
-                <span class="select-label">至 第</span>
-                <div class="select-grid compact scroll">
-                  <button v-for="w in 18" :key="w" class="select-btn sm" :class="{ active: addForm.weekEnd === w }" :disabled="w < addForm.weekStart" @click="addForm.weekEnd = w">{{ w }}</button>
-                </div>
-                <span class="select-label">周</span>
-              </div>
-            </div>
-          </div>
-          <div class="form-row">
-            <label>单双周</label>
-            <div class="select-grid three">
-              <button class="select-btn" :class="{ active: addForm.weekdayType === 'all' }" @click="addForm.weekdayType = 'all'">全部</button>
-              <button class="select-btn" :class="{ active: addForm.weekdayType === 'odd' }" @click="addForm.weekdayType = 'odd'">单周</button>
-              <button class="select-btn" :class="{ active: addForm.weekdayType === 'even' }" @click="addForm.weekdayType = 'even'">双周</button>
-            </div>
-          </div>
-          <div class="form-section"><div class="form-label">选填信息</div></div>
-          <div class="form-row"><label>任课教师</label><input v-model="addForm.teacher" placeholder="选填"></div>
-          <div class="form-row"><label>课程编号</label><input v-model="addForm.id" placeholder="选填"></div>
-          <div class="form-row"><label>课程类别</label>
-            <div class="select-grid three">
-              <button class="select-btn" :class="{ active: addForm.category === '专业必修课' }" @click="addForm.category = '专业必修课'">专业必修</button>
-              <button class="select-btn" :class="{ active: addForm.category === '专业选修课' }" @click="addForm.category = '专业选修课'">专业选修</button>
-              <button class="select-btn" :class="{ active: addForm.category === '公共必修课' }" @click="addForm.category = '公共必修课'">公共必修</button>
-            </div>
-          </div>
-          <div class="form-row inline">
-            <div class="inline-field"><label>学分</label><input v-model.number="addForm.credits" type="number" min="0" step="0.5"></div>
-            <div class="inline-field"><label>学时</label><input v-model.number="addForm.hours" type="number" min="0" step="2"></div>
-          </div>
-        </div>
-        <div class="add-footer">
-          <button class="btn-cancel" @click="showAddModal = false">取消</button>
-          <button class="btn-save" @click="doAddCourse" :disabled="!addForm.name.trim() || !addForm.location.trim()">添加课程</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 编辑课程 -->
-    <div v-if="showEditModal" class="overlay" @click.self="showEditModal = false">
-      <div class="add-modal">
-        <div class="add-header">✏️ 编辑课程</div>
-        <div class="add-body">
-          <div class="form-section"><div class="form-label">必填信息</div></div>
-          <div class="form-row"><label>课程名称</label><input v-model="editForm.name" placeholder="如：高等数学"></div>
-          <div class="form-row"><label>上课地点</label><input v-model="editForm.location" placeholder="如：笃行1-201"></div>
-          <div class="form-row">
-            <label>星期几</label>
-            <div class="select-grid">
-              <button v-for="d in 7" :key="d" class="select-btn" :class="{ active: editForm.weekday === d }" @click="editForm.weekday = d">{{ ['一','二','三','四','五','六','日'][d-1] }}</button>
-            </div>
-          </div>
-          <div class="form-row">
-            <label>节次</label>
-            <div class="period-select">
-              <div class="select-group">
-                <span class="select-label">开始</span>
-                <div class="select-grid compact">
-                  <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: editForm.startPeriod === p }" @click="editForm.startPeriod = p; if(editForm.endPeriod < p) editForm.endPeriod = p">{{ p }}</button>
-                </div>
-              </div>
-              <div class="select-group">
-                <span class="select-label">结束</span>
-                <div class="select-grid compact">
-                  <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: editForm.endPeriod === p }" :disabled="p < editForm.startPeriod" @click="editForm.endPeriod = p">{{ p }}</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="form-row">
-            <label>上课周次</label>
-            <div class="week-range-select">
-              <div class="select-group">
-                <span class="select-label">第</span>
-                <div class="select-grid compact scroll">
-                  <button v-for="w in 18" :key="w" class="select-btn sm" :class="{ active: editForm.weekStart === w }" @click="editForm.weekStart = w; if(editForm.weekEnd < w) editForm.weekEnd = w">{{ w }}</button>
-                </div>
-                <span class="select-label">周</span>
-              </div>
-              <div class="select-group">
-                <span class="select-label">至 第</span>
-                <div class="select-grid compact scroll">
-                  <button v-for="w in 18" :key="w" class="select-btn sm" :class="{ active: editForm.weekEnd === w }" :disabled="w < editForm.weekStart" @click="editForm.weekEnd = w">{{ w }}</button>
-                </div>
-                <span class="select-label">周</span>
-              </div>
-            </div>
-          </div>
-          <div class="form-row">
-            <label>单双周</label>
-            <div class="select-grid three">
-              <button class="select-btn" :class="{ active: editForm.weekdayType === 'all' }" @click="editForm.weekdayType = 'all'">全部</button>
-              <button class="select-btn" :class="{ active: editForm.weekdayType === 'odd' }" @click="editForm.weekdayType = 'odd'">单周</button>
-              <button class="select-btn" :class="{ active: editForm.weekdayType === 'even' }" @click="editForm.weekdayType = 'even'">双周</button>
-            </div>
-          </div>
-          <div class="form-section"><div class="form-label">选填信息</div></div>
-          <div class="form-row"><label>任课教师</label><input v-model="editForm.teacher" placeholder="选填"></div>
-          <div class="form-row"><label>课程编号</label><input v-model="editForm.id" placeholder="选填"></div>
-          <div class="form-row"><label>课程类别</label>
-            <div class="select-grid three">
-              <button class="select-btn" :class="{ active: editForm.category === '专业必修课' }" @click="editForm.category = '专业必修课'">专业必修</button>
-              <button class="select-btn" :class="{ active: editForm.category === '专业选修课' }" @click="editForm.category = '专业选修课'">专业选修</button>
-              <button class="select-btn" :class="{ active: editForm.category === '公共必修课' }" @click="editForm.category = '公共必修课'">公共必修</button>
-            </div>
-          </div>
-          <div class="form-row inline">
-            <div class="inline-field"><label>学分</label><input v-model.number="editForm.credits" type="number" min="0" step="0.5"></div>
-            <div class="inline-field"><label>学时</label><input v-model.number="editForm.hours" type="number" min="0" step="2"></div>
-          </div>
-        </div>
-        <div class="add-footer">
-          <button class="btn-cancel" @click="showEditModal = false">取消</button>
-          <button class="btn-save" @click="doEditCourse" :disabled="!editForm.name.trim() || !editForm.location.trim()">保存修改</button>
-        </div>
+        <div class="detail-footer"><button class="btn-close" @click="showDetail = false">关闭</button></div>
       </div>
     </div>
   </div>
@@ -1054,10 +417,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .stat-label { font-size: 10px; color: rgba(255,255,255,0.8); }
 
 /* 专业选择器 */
-.major-selector { display: flex; gap: 8px; padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.major-chip { flex-shrink: 0; padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
-.major-chip:hover { border-color: var(--chip-color, var(--primary)); color: var(--chip-color, var(--primary)); }
-.major-chip.active { background: var(--chip-color, var(--primary)); border-color: var(--chip-color, var(--primary)); color: #fff; }
+.major-selector { display: flex; gap: 6px; padding: 12px 12px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.major-chip { flex-shrink: 0; padding: 8px 14px; border: 2px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.major-chip:hover { border-color: var(--major-color); }
+.major-chip.active { background: var(--major-color); border-color: var(--major-color); color: #fff; }
 
 /* 下一节课 */
 .next-card { margin: 12px 12px 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; }
@@ -1088,7 +451,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .search-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); font-size: 14px; outline: none; box-sizing: border-box; }
 .search-input:focus { border-color: var(--primary); }
 
-.week-selector { padding: 0 12px; margin-top: 10px; margin-bottom: 4px; }
+.week-selector { padding: 0 12px; margin-top: 10px; margin-bottom: 8px; }
 .week-nav { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; }
 .week-nav-btn { width: 32px; height: 32px; border: none; border-radius: 50%; background: var(--soft-fg); color: var(--text); font-size: 18px; cursor: pointer; }
 .week-nav-btn:hover:not(:disabled) { background: var(--primary); color: #fff; }
@@ -1118,9 +481,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .semester-btn { flex-shrink: 0; padding: 6px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 11px; cursor: pointer; font-weight: 700; white-space: nowrap; }
 .semester-btn.active { background: #6a1b9a; border-color: #6a1b9a; color: #fff; }
 
-.mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.reset-btn { padding: 4px 10px; border: 1px solid var(--primary); border-radius: 6px; background: transparent; color: var(--primary); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.reset-btn:hover { background: var(--primary); color: #fff; }
+.mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; }
 
 /* 表格 */
 .grid-view { padding: 0; overflow-x: auto; }
@@ -1137,35 +498,32 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .weekday-col { background: var(--soft-fg); font-weight: 700; }
 .weekday-col.weekend { background: #f5f5f5; }
 .weekday-col.is-today { background: #dbeafe; }
-.weekday-col.is-holiday { background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%); }
-.weekday-col.is-holiday .weekday-label { color: #dc2626; font-weight: 800; }
-.weekday-col.is-makeup { background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%); }
-.weekday-col.is-makeup .weekday-label { color: #b45309; font-weight: 800; }
-.holiday-badge { display: inline-flex; align-items: center; gap: 3px; margin: 3px auto 5px; padding: 2px 8px; border-radius: 999px; font-size: 9px; font-weight: 700; line-height: 1.4; white-space: nowrap; letter-spacing: 0.3px; }
-.holiday-badge.badge-for-save { display: block !important; text-align: center; font-size: 11px; padding: 3px 6px; }
-.holiday-badge.holiday { background: #fca5a5; color: #991b1b; }
-.holiday-badge.makeup { background: #fbbf24; color: #78350f; }
-.holiday-icon { font-size: 11px; }
-.holiday-text { font-size: 9px; }
-.holiday-empty-cell { text-align: center; vertical-align: middle; background: repeating-linear-gradient(45deg, #fef2f2, #fef2f2 10px, #fff5f5 10px, #fff5f5 20px); border-left: 2px dashed #fca5a5; border-right: 2px dashed #fca5a5; }
-.holiday-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; }
-.holiday-empty-icon { font-size: 32px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.1)); }
-.holiday-empty-text { font-size: 14px; font-weight: 800; color: #dc2626; letter-spacing: 1px; }
-.holiday-empty-sub { font-size: 11px; color: #9ca3af; font-weight: 500; }
-.makeup-cell { position: relative; }
 .weekday-label { padding: 6px 0 0; font-size: 12px; font-weight: 700; }
 .weekday-date { padding: 0 0 4px; font-size: 9px; color: var(--text-sub); }
+.weekday-col.is-holiday-col { background: #fef2f2; }
+.weekday-col.is-makeup-col { background: #fffbeb; }
+.holiday-badge { display: flex; align-items: center; gap: 3px; justify-content: center; padding: 2px 6px; font-size: 10px; border-radius: 4px; margin: 0 0 3px; }
+.holiday-badge.holiday { background: #fee2e2; color: #dc2626; }
+.holiday-badge.makeup { background: #fef3c7; color: #92400e; }
+.holiday-icon { font-size: 11px; }
+.holiday-text { font-size: 10px; font-weight: 600; }
+.holiday-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1px; }
+.holiday-empty-icon { font-size: 16px; }
+.holiday-empty-text { font-size: 10px; font-weight: 800; color: #dc2626; letter-spacing: 1px; }
+.holiday-empty-sub { font-size: 9px; color: #9ca3af; font-weight: 500; }
+.is-makeup-col { position: relative; }
+.moved-badge { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; text-align: center; background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); border-radius: 6px; border-left: 3px solid #7c3aed; height: 100%; justify-content: center; cursor: pointer; transition: all .15s; }
+.moved-badge:hover { background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%); transform: scale(1.02); }
+.moved-icon { font-size: 14px; }
+.moved-text { font-size: 9px; font-weight: 700; color: #6d28d9; line-height: 1.2; }
+.moved-loc { font-size: 8px; font-weight: 600; color: #7c3aed; background: #ede9fe; padding: 1px 4px; border-radius: 3px; }
 tr[data-period="5"] .course-cell { border-top: 1px solid var(--border); }
 tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .course-cell { padding: 3px; height: 46px; vertical-align: middle; cursor: default; transition: background .15s; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }
-.course-cell.is-holiday-col { background: #fef2f2; }
-.course-cell.is-makeup-col { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
 .course-cell.has-course { cursor: pointer; }
 .course-cell.has-course:hover { background: var(--primary-soft); }
-.course-cell:not(.has-course):not(.is-holiday-col):not(.holiday-empty-cell) { cursor: pointer; }
-.course-cell:not(.has-course):not(.is-holiday-col):not(.holiday-empty-cell):hover { background: #f0fdf4; outline: 2px dashed #86efac; outline-offset: -2px; }
 .course-cell.other-week { opacity: 0.5; }
 .course-cell.is-flashing { animation: flashHighlight 0.6s ease 4; z-index: 1; position: relative; }
 @keyframes flashHighlight { 0%, 100% { background-color: transparent; } 25%, 75% { background-color: #fef08a; } 50% { background-color: #fde047; } }
@@ -1178,19 +536,11 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .course-info { display: flex; flex-direction: column; gap: 0; }
 .course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; }
 .course-weeks { color: var(--primary); font-weight: 600; }
-.moved-badge { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; text-align: center; background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); border-radius: 6px; border-left: 3px solid #7c3aed; height: 100%; justify-content: center; cursor: pointer; transition: all .15s; box-sizing: border-box; }
-.moved-badge:hover { background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%); transform: scale(1.02); }
-.moved-icon { font-size: 18px; }
-.moved-text { font-size: 10px; font-weight: 700; color: #6d28d9; line-height: 1.3; }
-.moved-loc { font-size: 9px; font-weight: 600; color: #7c3aed; background: #ede9fe; padding: 2px 6px; border-radius: 3px; }
-.course-card.is-incoming { border-left-style: dashed !important; position: relative; }
-.incoming-badge { font-size: 8px; font-weight: 700; color: #0369a1; background: #e0f2fe; padding: 1px 4px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; }
-.course-location.new-location { color: #dc2626; font-weight: 700; }
 
-/* 时间射线 - 只在当日列内显示 */
+/* 时间射线 */
 .time-line { position: absolute; height: 2px; background: #ef4444; z-index: 10; pointer-events: none; }
 .time-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; }
-.time-label { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px 0 0 4px; white-space: nowrap; }
+.time-label { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; white-space: nowrap; line-height: 1; }
 
 /* 列表 */
 .list-view { padding: 0 12px; display: flex; flex-direction: column; gap: 16px; }
@@ -1232,72 +582,20 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .detail-row:last-child { border-bottom: none; }
 .detail-label { width: 80px; font-size: 13px; color: var(--text-sub); flex-shrink: 0; }
 .detail-value { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
-.detail-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
-.btn-close { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--soft-fg); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
-.btn-delete { padding: 12px 16px; border: none; border-radius: 8px; background: #fee2e2; color: #dc2626; font-size: 14px; font-weight: 700; cursor: pointer; }
-.btn-delete:hover { background: #fecaca; }
-.btn-edit { padding: 12px 16px; border: none; border-radius: 8px; background: #e0f2fe; color: #0369a1; font-size: 14px; font-weight: 700; cursor: pointer; }
-.btn-edit:hover { background: #bae6fd; }
-.detail-actions { padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px dashed var(--border); }
-.detail-action-btn { flex: 1; min-width: calc(50% - 3px); padding: 10px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
-.detail-action-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-.nav-btn { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-.eat-btn { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-.budget-btn { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-.eat-what-btn { background: #fce7f3; color: #9d174d; border-color: #fbcfe8; }
-
-/* 删除确认弹窗 */
-.confirm-modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 360px; padding: 24px; }
-.confirm-title { font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 8px; }
-.confirm-desc { font-size: 14px; color: var(--text); text-align: center; margin-bottom: 16px; }
-.confirm-scope { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-.scope-option { display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; }
-.scope-option:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
-.scope-option input { margin: 0; }
-.confirm-actions { display: flex; gap: 10px; }
-.confirm-actions .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; }
-.btn-danger { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #dc2626; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
-.btn-danger:hover { background: #b91c1c; }
-.btn-primary { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
-.btn-primary:hover { background: color-mix(in srgb, var(--primary) 80%, #000); }
-
-/* 添加课程弹窗 */
-.add-modal { background: var(--card); border-radius: 16px; width: 100%; max-width: 480px; max-height: 85vh; display: flex; flex-direction: column; }
-.add-header { padding: 20px 24px 0; font-size: 18px; font-weight: 800; }
-.add-body { padding: 16px 24px; overflow-y: auto; flex: 1; }
-.form-section { margin: 12px 0 8px; }
-.form-label { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
-.form-row { margin-bottom: 12px; }
-.form-row label { display: block; font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 4px; }
-.form-row input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; outline: none; box-sizing: border-box; }
-.form-row input:focus { border-color: var(--primary); }
-.form-row.inline { display: flex; gap: 12px; }
-.inline-field { flex: 1; }
-.select-grid { display: flex; gap: 4px; flex-wrap: wrap; }
-.select-grid.three { display: flex; gap: 4px; }
-.select-grid.compact { gap: 3px; }
-.select-grid.scroll { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
-.select-btn { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); font-size: 13px; cursor: pointer; transition: all .12s; }
-.select-btn.sm { padding: 6px 8px; font-size: 12px; min-width: 30px; text-align: center; }
-.select-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.select-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.period-select, .week-range-select { display: flex; flex-direction: column; gap: 6px; }
-.select-group { display: flex; align-items: center; gap: 4px; }
-.select-label { font-size: 12px; color: var(--text-sub); flex-shrink: 0; }
-.add-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-.add-footer .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; }
-.add-footer .btn-save { flex: 1; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
-.add-footer .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.detail-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+.btn-close { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--soft-fg); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
 
 /* 手机端 */
 @media (max-width: 640px) {
   .schedule-header { border-radius: 0; margin: -16px -16px 0; padding: 12px 16px 14px; }
   .header-title { font-size: 16px; }
   .stat-value { font-size: 14px; color: #fff; }
+  .major-selector { padding: 10px 8px 0; gap: 4px; }
+  .major-chip { padding: 6px 10px; font-size: 11px; }
   .next-card, .today-section { margin: 10px 8px 0; }
   .search-bar { padding: 10px 8px 0; }
   .week-selector { padding: 0 8px; }
-  .control-row { padding: 0 8px; flex-wrap: wrap; gap: 4px; padding-bottom: 60px; }
+  .control-row { padding: 0 8px; flex-wrap: wrap; gap: 4px; }
   .control-row > * { flex: 0 0 auto; }
   .mode-hint { margin: 0 8px 8px; font-size: 11px; }
   .period-col { width: 30px; }
@@ -1309,26 +607,17 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .course-card { padding: 3px 5px; }
   .course-name { font-size: calc(10px * var(--font-scale)); }
   .course-location, .course-teacher { font-size: calc(8px * var(--font-scale)); }
-  .holiday-badge { padding: 1px 4px; font-size: 8px; gap: 1px; margin: 2px auto 3px; }
+  .holiday-badge { padding: 1px 4px; font-size: 8px; gap: 1px; margin: 0 0 2px; }
   .holiday-icon { font-size: 9px; }
   .holiday-text { font-size: 8px; }
-  .moved-badge { padding: 4px; gap: 2px; }
-  .moved-icon { font-size: 14px; }
-  .moved-text { font-size: 9px; }
-  .moved-loc { font-size: 8px; padding: 1px 4px; }
-  .holiday-empty-icon { font-size: 24px; }
-  .holiday-empty-text { font-size: 12px; }
-  .incoming-badge { font-size: 7px; padding: 0 3px; }
-  .course-location.new-color { font-size: calc(7px * var(--font-scale)); }
+  .moved-badge { padding: 2px; gap: 1px; }
+  .moved-icon { font-size: 12px; }
+  .moved-text { font-size: 8px; }
+  .moved-loc { font-size: 7px; }
+  .holiday-empty-icon { font-size: 14px; }
+  .holiday-empty-text { font-size: 9px; }
   .list-view { padding: 0 8px; }
   .time-line::before { width: 8px; height: 8px; left: -4px; top: -3px; }
-  .time-label { font-size: 9px; padding: 1px 4px; border-radius: 3px 0 0 3px; }
-  .detail-actions { padding: 10px 12px; gap: 4px; }
-  .detail-action-btn { min-width: calc(50% - 2px); padding: 8px 6px; font-size: 11px; }
-  .add-modal { max-width: 100%; max-height: 90vh; border-radius: 12px; }
-  .add-body { padding: 12px 16px; }
-  .add-header { padding: 16px 16px 0; }
-  .add-footer { padding: 12px 16px; }
-  .select-btn.sm { padding: 5px 6px; font-size: 11px; min-width: 26px; }
+  .time-label { font-size: 9px; padding: 1px 4px; }
 }
 </style>

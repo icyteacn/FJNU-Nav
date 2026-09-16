@@ -837,7 +837,33 @@ function renderTable(){
       const effectiveWd=isMak?dt.scheduleWeekday:wd.key;
       const course=courses.find(c=>c.weekday===effectiveWd&&row.period>=c.startPeriod&&row.period<=c.endPeriod);
       const override=getOverride(ds,row.period);
-      if(override&&row.period===override.srcPeriods[0]){
+      // 检查是否有调入课程（从其他日期调来）
+      let incoming=null;
+      for(const key of Object.keys(HOLIDAY_MAP)){
+        const hdt=HOLIDAY_MAP[key];
+        if(!hdt||!hdt.overrides)continue;
+        for(const ov of hdt.overrides){
+          if(ov.destDate===ds&&row.period>=ov.destPeriods[0]&&row.period<=ov.destPeriods.at(-1)){
+            const srcWd=hdt.scheduleWeekday;
+            const srcCourse=courses.find(c=>c.weekday===srcWd&&ov.srcPeriods[0]>=c.startPeriod&&ov.srcPeriods[0]<=c.endPeriod);
+            if(srcCourse)incoming={course:srcCourse,srcDate:key,srcPeriods:ov.srcPeriods,destLocation:ov.destLocation};
+          }
+        }
+      }
+      if(incoming&&row.period===incoming.srcPeriods[0]){
+        const span=incoming.srcPeriods.length;
+        incoming.srcPeriods.forEach(p=>merged.add(wd.key+'-'+p));
+        let cls='course-cell has-course';
+        if(wd.key>=6)cls+=' weekend';
+        if(isTod)cls+=' is-today';
+        if(isMak)cls+=' is-makeup-col';
+        bodyHtml+='<td rowspan="'+span+'" class="'+cls+'">';
+        bodyHtml+='<div class="course-card" style="border-left-style:dashed;border-left-color:#0369a1;background:#e0f2fe">';
+        bodyHtml+='<div class="incoming-badge" style="font-size:8px;font-weight:700;color:#0369a1;background:#bae6fd;padding:1px 4px;border-radius:3px;margin-bottom:2px">⬅️ 调入 '+incoming.srcDate.slice(5)+'第'+incoming.srcPeriods[0]+'节</div>';
+        bodyHtml+='<div class="course-name">'+incoming.course.name+'</div>';
+        bodyHtml+='<div class="course-info"><span class="course-location" style="color:#dc2626;font-weight:700">'+incoming.destLocation+'</span>';
+        bodyHtml+='<span class="course-teacher">'+incoming.course.teacher+'</span></div></div></td>';
+      } else if(override&&row.period===override.srcPeriods[0]){
         const span=override.srcPeriods.length;
         override.srcPeriods.forEach(p=>merged.add(wd.key+'-'+p));
         let cls='course-cell has-course';
@@ -1113,15 +1139,15 @@ function showOverrideDetail(dateStr,period){
   const o=getOverride(dateStr,period);
   if(!o)return;
   const modal=document.getElementById('detailModal');
-  document.getElementById('detailTitle').textContent='↗️ 调课通知';
+  modal.querySelector('.modal-title').textContent='↗️ 调课通知';
   let html='<div class="detail-row"><span class="detail-label">原日期</span><span class="detail-value">'+dateStr+'</span></div>';
   html+='<div class="detail-row"><span class="detail-label">原节次</span><span class="detail-value">第'+o.srcPeriods[0]+'-'+o.srcPeriods.at(-1)+'节</span></div>';
   html+='<div class="detail-row"><span class="detail-label">调至日期</span><span class="detail-value">'+o.destDate+'</span></div>';
   html+='<div class="detail-row"><span class="detail-label">调至节次</span><span class="detail-value">第'+o.destPeriods[0]+'-'+o.destPeriods.at(-1)+'节</span></div>';
   html+='<div class="detail-row"><span class="detail-label">上课地点</span><span class="detail-value">'+o.destLocation+'</span></div>';
   if(o.courseHint)html+='<div class="detail-row"><span class="detail-label">课程</span><span class="detail-value">'+o.courseHint+'</span></div>';
-  document.getElementById('detailBody').innerHTML=html;
-  document.getElementById('detailActions').innerHTML='<button class="btn-close" onclick="closeDetailModal()">关闭</button>';
+  modal.querySelector('#detailContent').innerHTML=html;
+  modal.querySelector('.modal-footer').innerHTML='<button class="btn btn-secondary" onclick="closeDetailModal()">关闭</button>';
   modal.classList.add('show');
 }
 let overrideDate=null;
@@ -1186,13 +1212,28 @@ function importData(){
 function checkUpdate(){
   closeMoreMenu();
   showToast('正在检查更新...');
-  fetch('https://icyteacn.github.io/FJNU-Nav/data/snapshot.json')
-    .then(r=>r.json()).then(data=>{
-      if(data&&data.rows){
-        const last=localStorage.getItem('sche_last_update')||'';
-        const now=data.updateTime||'';
-        if(now&&now!==last){showConfirm('发现更新','发现新的课表数据，是否更新？',()=>{localStorage.setItem('sche_last_update',now);showToast('已更新到最新数据')})}
-        else showToast('已是最新数据');
+  fetch('https://icyteacn.github.io/FJNU-Nav/data/schedule-courses.json')
+    .then(r=>{if(!r.ok)throw new Error('not found');return r.json()})
+    .then(data=>{
+      if(data&&data.courses){
+        const localVersion=localStorage.getItem('sche_data_version')||'';
+        const remoteVersion=data.version||'';
+        const remoteTime=data.updatedAt||'';
+        const lastUpdate=localStorage.getItem('sche_last_update')||'';
+        if(remoteTime&&remoteTime!==lastUpdate){
+          showConfirm('发现更新','发现新的课表数据（'+data.courses.length+'门课程），是否更新？',()=>{
+            const updated={};
+            data.courses.forEach(c=>{
+              if(!updated[c.major])updated[c.major]=[];
+              updated[c.major].push(c);
+            });
+            Object.keys(updated).forEach(m=>{ALL_COURSES[m]=updated[m]});
+            localStorage.setItem('sche_last_update',remoteTime);
+            localStorage.setItem('sche_data_version',remoteVersion);
+            saveState();render();
+            showToast('✅ 已更新到最新数据（'+data.courses.length+'门课程）');
+          });
+        }else showToast('已是最新数据');
       }else showToast('暂无新数据');
     }).catch(()=>showToast('当前离线，无法检查更新'));
 }

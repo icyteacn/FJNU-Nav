@@ -303,6 +303,32 @@
       white-space: nowrap;
     }
     .hidden { display: none !important; }
+    .pure-bottom {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #eee;
+      padding: 8px 16px;
+      padding-bottom: calc(8px + var(--safe-bottom));
+      justify-content: center;
+      gap: 12px;
+      z-index: 200;
+    }
+    .pure-bottom.show { display: flex; }
+    .pure-bottom button {
+      padding: 8px 20px;
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      background: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .pure-bottom button:active { background: #f5f5f5; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     @media (max-width: 768px) {
       .schedule-table { min-width: 100%; }
       .schedule-table th, .schedule-table td { padding: 2px; font-size: 10px; }
@@ -321,8 +347,8 @@
         </div>
       </div>
       <div class="mode-toggle">
-        <button class="mode-btn active" onclick="setMode('page')">页面版</button>
-        <button class="mode-btn" onclick="setMode('table')">纯课表</button>
+        <button class="mode-btn" onclick="setMode('page')">📄 网页版</button>
+        <button class="mode-btn active" onclick="setMode('table')">📐 纯课表</button>
       </div>
       <div class="search-box" id="searchBox">
         <input type="text" class="search-input" placeholder="搜索课程..." id="searchInput" oninput="renderSchedule()">
@@ -340,6 +366,16 @@
       <button onclick="nextWeek()">下周 ›</button>
     </div>
 
+    <!-- 精简周次导航（纯课表模式） -->
+    <div class="week-nav" id="pureWeekNav" style="display:none;">
+      <button onclick="prevWeek()">‹</button>
+      <div class="week-info">
+        <div class="week-num" id="pureWeekNum">第1周</div>
+        <div class="week-date" id="pureWeekDate"></div>
+      </div>
+      <button onclick="nextWeek()">›</button>
+    </div>
+
     <div class="table-container" id="tableContainer">
       <table class="schedule-table" id="scheduleTable">
         <thead id="tableHead"></thead>
@@ -348,6 +384,13 @@
     </div>
 
     <button class="fab" onclick="showAddModal()">+</button>
+
+    <!-- 纯课表底部快捷栏 -->
+    <div class="pure-bottom" id="pureBottom">
+      <button onclick="currentWeek=getCurrentWeekNum();renderWeekNav();renderSchedule();">📍 本周</button>
+      <button onclick="saveScreenshot()">📷 截图</button>
+      <button onclick="showAddModal()">➕ 添加</button>
+    </div>
   </div>
 
   <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleImport(event)">
@@ -458,7 +501,7 @@
     // ===== 状态 =====
     let currentMajor = 'cs-master';
     let currentWeek = 1;
-    let currentMode = 'page';
+    let currentMode = 'table';
     let currentFilter = 'all';
     let searchQuery = '';
     let userCourses = [];
@@ -559,11 +602,17 @@
     }
 
     function renderWeekNav() {
-      document.getElementById('weekNum').textContent = `第${currentWeek}周`;
+      const text = `第${currentWeek}周`;
       const start = getWeekStartDate(currentWeek);
       const end = new Date(start);
       end.setDate(end.getDate() + 6);
-      document.getElementById('weekDate').textContent = `${formatDate(start)} - ${formatDate(end)}`;
+      const dateText = `${formatDate(start)} - ${formatDate(end)}`;
+      document.getElementById('weekNum').textContent = text;
+      document.getElementById('weekDate').textContent = dateText;
+      const pn = document.getElementById('pureWeekNum');
+      const pd = document.getElementById('pureWeekDate');
+      if (pn) pn.textContent = text;
+      if (pd) pd.textContent = dateText;
     }
 
     function getAllCoursesForMajor(major) {
@@ -677,13 +726,64 @@
     }
 
     function setMode(mode) {
+      if (mode === 'page') {
+        openWebsite();
+        return;
+      }
       currentMode = mode;
       document.querySelectorAll('.mode-btn').forEach((btn, i) => {
         btn.classList.toggle('active', (i === 0 && mode === 'page') || (i === 1 && mode === 'table'));
       });
       document.getElementById('searchBox').classList.toggle('hidden', mode === 'table');
       document.querySelector('.fab').classList.toggle('hidden', mode === 'table');
+      document.querySelector('.header-top').classList.toggle('hidden', mode === 'table');
+      document.querySelector('.mode-toggle').classList.toggle('hidden', mode === 'table');
+      document.querySelector('.week-nav').classList.toggle('hidden', mode === 'table');
+      document.getElementById('pureWeekNav').style.display = mode === 'table' ? 'flex' : 'none';
+      document.getElementById('pureBottom').classList.toggle('show', mode === 'table');
+      document.querySelector('.table-container').style.paddingBottom = mode === 'table' ? '60px' : '0';
       renderSchedule();
+    }
+
+    const SITE_URL = 'https://icyteacn.github.io/FJNU-Nav/';
+    function openWebsite() {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:24px;max-width:300px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+          <div style="font-size:32px;margin-bottom:8px;">🌐</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px;">正在跳转网页版…</div>
+          <div style="font-size:12px;color:#888;margin-bottom:16px;">将打开福star导航网站的课程表应用</div>
+          <div id="loadingDots" style="font-size:14px;color:#c62828;margin-bottom:16px;">请稍候...</div>
+          <button onclick="this.parentElement.parentElement.remove()" style="padding:8px 24px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:13px;cursor:pointer;">取消</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+      const timer = setTimeout(() => {
+        overlay.remove();
+        showNetworkError();
+      }, 8000);
+      const w = window.open(SITE_URL, '_blank');
+      if (!w || w.closed) {
+        clearTimeout(timer);
+        overlay.remove();
+        showNetworkError();
+      } else {
+        setTimeout(() => { clearTimeout(timer); overlay.remove(); }, 3000);
+      }
+    }
+    function showNetworkError() {
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;padding:24px;max-width:300px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:10000;animation:fadeIn .3s;';
+      t.innerHTML = `
+        <div style="font-size:40px;margin-bottom:8px;">📡</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px;">网络连接不佳</div>
+        <div style="font-size:12px;color:#888;line-height:1.5;margin-bottom:16px;">无法打开网页版课表<br>请检查网络连接后重试<br><span style="font-size:11px;color:#aaa;">${SITE_URL}</span></div>
+        <button onclick="this.parentElement.remove()" style="padding:8px 24px;border:none;border-radius:8px;background:#c62828;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">知道了</button>
+      `;
+      document.body.appendChild(t);
+      setTimeout(() => { if (t.parentElement) t.remove(); }, 6000);
     }
 
     function toggleFilter() {
@@ -1058,9 +1158,11 @@
     // ===== 初始化 =====
     loadUserCourses();
     currentWeek = getCurrentWeekNum();
+    currentMode = 'table';
     renderMajorChips();
     renderWeekNav();
     renderSchedule();
+    setMode('table');
   </script>
 </body>
 </html>

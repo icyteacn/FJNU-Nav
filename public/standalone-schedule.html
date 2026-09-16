@@ -836,7 +836,19 @@ function renderTable(){
       if(isHol)return;
       const effectiveWd=isMak?dt.scheduleWeekday:wd.key;
       const course=courses.find(c=>c.weekday===effectiveWd&&row.period>=c.startPeriod&&row.period<=c.endPeriod);
-      if(course&&row.period===course.startPeriod){
+      const override=getOverride(ds,row.period);
+      if(override&&row.period===override.srcPeriods[0]){
+        const span=override.srcPeriods.length;
+        override.srcPeriods.forEach(p=>merged.add(wd.key+'-'+p));
+        let cls='course-cell has-course';
+        if(wd.key>=6)cls+=' weekend';
+        if(isTod)cls+=' is-today';
+        if(isMak)cls+=' is-makeup-col';
+        bodyHtml+='<td rowspan="'+span+'" class="'+cls+'" onclick="showOverrideDetail(\''+ds+'\','+row.period+')">';
+        bodyHtml+='<div class="moved-badge"><span class="moved-icon">↗️</span>';
+        bodyHtml+='<span class="moved-text">'+override.destDate.slice(5)+' 第'+override.destPeriods[0]+'-'+override.destPeriods.at(-1)+'节</span>';
+        bodyHtml+='<span class="moved-loc">📍'+override.destLocation+'</span></div></td>';
+      } else if(course&&row.period===course.startPeriod){
         const span=course.endPeriod-course.startPeriod+1;
         for(let p=course.startPeriod;p<=course.endPeriod;p++)merged.add(wd.key+'-'+p);
         const color=state.colorMode==='color'?(course.color||'#999'):'#666';
@@ -873,11 +885,18 @@ function renderTable(){
   document.getElementById('tableBody').innerHTML=bodyHtml;
 }
 function applyStyles(){
-  document.documentElement.style.setProperty('--font-scale',state.fontSize);
+  const s=state.fontSize;
+  document.documentElement.style.setProperty('--font-scale',s);
+  document.querySelectorAll('.course-name').forEach(e=>e.style.fontSize=(11*s)+'px');
+  document.querySelectorAll('.course-location,.course-teacher').forEach(e=>e.style.fontSize=(9*s)+'px');
+  document.querySelectorAll('.period-num').forEach(e=>e.style.fontSize=(14*s)+'px');
+  document.querySelectorAll('.period-time').forEach(e=>e.style.fontSize=(7*s)+'px');
+  document.querySelectorAll('.period-time-end').forEach(e=>e.style.fontSize=(6.5*s)+'px');
+  document.querySelectorAll('.weekday-label').forEach(e=>e.style.fontSize=(12*s)+'px');
   const fs=document.getElementById('fontSlider');
-  if(fs)fs.value=state.fontSize;
+  if(fs)fs.value=s;
   const fl=document.getElementById('fontSizeLabel');
-  if(fl)fl.textContent=Math.round(state.fontSize*100)+'%';
+  if(fl)fl.textContent=Math.round(s*100)+'%';
   const cb=document.getElementById('colorModeBtn');
   const wb=document.getElementById('whiteModeBtn');
   if(cb)cb.classList.toggle('active',state.colorMode==='color');
@@ -888,12 +907,25 @@ function applyStyles(){
 function prevWeek(){if(state.selectedWeek>1){state.selectedWeek--;saveState();render()}}
 function nextWeek(){if(state.selectedWeek<18){state.selectedWeek++;saveState();render()}}
 function goToday(){state.selectedWeek=getCurrentWeek();saveState();render();showToast('已跳转到本周')}
-let touchStartX=0;
-document.getElementById('tableContainer').addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX});
-document.getElementById('tableContainer').addEventListener('touchend',e=>{
+let touchStartX=0,touchStartY=0,touchStartTime=0;
+const tableEl=document.getElementById('tableContainer');
+tableEl.addEventListener('touchstart',e=>{
+  touchStartX=e.touches[0].clientX;
+  touchStartY=e.touches[0].clientY;
+  touchStartTime=Date.now();
+  tableEl.style.transition='none';
+},{passive:true});
+tableEl.addEventListener('touchend',e=>{
   const dx=e.changedTouches[0].clientX-touchStartX;
-  if(Math.abs(dx)>80){if(dx>0)prevWeek();else nextWeek()}
-});
+  const dy=e.changedTouches[0].clientY-touchStartY;
+  const dt=Date.now()-touchStartTime;
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50&&dt<300){
+    tableEl.style.transition='transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)';
+    tableEl.style.transform='translateX('+(dx>0?30:-30)+'px)';
+    setTimeout(()=>{tableEl.style.transform='';},150);
+    if(dx>0)prevWeek();else nextWeek();
+  }
+},{passive:true});
 
 // ==================== 菜单 ====================
 function showMoreMenu(){document.getElementById('moreMenu').classList.add('show')}
@@ -1068,6 +1100,30 @@ function saveCourse(){
 }
 
 // ==================== 停课/调休 ====================
+function getOverride(dateStr,period){
+  const dt=HOLIDAY_MAP[dateStr];
+  if(dt&&dt.overrides){
+    for(const o of dt.overrides){
+      if(o.srcPeriods&&o.srcPeriods.includes(period))return o;
+    }
+  }
+  return null;
+}
+function showOverrideDetail(dateStr,period){
+  const o=getOverride(dateStr,period);
+  if(!o)return;
+  const modal=document.getElementById('detailModal');
+  document.getElementById('detailTitle').textContent='↗️ 调课通知';
+  let html='<div class="detail-row"><span class="detail-label">原日期</span><span class="detail-value">'+dateStr+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-label">原节次</span><span class="detail-value">第'+o.srcPeriods[0]+'-'+o.srcPeriods.at(-1)+'节</span></div>';
+  html+='<div class="detail-row"><span class="detail-label">调至日期</span><span class="detail-value">'+o.destDate+'</span></div>';
+  html+='<div class="detail-row"><span class="detail-label">调至节次</span><span class="detail-value">第'+o.destPeriods[0]+'-'+o.destPeriods.at(-1)+'节</span></div>';
+  html+='<div class="detail-row"><span class="detail-label">上课地点</span><span class="detail-value">'+o.destLocation+'</span></div>';
+  if(o.courseHint)html+='<div class="detail-row"><span class="detail-label">课程</span><span class="detail-value">'+o.courseHint+'</span></div>';
+  document.getElementById('detailBody').innerHTML=html;
+  document.getElementById('detailActions').innerHTML='<button class="btn-close" onclick="closeDetailModal()">关闭</button>';
+  modal.classList.add('show');
+}
 let overrideDate=null;
 function showOverrideModal(dateStr){
   overrideDate=dateStr;
@@ -1154,16 +1210,35 @@ function resetData(){
 function takeScreenshot(){
   closeMoreMenu();
   showToast('正在生成截图...');
+  function doCapture(canvas){
+    const dataUrl=canvas.toDataURL('image/png');
+    if(window.Capacitor){
+      const {Camera,Filesystem}=window.Capacitor.Plugins||{};
+      if(Filesystem){
+        const base64=dataUrl.split(',')[1];
+        const fileName='课表_'+state.selectedWeek+'周_'+Date.now()+'.png';
+        Filesystem.writeFile({path:fileName,data:base64,directory:'Pictures'}).then(()=>{
+          showToast('✅ 截图已保存到相册');
+        }).catch(err=>{
+          console.error(err);
+          fallbackDownload(dataUrl,fileName);
+        });
+        return;
+      }
+    }
+    fallbackDownload(dataUrl,'课表_'+state.selectedWeek+'周.png');
+  }
+  function fallbackDownload(dataUrl,name){
+    const link=document.createElement('a');
+    link.download=name;link.href=dataUrl;link.click();
+    showToast('截图已下载');
+  }
   if(typeof html2canvas!=='undefined'){
-    html2canvas(document.getElementById('scheduleTable'),{backgroundColor:'#ffffff',scale:2}).then(canvas=>{
-      const link=document.createElement('a');
-      link.download='课表-'+state.selectedWeek+'周.png';link.href=canvas.toDataURL();link.click();
-      showToast('截图已保存');
-    });
+    html2canvas(document.getElementById('scheduleTable'),{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(doCapture);
   }else{
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload=()=>takeScreenshot();s.onerror=()=>showToast('截图库加载失败');
+    s.onload=()=>takeScreenshot();s.onerror=()=>showToast('截图库加载失败，请检查网络');
     document.head.appendChild(s);
   }
 }

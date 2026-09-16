@@ -74,7 +74,7 @@ function toggleCampus(name) {
     </section>
 
     <section class="section">
-      <a href="https://github.com/icyteacn/FJNU-Nav/releases/latest" class="app-download-card" target="_blank" rel="noopener">
+      <a href="downloads/feike-schedule.apk" class="app-download-card" download>
         <div class="download-left">
           <span class="download-icon">🐔🩸</span>
           <div>

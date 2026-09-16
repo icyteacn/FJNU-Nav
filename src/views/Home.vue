@@ -74,6 +74,19 @@ function toggleCampus(name) {
     </section>
 
     <section class="section">
+      <a href="downloads/feike-schedule.apk" class="app-download-card" download>
+        <div class="download-left">
+          <span class="download-icon">🐔🩸</span>
+          <div>
+            <div class="download-title">课表 App · 安卓版</div>
+            <div class="download-desc">独立课表应用，离线可用，支持6个研究生专业</div>
+          </div>
+        </div>
+        <span class="download-btn">下载 APK ↗</span>
+      </a>
+    </section>
+
+    <section class="section">
       <div class="section-head">
         <h3 class="section-title">公开应用</h3>
         <div class="section-head-right">
@@ -204,4 +217,11 @@ function toggleCampus(name) {
 .section-head-right { display: flex; align-items: center; gap: 10px; }
 .about-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 .tile-hit { font-size: 11px; color: var(--primary); background: var(--primary-soft); border-radius: 999px; padding: 2px 8px; width: fit-content; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-download-card { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: linear-gradient(135deg, #c62828, #ad1457); border-radius: 14px; color: #fff; text-decoration: none; transition: transform .15s, box-shadow .15s; }
+.app-download-card:active { transform: scale(0.98); }
+.download-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.download-icon { font-size: 28px; flex-shrink: 0; }
+.download-title { font-size: 15px; font-weight: 800; }
+.download-desc { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+.download-btn { flex-shrink: 0; padding: 8px 16px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; font-size: 13px; font-weight: 700; color: #fff; }
 </style>

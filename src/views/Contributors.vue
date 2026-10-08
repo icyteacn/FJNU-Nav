@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.3.1</b> — {{ '技能市场、信任等级徽章、课表导入器、智能体介绍页、草稿保存、AI 帖子摘要。' }}</li>
       <li><b>v1.3.0 大版本</b> — {{ '对话式智能体 × 超级论坛：师大智答 27 工作流、BM25 校本知识、12 分区论坛、隐秘管理台、换校 bat 与网站工坊。' }}</li>
       <li><b>v1.2.27</b> — {{ '换校工具.bat 一键启动 + 网站工坊（表单编辑、样式实时、生成 site.js）。' }}</li>
       <li><b>v1.2.26</b> — {{ 'BM25 校本知识层五级识别链；架构/部署白皮书与 27 工作流剧本。' }}</li>

@@ -107,3 +107,10 @@ FJNU-Nav/
 
 文档索引：`docs/ARCHITECTURE.md` · `docs/DEPLOY.md` · `CHANGELOG.md` ·
 `src/agent/README.md` · `src/agent/playbooks/` · `src/agent/DIALOGUES.md`
+
+
+## 版本历史
+
+| 版本 | 说明 |
+| --- | --- |
+| **v1.3.1** | 技能市场（27 工作流卡片化）· 信任等级与成就徽章 · 课表导入器（免班级查课表）· 关于智能体介绍页 · 草稿自动保存 + 楼层引用 · 输入历史 ↑↓ · AI 帖子摘要 · 管理台反馈聚类。 |

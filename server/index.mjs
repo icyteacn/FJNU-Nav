@@ -9,7 +9,8 @@ import { handleCommunity, communityCors, bus } from './community.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DIST = path.join(__dirname, '..', 'dist')
-const PORT = Number(process.env.PORT) || 8787
+const PORT = Number(process.env.PORT) || 8788
+const HOST = process.env.HOST || '0.0.0.0'
 const execFileP = promisify(execFile)
 const PY = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3')
 const PARSE_PY = process.env.PARSE_PY || path.join(__dirname, 'parse_kcb.py')
@@ -451,6 +452,21 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // SSE 实时推送：社区内容变化即时广播（前端 EventSource 收听，替代长轮询）
+  if (urlPath === '/api/events') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    })
+    res.write(': connected\n\n')
+    const off = bus.on((payload) => { try { res.write('data: ' + payload + '\n\n') } catch { /* noop */ } })
+    const hb = setInterval(() => { try { res.write(': hb\n\n') } catch { /* noop */ } }, 15000)
+    req.on('close', () => { clearInterval(hb); off() })
+    return
+  }
+
   // 社区服务：评论 / 校园墙 / 敏感词 / 管理 API
   if (urlPath.startsWith('/api/comments') || urlPath.startsWith('/api/wall') ||
       urlPath.startsWith('/api/moderation') || urlPath.startsWith('/api/admin') ||
@@ -482,7 +498,8 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res, urlPath)
 })
 
-server.listen(PORT, () => {
-  console.log(`[fjnu-nav] 服务已启动：http://localhost:${PORT}`)
+server.listen(PORT, HOST, () => {
+  console.log(`[fjnu-nav] 服务已启动：http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`)
+  if (HOST === '0.0.0.0') console.log('[fjnu-nav] 局域网访问：用本机 LAN IP（如 http://192.168.x.x:8788），手机连同一 WiFi 即可打开')
   console.log(`[fjnu-nav] API 网关：${JWC} / ${XJW}`)
 })

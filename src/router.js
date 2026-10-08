@@ -10,6 +10,7 @@
  */
 import { ref, computed, markRaw } from 'vue'
 import Home from './views/Home.vue'
+import { recordAppOpen } from './agent/profile'
 
 /** 首页组件同步加载，其他页面懒加载（减少首屏 JS 体积） */
 const VIEWS = {
@@ -25,6 +26,11 @@ const VIEWS = {
   messages: () => import('./views/Messages.vue'),
   focus: () => import('./views/FocusTimer.vue'),
   data: () => import('./views/DataManager.vue'),
+  jobs: () => import('./views/Jobs.vue'),
+  compare: () => import('./views/Compare.vue'),
+  flywheel: () => import('./views/Flywheel.vue'),
+  transplant: () => import('./views/Transplant.vue'),
+  profile: () => import('./views/Profile.vue'),
   orientationSchedule: () => import('./views/OrientationSchedule.vue'),
   graduatePlan: () => import('./views/GraduatePlan.vue'),
   campusNews: () => import('./views/CampusNews.vue'),
@@ -121,6 +127,7 @@ export function useViewState() {
     location.hash = APP_ROUTE + id
     setView(id)
     window.scrollTo(0, 0)
+    try { recordAppOpen(id) } catch { /* 画像行为记录失败不挡主流程 */ }
   }
 
   /** 返回首页 */

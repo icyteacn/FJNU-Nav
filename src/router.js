@@ -13,6 +13,11 @@ import Home from './views/Home.vue'
 
 /** 首页组件同步加载，其他页面懒加载（减少首屏 JS 体积） */
 const VIEWS = {
+  assistant: () => import('./views/Assistant.vue'),
+  campusWall: () => import('./views/CampusWall.vue'),
+  reminder: () => import('./views/ReminderCenter.vue'),
+  insights: () => import('./views/CommunityInsights.vue'),
+  rebrand: () => import('./views/RebrandPreview.vue'),
   orientationSchedule: () => import('./views/OrientationSchedule.vue'),
   graduatePlan: () => import('./views/GraduatePlan.vue'),
   campusNews: () => import('./views/CampusNews.vue'),
@@ -40,6 +45,7 @@ export const VIEWS_LAZY = VIEWS
 
 /** 底部快捷导航（首页 + 高频应用） */
 export const NAV_APPS = [
+  { id: 'assistant', icon: '🤖', label: '智能体' },
   { id: 'campusNews', icon: '📢', label: '动态' },
   { id: 'officialSites', icon: '🏛️', label: '官网' },
   { id: 'budget', icon: '🧮', label: '生活费' },

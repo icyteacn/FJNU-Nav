@@ -3,6 +3,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { apps, campusStats } from '../data/apps'
 import { searchApps } from '../data/searchIndex'
+import { recognize } from '../agent/intents'
+import { AGENT_PROFILE } from '../agent/config'
 import { campuses } from '../data/campus'
 import { getCourseStats, EMPTY_STATS } from '../api/courseStats'
 import { SITE } from '../config/site'
@@ -43,6 +45,25 @@ const expanded = ref(null)
 function toggleCampus(name) {
   expanded.value = expanded.value === name ? null : name
 }
+
+/* 首页对话式入口：回车先过意图识别，命中即交给智能体办事 */
+function pushInbox(text) {
+  try { localStorage.setItem('qdu_agent_inbox', text) } catch { /* noop */ }
+}
+function onSearchEnter() {
+  const q = keyword.value.trim()
+  if (!q) return
+  const r = recognize(q)
+  if (r.layer === 'intent' || r.layer === 'faq') {
+    pushInbox(q)
+    keyword.value = ''
+    emit('open', 'assistant')
+  }
+}
+function askAgent(text) {
+  pushInbox(text)
+  emit('open', 'assistant')
+}
 </script>
 
 <template>
@@ -51,8 +72,18 @@ function toggleCampus(name) {
       <h2 class="hero-title">{{ greeting() }}</h2>
       <p class="hero-sub">欢迎回到 {{ SITE.name }}，{{ SITE.heroSub }}</p>
       <div class="search-bar" data-tour="search">
-        <span class="search-icon">🔍</span>
-        <input v-model="keyword" class="search-input" placeholder="搜索应用或功能：奖学金、空教室、记账…" />
+        <span class="search-icon">🤖</span>
+        <input
+          v-model="keyword"
+          class="search-input"
+          placeholder="说出你的需求：明天有空教室吗、今天吃什么、加个日程…"
+          @keydown.enter.prevent="onSearchEnter"
+        />
+        <button class="search-agent-go" title="交给智能体执行" @click="askAgent(keyword || '你能做什么')">执行 ›</button>
+      </div>
+      <div class="hero-chips">
+        <span class="hero-chips-label">试试：</span>
+        <button v-for="s in AGENT_PROFILE.examples.slice(0, 4)" :key="s" class="hero-chip" @click="askAgent(s)">{{ s }}</button>
       </div>
     </section>
 
@@ -224,4 +255,30 @@ function toggleCampus(name) {
 .download-title { font-size: 15px; font-weight: 800; }
 .download-desc { font-size: 12px; opacity: 0.85; margin-top: 2px; }
 .download-btn { flex-shrink: 0; padding: 8px 16px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; font-size: 13px; font-weight: 700; color: #fff; }
+
+.search-agent-go {
+  flex-shrink: 0;
+  border: none;
+  background: var(--primary, #1b66c9);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.hero-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; align-items: center; justify-content: center; }
+.hero-chips-label { font-size: 12px; color: var(--muted, #8a94a6); }
+.hero-chip {
+  border: 1px dashed var(--border, #e5eaf2);
+  background: var(--card, rgba(255, 255, 255, 0.75));
+  color: var(--text, #24292f);
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.hero-chip:hover { border-color: var(--primary, #1b66c9); color: var(--primary, #1b66c9); }
 </style>

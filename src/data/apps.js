@@ -9,6 +9,11 @@
  * 详见 README「二次开发：新增应用」。
  */
 export const apps = [
+  { id: 'reminder', title: '提醒中心', desc: '定时提醒引擎：页内弹窗+桌面通知+提示音，与智能体日程打通', icon: '⏰', color: '#d97706', group: '生活' },
+  { id: 'insights', title: '社区洞察', desc: '评论趋势、分区占比、热词与治理健康度的可视化看板', icon: '📈', color: '#0f766e', group: '服务' },
+  { id: 'rebrand', title: '换校向导', desc: '一键换校可视化：品牌实时预览、9 套主题、导出配置脚本直改', icon: '🔁', color: '#7c3aed', group: '服务' },
+  { id: 'campusWall', title: '校园墙', desc: '发帖吐槽、失物招领、求助美食，匿名互动全员可见', icon: '🧱', color: '#ea580c', group: '生活' },
+  { id: 'assistant', title: '智能助手', desc: '说一句话就能办事：查课表、找空教室、加日程、直达服务', icon: '🤖', color: '#1b66c9', group: '服务' },
   { id: 'orientationSchedule', title: '日程助手', desc: '新生入学教育日程 · 智能提醒 · 准备清单', icon: '📅', color: '#1565c0', group: '新生', },
   { id: 'graduatePlan', title: '研究生服务', desc: '培养方案 / 学术日历 / 常用资源 / 研究生专属服务', icon: '🎓', color: '#6a1b9a', group: '服务', },
   { id: 'officialSites', title: '学校官网', desc: '福建师范大学官方网站与各学院官网大全', icon: '🏯', color: '#c62828', group: '服务', },

@@ -89,3 +89,21 @@ FJNU-Nav/
 ## 免责声明
 
 非福建师范大学官方服务。数据来自公开渠道，仅供学习交流。
+
+
+---
+
+## 智能体与社区（2026-10 升级摘要）
+
+与 QDU-Nav-agent 同构内核 + 福建师大校本适配（差异见 `docs/ARCHITECTURE.md`）。
+
+- 🤖 **师大智答**：三层识别（40+ 意图 / BM25 知识库 / 应用检索）+ 27 工作流 + 三模式；
+  FAQ 为校本 8 条流程型（全部"以当年通知为准"，无未核实数字）
+- 🧱 **校园墙**：12 分区 5 帖型超级论坛（悬赏/投票/资源/楼中楼/签到积分/广告位）
+- 🛰️ **管理台**：`/admin` · `/console` · `/.g/9f3a` + Logo 连点×3；口令 `ADMIN_TOKEN`
+- ⏰📈🔁 提醒中心 / 社区洞察 / 换校向导 三新应用
+- ✅ `npm run build` + `node scripts/smoke-community.mjs`（网关默认 **8788**）
+- 🔁 换校：`python customize.py --config templates/fjnu.json`（7/7 复测通过）
+
+文档索引：`docs/ARCHITECTURE.md` · `docs/DEPLOY.md` · `CHANGELOG.md` ·
+`src/agent/README.md` · `src/agent/playbooks/` · `src/agent/DIALOGUES.md`

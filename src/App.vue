@@ -10,6 +10,7 @@ import Welcome from './views/Welcome.vue'
 import TourOverlay from './components/TourOverlay.vue'
 import ChatDock from './components/agent/ChatDock.vue'
 import { SITE } from './config/site'
+import { useI18n } from './i18n'
 import { NAV_APPS, useViewState, preloadPopular } from './router'
 import { useTour } from './utils/useTour'
 import { getTourSteps, getSubTourSteps } from './data/tourSteps'
@@ -187,6 +188,7 @@ onMounted(() => {
             <span class="notice-dot" v-if="unreadCount">{{ unreadCount }}</span>
           </button>
           <button class="ghost-btn tour-btn-header" data-tour="tour-btn" title="查看新手引导" @click="triggerTour">❓</button>
+          <button class="ghost-btn lang-btn" :title="lang === 'zh' ? 'Switch to English' : '切换到中文'" @click="toggleLang"><span class="lang-label">{{ lang === 'zh' ? 'EN' : '中' }}</span></button>
           <button class="ghost-btn" data-tour="theme-toggle" :title="theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'" @click="toggleTheme">{{ theme === 'dark' ? '☀️' : '🌙' }}</button>
           <button class="ghost-btn home-btn" @click="goHome">🏠<span class="home-btn-text"> 首页</span></button>
         </div>
@@ -223,7 +225,7 @@ onMounted(() => {
         @click="openApp(a.id)"
       >
         <span class="bn-icon">{{ a.icon }}</span>
-        <span>{{ a.label }}</span>
+        <span>{{ navLabel(a) }}</span>
       </button>
     </nav>
 

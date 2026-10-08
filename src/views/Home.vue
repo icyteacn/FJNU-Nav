@@ -8,9 +8,11 @@ import { AGENT_PROFILE } from '../agent/config'
 import { campuses } from '../data/campus'
 import { getCourseStats, EMPTY_STATS } from '../api/courseStats'
 import { SITE } from '../config/site'
+import { useI18n } from '../i18n'
 import VisitStats from '../components/VisitStats.vue'
 
 const emit = defineEmits(['open'])
+const { lang, t } = useI18n()
 
 const keyword = ref('')
 
@@ -76,7 +78,7 @@ function askAgent(text) {
         <input
           v-model="keyword"
           class="search-input"
-          placeholder="说出你的需求：明天有空教室吗、今天吃什么、加个日程…"
+          :placeholder="t('home.searchPlaceholder')"
           @keydown.enter.prevent="onSearchEnter"
         />
         <button class="search-agent-go" title="交给智能体执行" @click="askAgent(keyword || '你能做什么')">执行 ›</button>
@@ -119,10 +121,10 @@ function askAgent(text) {
 
     <section class="section">
       <div class="section-head">
-        <h3 class="section-title">公开应用</h3>
+        <h3 class="section-title">{{ t('home.publicApps') }}</h3>
         <div class="section-head-right">
           <span class="section-sub">高频应用一键直达</span>
-          <button class="section-link" @click="emit('open', 'categories')">查看全部分类 ›</button>
+          <button class="section-link" @click="emit('open', 'categories')">{{ t('home.viewAllCats') }}</button>
         </div>
       </div>
       <div v-if="keyword.trim() && filtered.length" class="tile-grid" data-tour="app-grid">
@@ -228,7 +230,7 @@ function askAgent(text) {
     </section>
 
     <section class="section">
-      <h3 class="section-title">关于本站</h3>
+      <h3 class="section-title">{{ t('home.about') }}</h3>
       <div class="about-card">
         <div class="about-line"><b>网站开发者：</b>{{ SITE.developer }}</div>
         <div class="about-line"><b>网站版本：</b>v{{ SITE.version }}</div>

@@ -13,9 +13,33 @@
     #app { width: 100%; height: 100%; }
     body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
   </style>
+  <style>
+    #agent-fab{position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:99;
+      background:linear-gradient(135deg,#c62828,#e05a4e);color:#fff;border:none;border-radius:999px;
+      padding:11px 18px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(198,40,40,.4);cursor:pointer}
+    #agent-fab:active{transform:scale(.96)}
+    #agent-tip{position:fixed;right:14px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:99;
+      background:#161b22;color:#e6edf3;font-size:11.5px;border-radius:10px;padding:7px 12px;opacity:.92;display:none}
+  </style>
 </head>
 <body>
   <div id="app"></div>
+  <!-- mini 智能体入口：浏览器打开时可用；APK(Capacitor) 环境自动隐藏避免跳转循环 -->
+  <div id="agent-tip">🤖 说一句话办事 · 查课表/空教室/日程</div>
+  <button id="agent-fab" type="button">🤖 问校园助手</button>
+  <script>
+    (function () {
+      var fab = document.getElementById('agent-fab');
+      var tip = document.getElementById('agent-tip');
+      if (!fab) return;
+      if (window.Capacitor) { fab.style.display = 'none'; tip.style.display = 'none'; return; } // APK 内不显示
+      setTimeout(function () { if (tip) tip.style.display = 'block'; setTimeout(function () { tip.style.display = 'none'; }, 4200); }, 1200);
+      fab.addEventListener('click', function () {
+        // 同域主站智能体（Hash 路由直达）；带话术入口协议 ?q= 兼容
+        location.href = './#/app/assistant';
+      });
+    })();
+  </script>
   <script type="module" src="/src/mobile.js"></script>
 </body>
 </html>

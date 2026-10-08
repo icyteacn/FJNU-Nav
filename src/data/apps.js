@@ -15,6 +15,7 @@ export const apps = [
   { id: 'campusWall', title: '校园墙', desc: '发帖吐槽、失物招领、求助美食，匿名互动全员可见', icon: '🧱', color: '#ea580c', group: '生活' },
   { id: 'skills', title: '技能市场', desc: '27 条工作流卡片化：分类搜索、使用统计、一键运行', icon: '🧩', color: '#2563eb', group: '服务' },
   { id: 'aboutagent', title: '关于智能体', desc: '架构五层、三模式、双 Agent 飞轮与现场演示引导', icon: '🤖', color: '#0891b2', group: '服务' },
+  { id: 'buildingGallery', title: '楼宇图鉴', desc: '真实排课数据生成：楼层房间格子图，点房查占用', icon: '🏢', color: '#b63a46', group: '学习' },
   { id: 'importer', title: '课表导入器', desc: '粘贴课表即解析存本机，解锁免班级查课表', icon: '📥', color: '#0f766e', group: '学习' },
   { id: 'assistant', title: '智能助手', desc: '说一句话就能办事：查课表、找空教室、加日程、直达服务', icon: '🤖', color: '#1b66c9', group: '服务' },
   { id: 'orientationSchedule', title: '日程助手', desc: '新生入学教育日程 · 智能提醒 · 准备清单', icon: '📅', color: '#1565c0', group: '新生', },

@@ -21,6 +21,7 @@ const VIEWS = {
   skills: () => import('./views/SkillMarket.vue'),
   aboutagent: () => import('./views/AboutAgent.vue'),
   importer: () => import('./views/CourseImporter.vue'),
+  buildingGallery: () => import('./views/BuildingGallery.vue'),
   orientationSchedule: () => import('./views/OrientationSchedule.vue'),
   graduatePlan: () => import('./views/GraduatePlan.vue'),
   campusNews: () => import('./views/CampusNews.vue'),

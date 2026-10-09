@@ -58,13 +58,13 @@ export const VIEWS_LAZY = VIEWS
 
 /** 底部快捷导航（首页 + 高频应用） */
 export const NAV_APPS = [
-  { id: 'assistant', icon: '🤖', label: '智能体' },
-  { id: 'campusNews', icon: '📢', label: '动态' },
-  { id: 'officialSites', icon: '🏛️', label: '官网' },
-  { id: 'budget', icon: '🧮', label: '生活费' },
-  { id: 'orientationSchedule', icon: '📅', label: '日程' },
-  { id: 'classroomNav', icon: '🧭', label: '教室' },
-  { id: 'calendar', icon: '🗓️', label: '校历' }
+  { id: 'assistant', icon: '🤖', label: '智能体', labelEn: 'Agent' },
+  { id: 'campusNews', icon: '📢', label: '动态', labelEn: 'News' },
+  { id: 'officialSites', icon: '🏛️', label: '官网', labelEn: 'Portal' },
+  { id: 'budget', icon: '🧮', label: '生活费', labelEn: 'Budget' },
+  { id: 'orientationSchedule', icon: '📅', label: '日程', labelEn: 'Schedule' },
+  { id: 'classroomNav', icon: '🧭', label: '教室', labelEn: 'Rooms' },
+  { id: 'calendar', icon: '🗓️', label: '校历', labelEn: 'Calendar' }
 ]
 
 /** 应用页路由前缀（视图需匹配 parseHash 正则 /^#\/app\/(\w+)/） */

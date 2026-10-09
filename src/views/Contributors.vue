@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.5.10</b> — {{ 'i18n/E2E/收尾：注册表英文字段 + 浏览器 E2E + 树形回复 + 多草稿箱 + RichEditor 进私信。' }}</li>
       <li><b>v1.5.9</b> — {{ '高级感与新工作流：富文本/TTS/ICS + 8 工作流校本同步。' }}</li>
       <li><b>v1.5.8</b> — {{ '代码治理校本同步：草稿统一/洞察去重/统一出口/脚手架统一。' }}</li>
       <li><b>v1.5.7</b> — {{ '暗门口令先验后开 + 用户面去管理字样 + 报修工单解析加固。' }}</li>

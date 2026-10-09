@@ -170,7 +170,7 @@ function reset() {
   bountyNeed.value = ''; resUrl.value = ''; resTitle.value = ''; resCode.value = ''
   noticeOrg.value = ''; err.value = ''
 }
-defineExpose({ reset })
+defineExpose({ reset, loadDraft: applyDraft })
 </script>
 
 <template>

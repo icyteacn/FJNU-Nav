@@ -1,17 +1,32 @@
 <!-- @模块：src/views/Categories.vue —— 应用分类总览 -->
 <script setup>
 import { ref, computed } from 'vue'
-import { apps, appGroups, groupColors } from '../data/apps.js'
+import { apps, appGroups, appGroupsEn, groupColors } from '../data/apps.js'
+import { useI18n } from '../i18n/index.js'
 
 const emit = defineEmits(['back', 'open'])
+const { lang } = useI18n()
 const kw = ref('')
 
 const grouped = computed(() => {
   const k = kw.value.trim().toLowerCase()
   return appGroups
-    .map((g) => ({ group: g, items: apps.filter((a) => a.group === g && (!k || (a.title + a.desc + a.group + g).toLowerCase().includes(k))) }))
+    .map((g, i) => ({
+      group: g, groupEn: appGroupsEn[i] || g,
+      items: apps.filter((a) => a.group === g && (!k || (a.title + a.desc + a.group + g + (a.titleEn || '') + (a.descEn || '')).toLowerCase().includes(k)))
+    }))
     .filter((x) => x.items.length)
 })
+/** 应用标题/简介：英文模式优先英文（无则回落中文） */
+function appTitle(a) {
+  try { return (lang.value === 'en' && a.titleEn) ? a.titleEn : a.title } catch { return a.title }
+}
+function appDesc(a) {
+  try { return (lang.value === 'en' && a.descEn) ? a.descEn : a.desc } catch { return a.desc }
+}
+function groupName(g) {
+  try { return (lang.value === 'en' && g.groupEn) ? g.groupEn : g.group } catch { return g.group }
+}
 </script>
 
 <template>
@@ -27,18 +42,18 @@ const grouped = computed(() => {
   </div>
 
   <div v-for="g in grouped" :key="g.group" class="cat-group">
-    <div class="cat-group-head">
-      <span class="cat-group-dot" :style="{ background: groupColors[g.group] }"></span>
-      <span class="cat-group-name">{{ g.group }}</span>
-      <span class="cat-group-count">{{ g.items.length }} 个</span>
-    </div>
-    <div class="cat-grid">
-      <button v-for="a in g.items" :key="a.id" class="cat-tile" @click="emit('open', a.id)">
-        <span class="cat-tile-icon" :style="{ background: a.color + '1a', color: a.color }">{{ a.icon }}</span>
-        <span class="cat-tile-title">{{ a.title }}</span>
-        <span class="cat-tile-desc">{{ a.desc }}</span>
-      </button>
-    </div>
+      <div class="cat-group-head">
+        <span class="cat-group-dot" :style="{ background: groupColors[g.group] }"></span>
+        <span class="cat-group-name">{{ groupName(g) }}</span>
+        <span class="cat-group-count">{{ g.items.length }} 个</span>
+      </div>
+      <div class="cat-grid">
+        <button v-for="a in g.items" :key="a.id" class="cat-tile" @click="emit('open', a.id)">
+          <span class="cat-tile-icon" :style="{ background: a.color + '1a', color: a.color }">{{ a.icon }}</span>
+          <span class="cat-tile-title">{{ appTitle(a) }}</span>
+          <span class="cat-tile-desc">{{ appDesc(a) }}</span>
+        </button>
+      </div>
   </div>
 
   <div v-if="!grouped.length" class="empty" style="margin:24px 0;">没有匹配的分类应用</div>

@@ -14,6 +14,14 @@ import VisitStats from '../components/VisitStats.vue'
 const emit = defineEmits(['open'])
 const { lang, t } = useI18n()
 
+/** 应用标题/简介：英文模式优先英文（无则回落中文） */
+function appTitle(a) {
+  try { return (lang.value === 'en' && a.titleEn) ? a.titleEn : a.title } catch { return a.title }
+}
+function appDesc(a) {
+  try { return (lang.value === 'en' && a.descEn) ? a.descEn : a.desc } catch { return a.desc }
+}
+
 const keyword = ref('')
 
 const stats = ref(EMPTY_STATS)
@@ -136,9 +144,9 @@ function askAgent(text) {
         >
           <span class="tile-icon" :style="{ background: r.app.color + '1a', color: r.app.color }">{{ r.app.icon }}</span>
           <span class="tile-body">
-            <span class="tile-title">{{ r.app.title }}</span>
+            <span class="tile-title">{{ appTitle(r.app) }}</span>
             <span v-if="r.hits.length" class="tile-hit">匹配：{{ r.hits.join(' · ') }}</span>
-            <span v-else class="tile-desc">{{ r.app.desc }}</span>
+            <span v-else class="tile-desc">{{ appDesc(r.app) }}</span>
           </span>
         </button>
       </div>
@@ -151,8 +159,8 @@ function askAgent(text) {
         >
           <span class="tile-icon" :style="{ background: a.color + '1a', color: a.color }">{{ a.icon }}</span>
           <span class="tile-body">
-            <span class="tile-title">{{ a.title }}</span>
-            <span class="tile-desc">{{ a.desc }}</span>
+            <span class="tile-title">{{ appTitle(a) }}</span>
+            <span class="tile-desc">{{ appDesc(a) }}</span>
           </span>
         </button>
       </div>

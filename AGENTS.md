@@ -58,6 +58,7 @@
 
 | 日期 | 版本 | 内容 |
 | --- | --- | --- |
+| 2026-10-08 | v1.5.2 | **白屏热修（patch）**。根因定位（真机复现）：App.vue 模板 `navLabel(a)` 未在 setup 定义（660c40b i18n 重构遗留，早于本轮），Vue 根挂载抛错整站空白；补 `lang/toggleLang/navLabel` + main.js 全局 errorHandler 报错盒；Playwright 真机验证主界面/Jobs/Assistant问候/Wall/Flywheel。 |
 | 2026-10-08 | v1.5.1 | **智能体交互升级校本同步（patch）**：converse/engine/AgentChat 同批移植 + /admin 垫片。验证：grow 44 项/build 全绿。 |
 | 2026-10-08 | **v1.5.0** | **【大版本·冲奖六件套校本同步】**三新工作流移植 + 画像/aiMod/jobs/activities/五视图/playbooks/单测 34 项同步 + 意图 8 新增 + 路由行为记录。验证：build/单测 148 项/scenes 全绿。 |
 | 2026-10-08 | **v1.4.0** | **【大版本·在线化（与 QDU 1.5.0 同批校本同步）】**14 文件同步（墙检索/治理/通知/草稿/洞察/评论树/编辑器/IM双件/学习计划/私信页/番茄钟/数据管家/E2E场景包）+懒加载登记；API基地址五源+SSE退避；网关SSE路由补齐+默认端口8788修正；deploy补configure-pages。验证：build/单测105/scenes10/10。 |

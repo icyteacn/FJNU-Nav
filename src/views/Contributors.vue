@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.5.2</b> — {{ '白屏热修：补齐模板缺失的 lang/toggleLang/navLabel；全局渲染保险。' }}</li>
       <li><b>v1.5.1</b> — {{ '智能体交互升级：上下文追问、主动问候、打字机回复、专属追问；/admin 跳转垫片。' }}</li>
       <li><b>v1.5.0 大版本</b> — {{ '冲奖六件套校本同步：三新工作流、画像推送、招聘板块、对比/飞轮/移植/画像五应用、AI 评论治理。' }}</li>
       <li><b>v1.4.0 大版本</b> — {{ '在线化（与 QDU 1.5.0 同批）：API 基地址切换、数据管家、私信+番茄钟、SSE 退避、网关 SSE 补齐、E2E 场景包 10/10。' }}</li>

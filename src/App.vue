@@ -17,6 +17,12 @@ import { getTourSteps, getSubTourSteps } from './data/tourSteps'
 
 const { startTour, isTourCompleted, isActive, markTourCompleted } = useTour()
 
+/** i18n：模板用的 lang/toggleLang/navLabel 在此补齐（此前漏接导致主界面白屏） */
+const { lang, toggleLang } = useI18n()
+function navLabel(a) {
+  try { return (lang.value === 'en' && a.labelEn) ? a.labelEn : a.label } catch { return (a && a.label) || '' }
+}
+
 /** 子页面引导：子组件通过 provide 注入的函数报告当前子页面 */
 const currentSubPage = ref(null)
 function setSubTour(subPageId) {

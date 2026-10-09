@@ -58,6 +58,7 @@
 
 | 日期 | 版本 | 内容 |
 | --- | --- | --- |
+| 2026-10-09 | v1.5.4 | **体验与门禁校本同步（patch）**。技能看板/详情抽屉/门禁CI/postbuild 全同步。 |
 | 2026-10-08 | v1.5.3 | **管理端线上可用校本同步（patch）**。云端直连移植 + 双垫片进包验证。 |
 | 2026-10-08 | v1.5.2 | **白屏热修（patch）**。根因定位（真机复现）：App.vue 模板 `navLabel(a)` 未在 setup 定义（660c40b i18n 重构遗留，早于本轮），Vue 根挂载抛错整站空白；补 `lang/toggleLang/navLabel` + main.js 全局 errorHandler 报错盒；Playwright 真机验证主界面/Jobs/Assistant问候/Wall/Flywheel。 |
 | 2026-10-08 | v1.5.1 | **智能体交互升级校本同步（patch）**：converse/engine/AgentChat 同批移植 + /admin 垫片。验证：grow 44 项/build 全绿。 |

@@ -1,11 +1,11 @@
 {
   "name": "fjnu-nav",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
     "server": "node server/index.mjs",
     "start": "npm run build && node server/index.mjs"

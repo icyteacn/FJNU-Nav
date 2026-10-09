@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.5.4</b> — {{ '技能数据看板 + 帖子详情抽屉 + 发布完整性门禁进CI。' }}</li>
       <li><b>v1.5.3</b> — {{ '管理端线上可用：/admin 跳转垫片进包 + 云端直连模式（看帖删帖）+ console 垫片。' }}</li>
       <li><b>v1.5.2</b> — {{ '白屏热修：补齐模板缺失的 lang/toggleLang/navLabel；全局渲染保险。' }}</li>
       <li><b>v1.5.1</b> — {{ '智能体交互升级：上下文追问、主动问候、打字机回复、专属追问；/admin 跳转垫片。' }}</li>

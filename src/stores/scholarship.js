@@ -5,9 +5,9 @@
  * 任一处改动实时同步；选择结果自动持久化到 localStorage（仅本设备）。
  */
 import { reactive, ref, watch, computed } from 'vue'
-import { RESEARCH_GROUPS, MEMBER_FACTORS } from '../data/researchRules'
-import { ZC_GROUPS } from '../data/zcRules'
-import { majorById } from '../data/courseCredits'
+import { RESEARCH_GROUPS, MEMBER_FACTORS } from '../data/researchRules.js'
+import { ZC_GROUPS } from '../data/zcRules.js'
+import { majorById } from '../data/courseCredits.js'
 
 const LS_KEY = 'fjnu-scholar-calc-v1'
 

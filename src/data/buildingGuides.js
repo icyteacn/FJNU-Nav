@@ -5,7 +5,7 @@
  * 内容按楼名特征归类（公共教学区 / 学院楼 / 实验楼群 / 体育场馆 / 仓山校区），
  * 只陈述可靠的通用信息（命名规律、所在校区、找教室思路），具体门牌以实地为准。
  */
-import { buildings } from './classrooms'
+import { buildings } from './classrooms.js'
 
 const CAMPUS_URL = (kw) => 'https://www.amap.com/search?query=' + encodeURIComponent('福建师范大学' + kw)
 

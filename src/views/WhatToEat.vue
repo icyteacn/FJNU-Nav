@@ -23,6 +23,17 @@ const showDetail = ref(false)
 const drawing = ref(false)
 const hallFilter = ref('')
 
+/** 档口→菜品（menu 表驱动；无记录返回空数组，视图显示空态而非崩溃） */
+function dishesOf(f) {
+  const key = typeof f === 'string' ? f : ((f && (f.stall || f.name)) || '')
+  if (!key) return []
+  if (menu && menu[key]) return menu[key]
+  try {
+    const hit = Object.keys(menu || {}).find((k) => key.includes(k) || k.includes(key))
+    return hit ? menu[hit] : []
+  } catch { return [] }
+}
+
 const CAMPUSES = ['全部', '旗山校区', '仓山校区']
 const MEALS = ['全部', '早餐', '正餐', '夜宵']
 const BUDGETS = ['全部', '8元以内', '8-15元', '15-25元', '25元以上']

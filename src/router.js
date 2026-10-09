@@ -10,7 +10,7 @@
  */
 import { ref, computed, markRaw } from 'vue'
 import Home from './views/Home.vue'
-import { recordAppOpen } from './agent/profile'
+import { recordAppOpen } from './agent/profile.js'
 
 /** 首页组件同步加载，其他页面懒加载（减少首屏 JS 体积） */
 const VIEWS = {

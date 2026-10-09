@@ -1,6 +1,6 @@
 // 菜品/档口库：由 src/data/canteens.js 的真实档口派生，菜价据福starWiki《校园餐饮》详细菜单整理
 // 价格为在校生实测/官方菜单价，仅供食参考，实际以餐厅当日标价为准。
-import { canteens } from './canteens'
+import { canteens } from './canteens.js'
 
 export const halls = canteens.map((c) => ({ name: c.name, campus: c.campus, zone: c.area }))
 

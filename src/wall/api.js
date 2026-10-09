@@ -16,7 +16,7 @@
  */
 import {
   WALLET_KEY, SIGN_KEY, FAV_KEY, POINTS, hotScore
-} from './config'
+} from './config.js'
 import { apiUrl } from './apiBase.js'
 import { cloudEnabled, cloudList, cloudCreate, cloudReply, cloudLike, cloudView } from './cloud.js'
 

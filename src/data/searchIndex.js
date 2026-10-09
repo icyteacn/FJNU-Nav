@@ -7,7 +7,7 @@
  * - title/desc 基础字段
  * 匹配时按 权重(标题3 > 别名2 > 简介1.5 > 内容1) 求和排序，并给出命中标签。
  */
-import { apps } from './apps'
+import { apps } from './apps.js'
 
 const EXTRA = {
   graduatePlan: {

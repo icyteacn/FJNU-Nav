@@ -11,8 +11,8 @@
  * ════════════════════════════════════════════════════════════════════
  */
 import { ref, reactive } from 'vue'
-import zh from './zh'
-import en from './en'
+import zh from './zh.js'
+import en from './en.js'
 
 const LANG_KEY = 'fjnu_lang'
 

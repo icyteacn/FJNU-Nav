@@ -1,6 +1,7 @@
+<!-- @模块：src/views/NoticeDetail.vue —— 通知详情 -->
 <script setup>
 import { ref, onMounted } from 'vue'
-import { apiFetch } from '../api'
+import { apiFetch } from '../api/index.js'
 
 const props = defineProps({ notice: { type: Object, required: true } })
 const emit = defineEmits(['back'])

@@ -5,11 +5,11 @@
  * 本项目保留原有空教室查询 + 楼宇列表 + 高德地图导航，未完全复刻分步导航图片指引功能。
  */
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { buildings, campusFilters, searchRooms } from '../data/classrooms'
-import { nfsRooms, nfsRoomGroups } from '../data/nfsClassrooms'
-import { guideOf } from '../data/buildingGuides'
-import { apiFetch } from '../api/index'
-import { navCtx } from '../stores/navContext'
+import { buildings, campusFilters, searchRooms } from '../data/classrooms.js'
+import { nfsRooms, nfsRoomGroups } from '../data/nfsClassrooms.js'
+import { guideOf } from '../data/buildingGuides.js'
+import { apiFetch } from '../api/index.js'
+import { navCtx } from '../stores/navContext.js'
 
 const emit = defineEmits(['back'])
 const view = ref('main')

@@ -14,7 +14,7 @@ import {
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
   loadUserOverrides, saveUserOverride,
-} from '../data/classSchedule'
+} from '../data/classSchedule.js'
 
 const CUSTOM_KEY = 'feike_custom_courses'
 const DELETED_KEY = 'feike_deleted_courses'

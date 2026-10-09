@@ -1,0 +1,150 @@
+{
+  "comments": [],
+  "posts": [],
+  "feedback": [],
+  "audit": [
+    {
+      "ts": 1791508740788,
+      "action": "comments:delete",
+      "detail": "场景包评论"
+    },
+    {
+      "ts": 1791508740785,
+      "action": "posts:delete",
+      "detail": "选一个"
+    },
+    {
+      "ts": 1791508740781,
+      "action": "posts:delete",
+      "detail": "E2E 场景包自动发帖，稍后清理"
+    },
+    {
+      "ts": 1791508740773,
+      "action": "login",
+      "detail": "管理台登录成功"
+    },
+    {
+      "ts": 1791505721268,
+      "action": "comments:delete",
+      "detail": "场景包评论"
+    },
+    {
+      "ts": 1791505721263,
+      "action": "posts:delete",
+      "detail": "选一个"
+    },
+    {
+      "ts": 1791505721260,
+      "action": "posts:delete",
+      "detail": "E2E 场景包自动发帖，稍后清理"
+    },
+    {
+      "ts": 1791505721251,
+      "action": "login",
+      "detail": "管理台登录成功"
+    },
+    {
+      "ts": 1791464967468,
+      "action": "comments:delete",
+      "detail": "场景包评论"
+    },
+    {
+      "ts": 1791464967466,
+      "action": "posts:delete",
+      "detail": "选一个"
+    },
+    {
+      "ts": 1791464967463,
+      "action": "posts:delete",
+      "detail": "E2E 场景包自动发帖，稍后清理"
+    },
+    {
+      "ts": 1791464967441,
+      "action": "login",
+      "detail": "管理台登录成功"
+    },
+    {
+      "ts": 1791464769986,
+      "action": "comments:delete",
+      "detail": "场景包评论"
+    },
+    {
+      "ts": 1791464769983,
+      "action": "posts:delete",
+      "detail": "选一个"
+    },
+    {
+      "ts": 1791464769981,
+      "action": "posts:delete",
+      "detail": "E2E 场景包自动发帖，稍后清理"
+    },
+    {
+      "ts": 1791464769972,
+      "action": "login",
+      "detail": "管理台登录成功"
+    },
+    {
+      "ts": 1791464726978,
+      "action": "comments:delete",
+      "detail": "场景包评论"
+    },
+    {
+      "ts": 1791464726973,
+      "action": "posts:delete",
+      "detail": "选一个"
+    },
+    {
+      "ts": 1791464726967,
+      "action": "posts:delete",
+      "detail": "E2E 场景包自动发帖，稍后清理"
+    },
+    {
+      "ts": 1791464726957,
+      "action": "login",
+      "detail": "管理台登录成功"
+    }
+  ],
+  "words": [
+    "加微信",
+    "加vx",
+    "加v信",
+    "微信号是",
+    "加qq",
+    "qq号",
+    "QQ群",
+    "群号是",
+    "代写",
+    "代考",
+    "包过",
+    "刷单",
+    "兼职刷",
+    "日结工资",
+    "一夜暴富",
+    "色情",
+    "援交",
+    "裸聊",
+    "赌博",
+    "博彩",
+    "六合彩",
+    "网贷口子",
+    "傻逼",
+    "脑残",
+    "去死",
+    "滚蛋",
+    "贱人",
+    "狗东西",
+    "智障玩意"
+  ],
+  "llm": {
+    "baseUrl": "",
+    "apiKey": "",
+    "model": "deepseek-chat"
+  },
+  "voted": {
+    "127.0.0.1|muzjue1fc3e92n": true,
+    "127.0.0.1|muzjvb8c7zrp9m": true,
+    "127.0.0.1|muzjzjlk2kzy8b": true,
+    "127.0.0.1|mv0891fzquapae": true,
+    "127.0.0.1|mv0a1rbpyckcu6": true
+  }
+}

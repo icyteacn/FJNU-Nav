@@ -7,7 +7,7 @@ import BudgetPro from './BudgetPro.vue'
 import BarRow from '../components/BarRow.vue'
 import PieChart from '../components/PieChart.vue'
 import { parseBillFile } from '../utils/billImport.js'
-import { navCtx } from '../stores/navContext'
+import { navCtx } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 

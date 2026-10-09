@@ -1,8 +1,8 @@
 <script setup>
 /** 校园动态：教务处通知/动态 + 计网学院官网动态，支持关键词过滤 */
 import { ref, computed, onMounted } from 'vue'
-import { apiFetch } from '../api'
-import { fallbackNotices, fallbackNews } from '../data/news'
+import { apiFetch } from '../api/index.js'
+import { fallbackNotices, fallbackNews } from '../data/news.js'
 import NoticeDetail from './NoticeDetail.vue'
 
 const emit = defineEmits(['back'])

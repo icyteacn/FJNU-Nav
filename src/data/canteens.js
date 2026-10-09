@@ -1,3 +1,7 @@
+/**
+ * @模块路径  src/data/canteens.js
+ * @职责      食堂与档口基础数据
+ */
 // 食堂数据：名单与档口据福建师范大学后勤服务集团「食堂人流量分析」服务与福starWiki《校园餐饮》整理
 // 实时空座数据由 crawler/canteen.py 抓取福star「食堂人流量分析」接口，快照存放于 public/data/canteen_live.json
 // people 为实时在座人数，seats 为座位数，daily 为当日消费次数（由爬虫更新）

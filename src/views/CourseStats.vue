@@ -5,12 +5,12 @@
  *            课程性质分布 / 校区分布 / 学院开课分布。
  *  条形行 / KPI 卡 / 洞察面板均使用公共组件（BarRow / KpiCard / InsightPanel）。 */
 import { ref, computed, onMounted } from 'vue'
-import { getCourseStats, EMPTY_STATS } from '../api/courseStats'
+import { getCourseStats, EMPTY_STATS } from '../api/courseStats.js'
 import CountUp from '../components/CountUp.vue'
 import KpiCard from '../components/KpiCard.vue'
 import BarRow from '../components/BarRow.vue'
 import InsightPanel from '../components/InsightPanel.vue'
-import { setNavContext } from '../stores/navContext'
+import { setNavContext } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 

@@ -3,8 +3,8 @@
 import { computed } from 'vue'
 import {
   state, setCourseScore, clearCourseScores, weightedAvg, profileOf,
-} from '../stores/scholarship'
-import { majorsForDegree, majorById } from '../data/courseCredits'
+} from '../stores/scholarship.js'
+import { majorsForDegree, majorById } from '../data/courseCredits.js'
 
 const prof = computed(profileOf)
 const majors = computed(() => majorsForDegree(prof.value.degree))

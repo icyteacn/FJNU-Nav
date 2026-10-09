@@ -1,9 +1,10 @@
+<!-- @模块：src/views/Canteen.vue —— 食堂空座率 -->
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { canteens, canteenStats } from '../data/canteens'
-import { menu } from '../data/foods'
-import { apiFetch } from '../api/index'
-import { navCtx } from '../stores/navContext'
+import { canteens, canteenStats } from '../data/canteens.js'
+import { menu } from '../data/foods.js'
+import { apiFetch } from '../api/index.js'
+import { navCtx } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 const campus = ref('全部')

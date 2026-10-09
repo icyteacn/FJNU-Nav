@@ -1,3 +1,7 @@
+/**
+ * @模块路径  src/data/classrooms.js
+ * @职责      教室快照数据（生成器产物）
+ */
 // 楼宇与教室数据由 scripts/gen-classrooms.mjs 生成（福建师范大学旗山/仓山校区公共教学楼）
 // 楼名对应校区区域参考学校文化标识系统；route 为通用指引，请以校园实地指示为准
 export const buildings = [

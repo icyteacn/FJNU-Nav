@@ -1,7 +1,7 @@
 <script setup>
 /** 欢迎初始页：品牌展示 + 进入入口（文案来自 src/config/site.js） */
-import { SITE } from '../config/site'
-import { campusStats } from '../data/apps'
+import { SITE } from '../config/site.js'
+import { campusStats } from '../data/apps.js'
 
 const emit = defineEmits(['enter'])
 </script>

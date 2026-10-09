@@ -1,7 +1,8 @@
+<!-- @模块：src/views/PhysicalTest.vue —— 体测成绩计算器 -->
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { standards, itemWeights, itemLabels, bmiScore, itemScore, gradeOf } from '../data/physical'
-import { setNavContext } from '../stores/navContext'
+import { standards, itemWeights, itemLabels, bmiScore, itemScore, gradeOf } from '../data/physical.js'
+import { setNavContext } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 

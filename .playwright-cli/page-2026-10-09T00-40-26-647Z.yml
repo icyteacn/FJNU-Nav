@@ -1,0 +1,1087 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e20]:
+      - banner [ref=e21]:
+        - generic [ref=e22]:
+          - generic [ref=e23] [cursor=pointer]:
+            - generic [ref=e24]: FJNU-Nav
+            - generic [ref=e26]:
+              - generic [ref=e27]: FJNU 校园导航
+              - generic [ref=e28]: 福建师范大学 · 校园服务聚合入口
+          - generic [ref=e29]:
+            - button "🤖" [ref=e30] [cursor=pointer]
+            - button "🔔 7" [ref=e31] [cursor=pointer]:
+              - text: 🔔
+              - generic [ref=e32]: "7"
+            - button "❓" [ref=e33] [cursor=pointer]
+            - button "EN" [ref=e34] [cursor=pointer]
+            - button "🌙" [ref=e35] [cursor=pointer]
+            - button "🏠 首页" [ref=e36] [cursor=pointer]
+      - main [ref=e37]:
+        - generic [ref=e38]:
+          - button "← 返回首页" [ref=e39] [cursor=pointer]
+          - generic [ref=e40]: 今天吃什么
+          - generic [ref=e41]: 选择困难？帮你随机决定 · 今日已随机 1 次
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - generic [ref=e44]:
+              - generic [ref=e45]: 校区
+              - generic [ref=e46]:
+                - button "全部" [ref=e47] [cursor=pointer]
+                - button "旗山校区" [ref=e48] [cursor=pointer]
+                - button "仓山校区" [ref=e49] [cursor=pointer]
+            - generic [ref=e50]:
+              - generic [ref=e51]: 餐次
+              - generic [ref=e52]:
+                - button "全部" [ref=e53] [cursor=pointer]
+                - button "早餐" [ref=e54] [cursor=pointer]
+                - button "正餐" [ref=e55] [cursor=pointer]
+                - button "夜宵" [ref=e56] [cursor=pointer]
+            - generic [ref=e57]:
+              - generic [ref=e58]: 预算
+              - generic [ref=e59]:
+                - button "全部" [ref=e60] [cursor=pointer]
+                - button "8元以内" [ref=e61] [cursor=pointer]
+                - button "8-15元" [ref=e62] [cursor=pointer]
+                - button "15-25元" [ref=e63] [cursor=pointer]
+                - button "25元以上" [ref=e64] [cursor=pointer]
+          - generic [ref=e66]:
+            - generic [ref=e67] [cursor=pointer]:
+              - generic [ref=e68]:
+                - generic [ref=e69]: ☀️
+                - generic [ref=e70]: 价格待定
+              - generic [ref=e71]: 大众快餐
+              - generic [ref=e72]:
+                - generic [ref=e73]: 大众窗口
+                - generic [ref=e74]: 🍽️
+              - generic [ref=e75]:
+                - generic [ref=e76]: 📍 聚星园餐厅
+                - generic [ref=e77]: 仓山校区 · 仓山·聚星园
+              - generic [ref=e78]: 点击查看详情 ›
+            - generic [ref=e79] [cursor=pointer]:
+              - generic [ref=e80]:
+                - generic [ref=e81]: ☀️
+                - generic [ref=e82]: ¥14
+              - generic [ref=e83]: 蜀合记担担面
+              - generic [ref=e84]: 汤面系列
+              - generic [ref=e85]: 川味汤面
+              - generic [ref=e86]:
+                - generic [ref=e87]: 风味档口
+                - generic [ref=e88]: 🌶️
+              - generic [ref=e89]:
+                - generic [ref=e90]: 📍 百草园餐厅
+                - generic [ref=e91]: 旗山校区 · 北区·榕苑
+              - generic [ref=e92]: 点击查看详情 ›
+            - generic [ref=e93] [cursor=pointer]:
+              - generic [ref=e94]:
+                - generic [ref=e95]: ☀️
+                - generic [ref=e96]: 价格待定
+              - generic [ref=e97]: 木桶饭
+              - generic [ref=e98]:
+                - generic [ref=e99]: 大众窗口
+                - generic [ref=e100]: 🍽️
+              - generic [ref=e101]:
+                - generic [ref=e102]: 📍 长安美食餐厅1楼
+                - generic [ref=e103]: 仓山校区 · 仓山·长安山
+              - generic [ref=e104]: 点击查看详情 ›
+          - generic [ref=e105]:
+            - button "🔄 换一个" [ref=e106] [cursor=pointer]
+            - button "🎯 就吃这个" [ref=e107] [cursor=pointer]
+          - generic [ref=e108]: 菜品均为食堂真实档口（据福starWiki《校园餐饮》与公开信息），价格仅供参考
+        - generic [ref=e109]:
+          - generic [ref=e110]:
+            - text: 档口库（
+            - generic [ref=e112]: "125"
+            - text: 个）
+          - generic [ref=e113]:
+            - button "全部" [ref=e114] [cursor=pointer]
+            - button "早餐" [ref=e115] [cursor=pointer]
+            - button "正餐" [ref=e116] [cursor=pointer]
+            - button "夜宵" [ref=e117] [cursor=pointer]
+          - table [ref=e119]:
+            - rowgroup [ref=e120]:
+              - row [ref=e121]:
+                - columnheader "档口" [ref=e122]
+                - columnheader "菜品" [ref=e123]
+                - columnheader "参考价" [ref=e124]
+                - columnheader "餐厅" [ref=e125]
+                - columnheader "校区" [ref=e126]
+                - columnheader "口味" [ref=e127]
+            - rowgroup [ref=e128]:
+              - row [ref=e129] [cursor=pointer]:
+                - cell "麦当劳" [ref=e130]
+                - cell "麦满分套餐系列 / 随心配 1+1" [ref=e131]
+                - cell "¥13" [ref=e132]
+                - cell "百草园餐厅" [ref=e133]
+                - cell "旗山校区" [ref=e134]
+                - cell "🍽️" [ref=e135]
+              - row [ref=e136] [cursor=pointer]:
+                - cell "库迪咖啡" [ref=e137]
+                - cell "-" [ref=e138]
+                - cell "-" [ref=e139]
+                - cell "百草园餐厅" [ref=e140]
+                - cell "旗山校区" [ref=e141]
+                - cell "🍽️" [ref=e142]
+              - row [ref=e143] [cursor=pointer]:
+                - cell "雨佳烧烤" [ref=e144]
+                - cell "自选烧烤系列 / 拉丝芝士棒+烤鸡腿+茄子" [ref=e145]
+                - cell "¥20" [ref=e146]
+                - cell "百草园餐厅" [ref=e147]
+                - cell "旗山校区" [ref=e148]
+                - cell "🌶️" [ref=e149]
+              - row [ref=e150] [cursor=pointer]:
+                - cell "梦想咖喱" [ref=e151]
+                - cell "咖喱饭类 / 滑蛋饭类" [ref=e152]
+                - cell "¥14" [ref=e153]
+                - cell "百草园餐厅" [ref=e154]
+                - cell "旗山校区" [ref=e155]
+                - cell "🌶️" [ref=e156]
+              - row [ref=e157] [cursor=pointer]:
+                - cell "福记麻辣烫" [ref=e158]
+                - cell "自助称重 1.98 元/两" [ref=e159]
+                - cell "¥14" [ref=e160]
+                - cell "百草园餐厅" [ref=e161]
+                - cell "旗山校区" [ref=e162]
+                - cell "🌶️🌶️" [ref=e163]
+              - row [ref=e164] [cursor=pointer]:
+                - cell "东福兴港式烧腊" [ref=e165]
+                - cell "烧腊系列" [ref=e166]
+                - cell "¥11" [ref=e167]
+                - cell "百草园餐厅" [ref=e168]
+                - cell "旗山校区" [ref=e169]
+                - cell "🍽️" [ref=e170]
+              - row [ref=e171] [cursor=pointer]:
+                - cell "香熏鸭仔面" [ref=e172]
+                - cell "招牌鸭仔面系列" [ref=e173]
+                - cell "¥12" [ref=e174]
+                - cell "百草园餐厅" [ref=e175]
+                - cell "旗山校区" [ref=e176]
+                - cell "🍽️" [ref=e177]
+              - row [ref=e178] [cursor=pointer]:
+                - cell "富榕瓦罐煨汤" [ref=e179]
+                - cell "-" [ref=e180]
+                - cell "-" [ref=e181]
+                - cell "百草园餐厅" [ref=e182]
+                - cell "旗山校区" [ref=e183]
+                - cell "🍽️" [ref=e184]
+              - row [ref=e185] [cursor=pointer]:
+                - cell "旺比包子" [ref=e186]
+                - cell "包子系列 / 面点系列" [ref=e187]
+                - cell "¥1.5" [ref=e188]
+                - cell "百草园餐厅" [ref=e189]
+                - cell "旗山校区" [ref=e190]
+                - cell "🍽️" [ref=e191]
+              - row [ref=e192] [cursor=pointer]:
+                - cell "米婆婆" [ref=e193]
+                - cell "自选一荤一素 / 自选半荤半素" [ref=e194]
+                - cell "¥10" [ref=e195]
+                - cell "百草园餐厅" [ref=e196]
+                - cell "旗山校区" [ref=e197]
+                - cell "🍽️" [ref=e198]
+              - row [ref=e199] [cursor=pointer]:
+                - cell "淳百味" [ref=e200]
+                - cell "拌面系列 / 扁肉系列" [ref=e201]
+                - cell "¥6" [ref=e202]
+                - cell "百草园餐厅" [ref=e203]
+                - cell "旗山校区" [ref=e204]
+                - cell "🍽️" [ref=e205]
+              - row [ref=e206] [cursor=pointer]:
+                - cell "百草高汤粉面" [ref=e207]
+                - cell "-" [ref=e208]
+                - cell "-" [ref=e209]
+                - cell "百草园餐厅" [ref=e210]
+                - cell "旗山校区" [ref=e211]
+                - cell "🍽️" [ref=e212]
+              - row [ref=e213] [cursor=pointer]:
+                - cell "旺旺客家牛肉面" [ref=e214]
+                - cell "-" [ref=e215]
+                - cell "-" [ref=e216]
+                - cell "百草园餐厅" [ref=e217]
+                - cell "旗山校区" [ref=e218]
+                - cell "🍽️" [ref=e219]
+              - row [ref=e220] [cursor=pointer]:
+                - cell "螺当铺螺蛳粉" [ref=e221]
+                - cell "-" [ref=e222]
+                - cell "-" [ref=e223]
+                - cell "百草园餐厅" [ref=e224]
+                - cell "旗山校区" [ref=e225]
+                - cell "🍽️" [ref=e226]
+              - row [ref=e227] [cursor=pointer]:
+                - cell "蜀合记担担面" [ref=e228]
+                - cell "招牌担担面 / 汤面系列" [ref=e229]
+                - cell "¥13" [ref=e230]
+                - cell "百草园餐厅" [ref=e231]
+                - cell "旗山校区" [ref=e232]
+                - cell "🌶️🌶️" [ref=e233]
+              - row [ref=e234] [cursor=pointer]:
+                - cell "东方匠作中国汉堡" [ref=e235]
+                - cell "低配两件套 / 高配三件套" [ref=e236]
+                - cell "¥12.9" [ref=e237]
+                - cell "百草园餐厅" [ref=e238]
+                - cell "旗山校区" [ref=e239]
+                - cell "🍽️" [ref=e240]
+              - row [ref=e241] [cursor=pointer]:
+                - cell "塔斯汀中国汉堡" [ref=e242]
+                - cell "辣堡三件套 / 1+1 随心配" [ref=e243]
+                - cell "¥19.9" [ref=e244]
+                - cell "翠竹园餐厅" [ref=e245]
+                - cell "旗山校区" [ref=e246]
+                - cell "🌶️🌶️" [ref=e247]
+              - row [ref=e248] [cursor=pointer]:
+                - cell "蜜雪冰城" [ref=e249]
+                - cell "-" [ref=e250]
+                - cell "-" [ref=e251]
+                - cell "翠竹园餐厅" [ref=e252]
+                - cell "旗山校区" [ref=e253]
+                - cell "🍽️" [ref=e254]
+              - row [ref=e255] [cursor=pointer]:
+                - cell "老上海肠粉馄饨" [ref=e256]
+                - cell "水饺系列 / 肠粉系列" [ref=e257]
+                - cell "¥13" [ref=e258]
+                - cell "翠竹园餐厅" [ref=e259]
+                - cell "旗山校区" [ref=e260]
+                - cell "🍽️" [ref=e261]
+              - row [ref=e262] [cursor=pointer]:
+                - cell "蒸佰味" [ref=e263]
+                - cell "-" [ref=e264]
+                - cell "-" [ref=e265]
+                - cell "翠竹园餐厅" [ref=e266]
+                - cell "旗山校区" [ref=e267]
+                - cell "🍽️" [ref=e268]
+              - row [ref=e269] [cursor=pointer]:
+                - cell "西安大碗面" [ref=e270]
+                - cell "经典干拌面系列 / 油泼系列" [ref=e271]
+                - cell "¥13" [ref=e272]
+                - cell "翠竹园餐厅" [ref=e273]
+                - cell "旗山校区" [ref=e274]
+                - cell "🌶️" [ref=e275]
+              - row [ref=e276] [cursor=pointer]:
+                - cell "回洋號沙茶面" [ref=e277]
+                - cell "沙茶面套餐系列 / 闽南鸭面套餐系列" [ref=e278]
+                - cell "¥14" [ref=e279]
+                - cell "翠竹园餐厅" [ref=e280]
+                - cell "旗山校区" [ref=e281]
+                - cell "🌶️" [ref=e282]
+              - row [ref=e283] [cursor=pointer]:
+                - cell "麺大厨蜀味记" [ref=e284]
+                - cell "-" [ref=e285]
+                - cell "-" [ref=e286]
+                - cell "翠竹园餐厅" [ref=e287]
+                - cell "旗山校区" [ref=e288]
+                - cell "🍽️" [ref=e289]
+              - row [ref=e290] [cursor=pointer]:
+                - cell "沙小二醉沙县" [ref=e291]
+                - cell "小吃系列 / 炒面饭系列" [ref=e292]
+                - cell "¥5" [ref=e293]
+                - cell "翠竹园餐厅" [ref=e294]
+                - cell "旗山校区" [ref=e295]
+                - cell "🍽️" [ref=e296]
+              - row [ref=e297] [cursor=pointer]:
+                - cell "小哥瓦罐" [ref=e298]
+                - cell "套餐饭系列 / 瓦罐系列" [ref=e299]
+                - cell "¥12" [ref=e300]
+                - cell "翠竹园餐厅" [ref=e301]
+                - cell "旗山校区" [ref=e302]
+                - cell "🍽️" [ref=e303]
+              - row [ref=e304] [cursor=pointer]:
+                - cell "张记港式烧腊" [ref=e305]
+                - cell "-" [ref=e306]
+                - cell "-" [ref=e307]
+                - cell "翠竹园餐厅" [ref=e308]
+                - cell "旗山校区" [ref=e309]
+                - cell "🍽️" [ref=e310]
+              - row [ref=e311] [cursor=pointer]:
+                - cell "临榆炸鸡腿" [ref=e312]
+                - cell "炸鸡腿 3 个 / 炸鸡系列 250g" [ref=e313]
+                - cell "¥15" [ref=e314]
+                - cell "翠竹园餐厅" [ref=e315]
+                - cell "旗山校区" [ref=e316]
+                - cell "🍽️" [ref=e317]
+              - row [ref=e318] [cursor=pointer]:
+                - cell "田阿婆麻辣烫" [ref=e319]
+                - cell "自选菜称重 19.8 元/斤" [ref=e320]
+                - cell "¥14" [ref=e321]
+                - cell "翠竹园餐厅" [ref=e322]
+                - cell "旗山校区" [ref=e323]
+                - cell "🌶️🌶️" [ref=e324]
+              - row [ref=e325] [cursor=pointer]:
+                - cell "果汁源鲜榨果汁" [ref=e326]
+                - cell "-" [ref=e327]
+                - cell "-" [ref=e328]
+                - cell "翠竹园餐厅" [ref=e329]
+                - cell "旗山校区" [ref=e330]
+                - cell "🍽️" [ref=e331]
+              - row [ref=e332] [cursor=pointer]:
+                - cell "面夫子" [ref=e333]
+                - cell "包子系列 / 面点系列" [ref=e334]
+                - cell "¥2" [ref=e335]
+                - cell "千叶园餐厅" [ref=e336]
+                - cell "旗山校区" [ref=e337]
+                - cell "🍽️" [ref=e338]
+              - row [ref=e339] [cursor=pointer]:
+                - cell "伊樂拉面" [ref=e340]
+                - cell "豚骨拉面系列 / 地狱系列" [ref=e341]
+                - cell "¥18" [ref=e342]
+                - cell "千叶园餐厅" [ref=e343]
+                - cell "旗山校区" [ref=e344]
+                - cell "🍽️" [ref=e345]
+              - row [ref=e346] [cursor=pointer]:
+                - cell "百味佳自选快餐" [ref=e347]
+                - cell "自选荤素搭配快餐" [ref=e348]
+                - cell "¥11" [ref=e349]
+                - cell "千叶园餐厅" [ref=e350]
+                - cell "旗山校区" [ref=e351]
+                - cell "🍽️" [ref=e352]
+              - row [ref=e353] [cursor=pointer]:
+                - cell "港式煨汤" [ref=e354]
+                - cell "自选荤素搭配 / 瓦罐系列" [ref=e355]
+                - cell "¥11" [ref=e356]
+                - cell "千叶园餐厅" [ref=e357]
+                - cell "旗山校区" [ref=e358]
+                - cell "🍽️" [ref=e359]
+              - row [ref=e360] [cursor=pointer]:
+                - cell "饺饺者手工饺子" [ref=e361]
+                - cell "水饺类 / 大馄饨类" [ref=e362]
+                - cell "¥14" [ref=e363]
+                - cell "千叶园餐厅" [ref=e364]
+                - cell "旗山校区" [ref=e365]
+                - cell "🍽️" [ref=e366]
+              - row [ref=e367] [cursor=pointer]:
+                - cell "朱家小馆羊肉面" [ref=e368]
+                - cell "汤面系列 / 拌面系列" [ref=e369]
+                - cell "¥12" [ref=e370]
+                - cell "千叶园餐厅" [ref=e371]
+                - cell "旗山校区" [ref=e372]
+                - cell "🍽️" [ref=e373]
+              - row [ref=e374] [cursor=pointer]:
+                - cell "韩石记石锅饭" [ref=e375]
+                - cell "韩式石锅拌饭系列 / 荤素搭配煲系列" [ref=e376]
+                - cell "¥13" [ref=e377]
+                - cell "千叶园餐厅" [ref=e378]
+                - cell "旗山校区" [ref=e379]
+                - cell "🌶️" [ref=e380]
+              - row [ref=e381] [cursor=pointer]:
+                - cell "肯德基" [ref=e382]
+                - cell "-" [ref=e383]
+                - cell "-" [ref=e384]
+                - cell "千叶园餐厅" [ref=e385]
+                - cell "旗山校区" [ref=e386]
+                - cell "🍽️" [ref=e387]
+              - row [ref=e388] [cursor=pointer]:
+                - cell "霸王茶姬" [ref=e389]
+                - cell "-" [ref=e390]
+                - cell "-" [ref=e391]
+                - cell "千叶园餐厅" [ref=e392]
+                - cell "旗山校区" [ref=e393]
+                - cell "🍽️" [ref=e394]
+              - row [ref=e395] [cursor=pointer]:
+                - cell "古茗" [ref=e396]
+                - cell "-" [ref=e397]
+                - cell "-" [ref=e398]
+                - cell "千叶园餐厅" [ref=e399]
+                - cell "旗山校区" [ref=e400]
+                - cell "🍽️" [ref=e401]
+              - row [ref=e402] [cursor=pointer]:
+                - cell "鑫友福麻辣烫" [ref=e403]
+                - cell "-" [ref=e404]
+                - cell "-" [ref=e405]
+                - cell "千叶园餐厅" [ref=e406]
+                - cell "旗山校区" [ref=e407]
+                - cell "🍽️" [ref=e408]
+              - row [ref=e409] [cursor=pointer]:
+                - cell "茶百道" [ref=e410]
+                - cell "-" [ref=e411]
+                - cell "-" [ref=e412]
+                - cell "花香园餐厅" [ref=e413]
+                - cell "旗山校区" [ref=e414]
+                - cell "🍽️" [ref=e415]
+              - row [ref=e416] [cursor=pointer]:
+                - cell "高八斗套餐饭" [ref=e417]
+                - cell "菜饭套餐系列" [ref=e418]
+                - cell "¥15" [ref=e419]
+                - cell "花香园餐厅" [ref=e420]
+                - cell "旗山校区" [ref=e421]
+                - cell "🍽️" [ref=e422]
+              - row [ref=e423] [cursor=pointer]:
+                - cell "美侍郎瓦香鸡" [ref=e424]
+                - cell "瓦香鸡腿块饭 / 瓦香鸡饭系列" [ref=e425]
+                - cell "¥14" [ref=e426]
+                - cell "花香园餐厅" [ref=e427]
+                - cell "旗山校区" [ref=e428]
+                - cell "🌶️" [ref=e429]
+              - row [ref=e430] [cursor=pointer]:
+                - cell "汤居仕瓦罐煨汤" [ref=e431]
+                - cell "瓦罐系列 / 自选荤素搭配" [ref=e432]
+                - cell "¥6" [ref=e433]
+                - cell "花香园餐厅" [ref=e434]
+                - cell "旗山校区" [ref=e435]
+                - cell "🍽️" [ref=e436]
+              - row [ref=e437] [cursor=pointer]:
+                - cell "面夫子" [ref=e438]
+                - cell "包子系列 / 面点系列" [ref=e439]
+                - cell "¥2" [ref=e440]
+                - cell "花香园餐厅" [ref=e441]
+                - cell "旗山校区" [ref=e442]
+                - cell "🍽️" [ref=e443]
+              - row [ref=e444] [cursor=pointer]:
+                - cell "小鲜肉手工水饺" [ref=e445]
+                - cell "饺子系列 / 锅贴系列" [ref=e446]
+                - cell "¥13" [ref=e447]
+                - cell "花香园餐厅" [ref=e448]
+                - cell "旗山校区" [ref=e449]
+                - cell "🍽️" [ref=e450]
+              - row [ref=e451] [cursor=pointer]:
+                - cell "豫味拉面" [ref=e452]
+                - cell "汤面类" [ref=e453]
+                - cell "¥13" [ref=e454]
+                - cell "花香园餐厅" [ref=e455]
+                - cell "旗山校区" [ref=e456]
+                - cell "🍽️" [ref=e457]
+              - row [ref=e458] [cursor=pointer]:
+                - cell "沙县美食" [ref=e459]
+                - cell "小吃类 / 小炒类" [ref=e460]
+                - cell "¥5" [ref=e461]
+                - cell "花香园餐厅" [ref=e462]
+                - cell "旗山校区" [ref=e463]
+                - cell "🍽️" [ref=e464]
+              - row [ref=e465] [cursor=pointer]:
+                - cell "云尚云南小锅米线" [ref=e466]
+                - cell "米线系列" [ref=e467]
+                - cell "¥13" [ref=e468]
+                - cell "花香园餐厅" [ref=e469]
+                - cell "旗山校区" [ref=e470]
+                - cell "🌶️" [ref=e471]
+              - row [ref=e472] [cursor=pointer]:
+                - cell "河林鸿老鸭粉丝" [ref=e473]
+                - cell "粉面类 / 精品粉面类" [ref=e474]
+                - cell "¥13" [ref=e475]
+                - cell "花香园餐厅" [ref=e476]
+                - cell "旗山校区" [ref=e477]
+                - cell "🍽️" [ref=e478]
+              - row [ref=e479] [cursor=pointer]:
+                - cell "云南小锅米线" [ref=e480]
+                - cell "经典米线系列" [ref=e481]
+                - cell "¥11" [ref=e482]
+                - cell "文化街美食餐厅" [ref=e483]
+                - cell "旗山校区" [ref=e484]
+                - cell "🌶️" [ref=e485]
+              - row [ref=e486] [cursor=pointer]:
+                - cell "林真棒卤味饭" [ref=e487]
+                - cell "自选卤味搭配" [ref=e488]
+                - cell "¥11" [ref=e489]
+                - cell "文化街美食餐厅" [ref=e490]
+                - cell "旗山校区" [ref=e491]
+                - cell "🍽️" [ref=e492]
+              - row [ref=e493] [cursor=pointer]:
+                - cell "北方手工饺子" [ref=e494]
+                - cell "水饺系列" [ref=e495]
+                - cell "¥13" [ref=e496]
+                - cell "文化街美食餐厅" [ref=e497]
+                - cell "旗山校区" [ref=e498]
+                - cell "🍽️" [ref=e499]
+              - row [ref=e500] [cursor=pointer]:
+                - cell "张记饸饹面" [ref=e501]
+                - cell "盖浇面类 / 炒面类" [ref=e502]
+                - cell "¥14" [ref=e503]
+                - cell "文化街美食餐厅" [ref=e504]
+                - cell "旗山校区" [ref=e505]
+                - cell "🍽️" [ref=e506]
+              - row [ref=e507] [cursor=pointer]:
+                - cell "京元自选食堂" [ref=e508]
+                - cell "自选荤素搭配 / 面点类" [ref=e509]
+                - cell "¥10" [ref=e510]
+                - cell "文化街美食餐厅" [ref=e511]
+                - cell "旗山校区" [ref=e512]
+                - cell "🍽️" [ref=e513]
+              - row [ref=e514] [cursor=pointer]:
+                - cell "元气锅盔" [ref=e515]
+                - cell "荆州锅盔 / 广东肠粉系列" [ref=e516]
+                - cell "¥7" [ref=e517]
+                - cell "文化街美食餐厅" [ref=e518]
+                - cell "旗山校区" [ref=e519]
+                - cell "🌶️" [ref=e520]
+              - row [ref=e521] [cursor=pointer]:
+                - cell "小街胡同牛杂面" [ref=e522]
+                - cell "-" [ref=e523]
+                - cell "-" [ref=e524]
+                - cell "文化街美食餐厅" [ref=e525]
+                - cell "旗山校区" [ref=e526]
+                - cell "🍽️" [ref=e527]
+              - row [ref=e528] [cursor=pointer]:
+                - cell "玛格利塔披萨" [ref=e529]
+                - cell "单片披萨 / 整个披萨" [ref=e530]
+                - cell "¥7.9" [ref=e531]
+                - cell "文化街美食餐厅" [ref=e532]
+                - cell "旗山校区" [ref=e533]
+                - cell "🍽️" [ref=e534]
+              - row [ref=e535] [cursor=pointer]:
+                - cell "一点点奶茶" [ref=e536]
+                - cell "-" [ref=e537]
+                - cell "-" [ref=e538]
+                - cell "文化街美食餐厅" [ref=e539]
+                - cell "旗山校区" [ref=e540]
+                - cell "🍽️" [ref=e541]
+              - row [ref=e542] [cursor=pointer]:
+                - cell "川湘瓦缸炖肉" [ref=e543]
+                - cell "-" [ref=e544]
+                - cell "-" [ref=e545]
+                - cell "文化街美食餐厅" [ref=e546]
+                - cell "旗山校区" [ref=e547]
+                - cell "🍽️" [ref=e548]
+              - row [ref=e549] [cursor=pointer]:
+                - cell "自选食堂（5元营养餐）" [ref=e550]
+                - cell "一荤一素管饱低保餐 / 自选快餐系列" [ref=e551]
+                - cell "¥5" [ref=e552]
+                - cell "嘉树园餐厅" [ref=e553]
+                - cell "旗山校区" [ref=e554]
+                - cell "🍽️" [ref=e555]
+              - row [ref=e556] [cursor=pointer]:
+                - cell "益禾堂" [ref=e557]
+                - cell "-" [ref=e558]
+                - cell "-" [ref=e559]
+                - cell "嘉树园餐厅" [ref=e560]
+                - cell "旗山校区" [ref=e561]
+                - cell "🍽️" [ref=e562]
+              - row [ref=e563] [cursor=pointer]:
+                - cell "雀玲珑中国炸鸡" [ref=e564]
+                - cell "2 个炸鸡腿 / 组合炸鸡套餐系列" [ref=e565]
+                - cell "¥9.9" [ref=e566]
+                - cell "嘉树园餐厅" [ref=e567]
+                - cell "旗山校区" [ref=e568]
+                - cell "🍽️" [ref=e569]
+              - row [ref=e570] [cursor=pointer]:
+                - cell "匠心卤热卤拌饭" [ref=e571]
+                - cell "金牌肘子饭 / 热卤饭系列" [ref=e572]
+                - cell "¥16" [ref=e573]
+                - cell "嘉树园餐厅" [ref=e574]
+                - cell "旗山校区" [ref=e575]
+                - cell "🌶️" [ref=e576]
+              - row [ref=e577] [cursor=pointer]:
+                - cell "香村瓦罐" [ref=e578]
+                - cell "-" [ref=e579]
+                - cell "-" [ref=e580]
+                - cell "嘉树园餐厅" [ref=e581]
+                - cell "旗山校区" [ref=e582]
+                - cell "🍽️" [ref=e583]
+              - row [ref=e584] [cursor=pointer]:
+                - cell "正粤营养糖水粥" [ref=e585]
+                - cell "粥类 / 山东杂粮煎饼" [ref=e586]
+                - cell "¥4" [ref=e587]
+                - cell "嘉树园餐厅" [ref=e588]
+                - cell "旗山校区" [ref=e589]
+                - cell "🍽️" [ref=e590]
+              - row [ref=e591] [cursor=pointer]:
+                - cell "潮腊烧腊" [ref=e592]
+                - cell "招牌脆皮烧鸭饭 / 粤式烧腊饭系列" [ref=e593]
+                - cell "¥13" [ref=e594]
+                - cell "嘉树园餐厅" [ref=e595]
+                - cell "旗山校区" [ref=e596]
+                - cell "🍽️" [ref=e597]
+              - row [ref=e598] [cursor=pointer]:
+                - cell "赣味小炒" [ref=e599]
+                - cell "招牌小炒肉系列 / 甄选菜品系列" [ref=e600]
+                - cell "¥14" [ref=e601]
+                - cell "嘉树园餐厅" [ref=e602]
+                - cell "旗山校区" [ref=e603]
+                - cell "🌶️🌶️" [ref=e604]
+              - row [ref=e605] [cursor=pointer]:
+                - cell "自选食堂" [ref=e606]
+                - cell "自选荤素搭配" [ref=e607]
+                - cell "¥10" [ref=e608]
+                - cell "教工食堂" [ref=e609]
+                - cell "旗山校区" [ref=e610]
+                - cell "🍽️" [ref=e611]
+              - row [ref=e612] [cursor=pointer]:
+                - cell "营养套餐" [ref=e613]
+                - cell "-" [ref=e614]
+                - cell "-" [ref=e615]
+                - cell "教工食堂" [ref=e616]
+                - cell "旗山校区" [ref=e617]
+                - cell "🍽️" [ref=e618]
+              - row [ref=e619] [cursor=pointer]:
+                - cell "自选食堂（5元营养餐）" [ref=e620]
+                - cell "一荤一素管饱低保餐 / 自选快餐系列" [ref=e621]
+                - cell "¥5" [ref=e622]
+                - cell "随园餐厅" [ref=e623]
+                - cell "旗山校区" [ref=e624]
+                - cell "🍽️" [ref=e625]
+              - row [ref=e626] [cursor=pointer]:
+                - cell "心语面包" [ref=e627]
+                - cell "-" [ref=e628]
+                - cell "-" [ref=e629]
+                - cell "随园餐厅" [ref=e630]
+                - cell "旗山校区" [ref=e631]
+                - cell "🍽️" [ref=e632]
+              - row [ref=e633] [cursor=pointer]:
+                - cell "量贩自助（仅午餐）" [ref=e634]
+                - cell "-" [ref=e635]
+                - cell "-" [ref=e636]
+                - cell "随园餐厅" [ref=e637]
+                - cell "旗山校区" [ref=e638]
+                - cell "🍽️" [ref=e639]
+              - row [ref=e640] [cursor=pointer]:
+                - cell "牛小贰原汤牛肉面" [ref=e641]
+                - cell "原汤牛肉面 / 汤面类" [ref=e642]
+                - cell "¥15" [ref=e643]
+                - cell "溢香美食餐厅" [ref=e644]
+                - cell "旗山校区" [ref=e645]
+                - cell "🍽️" [ref=e646]
+              - row [ref=e647] [cursor=pointer]:
+                - cell "聚贤套餐饭" [ref=e648]
+                - cell "一荤两素一蛋套餐饭 / 双拼套餐饭" [ref=e649]
+                - cell "¥13" [ref=e650]
+                - cell "溢香美食餐厅" [ref=e651]
+                - cell "旗山校区" [ref=e652]
+                - cell "🍽️" [ref=e653]
+              - row [ref=e654] [cursor=pointer]:
+                - cell "张记石磨肠粉" [ref=e655]
+                - cell "石磨肠粉系列 / 福鼎肉片" [ref=e656]
+                - cell "¥10" [ref=e657]
+                - cell "溢香美食餐厅" [ref=e658]
+                - cell "旗山校区" [ref=e659]
+                - cell "🍽️" [ref=e660]
+              - row [ref=e661] [cursor=pointer]:
+                - cell "佳佳香鲜烫牛肉粉" [ref=e662]
+                - cell "-" [ref=e663]
+                - cell "-" [ref=e664]
+                - cell "溢香美食餐厅" [ref=e665]
+                - cell "旗山校区" [ref=e666]
+                - cell "🍽️" [ref=e667]
+              - row [ref=e668] [cursor=pointer]:
+                - cell "潮汕汤粉王" [ref=e669]
+                - cell "-" [ref=e670]
+                - cell "-" [ref=e671]
+                - cell "溢香美食餐厅" [ref=e672]
+                - cell "旗山校区" [ref=e673]
+                - cell "🍽️" [ref=e674]
+              - row [ref=e675] [cursor=pointer]:
+                - cell "周记麻辣烫" [ref=e676]
+                - cell "-" [ref=e677]
+                - cell "-" [ref=e678]
+                - cell "溢香美食餐厅" [ref=e679]
+                - cell "旗山校区" [ref=e680]
+                - cell "🍽️" [ref=e681]
+              - row [ref=e682] [cursor=pointer]:
+                - cell "经典牛排·铁板板" [ref=e683]
+                - cell "鸡排饭 / 牛排系列" [ref=e684]
+                - cell "¥17" [ref=e685]
+                - cell "槿灿园餐厅" [ref=e686]
+                - cell "旗山校区" [ref=e687]
+                - cell "🍽️" [ref=e688]
+              - row [ref=e689] [cursor=pointer]:
+                - cell "好煨道瓦罐套餐" [ref=e690]
+                - cell "一荤一素套餐 / 两荤一素套餐" [ref=e691]
+                - cell "¥9" [ref=e692]
+                - cell "槿灿园餐厅" [ref=e693]
+                - cell "旗山校区" [ref=e694]
+                - cell "🍽️" [ref=e695]
+              - row [ref=e696] [cursor=pointer]:
+                - cell "烤肉饭·脆皮鸡饭" [ref=e697]
+                - cell "烤肉饭系列 / 脆皮鸡饭系列" [ref=e698]
+                - cell "¥13" [ref=e699]
+                - cell "槿灿园餐厅" [ref=e700]
+                - cell "旗山校区" [ref=e701]
+                - cell "🍽️" [ref=e702]
+              - row [ref=e703] [cursor=pointer]:
+                - cell "麻辣香锅·麻辣烫" [ref=e704]
+                - cell "-" [ref=e705]
+                - cell "-" [ref=e706]
+                - cell "槿灿园餐厅" [ref=e707]
+                - cell "旗山校区" [ref=e708]
+                - cell "🍽️" [ref=e709]
+              - row [ref=e710] [cursor=pointer]:
+                - cell "重庆小面" [ref=e711]
+                - cell "-" [ref=e712]
+                - cell "-" [ref=e713]
+                - cell "槿灿园餐厅" [ref=e714]
+                - cell "旗山校区" [ref=e715]
+                - cell "🍽️" [ref=e716]
+              - row [ref=e717] [cursor=pointer]:
+                - cell "食语轩自助餐" [ref=e718]
+                - cell "-" [ref=e719]
+                - cell "-" [ref=e720]
+                - cell "槿灿园餐厅" [ref=e721]
+                - cell "旗山校区" [ref=e722]
+                - cell "🍽️" [ref=e723]
+              - row [ref=e724] [cursor=pointer]:
+                - cell "安泰楼酒家" [ref=e725]
+                - cell "-" [ref=e726]
+                - cell "-" [ref=e727]
+                - cell "槿灿园餐厅" [ref=e728]
+                - cell "旗山校区" [ref=e729]
+                - cell "🍽️" [ref=e730]
+              - row [ref=e731] [cursor=pointer]:
+                - cell "缘味先石锅饭" [ref=e732]
+                - cell "肉末鸡蛋石锅饭 / 石锅特色系列" [ref=e733]
+                - cell "¥12" [ref=e734]
+                - cell "桃李园餐厅" [ref=e735]
+                - cell "旗山校区" [ref=e736]
+                - cell "🍽️" [ref=e737]
+              - row [ref=e738] [cursor=pointer]:
+                - cell "延妈妈朝鲜族石锅拌饭" [ref=e739]
+                - cell "-" [ref=e740]
+                - cell "-" [ref=e741]
+                - cell "桃李园餐厅" [ref=e742]
+                - cell "旗山校区" [ref=e743]
+                - cell "🍽️" [ref=e744]
+              - row [ref=e745] [cursor=pointer]:
+                - cell "肥佬烧腊" [ref=e746]
+                - cell "-" [ref=e747]
+                - cell "-" [ref=e748]
+                - cell "桃李园餐厅" [ref=e749]
+                - cell "旗山校区" [ref=e750]
+                - cell "🍽️" [ref=e751]
+              - row [ref=e752] [cursor=pointer]:
+                - cell "五谷渔粉" [ref=e753]
+                - cell "-" [ref=e754]
+                - cell "-" [ref=e755]
+                - cell "桃李园餐厅" [ref=e756]
+                - cell "旗山校区" [ref=e757]
+                - cell "🍽️" [ref=e758]
+              - row [ref=e759] [cursor=pointer]:
+                - cell "赣味田园自选大餐" [ref=e760]
+                - cell "-" [ref=e761]
+                - cell "-" [ref=e762]
+                - cell "桃李园餐厅" [ref=e763]
+                - cell "旗山校区" [ref=e764]
+                - cell "🍽️" [ref=e765]
+              - row [ref=e766] [cursor=pointer]:
+                - cell "国燕现蒸凉皮" [ref=e767]
+                - cell "-" [ref=e768]
+                - cell "-" [ref=e769]
+                - cell "桃李园餐厅" [ref=e770]
+                - cell "旗山校区" [ref=e771]
+                - cell "🍽️" [ref=e772]
+              - row [ref=e773] [cursor=pointer]:
+                - cell "肯德基小站餐厅" [ref=e774]
+                - cell "-" [ref=e775]
+                - cell "-" [ref=e776]
+                - cell "展园餐厅" [ref=e777]
+                - cell "旗山校区" [ref=e778]
+                - cell "🍽️" [ref=e779]
+              - row [ref=e780] [cursor=pointer]:
+                - cell "乡外乡套餐饭" [ref=e781]
+                - cell "1 素 1 荤 1 半荤套餐 / 1 素 2 荤 1 半荤套餐" [ref=e782]
+                - cell "¥9.9" [ref=e783]
+                - cell "展园餐厅" [ref=e784]
+                - cell "旗山校区" [ref=e785]
+                - cell "🍽️" [ref=e786]
+              - row [ref=e787] [cursor=pointer]:
+                - cell "咖喱饱饱" [ref=e788]
+                - cell "咖喱饭套餐系列 / 滑蛋饭系列" [ref=e789]
+                - cell "¥14.8" [ref=e790]
+                - cell "展园餐厅" [ref=e791]
+                - cell "旗山校区" [ref=e792]
+                - cell "🌶️" [ref=e793]
+              - row [ref=e794] [cursor=pointer]:
+                - cell "金日升烤盘饭" [ref=e795]
+                - cell "自助称重 8.9 元/三两" [ref=e796]
+                - cell "¥16" [ref=e797]
+                - cell "展园餐厅" [ref=e798]
+                - cell "旗山校区" [ref=e799]
+                - cell "🍽️" [ref=e800]
+              - row [ref=e801] [cursor=pointer]:
+                - cell "福记麻辣烫" [ref=e802]
+                - cell "自助称重 1.98 元/两" [ref=e803]
+                - cell "¥14" [ref=e804]
+                - cell "展园餐厅" [ref=e805]
+                - cell "旗山校区" [ref=e806]
+                - cell "🌶️🌶️" [ref=e807]
+              - row [ref=e808] [cursor=pointer]:
+                - cell "淳百味" [ref=e809]
+                - cell "拌面系列 / 扁肉系列" [ref=e810]
+                - cell "¥6" [ref=e811]
+                - cell "展园餐厅" [ref=e812]
+                - cell "旗山校区" [ref=e813]
+                - cell "🍽️" [ref=e814]
+              - row [ref=e815] [cursor=pointer]:
+                - cell "重庆面馆" [ref=e816]
+                - cell "汤面系列 / 酸辣粉系列" [ref=e817]
+                - cell "¥13" [ref=e818]
+                - cell "展园餐厅" [ref=e819]
+                - cell "旗山校区" [ref=e820]
+                - cell "🌶️🌶️" [ref=e821]
+              - row [ref=e822] [cursor=pointer]:
+                - cell "稻香缘渔粉" [ref=e823]
+                - cell "粉面系列 / 锡纸系列" [ref=e824]
+                - cell "¥12" [ref=e825]
+                - cell "展园餐厅" [ref=e826]
+                - cell "旗山校区" [ref=e827]
+                - cell "🍽️" [ref=e828]
+              - row [ref=e829] [cursor=pointer]:
+                - cell "西北拉面" [ref=e830]
+                - cell "拉面系列 / 刀削面系列" [ref=e831]
+                - cell "¥12" [ref=e832]
+                - cell "展园餐厅" [ref=e833]
+                - cell "旗山校区" [ref=e834]
+                - cell "🍽️" [ref=e835]
+              - row [ref=e836] [cursor=pointer]:
+                - cell "喜姐炸串" [ref=e837]
+                - cell "招牌必吃系列 / 超嗨套餐系列" [ref=e838]
+                - cell "¥20" [ref=e839]
+                - cell "展园餐厅" [ref=e840]
+                - cell "旗山校区" [ref=e841]
+                - cell "🌶️" [ref=e842]
+              - row [ref=e843] [cursor=pointer]:
+                - cell "星巴克" [ref=e844]
+                - cell "-" [ref=e845]
+                - cell "-" [ref=e846]
+                - cell "展园餐厅" [ref=e847]
+                - cell "旗山校区" [ref=e848]
+                - cell "🍽️" [ref=e849]
+              - row [ref=e850] [cursor=pointer]:
+                - cell "益禾堂" [ref=e851]
+                - cell "-" [ref=e852]
+                - cell "-" [ref=e853]
+                - cell "展园餐厅" [ref=e854]
+                - cell "旗山校区" [ref=e855]
+                - cell "🍽️" [ref=e856]
+              - row [ref=e857] [cursor=pointer]:
+                - cell "自选食堂（5元营养餐）" [ref=e858]
+                - cell "一荤一素管饱低保餐 / 自选快餐系列" [ref=e859]
+                - cell "¥5" [ref=e860]
+                - cell "聚星园餐厅" [ref=e861]
+                - cell "仓山校区" [ref=e862]
+                - cell "🍽️" [ref=e863]
+              - row [ref=e864] [cursor=pointer]:
+                - cell "大众快餐" [ref=e865]
+                - cell "-" [ref=e866]
+                - cell "-" [ref=e867]
+                - cell "聚星园餐厅" [ref=e868]
+                - cell "仓山校区" [ref=e869]
+                - cell "🍽️" [ref=e870]
+              - row [ref=e871] [cursor=pointer]:
+                - cell "五谷鱼粉" [ref=e872]
+                - cell "鱼粉系列" [ref=e873]
+                - cell "¥13" [ref=e874]
+                - cell "聚星园2楼（高区食堂）" [ref=e875]
+                - cell "仓山校区" [ref=e876]
+                - cell "🍽️" [ref=e877]
+              - row [ref=e878] [cursor=pointer]:
+                - cell "兰州拉面" [ref=e879]
+                - cell "拉面系列" [ref=e880]
+                - cell "¥12" [ref=e881]
+                - cell "聚星园2楼（高区食堂）" [ref=e882]
+                - cell "仓山校区" [ref=e883]
+                - cell "🍽️" [ref=e884]
+              - row [ref=e885] [cursor=pointer]:
+                - cell "小锅米线" [ref=e886]
+                - cell "小锅米线" [ref=e887]
+                - cell "¥12" [ref=e888]
+                - cell "聚星园2楼（高区食堂）" [ref=e889]
+                - cell "仓山校区" [ref=e890]
+                - cell "🌶️" [ref=e891]
+              - row [ref=e892] [cursor=pointer]:
+                - cell "水煮肉片" [ref=e893]
+                - cell "-" [ref=e894]
+                - cell "-" [ref=e895]
+                - cell "聚星园2楼（高区食堂）" [ref=e896]
+                - cell "仓山校区" [ref=e897]
+                - cell "🍽️" [ref=e898]
+              - row [ref=e899] [cursor=pointer]:
+                - cell "水饺" [ref=e900]
+                - cell "饺子系列 / 锅贴系列" [ref=e901]
+                - cell "-" [ref=e902]
+                - cell "聚星园2楼（高区食堂）" [ref=e903]
+                - cell "仓山校区" [ref=e904]
+                - cell "🍽️" [ref=e905]
+              - row [ref=e906] [cursor=pointer]:
+                - cell "麻辣烫" [ref=e907]
+                - cell "自选菜称重 19.8 元/斤" [ref=e908]
+                - cell "-" [ref=e909]
+                - cell "聚星园2楼（高区食堂）" [ref=e910]
+                - cell "仓山校区" [ref=e911]
+                - cell "🍽️" [ref=e912]
+              - row [ref=e913] [cursor=pointer]:
+                - cell "炖罐" [ref=e914]
+                - cell "-" [ref=e915]
+                - cell "-" [ref=e916]
+                - cell "聚星园2楼（高区食堂）" [ref=e917]
+                - cell "仓山校区" [ref=e918]
+                - cell "🍽️" [ref=e919]
+              - row [ref=e920] [cursor=pointer]:
+                - cell "谷物蒸饭" [ref=e921]
+                - cell "-" [ref=e922]
+                - cell "-" [ref=e923]
+                - cell "聚星园2楼（高区食堂）" [ref=e924]
+                - cell "仓山校区" [ref=e925]
+                - cell "🍽️" [ref=e926]
+              - row [ref=e927] [cursor=pointer]:
+                - cell "雀玲珑" [ref=e928]
+                - cell "2 个炸鸡腿 / 组合炸鸡套餐系列" [ref=e929]
+                - cell "-" [ref=e930]
+                - cell "长安美食餐厅1楼" [ref=e931]
+                - cell "仓山校区" [ref=e932]
+                - cell "🍽️" [ref=e933]
+              - row [ref=e934] [cursor=pointer]:
+                - cell "淳百味" [ref=e935]
+                - cell "拌面系列 / 扁肉系列" [ref=e936]
+                - cell "¥6" [ref=e937]
+                - cell "长安美食餐厅1楼" [ref=e938]
+                - cell "仓山校区" [ref=e939]
+                - cell "🍽️" [ref=e940]
+              - row [ref=e941] [cursor=pointer]:
+                - cell "渔家傲" [ref=e942]
+                - cell "-" [ref=e943]
+                - cell "-" [ref=e944]
+                - cell "长安美食餐厅1楼" [ref=e945]
+                - cell "仓山校区" [ref=e946]
+                - cell "🍽️" [ref=e947]
+              - row [ref=e948] [cursor=pointer]:
+                - cell "烤盘饭" [ref=e949]
+                - cell "自助称重 8.9 元/三两" [ref=e950]
+                - cell "-" [ref=e951]
+                - cell "长安美食餐厅1楼" [ref=e952]
+                - cell "仓山校区" [ref=e953]
+                - cell "🍽️" [ref=e954]
+              - row [ref=e955] [cursor=pointer]:
+                - cell "木桶饭" [ref=e956]
+                - cell "-" [ref=e957]
+                - cell "-" [ref=e958]
+                - cell "长安美食餐厅1楼" [ref=e959]
+                - cell "仓山校区" [ref=e960]
+                - cell "🍽️" [ref=e961]
+              - row [ref=e962] [cursor=pointer]:
+                - cell "麻辣烫" [ref=e963]
+                - cell "自选菜称重 19.8 元/斤" [ref=e964]
+                - cell "-" [ref=e965]
+                - cell "长安美食餐厅1楼" [ref=e966]
+                - cell "仓山校区" [ref=e967]
+                - cell "🍽️" [ref=e968]
+              - row [ref=e969] [cursor=pointer]:
+                - cell "漳州鸭香面" [ref=e970]
+                - cell "-" [ref=e971]
+                - cell "-" [ref=e972]
+                - cell "长安美食餐厅1楼" [ref=e973]
+                - cell "仓山校区" [ref=e974]
+                - cell "🍽️" [ref=e975]
+              - row [ref=e976] [cursor=pointer]:
+                - cell "闽味小炒" [ref=e977]
+                - cell "-" [ref=e978]
+                - cell "-" [ref=e979]
+                - cell "长安美食餐厅2楼" [ref=e980]
+                - cell "仓山校区" [ref=e981]
+                - cell "🍽️" [ref=e982]
+              - row [ref=e983] [cursor=pointer]:
+                - cell "风味窗口" [ref=e984]
+                - cell "-" [ref=e985]
+                - cell "-" [ref=e986]
+                - cell "长安美食餐厅2楼" [ref=e987]
+                - cell "仓山校区" [ref=e988]
+                - cell "🍽️" [ref=e989]
+              - row [ref=e990] [cursor=pointer]:
+                - cell "清真窗口" [ref=e991]
+                - cell "-" [ref=e992]
+                - cell "-" [ref=e993]
+                - cell "长安美食餐厅3楼" [ref=e994]
+                - cell "仓山校区" [ref=e995]
+                - cell "🍽️" [ref=e996]
+              - row [ref=e997] [cursor=pointer]:
+                - cell "特色窗口" [ref=e998]
+                - cell "-" [ref=e999]
+                - cell "-" [ref=e1000]
+                - cell "长安美食餐厅3楼" [ref=e1001]
+                - cell "仓山校区" [ref=e1002]
+                - cell "🍽️" [ref=e1003]
+        - generic [ref=e1004]:
+          - generic [ref=e1005]:
+            - text: 食堂一览（
+            - generic [ref=e1007]: "17"
+            - text: 家）
+          - generic [ref=e1008]:
+            - button "百草园餐厅 旗山校区 · 北区·榕苑" [ref=e1009] [cursor=pointer]:
+              - text: 百草园餐厅
+              - generic [ref=e1010]: 旗山校区 · 北区·榕苑
+            - button "翠竹园餐厅 旗山校区 · 北区·桂苑" [ref=e1011] [cursor=pointer]:
+              - text: 翠竹园餐厅
+              - generic [ref=e1012]: 旗山校区 · 北区·桂苑
+            - button "千叶园餐厅 旗山校区 · 北区·李苑" [ref=e1013] [cursor=pointer]:
+              - text: 千叶园餐厅
+              - generic [ref=e1014]: 旗山校区 · 北区·李苑
+            - button "花香园餐厅 旗山校区 · 北区·榕苑" [ref=e1015] [cursor=pointer]:
+              - text: 花香园餐厅
+              - generic [ref=e1016]: 旗山校区 · 北区·榕苑
+            - button "文化街美食餐厅 旗山校区 · 北区·李苑" [ref=e1017] [cursor=pointer]:
+              - text: 文化街美食餐厅
+              - generic [ref=e1018]: 旗山校区 · 北区·李苑
+            - button "嘉树园餐厅 旗山校区 · 北区·桃苑" [ref=e1019] [cursor=pointer]:
+              - text: 嘉树园餐厅
+              - generic [ref=e1020]: 旗山校区 · 北区·桃苑
+            - button "教工食堂 旗山校区 · 中部·行政楼" [ref=e1021] [cursor=pointer]:
+              - text: 教工食堂
+              - generic [ref=e1022]: 旗山校区 · 中部·行政楼
+            - button "随园餐厅 旗山校区 · 南区·兰苑" [ref=e1023] [cursor=pointer]:
+              - text: 随园餐厅
+              - generic [ref=e1024]: 旗山校区 · 南区·兰苑
+            - button "溢香美食餐厅 旗山校区 · 北区·李苑" [ref=e1025] [cursor=pointer]:
+              - text: 溢香美食餐厅
+              - generic [ref=e1026]: 旗山校区 · 北区·李苑
+            - button "槿灿园餐厅 旗山校区 · 北区·桃苑" [ref=e1027] [cursor=pointer]:
+              - text: 槿灿园餐厅
+              - generic [ref=e1028]: 旗山校区 · 北区·桃苑
+            - button "桃李园餐厅 旗山校区 · 北区·桃苑" [ref=e1029] [cursor=pointer]:
+              - text: 桃李园餐厅
+              - generic [ref=e1030]: 旗山校区 · 北区·桃苑
+            - button "展园餐厅 旗山校区 · 南区·兰苑" [ref=e1031] [cursor=pointer]:
+              - text: 展园餐厅
+              - generic [ref=e1032]: 旗山校区 · 南区·兰苑
+            - button "聚星园餐厅 仓山校区 · 仓山·聚星园" [ref=e1033] [cursor=pointer]:
+              - text: 聚星园餐厅
+              - generic [ref=e1034]: 仓山校区 · 仓山·聚星园
+            - button "聚星园2楼（高区食堂） 仓山校区 · 仓山·聚星园" [ref=e1035] [cursor=pointer]:
+              - text: 聚星园2楼（高区食堂）
+              - generic [ref=e1036]: 仓山校区 · 仓山·聚星园
+            - button "长安美食餐厅1楼 仓山校区 · 仓山·长安山" [ref=e1037] [cursor=pointer]:
+              - text: 长安美食餐厅1楼
+              - generic [ref=e1038]: 仓山校区 · 仓山·长安山
+            - button "长安美食餐厅2楼 仓山校区 · 仓山·长安山" [ref=e1039] [cursor=pointer]:
+              - text: 长安美食餐厅2楼
+              - generic [ref=e1040]: 仓山校区 · 仓山·长安山
+            - button "长安美食餐厅3楼 仓山校区 · 仓山·长安山" [ref=e1041] [cursor=pointer]:
+              - text: 长安美食餐厅3楼
+              - generic [ref=e1042]: 仓山校区 · 仓山·长安山
+      - contentinfo [ref=e1043]:
+        - generic [ref=e1044]:
+          - generic [ref=e1045]: 官方实时：校园动态 · 校历 · 课程总表 · 教室排课（抓自 jwc.fjnu.edu.cn）
+          - generic [ref=e1047]: 官方通道：学号查询 · 体测成绩 · 个人课表（需统一身份认证，附官方入口）
+          - generic [ref=e1049]: 校园工具：食堂 · 空教室 · 吃什么 · 问答 · 轮盘 · 速配 · 教室导航
+        - generic [ref=e1051]: FJNU 校园导航 · 非官方校园服务聚合演示站，数据仅供学习交流 v1.5.2
+        - generic [ref=e1052]: 网站开发者：FJNU-Nav 团队 · 数据抓取自福建师范大学公开页面（教务通知 · 教学动态 · 校历 · 课程总表），版权归学校及相关方所有，本站仅作学习与生活实用，不做任何商业用途
+      - navigation [ref=e1053]:
+        - button "🏠 首页" [ref=e1054] [cursor=pointer]:
+          - generic [ref=e1055]: 🏠
+          - generic [ref=e1056]: 首页
+        - button "🤖 智能体" [ref=e1057] [cursor=pointer]:
+          - generic [ref=e1058]: 🤖
+          - generic [ref=e1059]: 智能体
+        - button "📢 动态" [ref=e1060] [cursor=pointer]:
+          - generic [ref=e1061]: 📢
+          - generic [ref=e1062]: 动态
+        - button "🏛️ 官网" [ref=e1063] [cursor=pointer]:
+          - generic [ref=e1064]: 🏛️
+          - generic [ref=e1065]: 官网
+        - button "🧮 生活费" [ref=e1066] [cursor=pointer]:
+          - generic [ref=e1067]: 🧮
+          - generic [ref=e1068]: 生活费
+        - button "📅 日程" [ref=e1069] [cursor=pointer]:
+          - generic [ref=e1070]: 📅
+          - generic [ref=e1071]: 日程
+        - button "🧭 教室" [ref=e1072] [cursor=pointer]:
+          - generic [ref=e1073]: 🧭
+          - generic [ref=e1074]: 教室
+        - button "🗓️ 校历" [ref=e1075] [cursor=pointer]:
+          - generic [ref=e1076]: 🗓️
+          - generic [ref=e1077]: 校历
+    - button "🤖 AI" [ref=e17] [cursor=pointer]:
+      - generic [ref=e18]: 🤖
+      - generic [ref=e19]: AI
+  - generic [ref=e1081]:
+    - generic [ref=e1083]: 1/2
+    - generic [ref=e1087]:
+      - generic [ref=e1088]:
+        - generic [ref=e1089]: 🏠
+        - heading "返回首页" [level=4] [ref=e1090]
+      - paragraph [ref=e1091]: 点击这里可以随时返回首页。
+    - generic [ref=e1092]:
+      - button "跳过" [ref=e1093] [cursor=pointer]
+      - button "下一步 ›" [ref=e1095] [cursor=pointer]

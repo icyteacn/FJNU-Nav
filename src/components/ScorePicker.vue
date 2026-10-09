@@ -1,8 +1,8 @@
 <script setup>
 /** 通用加分快速选档器：手风琴分类 + 档位 chips + 计数步进，供科研分 / 综测分两处复用 */
 import { reactive, computed, watch } from 'vue'
-import { state, togglePick, getCount, setCount, factorIdxOf, setFactorIdx, highlightGroup } from '../stores/scholarship'
-import { MEMBER_FACTORS } from '../data/researchRules'
+import { state, togglePick, getCount, setCount, factorIdxOf, setFactorIdx, highlightGroup } from '../stores/scholarship.js'
+import { MEMBER_FACTORS } from '../data/researchRules.js'
 
 const props = defineProps({
   kind: { type: String, required: true },

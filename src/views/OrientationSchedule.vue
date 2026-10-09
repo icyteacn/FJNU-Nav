@@ -9,8 +9,8 @@ import {
   SCHEDULE_VERSIONS, EVENT_CATEGORIES, MAJORS, audienceMajors,
   groupByDate, eventStatus, nextEvent, timeUntil, nextEventDate,
   eventCountdown, isImminent,
-} from '../data/orientationSchedule'
-import { setNavContext } from '../stores/navContext'
+} from '../data/orientationSchedule.js'
+import { setNavContext } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 function openApp(id) { emit('open', id) }

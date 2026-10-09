@@ -1,8 +1,8 @@
 ﻿<script setup>
 import { ref, computed, onMounted } from 'vue'
-import { foods, halls } from '../data/foods'
+import { foods, halls } from '../data/foods.js'
 import CountUp from '../components/CountUp.vue'
-import { setNavContext } from '../stores/navContext'
+import { setNavContext } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 

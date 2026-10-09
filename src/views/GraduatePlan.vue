@@ -1,9 +1,10 @@
+<!-- @模块：src/views/GraduatePlan.vue —— 研究生服务 -->
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import ZcAccumulator from '../components/ZcAccumulator.vue'
-import { loadState, saveState, togglePick, isContestPicked, setHighlightGroup } from '../stores/scholarship'
-import { COMPETITIONS_A, COMPETITIONS_B_KEY, COMPETITIONS_B_NORMAL, SCHOLARSHIP_A, SCHOLARSHIP_B, AWARD_CHIPS_A, AWARD_CHIPS_B } from '../data/competitions'
-import { setNavContext, navCtx } from '../stores/navContext'
+import { loadState, saveState, togglePick, isContestPicked, setHighlightGroup } from '../stores/scholarship.js'
+import { COMPETITIONS_A, COMPETITIONS_B_KEY, COMPETITIONS_B_NORMAL, SCHOLARSHIP_A, SCHOLARSHIP_B, AWARD_CHIPS_A, AWARD_CHIPS_B } from '../data/competitions.js'
+import { setNavContext, navCtx } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 

@@ -14,8 +14,8 @@ import {
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
   loadUserOverrides, saveUserOverride,
-} from '../data/classSchedule'
-import { setNavContext } from '../stores/navContext'
+} from '../data/classSchedule.js'
+import { setNavContext } from '../stores/navContext.js'
 
 const props = defineProps({
   storagePrefix: { type: String, default: '' },

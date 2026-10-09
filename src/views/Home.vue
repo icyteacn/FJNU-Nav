@@ -1,14 +1,14 @@
 <script setup>
 /** 首页：欢迎语 / 应用网格 / 分类入口 / 校园数据 / 数据洞察 / 校区 / 关于本站 */
 import { ref, computed, onMounted } from 'vue'
-import { apps, campusStats } from '../data/apps'
-import { searchApps } from '../data/searchIndex'
-import { recognize } from '../agent/intents'
-import { AGENT_PROFILE } from '../agent/config'
-import { campuses } from '../data/campus'
-import { getCourseStats, EMPTY_STATS } from '../api/courseStats'
-import { SITE } from '../config/site'
-import { useI18n } from '../i18n'
+import { apps, campusStats } from '../data/apps.js'
+import { searchApps } from '../data/searchIndex.js'
+import { recognize } from '../agent/intents.js'
+import { AGENT_PROFILE } from '../agent/config.js'
+import { campuses } from '../data/campus.js'
+import { getCourseStats, EMPTY_STATS } from '../api/courseStats.js'
+import { SITE } from '../config/site.js'
+import { useI18n } from '../i18n/index.js'
 import VisitStats from '../components/VisitStats.vue'
 
 const emit = defineEmits(['open'])

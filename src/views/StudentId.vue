@@ -1,6 +1,7 @@
+<!-- @模块：src/views/StudentId.vue —— 新生学号查询 -->
 <script setup>
 import { ref, onMounted } from 'vue'
-import { setNavContext, navCtx } from '../stores/navContext'
+import { setNavContext, navCtx } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 

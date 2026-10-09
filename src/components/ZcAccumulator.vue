@@ -7,7 +7,7 @@ import {
   state, loadState, saveState, resetKind, profileOf, PROFILES,
   researchDetail, researchScore, qualityDetail, qualityScore,
   coursePart, totalScore,
-} from '../stores/scholarship'
+} from '../stores/scholarship.js'
 
 const emit = defineEmits(['goto'])
 

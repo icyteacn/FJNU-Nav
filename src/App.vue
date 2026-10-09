@@ -9,11 +9,11 @@ import { ref, computed, onMounted, watch, nextTick, provide } from 'vue'
 import Welcome from './views/Welcome.vue'
 import TourOverlay from './components/TourOverlay.vue'
 import ChatDock from './components/agent/ChatDock.vue'
-import { SITE } from './config/site'
-import { useI18n } from './i18n'
-import { NAV_APPS, useViewState, preloadPopular } from './router'
-import { useTour } from './utils/useTour'
-import { getTourSteps, getSubTourSteps } from './data/tourSteps'
+import { SITE } from './config/site.js'
+import { useI18n } from './i18n/index.js'
+import { NAV_APPS, useViewState, preloadPopular } from './router.js'
+import { useTour } from './utils/useTour.js'
+import { getTourSteps, getSubTourSteps } from './data/tourSteps.js'
 
 const { startTour, isTourCompleted, isActive, markTourCompleted } = useTour()
 

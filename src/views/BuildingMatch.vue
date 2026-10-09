@@ -1,7 +1,8 @@
+<!-- @模块：src/views/BuildingMatch.vue —— 教学楼速配游戏 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import CountUp from '../components/CountUp.vue'
-import { setNavContext } from '../stores/navContext'
+import { setNavContext } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 

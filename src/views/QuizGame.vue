@@ -1,6 +1,6 @@
 ﻿<script setup>
 import { ref, computed, onMounted } from 'vue'
-import { quiz } from '../data/quiz'
+import { quiz } from '../data/quiz.js'
 import CountUp from '../components/CountUp.vue'
 
 const emit = defineEmits(['back'])

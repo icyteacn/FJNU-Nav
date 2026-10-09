@@ -1,6 +1,7 @@
+<!-- @模块：src/views/Categories.vue —— 应用分类总览 -->
 <script setup>
 import { ref, computed } from 'vue'
-import { apps, appGroups, groupColors } from '../data/apps'
+import { apps, appGroups, groupColors } from '../data/apps.js'
 
 const emit = defineEmits(['back', 'open'])
 const kw = ref('')

@@ -5,9 +5,9 @@
  * 本项目复刻了校区/餐次/预算/口味筛选 + 菜品详情弹窗 + 抽取动画功能。
  */
 import { ref, computed, onMounted, watch } from 'vue'
-import { foods, halls, menu } from '../data/foods'
+import { foods, halls, menu } from '../data/foods.js'
 import CountUp from '../components/CountUp.vue'
-import { navCtx } from '../stores/navContext'
+import { navCtx } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 

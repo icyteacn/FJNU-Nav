@@ -5,7 +5,7 @@
  * 同时保留原有「官方链接跳转」模式，两种方式并存。
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { apiFetch } from '../api'
+import { apiFetch } from '../api/index.js'
 
 const emit = defineEmits(['back'])
 

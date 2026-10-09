@@ -1,7 +1,7 @@
 ﻿<script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { officialGroups, colleges, emergency } from '../data/official'
-import { navCtx } from '../stores/navContext'
+import { officialGroups, colleges, emergency } from '../data/official.js'
+import { navCtx } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
 const tab = ref('official')

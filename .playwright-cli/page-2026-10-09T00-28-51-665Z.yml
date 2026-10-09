@@ -1,0 +1,15 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - generic [ref=e6]: FJNU-Nav
+    - heading "FJNU 校园导航" [level=1] [ref=e8]
+    - paragraph [ref=e9]: 福建师范大学 · 校园服务聚合入口
+    - generic [ref=e10]: 知明行笃 · 立诚致广
+    - generic [ref=e11]:
+      - generic [ref=e12]: 2 大校区
+      - generic [ref=e13]: 28 个学院
+      - generic [ref=e14]: 84 个本科专业
+    - button "进入校园导航 →" [ref=e15] [cursor=pointer]
+    - paragraph [ref=e16]: 非官方校园服务聚合演示站 · 数据仅供学习交流
+  - button "🤖 AI" [ref=e17] [cursor=pointer]:
+    - generic [ref=e18]: 🤖
+    - generic [ref=e19]: AI

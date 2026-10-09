@@ -5,14 +5,14 @@
  *  本项目保留原有班级/教室/教师三维查询 + 周视图/列表视图切换，未完全复刻课程编辑器和分享功能。
  */
 import { ref, shallowRef, computed, watch, onMounted, onUnmounted, nextTick, inject } from 'vue'
-import { apiFetch } from '../api/index'
-import { loadSnap } from '../api/localCourse'
-import { loadTimetableMeta, loadTermRows } from '../api/termTimetable'
-import { normRoom, clsSplit, profOf, gradeOf, parseWeeks } from '../utils/course'
-import { fmtTime } from '../utils/format'
-import { setNavContext } from '../stores/navContext'
+import { apiFetch } from '../api/index.js'
+import { loadSnap } from '../api/localCourse.js'
+import { loadTimetableMeta, loadTermRows } from '../api/termTimetable.js'
+import { normRoom, clsSplit, profOf, gradeOf, parseWeeks } from '../utils/course.js'
+import { fmtTime } from '../utils/format.js'
+import { setNavContext } from '../stores/navContext.js'
 import ClassSchedule from './ClassSchedule.vue'
-import { COURSES as GRAD_COURSES, MAJORS, SINGLE_PERIOD_TIMES, TABLE_ROWS } from '../data/classSchedule'
+import { COURSES as GRAD_COURSES, MAJORS, SINGLE_PERIOD_TIMES, TABLE_ROWS } from '../data/classSchedule.js'
 
 const emit = defineEmits(['back', 'open'])
 

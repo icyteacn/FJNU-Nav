@@ -13,6 +13,7 @@ import { SITE } from './config/site.js'
 import { useI18n } from './i18n/index.js'
 import { NAV_APPS, useViewState, preloadPopular } from './router.js'
 import { useTour } from './utils/useTour.js'
+import { adminUrl } from './wall/apiBase.js'
 import { getTourSteps, getSubTourSteps } from './data/tourSteps.js'
 
 const { startTour, isTourCompleted, isActive, markTourCompleted } = useTour()
@@ -95,7 +96,7 @@ function secretPortal() {
     const t = prompt('🛰️ 社区控制台\n请输入管理口令：')
     if (t) {
       try { localStorage.setItem('pending_admin_token', t) } catch { /* noop */ }
-      window.open('/admin', '_blank', 'noopener')
+      window.open(adminUrl(), '_blank', 'noopener')
     }
   }
 }

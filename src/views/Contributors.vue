@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.5.13</b> — {{ '应用排序调优：日程助手/研究生服务置顶，其余组内老前新后重排。' }}</li>
       <li><b>v1.5.12</b> — {{ '访问统计卡 i18n：VisitStats 中文全部 t() 化，zh/en 词包新增 visitStats 9 键。' }}</li>
       <li><b>v1.5.11</b> — {{ '不蒜子第三方实时统计三指标：共享模块 utils/busuanzi.js + ensureHost 兼容 Vercount。' }}</li>
       <li><b>v1.5.10</b> — {{ 'i18n/E2E/收尾：注册表英文字段 + 浏览器 E2E + 树形回复 + 多草稿箱 + RichEditor 进私信。' }}</li>

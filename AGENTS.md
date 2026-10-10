@@ -58,6 +58,7 @@
 
 | 日期 | 版本 | 内容 |
 | --- | --- | --- |
+| 2026-10-10 | v1.5.11 | **不蒜子第三方实时统计三指标（patch）**。访问统计卡 `VisitStats.vue` 在 Vercount 行下新增 busuanzi.ibruce.info 实时行（首页浏览/站点浏览/站点访客），i18n 形态与组件现状一致（硬编码中文，该组件尚未接 i18n）。实现收敛为共享模块 `src/utils/busuanzi.js`：**串行队列**防路由快速切换竞态 + **常驻隐藏 span** 不随组件卸载丢失 + 注入前清空 span 防旧值误判 + **ensureHost 逐个补齐**（本站 Vercount 会自建 site_pv/site_uv 两个 span，整体判断会漏建 page_pv 致卡 loading，此坑在 QDU 侧实测踩出）。`router.parseHash` 每次导航注入一次 JSONP（site_pv +1），组件只读共享状态。**基线说明**：任务最初基于 v1.2.22 实现，推送时远端已推进至 v1.5.10（另线 i18n/E2E 工作），已重基线到 v1.5.10 重新移植功能，版本号跟随远端序列 bump 至 1.5.11（旧提交留档分支 backup-v1223-busuanzi）。**验证**：npm build 通过；CDP（Chrome 151）冒烟 **ALL PASS**——首页三指标回填、路由切换 site_pv 实测递增、返回首页 host 仍在且数据更新、375 首页/应用页无横向溢出、零业务 JS 错误。**注意**：`site_pv/site_uv` 为 `iceoftea.github.io` 域名级口径；hash 路由下 Referer 不含 `#hash`，各页共享站点根 `page_pv` 计数，前端按前端路由 path 缓存展示。 |
 | 2026-10-09 | v1.5.10 | **i18n/E2E/收尾校本同步（patch）**。FJNU 注册表 EN 字段/网格/分类/底部导航跟进/门禁检查；E2E 脚本+workflow；树形视图切换/多草稿箱UI/RichEditor 进私信。验证：build/e2e-integrity/unit×5/E2E 10/10 全绿。 |
 | 2026-10-09 | v1.5.9 | **高级感与新工作流校本同步（patch）**。富文本/TTS/ICS/记忆/曲线/自检/高级检索 + 8 工作流移植。 |
 | 2026-10-09 | v1.5.8 | **代码治理校本同步（patch）**。草稿统一/统一出口/脚手架统一/审计0/0。 |

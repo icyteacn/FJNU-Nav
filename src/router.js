@@ -9,6 +9,7 @@
  * 新增一个应用页面的完整流程见 README「二次开发：新增应用」。
  */
 import { ref, computed, markRaw } from 'vue'
+import { hitBusuanzi } from './utils/busuanzi.js'
 import Home from './views/Home.vue'
 import { recordAppOpen } from './agent/profile.js'
 
@@ -117,6 +118,9 @@ export function useViewState() {
     const id = m && VIEWS[m[1]] ? m[1] : 'home'
     current.value = id
     setView(id)
+    // 不蒜子计数：每次导航（hashchange + 初始）注入一次 JSONP → site_pv +1，
+    // page_pv 按 path 缓存进共享模块（VisitStats 读此状态展示）
+    hitBusuanzi(id === 'home' ? '/' : '/app/' + id)
   }
   window.addEventListener('hashchange', parseHash)
   parseHash()

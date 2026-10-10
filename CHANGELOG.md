@@ -2,6 +2,12 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.5.11 (2026-10-10) · 不蒜子第三方实时统计三指标（首页浏览/站点浏览/站点访客）（patch）
+- ✨ 访问统计卡新增 busuanzi.ibruce.info 实时行（首页浏览 / 站点浏览 / 站点访客），与 Vercount 原统计并存
+- 🛠 新增共享模块 `utils/busuanzi.js`：串行队列 JSONP（防路由快速切换竞态）+ 常驻隐藏 span（组件卸载不丢）+ 注入前清空防旧值 + ensureHost 逐个补齐（兼容 Vercount 自建的 site_pv/site_uv span）
+- 🔁 `router.parseHash` 每次导航注入一次 → site_pv +1；hash 路由下 page_pv 按前端路由 path 缓存展示
+- ✅ 验证：npm build 通过；CDP 冒烟 ALL PASS（三指标回填/导航 site_pv 递增/host 常驻/375 首页与应用页无溢出/零业务 JS 错误）
+
 ## v1.5.10 (2026-10-09) · i18n/E2E/收尾（patch，与 QDU 1.6.10 同批校本同步）
 - 🌐 注册表英文字段 + 浏览器 E2E 脚本 + 树形回复视图切换 + 多草稿箱 UI + RichEditor 进私信
 

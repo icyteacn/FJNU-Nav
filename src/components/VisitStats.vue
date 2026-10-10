@@ -3,11 +3,18 @@
  * 访问统计卡片：使用 Vercount 第三方统计服务
  * 服务端持久化，支持跨设备共享真实 UV/PV
  */
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { bsz } from '../utils/busuanzi.js'
 
 const uv = ref(0)
 const pv = ref(0)
 const loaded = ref(false)
+
+// 不蒜子三指标（共享模块 utils/busuanzi.js 在每次路由导航时注入 JSONP，本组件只读）
+const fmt = (n) => (Number(n) || 0).toLocaleString('en-US')
+const bszHomeText = computed(() => (bsz.pagePvMap['/'] == null ? '—' : fmt(bsz.pagePvMap['/'])))
+const bszSitePvText = computed(() => (bsz.sitePv == null ? '—' : fmt(bsz.sitePv)))
+const bszSiteUvText = computed(() => (bsz.siteUv == null ? '—' : fmt(bsz.siteUv)))
 
 const VERCOUNT_SCRIPT = 'https://vercount.one/js'
 const VERCOUNT_API = 'https://events.vercount.one/api/v2/log'
@@ -117,6 +124,17 @@ onMounted(async () => {
       </div>
     </div>
     <div class="vs-note">本站累计 · Vercount 统计</div>
+    <div class="vs-bsz" :class="{ fail: bsz.state === 'fail' }">
+      <template v-if="bsz.state === 'ok'">
+        <span class="bsz-tag">🐚 不蒜子实时</span>
+        <span>首页浏览 <b class="bsz-num">{{ bszHomeText }}</b></span>
+        <span>站点浏览 <b class="bsz-num">{{ bszSitePvText }}</b></span>
+        <span>站点访客 <b class="bsz-num">{{ bszSiteUvText }}</b></span>
+        <a href="https://busuanzi.ibruce.info" target="_blank" rel="noopener noreferrer">ibruce.info</a>
+      </template>
+      <span v-else-if="bsz.state === 'loading'">🐚 不蒜子统计加载中…</span>
+      <span v-else>🐚 不蒜子统计暂不可用，看看其他统计吧</span>
+    </div>
   </div>
 </template>
 
@@ -167,4 +185,22 @@ onMounted(async () => {
   color: var(--text-sub, #aaa);
   margin-top: 8px;
 }
+.vs-bsz {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+  font-size: 11px;
+  color: var(--text-sub, #888);
+  background: var(--card, #fff);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-top: 8px;
+}
+.vs-bsz.fail { color: var(--text-sub, #aaa); }
+.bsz-tag { color: var(--primary, #1565c0); font-weight: 700; }
+.bsz-num { color: var(--primary, #1565c0); font-weight: 800; font-variant-numeric: tabular-nums; }
+.vs-bsz a { color: var(--text-sub, #aaa); text-decoration: underline; text-underline-offset: 2px; }
 </style>

@@ -2,6 +2,12 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.5.14 (2026-10-10) · 防复发门禁与工程体检（patch，与 QDU 1.6.13 同批）
+- 🚧 integrity 新增两道硬门禁：⑤ kb-nav 与 faq/workflows/apps 源同步；⑥ i18n zh/en 键对等双向同构（FJNU 词包本就同构，零修补直接硬拦）
+- 🧪 网关支持 `COMMUNITY_DATA` 环境变量（测试写数据副本，已 gitignore）；snapshot 降频 4 次/天 → 1 次/天
+- 🛠 新增 `crosscheck-kbnav.mjs` 与 `sync-diff.mjs`（QDU↔FJNU 漏同步盘点）；e2e-browser 新增「375 全应用无横向溢出」检查
+- ✅ 验证：build / integrity（含新门禁）/ unit×4 / 本地网关 E2E 全绿
+
 ## v1.5.13 (2026-10-10) · 应用排序调优（patch）
 - 📱 日程助手、研究生服务置顶（用户指定）；其余按组内「老前新后」重排（纯重排零内容改动，36 应用新旧行集合校验一致）
 - 🎯 首页「高频应用」平铺网格与分类页组内顺序同源生效（均以 `apps` 数组顺序为准）

@@ -2,6 +2,11 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.5.12 (2026-10-10) · 访问统计卡 i18n（patch，第四棒接力）
+- 🌐 VisitStats.vue 接入 i18n：独立访客/累计访问/Vercount 注/不蒜子实时等硬编码中文全部 t() 化
+- 📦 zh/en 词包同构新增 `visitStats` 节 9 键（参照 QDU `visitStats.bsz*` 键模式），英文模式不再出中文
+- ✅ 验证：npm build / unit×4 / e2e-integrity 全绿；回补 Contributors 版本历史 v1.5.11 缺行
+
 ## v1.5.11 (2026-10-10) · 不蒜子第三方实时统计三指标（首页浏览/站点浏览/站点访客）（patch）
 - ✨ 访问统计卡新增 busuanzi.ibruce.info 实时行（首页浏览 / 站点浏览 / 站点访客），与 Vercount 原统计并存
 - 🛠 新增共享模块 `utils/busuanzi.js`：串行队列 JSONP（防路由快速切换竞态）+ 常驻隐藏 span（组件卸载不丢）+ 注入前清空防旧值 + ensureHost 逐个补齐（兼容 Vercount 自建的 site_pv/site_uv span）

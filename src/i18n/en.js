@@ -103,5 +103,16 @@ export default {
     top: '📌 Pinned',
     signIn: '📅 Sign in +2',
     signed: '✓ Signed today'
+  },
+  visitStats: {
+    uv: 'Unique Visitors',
+    pv: 'Total Visits',
+    note: 'Total · Vercount stats',
+    bszTag: 'Busuanzi live',
+    bszHome: 'Home views',
+    bszSitePv: 'Site views',
+    bszSiteUv: 'Site visitors',
+    bszLoading: 'Busuanzi loading…',
+    bszFail: 'Busuanzi unavailable, see other stats'
   }
 }

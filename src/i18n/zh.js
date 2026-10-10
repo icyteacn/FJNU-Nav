@@ -104,5 +104,16 @@ export default {
     top: '📌 置顶/精华',
     signIn: '📅 签到 +2 积分',
     signed: '✓ 今日已签到'
+  },
+  visitStats: {
+    uv: '独立访客',
+    pv: '累计访问',
+    note: '本站累计 · Vercount 统计',
+    bszTag: '不蒜子实时',
+    bszHome: '首页浏览',
+    bszSitePv: '站点浏览',
+    bszSiteUv: '站点访客',
+    bszLoading: '不蒜子统计加载中…',
+    bszFail: '不蒜子统计暂不可用，看看其他统计吧'
   }
 }

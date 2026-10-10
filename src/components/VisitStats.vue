@@ -5,6 +5,9 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { bsz } from '../utils/busuanzi.js'
+import { useI18n } from '../i18n/index.js'
+
+const { t } = useI18n()
 
 const uv = ref(0)
 const pv = ref(0)
@@ -112,28 +115,28 @@ onMounted(async () => {
         <span class="vs-icon">👥</span>
         <div class="vs-cell">
           <span class="vs-num">{{ loaded ? uv : '···' }}</span>
-          <span class="vs-label">独立访客</span>
+          <span class="vs-label">{{ t('visitStats.uv') }}</span>
         </div>
       </div>
       <div class="vs-card">
         <span class="vs-icon">📈</span>
         <div class="vs-cell">
           <span class="vs-num">{{ loaded ? pv : '···' }}</span>
-          <span class="vs-label">累计访问</span>
+          <span class="vs-label">{{ t('visitStats.pv') }}</span>
         </div>
       </div>
     </div>
-    <div class="vs-note">本站累计 · Vercount 统计</div>
+    <div class="vs-note">{{ t('visitStats.note') }}</div>
     <div class="vs-bsz" :class="{ fail: bsz.state === 'fail' }">
       <template v-if="bsz.state === 'ok'">
-        <span class="bsz-tag">🐚 不蒜子实时</span>
-        <span>首页浏览 <b class="bsz-num">{{ bszHomeText }}</b></span>
-        <span>站点浏览 <b class="bsz-num">{{ bszSitePvText }}</b></span>
-        <span>站点访客 <b class="bsz-num">{{ bszSiteUvText }}</b></span>
+        <span class="bsz-tag">🐚 {{ t('visitStats.bszTag') }}</span>
+        <span>{{ t('visitStats.bszHome') }} <b class="bsz-num">{{ bszHomeText }}</b></span>
+        <span>{{ t('visitStats.bszSitePv') }} <b class="bsz-num">{{ bszSitePvText }}</b></span>
+        <span>{{ t('visitStats.bszSiteUv') }} <b class="bsz-num">{{ bszSiteUvText }}</b></span>
         <a href="https://busuanzi.ibruce.info" target="_blank" rel="noopener noreferrer">ibruce.info</a>
       </template>
-      <span v-else-if="bsz.state === 'loading'">🐚 不蒜子统计加载中…</span>
-      <span v-else>🐚 不蒜子统计暂不可用，看看其他统计吧</span>
+      <span v-else-if="bsz.state === 'loading'">🐚 {{ t('visitStats.bszLoading') }}</span>
+      <span v-else>🐚 {{ t('visitStats.bszFail') }}</span>
     </div>
   </div>
 </template>

@@ -23,8 +23,11 @@ export default {
     online: '已连接'
   },
   site: {
-    name: 'FJNU 校园导航',
+    name: 'FJNU 校园',
     tagline: '福建师范大学 · 校园服务聚合入口',
+    motto: '知明行笃 · 立诚致广',
+    welcomeTip: '非官方校园服务聚合演示站 · 数据仅供学习交流',
+    heroBadges: { campuses: '大校区', colleges: '个学院', majors: '个本科专业' },
     heroSub: '聚合你所需的校园服务',
     legendLive: '官方实时：校园动态 · 校历 · 课程总表（抓自教务处公开页面）',
     legendDemo: '官方通道：学号查询 · 体测成绩 · 个人课表（需统一身份认证）',
@@ -89,7 +92,7 @@ export default {
   },
   welcome: {
     tip: '非官方校园服务聚合演示站 · 数据仅供学习交流',
-    enter: '开始使用',
+    enter: '进入校园导航',
     motto: '校训'
   },
   apps: {

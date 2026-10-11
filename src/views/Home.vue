@@ -80,7 +80,7 @@ function askAgent(text) {
   <div class="page home">
     <section class="hero" data-tour="hero">
       <h2 class="hero-title">{{ greeting() }}</h2>
-      <p class="hero-sub">欢迎回到 {{ SITE.name }}，{{ SITE.heroSub }}</p>
+      <p class="hero-sub">{{ lang === 'en' ? 'Welcome to' : '欢迎回到' }} {{ t('site.name') }}，{{ t('site.heroSub') }}</p>
       <div class="search-bar" data-tour="search">
         <span class="search-icon">🤖</span>
         <input
@@ -269,7 +269,7 @@ function askAgent(text) {
 .app-download-card:active { transform: scale(0.98); }
 .download-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .download-icon { font-size: 28px; flex-shrink: 0; }
-.download-title { font-size: 15px; font-weight: 800; }
+.download-title { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .download-desc { font-size: 12px; opacity: 0.85; margin-top: 2px; }
 .download-btn { flex-shrink: 0; padding: 8px 16px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; font-size: 13px; font-weight: 700; color: #fff; }
 

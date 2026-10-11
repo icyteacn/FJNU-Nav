@@ -2,6 +2,11 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.5.16 (2026-10-11) · 视觉走查（patch）
+- 📸 真机截图肉眼走查：顶栏「FJI…」截断修复（home 按钮桌面专属 + site.name 短名 'FJNU 校园' + ellipsis + ghost-btn 收紧，五按钮清爽一行）；私信空态一行；洞察柱 flex 防挤出；APK 标题一行
+- 🌐 EN 夹生清零：hero-sub / Welcome 欢迎页（name/tagline/motto/badges/enter/tip）全量词包化——EN DOM 断言欢迎页与首页无中文泄漏
+- ✅ 验证：build / integrity 18 项 / unit×4 / 本地网关 E2E 11 项全绿
+
 ## v1.5.15 (2026-10-11) · 复盘修复（patch）
 - 🌐 首页 i18n 补全：问候语/试试 chips/Wiki 链接/APK 下载卡/高频应用副标/匹配前缀/空结果/浏览提示/校区统计卡/数据洞察区/两大校区/收起展开/关于本站 5 标签——词包 home 节补 16 键全部接线，**英文模式首页不再夹生中文**
 - 🐛 unit-agent「明天→day」周日公式修正（实现正确、单测 bug）；gen_kb_nav 应用语料逐行解析加固（重生成 byte 一致）

@@ -22,8 +22,11 @@ export default {
     online: 'Connected'
   },
   site: {
-    name: 'FJNU Campus Nav',
+    name: 'FJNU Nav',
     tagline: 'Fujian Normal University · Campus service hub',
+    motto: 'Insight · Action · Sincerity · Reach',
+    welcomeTip: 'Unofficial campus service demo · Data for learning purposes only',
+    heroBadges: { campuses: 'Campuses', colleges: 'Colleges', majors: 'Undergrad majors' },
     heroSub: 'All campus services in one place',
     legendLive: 'Official realtime: notices · calendar · timetable (from public pages)',
     legendDemo: 'Official channels: ID lookup · PE scores · personal schedule (SSO required)',
@@ -88,7 +91,7 @@ export default {
   },
   welcome: {
     tip: 'Unofficial campus aggregation demo · data for study & life only',
-    enter: 'Get Started',
+    enter: 'Enter Campus Nav',
     motto: 'Motto'
   },
   apps: {

@@ -19,7 +19,7 @@ import { getTourSteps, getSubTourSteps } from './data/tourSteps.js'
 const { startTour, isTourCompleted, isActive, markTourCompleted } = useTour()
 
 /** i18n：模板用的 lang/toggleLang/navLabel 在此补齐（此前漏接导致主界面白屏） */
-const { lang, toggleLang } = useI18n()
+const { lang, t, toggleLang } = useI18n()
 function navLabel(a) {
   try { return (lang.value === 'en' && a.labelEn) ? a.labelEn : a.label } catch { return (a && a.label) || '' }
 }
@@ -187,7 +187,7 @@ onMounted(() => {
         <div class="brand" @click="goHome(); secretPortal()">
           <div class="brand-logo"><span>{{ SITE.brand }}</span></div>
           <div>
-            <div class="brand-name">{{ SITE.name }}</div>
+            <div class="brand-name">{{ t('site.name') }}</div>
             <div class="brand-sub">{{ SITE.tagline }}</div>
           </div>
         </div>
@@ -200,7 +200,7 @@ onMounted(() => {
           <button class="ghost-btn tour-btn-header" data-tour="tour-btn" title="查看新手引导" @click="triggerTour">❓</button>
           <button class="ghost-btn lang-btn" :title="lang === 'zh' ? 'Switch to English' : '切换到中文'" @click="toggleLang"><span class="lang-label">{{ lang === 'zh' ? 'EN' : '中' }}</span></button>
           <button class="ghost-btn" data-tour="theme-toggle" :title="theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'" @click="toggleTheme">{{ theme === 'dark' ? '☀️' : '🌙' }}</button>
-          <button class="ghost-btn home-btn" @click="goHome">🏠<span class="home-btn-text"> 首页</span></button>
+          <button class="ghost-btn home-btn desktop-only" @click="goHome">🏠<span class="home-btn-text"> 首页</span></button>
         </div>
       </div>
     </header>

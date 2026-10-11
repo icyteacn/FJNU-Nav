@@ -38,11 +38,11 @@ onMounted(async () => {
 
 function greeting() {
   const h = new Date().getHours()
-  if (h < 6) return '夜深了，早点休息'
-  if (h < 12) return '早上好，福star人'
-  if (h < 14) return '中午好，福star人'
-  if (h < 18) return '下午好，福star人'
-  return '晚上好，福star人'
+  if (h < 6) return t('home.greetingNight')
+  if (h < 12) return t('home.greetingMorning')
+  if (h < 14) return t('home.greetingNoon')
+  if (h < 18) return t('home.greetingAfternoon')
+  return t('home.greetingEvening')
 }
 
 const filtered = computed(() => {
@@ -92,7 +92,7 @@ function askAgent(text) {
         <button class="search-agent-go" title="交给智能体执行" @click="askAgent(keyword || '你能做什么')">执行 ›</button>
       </div>
       <div class="hero-chips">
-        <span class="hero-chips-label">试试：</span>
+        <span class="hero-chips-label">{{ t('home.tryLabel') }}</span>
         <button v-for="s in AGENT_PROFILE.examples.slice(0, 4)" :key="s" class="hero-chip" @click="askAgent(s)">{{ s }}</button>
       </div>
     </section>
@@ -107,9 +107,9 @@ function askAgent(text) {
           </div>
         </div>
         <div class="wiki-links">
-          <a class="wiki-link" :href="SITE.wiki.links.site" target="_blank" rel="noopener">网站 ↗</a>
+          <a class="wiki-link" :href="SITE.wiki.links.site" target="_blank" rel="noopener">{{ t('home.wikiSite') }} ↗</a>
           <a class="wiki-link" :href="SITE.wiki.links.github" target="_blank" rel="noopener">GitHub ↗</a>
-          <a v-if="SITE.wiki.links.docs" class="wiki-link" :href="SITE.wiki.links.docs" target="_blank" rel="noopener">腾讯文档 ↗</a>
+          <a v-if="SITE.wiki.links.docs" class="wiki-link" :href="SITE.wiki.links.docs" target="_blank" rel="noopener">{{ t('home.wikiDocs') }} ↗</a>
         </div>
       </div>
     </section>
@@ -119,11 +119,11 @@ function askAgent(text) {
         <div class="download-left">
           <span class="download-icon">🐔🩸</span>
           <div>
-            <div class="download-title">课表 App · 安卓版</div>
-            <div class="download-desc">独立课表应用，离线可用，仅 1.5MB</div>
+            <div class="download-title">{{ t('home.downloadTitle') }}</div>
+            <div class="download-desc">{{ t('home.downloadDesc') }}</div>
           </div>
         </div>
-        <span class="download-btn">下载 APK ↗</span>
+        <span class="download-btn">{{ t('home.downloadBtn') }}</span>
       </a>
     </section>
 
@@ -131,7 +131,7 @@ function askAgent(text) {
       <div class="section-head">
         <h3 class="section-title">{{ t('home.publicApps') }}</h3>
         <div class="section-head-right">
-          <span class="section-sub">高频应用一键直达</span>
+          <span class="section-sub">{{ t('home.quickApps') }}</span>
           <button class="section-link" @click="emit('open', 'categories')">{{ t('home.viewAllCats') }}</button>
         </div>
       </div>
@@ -145,7 +145,7 @@ function askAgent(text) {
           <span class="tile-icon" :style="{ background: r.app.color + '1a', color: r.app.color }">{{ r.app.icon }}</span>
           <span class="tile-body">
             <span class="tile-title">{{ appTitle(r.app) }}</span>
-            <span v-if="r.hits.length" class="tile-hit">匹配：{{ r.hits.join(' · ') }}</span>
+            <span v-if="r.hits.length" class="tile-hit">{{ t('home.matchLabel') }}{{ r.hits.join(' · ') }}</span>
             <span v-else class="tile-desc">{{ appDesc(r.app) }}</span>
           </span>
         </button>
@@ -164,16 +164,16 @@ function askAgent(text) {
           </span>
         </button>
       </div>
-      <div v-else class="empty">没有找到「{{ keyword }}」相关内容，试试：奖学金 / 空教室 / 记账</div>
-      <div class="hint">按学习、生活、游戏等分组浏览全部 {{ apps.length }} 个应用</div>
+      <div v-else class="empty">{{ t('home.noResult') }}</div>
+      <div class="hint">{{ t('home.appCountHint') }} {{ apps.length }} {{ t('home.apps') }}</div>
     </section>
 
     <section class="section stats">
       <div class="stat" v-for="s in [
-        { v: campusStats.campuses, l: '大校区' },
-        { v: campusStats.colleges, l: '个学院' },
-        { v: campusStats.majors, l: '个本科专业' },
-        { v: campusStats.apps, l: '个校园应用' }
+        { v: campusStats.campuses, l: t('home.statsCampus') },
+        { v: campusStats.colleges, l: t('home.statsCollege') },
+        { v: campusStats.majors, l: t('home.statsMajor') },
+        { v: campusStats.apps, l: t('home.statsApp') }
       ]" :key="s.l">
         <div class="stat-value">{{ s.v }}</div>
         <div class="stat-label">{{ s.l }}</div>
@@ -182,18 +182,25 @@ function askAgent(text) {
 
     <section class="section">
       <div class="section-head">
-        <h3 class="section-title">数据洞察</h3>
-        <button class="section-link" @click="emit('open', 'courseStats')">查看完整统计 ›</button>
+        <h3 class="section-title">{{ t('home.courseInsight') }}</h3>
+        <button class="section-link" @click="emit('open', 'courseStats')">{{ t('home.fullStats') }}</button>
       </div>
       <div class="insight-card">
         <div class="insight-main">
-          <div class="insight-title">📈 校园热度 · 课程数据洞察</div>
+          <div class="insight-title">📈 {{ lang === 'en' ? 'Campus heat · course insights' : '校园热度 · 课程数据洞察' }}</div>
           <div v-if="stats.periods" class="insight-desc">
-            近 {{ stats.terms.length }} 个学期共 <b>{{ stats.periods }}</b> 条排课：最热教室
-            <b>{{ stats.hotRooms[0] && stats.hotRooms[0].name }}</b>（{{ stats.hotRooms[0] && stats.hotRooms[0].periods }} 节次）、
-            最热教师 <b>{{ stats.hotTeachers[0] && stats.hotTeachers[0].name }}</b>
+            <template v-if="lang === 'en'">
+              {{ stats.terms.length }} terms, <b>{{ stats.periods }}</b> entries: hottest room
+              <b>{{ stats.hotRooms[0] && stats.hotRooms[0].name }}</b> ({{ stats.hotRooms[0] && stats.hotRooms[0].periods }} periods),
+              hottest teacher <b>{{ stats.hotTeachers[0] && stats.hotTeachers[0].name }}</b>
+            </template>
+            <template v-else>
+              近 {{ stats.terms.length }} 个学期共 <b>{{ stats.periods }}</b> 条排课：最热教室
+              <b>{{ stats.hotRooms[0] && stats.hotRooms[0].name }}</b>（{{ stats.hotRooms[0] && stats.hotRooms[0].periods }} 节次）、
+              最热教师 <b>{{ stats.hotTeachers[0] && stats.hotTeachers[0].name }}</b>
+            </template>
           </div>
-          <div v-else class="insight-desc muted">统计数据暂不可用</div>
+          <div v-else class="insight-desc muted">{{ lang === 'en' ? 'Stats temporarily unavailable' : '统计数据暂不可用' }}</div>
         </div>
         <div class="insight-bars">
           <div v-for="t in stats.terms.slice(0, 5)" :key="t.semester" class="insight-bar" :title="t.semester + ' · ' + t.count">
@@ -204,7 +211,7 @@ function askAgent(text) {
     </section>
 
     <section class="section">
-      <h3 class="section-title">两大校区</h3>
+      <h3 class="section-title">{{ t('home.campusesTitle') }}</h3>
       <div class="campus-cards">
         <button
           v-for="c in campuses"
@@ -219,7 +226,7 @@ function askAgent(text) {
               <div class="campus-name">{{ c.name }}</div>
               <div class="campus-alias">{{ c.alias }}</div>
             </div>
-            <span class="campus-toggle">{{ expanded === c.name ? '收起 ▴' : '展开 ▾' }}</span>
+            <span class="campus-toggle">{{ expanded === c.name ? t('home.collapse') : t('home.expand') }} {{ expanded === c.name ? '▴' : '▾' }}</span>
           </div>
           <div class="campus-addr">{{ c.address }}</div>
           <div v-if="expanded === c.name" class="campus-detail">
@@ -240,11 +247,11 @@ function askAgent(text) {
     <section class="section">
       <h3 class="section-title">{{ t('home.about') }}</h3>
       <div class="about-card">
-        <div class="about-line"><b>网站开发者：</b>{{ SITE.developer }}</div>
-        <div class="about-line"><b>网站版本：</b>v{{ SITE.version }}</div>
-        <div class="about-line"><b>数据来源：</b>{{ SITE.aboutSource }}</div>
-        <div class="about-line"><b>抓取方式：</b>{{ SITE.aboutCrawl }}</div>
-        <div class="about-line"><b>用途与版权：</b>{{ SITE.aboutUsage }}</div>
+          <div class="about-line"><b>{{ t('home.aboutDev') }}</b>{{ SITE.developer }}</div>
+          <div class="about-line"><b>{{ t('home.aboutVer') }}</b>v{{ SITE.version }}</div>
+          <div class="about-line"><b>{{ t('home.aboutSrcLabel') }}</b>{{ SITE.aboutSource }}</div>
+          <div class="about-line"><b>{{ t('home.aboutCrawlLabel') }}</b>{{ SITE.aboutCrawl }}</div>
+          <div class="about-line"><b>{{ t('home.aboutUsageLabel') }}</b>{{ SITE.aboutUsage }}</div>
         <div class="about-actions">
           <button class="btn ghost small" @click="emit('open', 'contributors')">🎖️ 查看贡献者墙 ›</button>
         </div>

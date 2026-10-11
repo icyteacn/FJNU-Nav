@@ -2,6 +2,9 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.5.18 (2026-10-11) · 评论网关同源加固（patch，与 QDU 1.6.17 同步）
+- 🛡 `community.mjs` 同步：admin 删除评论多级子孙收敛（字节级与 QDU 一致）
+
 ## v1.5.17 (2026-10-11) · 评论网关同源增强（patch，与 QDU 1.6.16 同步）
 - 🗑 `community.mjs` 与 QDU 字节级同步：delete owner 鉴权（连子级）+ POST 收 owner + GET/queue 防盗删过滤
 - 🔧 目的：保持两仓 server 同源可 diff（sync-diff 干净），Wiki 评论增强跨校可用

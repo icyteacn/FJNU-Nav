@@ -2,6 +2,10 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.5.17 (2026-10-11) · 评论网关同源增强（patch，与 QDU 1.6.16 同步）
+- 🗑 `community.mjs` 与 QDU 字节级同步：delete owner 鉴权（连子级）+ POST 收 owner + GET/queue 防盗删过滤
+- 🔧 目的：保持两仓 server 同源可 diff（sync-diff 干净），Wiki 评论增强跨校可用
+
 ## v1.5.16 (2026-10-11) · 视觉走查（patch）
 - 📸 真机截图肉眼走查：顶栏「FJI…」截断修复（home 按钮桌面专属 + site.name 短名 'FJNU 校园' + ellipsis + ghost-btn 收紧，五按钮清爽一行）；私信空态一行；洞察柱 flex 防挤出；APK 标题一行
 - 🌐 EN 夹生清零：hero-sub / Welcome 欢迎页（name/tagline/motto/badges/enter/tip）全量词包化——EN DOM 断言欢迎页与首页无中文泄漏

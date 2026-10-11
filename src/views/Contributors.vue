@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.5.17</b> — {{ '评论网关与 QDU 同源增强：delete owner 鉴权 + GET 防盗删过滤。' }}</li>
       <li><b>v1.5.16</b> — {{ '视觉走查：顶栏短名/私信一行/洞察柱防挤出/EN 欢迎页与首页夹生清零（真机截图肉眼审查）。' }}</li>
       <li><b>v1.5.15</b> — {{ '复盘修复：首页 i18n 补全（16 键接线，EN 模式不再夹生）+ 单测周日公式修正 + gen 加固。' }}</li>
       <li><b>v1.5.14</b> — {{ '防复发门禁：kb-nav 新鲜度 + i18n 键对等 + COMMUNITY_DATA 隔离 + crosscheck/sync-diff + 375 扫描。' }}</li>

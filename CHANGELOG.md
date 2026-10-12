@@ -2,6 +2,9 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.5.20 (2026-10-12) · GitHub 评论巡检同源（patch，与 QDU 1.6.18 同步）
+- 🔍 `community.mjs` 同步：`/api/admin/gh-comments` 敏感词事后巡检（字节级与 QDU 一致）
+
 ## v1.5.18 (2026-10-11) · 评论网关同源加固（patch，与 QDU 1.6.17 同步）
 - 🛡 `community.mjs` 同步：admin 删除评论多级子孙收敛（字节级与 QDU 一致）
 

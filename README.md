@@ -2,7 +2,7 @@
 
 > **🌐 在线访问：<https://icyteacn.github.io/FJNU-Nav/>**
 >
-> **🏷️ 当前版本：v1.6.7**（APK 换用**可覆盖签名**（Android Debug `2277d065`，与用户手机已装 1.0 同证书）→ 直接覆盖安装；打包脚本默认自动使用该钥匙；调课原位置显示「已调整无课」）
+> **🏷️ 当前版本：v1.6.8**（APK **1.1** · 可覆盖签名（Android Debug `2277d065`，与手机已装 1.0 同证书，直接覆盖安装）；打包脚本默认自动使用该钥匙；调课原位置显示「已调整无课」）
 
 面向福建师范大学的校园服务聚合入口，暖色系「闽都红」主题、移动端优先。
 
@@ -113,6 +113,7 @@ FJNU-Nav/
 
 | 版本 | 说明 |
 | --- | --- |
+| **v1.6.8** | **APK 版本号改 1.1**（应维护者纠正，v1.6.7 出的包是 `versionName=1.0`）：`package.json.apkVersion`、standalone `APP_VERSION`、gradle 回退值三处 → **1.1**，`versionCode` 仍 3（覆盖条件 ≥ 已装 1 ✓，且不降级）。重打包实测 `versionCode=3 versionName=1.1`、签名仍 `CN=Android Debug 2277d065`（可覆盖手机上的 1.0）、1.00MB、下载入口 hash 与构建产物一致。 |
 | **v1.6.7** | **APK 换用可覆盖签名（路线 A 走通）**：从原电脑取回 `debug.keystore`，`keytool` 验指纹 **`2277d0655b73…`（与用户手机已装 1.0 完全一致）**，以 `-PksPath -PksAlias=androiddebugkey -PksPass=android` 重签 → 新包 `versionCode=3 / versionName=1.0 / 1.00MB`、签名 `CN=Android Debug 2277d065`，**可直接覆盖安装**（站点下载入口已同步，hash 与构建产物一致）。`build-apk.bat` 增加：探测到 `%USERPROFILE%\.android\cover-debug.keystore` 就**默认用它签名**（防止下次打包回退成仓库 keystore.jks 又断掉覆盖链），否则回退 `keystore.jks`。**keystore 保存在仓库外，不提交进公开仓库**（红线）。⚠️ 签名自此固定 `2277d065`：此前 `CN=Feike` 签的 1.1/1.2 包**无法覆盖**本包（那类设备需卸载一次），用户手机的 1.0 可直接覆盖。**验证**：keytool/apksigner 双指纹核对、aapt 版本包名、入口 hash 一致、回归 84/84。 |
 | **v1.6.6** | ①**调课后原位置改文案**：源格改期角标把 `📍目标教室` 换成 **「已调整无课」**（网页/移动端/APK 三端 + APK 单日列表同步），调入侧与调课详情仍显示目标教室（那是"调到哪上"的信息）。②**APK versionName 回 1.0**（应维护者要求，与已装显示一致），`versionCode` 保持 3 —— 覆盖安装的条件是**证书一致 + versionCode ≥ 已装**，与 versionName 无关。③**签名结论**：`Downloads (1)` 是另一台电脑 Android Studio 调试包（`CN=Android Debug` / `2277d065`），非本机 debug.keystore（`23:2AFA6D`）、非仓库 keystore.jks（`6b38568d`）；**覆盖必须持有同一把私钥，密码学上不可伪造、无法"破解"**；唯一绕过方式是 root 后改系统签名校验（不推荐、不实施）。三条现实路线：A) 找回那台电脑的 `~/.android/debug.keystore`（密码 `android`）→ 用已备好的 `-PksPath` 出覆盖版；B) 卸载重装一次后永久可覆盖（推荐）；C) root 改系统（不推荐）。 |
 | **v1.6.5** | ①**提建议邮件备用通道**（维护者提供收件邮箱）：`suggest.js` 新增 `SUGGEST_EMAIL` 与 `buildMailtoUrl()`（主题/正文预填），失败态主按钮改为 **「📧 邮件发送」**（+ 再试一次 + 复制文本），点开后提示收件人；APK `sendByMail()` 唤起 `mailto:` 并**同时复制内容兜底**（WebView 可能吞掉 mailto），toast 给出手动发送指引 → **Supabase 之外的第二条线路，零后端**。②**签名诊断结论**：维护者提供的 `Downloads (1)`（4.1MB、无扩展名）实为 `com.feike.schedule` 1.0（versionCode 1），`apksigner` 显示 `CN=Android Debug` / SHA-256 `2277d065…`，而**本机** debug.keystore 是 `23:2A:FA6D…`、仓库 keystore.jks 是 `6b38568d…`，两者都不匹配 → 该包由**另一台机器的调试私钥**签出，**没有那把私钥就签不出能覆盖它的包**。③已备好能力：`build.gradle` signingConfigs 支持 `-PksPath/-PksAlias/-PksPass` 临时换 keystore 重签，**默认仍走 keystore.jks**（验证 SHA-256 仍 `6b38568d` 不变）。维护者二选一：A 卸载重装一次（先「📤 导出数据」备份课表）后永久可覆盖；B 提供那台机器的 `~/.android/debug.keystore`（密码恒为 `android`）即可重签覆盖版。 |

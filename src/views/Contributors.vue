@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.6.8</b> — {{ 'APK 版本号改 1.1（versionCode 3，签名仍为可覆盖的 2277d065，直接覆盖手机上的 1.0）。' }}</li>
       <li><b>v1.6.7</b> — {{ 'APK 换用可覆盖签名（与手机已装 1.0 同证书 2277d065，直接覆盖安装）；打包脚本默认自动使用该钥匙且 keystore 不入库；调课原位置显示「已调整无课」。' }}</li>
       <li><b>v1.6.6</b> — {{ '调课后原位置改「已调整无课」不再显示教室（三端）；APK versionName 回 1.0（versionCode 3 保证覆盖）；签名不可伪造结论与三条路线。' }}</li>
       <li><b>v1.6.5</b> — {{ '提建议增加邮件备用通道（收件人与正文预填、零后端，APK 端同时复制内容兜底）；签名诊断：维护者提供的 1.0 包为 Android Debug 签名且非本机，打包支持 -PksPath 换 keystore。' }}</li>

@@ -10,7 +10,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from '../i18n/index.js'
 import {
-  submitSuggestion, buildSuggestText, copyText,
+  submitSuggestion, buildSuggestText, buildMailtoUrl, copyText, SUGGEST_EMAIL,
   enqueueSuggestion, armAutoFlush, loadQueue,
 } from '../suggest.js'
 
@@ -30,6 +30,10 @@ const failCode = ref('network')
 const copied = ref(false)
 const emptyTip = ref(false)
 const queuedCount = ref(0)
+const mailed = ref(false)
+
+// 邮件备用通道（Supabase 连续失败时的第二线路，零后端）
+const mailUrl = computed(() => buildMailtoUrl(payload.value))
 
 // 页面打开 / 网络恢复时自动补交暂存的建议（不跳任何第三方）
 onMounted(() => {
@@ -152,10 +156,12 @@ function goWall() {
         <div class="sugg-reason">{{ t('suggest.err' + failCode.charAt(0).toUpperCase() + failCode.slice(1)) }}</div>
         <div class="sugg-queued">🕒 {{ t('suggest.pending') }} · {{ queuedCount }}</div>
         <div class="sugg-actions">
-          <button class="sugg-btn primary" @click="doRetry">{{ t('suggest.retry') }}</button>
-          <button class="sugg-btn" @click="doCopy">{{ copied ? t('suggest.copyOk') : t('suggest.copy') }}</button>
+          <a class="sugg-btn primary" :href="mailUrl" @click="mailed = true">📧 {{ t('suggest.mail') }}</a>
+          <button class="sugg-btn" @click="doRetry">{{ t('suggest.retry') }}</button>
         </div>
+        <div v-if="mailed" class="sugg-mailhint">{{ t('suggest.mailHint') }}（{{ SUGGEST_EMAIL }}）</div>
         <div class="sugg-actions">
+          <button class="sugg-btn" @click="doCopy">{{ copied ? t('suggest.copyOk') : t('suggest.copy') }}</button>
           <button class="sugg-btn" @click="fail = false">←</button>
         </div>
       </div>
@@ -312,6 +318,7 @@ function goWall() {
 .sugg-fail-tip { font-size: 13px; color: #b45309; line-height: 1.6; }
 .sugg-reason { font-size: 12px; color: var(--text-sub, #6b7280); margin-top: 6px; padding: 6px 8px; background: var(--soft, #f5f5f5); border-radius: 6px; }
 .sugg-queued { font-size: 12px; color: var(--text-sub, #6b7280); margin-top: 8px; }
+.sugg-mailhint { font-size: 11.5px; color: var(--text-sub, #6b7280); margin-top: 8px; line-height: 1.55; word-break: break-all; }
 
 @media (max-width: 640px) {
   .sugg-fab { left: 12px; bottom: 66px; padding: 8px 12px 8px 10px; }

@@ -158,6 +158,8 @@ export default {
     copyOk: 'Copied — paste it to the developer',
     retry: 'Try again',
     pending: 'Queued',
+    mail: 'Send by email',
+    mailHint: 'Your mail app should open with recipient and content filled in — just hit send. If nothing opened, compose manually to',
     close: 'Close',
     empty: 'Write something first'
   }

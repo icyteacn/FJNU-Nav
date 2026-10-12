@@ -13,6 +13,8 @@ import { cloudCreate, cloudEnabled } from './wall/cloud.js'
 
 /** 校园墙里承载建议的分区 tag */
 export const SUGGEST_TAG = 'suggest'
+/** 建议备用通道收件邮箱（Supabase 连续失败时用邮件送达；零后端） */
+export const SUGGEST_EMAIL = '1311151541@qq.com'
 /** 暂存队列键（提交失败的建议，联网后自动补交） */
 export const SUGGEST_QUEUE_KEY = 'fjnu_suggest_queue'
 
@@ -120,6 +122,13 @@ export function armAutoFlush() {
 /** 纯文本（最后兜底：复制后粘给开发者任意渠道，不依赖任何网站） */
 export function buildSuggestText({ type, content, contact }) {
   return buildSuggestTitle(type, content) + '\n' + buildSuggestBody({ type, content, contact, from: 'FJNU-Nav' })
+}
+
+/** 邮件备用通道：预填标题正文的 mailto（浏览器直接可用，零后端） */
+export function buildMailtoUrl({ type, content, contact }) {
+  const subject = buildSuggestTitle(type, content)
+  const body = buildSuggestBody({ type, content, contact, from: 'FJNU-Nav 站内「提建议」' })
+  return `mailto:${SUGGEST_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }
 
 /** 复制到剪贴板（非安全上下文回退 execCommand） */

@@ -159,6 +159,8 @@ export default {
     copyOk: '已复制，粘贴发给开发者即可',
     retry: '再试一次',
     pending: '暂存待发',
+    mail: '邮件发送',
+    mailHint: '邮件应用已打开，收件人与内容已填好，点发送即可；若没弹出，请手动新建邮件发到',
     close: '关闭',
     empty: '先写点内容吧'
   }

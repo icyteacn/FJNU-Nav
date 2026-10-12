@@ -736,7 +736,10 @@
           <div id="sugReason" style="font-size:12px;color:var(--text-sub);margin-top:6px"></div>
           <div id="sugPending" style="font-size:12px;color:var(--text-sub);margin-top:8px">🕒 暂存待发 · 0</div>
           <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-primary" style="flex:1" onclick="submitSuggest()">再试一次</button>
+            <button class="btn btn-primary" style="flex:1" onclick="sendByMail()">📧 邮件发送</button>
+            <button class="btn btn-secondary" style="flex:1" onclick="submitSuggest()">再试一次</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
             <button class="btn btn-secondary" style="flex:1" onclick="copySuggest()">复制文本</button>
           </div>
         </div>
@@ -2045,6 +2048,21 @@ async function submitSuggest(){
     if(rs)rs.textContent='原因：'+friendlyErr(e);
   }
   btn.disabled=false;
+}
+/** 邮件备用通道：唤起邮件应用；WebView 可能吞掉 mailto，所以同时复制内容兜底 */
+function sendByMail(){
+  const p=suggestParts();
+  if(!p.text){document.getElementById('sugEmpty').style.display='block';return}
+  const url='mailto:1311151541@qq.com?subject='+encodeURIComponent(suggestTitle(p.type,p.text))+'&body='+encodeURIComponent(suggestBody(p));
+  try{location.href=url}catch(e){}
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=suggestPlain();
+    ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+  }catch(e){}
+  showToast('已复制邮件内容；若未弹出邮件应用，请新建邮件发送至 1311151541@qq.com');
 }
 function copySuggest(){
   const text=suggestPlain();

@@ -30,10 +30,15 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('keystore.jks')
-            storePassword 'feike123'
-            keyAlias 'feike'
-            keyPassword 'feike123'
+            // 默认用仓库的 keystore.jks（CN=Feike）；
+            // 若需覆盖安装历史上用其它证书发布的包，可临时指定：
+            //   gradlew assembleRelease -PksPath=/path/to/other.jks -PksAlias=xxx -PksPass=xxx
+            def ksPath = project.hasProperty('ksPath') ? file(project.property('ksPath')) : file('keystore.jks')
+            def ksPass = project.hasProperty('ksPass') ? project.property('ksPass') : 'feike123'
+            storeFile ksPath
+            storePassword ksPass
+            keyAlias project.hasProperty('ksAlias') ? project.property('ksAlias') : 'feike'
+            keyPassword ksPass
         }
     }
     buildTypes {

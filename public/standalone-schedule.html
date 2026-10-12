@@ -40,6 +40,20 @@
     .view-btn{border:1px solid var(--border);background:var(--soft-fg);color:var(--text);width:30px;height:26px;border-radius:8px;font-size:14px;cursor:pointer;flex-shrink:0}
     .view-btn:active{background:var(--weekend)}
 
+    /* 下一节课倒计时卡片 */
+    .next-card{display:flex;align-items:stretch;gap:10px;margin:8px 10px;padding:10px 12px;border-radius:14px;
+      background:linear-gradient(135deg,var(--primary),#ad1457);color:#fff;cursor:pointer;flex-shrink:0;
+      box-shadow:0 6px 18px rgba(198,40,40,.28);transition:transform .15s}
+    .next-card:active{transform:scale(.985)}
+    .next-card.empty{background:linear-gradient(135deg,#64748b,#475569);box-shadow:none}
+    .next-left{flex:1;min-width:0}
+    .next-badge-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .next-badge{font-size:11px;font-weight:800;background:rgba(255,255,255,.22);padding:2px 9px;border-radius:999px;letter-spacing:.3px}
+    .next-countdown{font-size:13px;font-weight:800;background:rgba(0,0,0,.22);padding:2px 9px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .next-name{font-size:15.5px;font-weight:800;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .next-meta{font-size:11.5px;opacity:.92;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .next-bar{width:4px;border-radius:4px;background:rgba(255,255,255,.38);flex-shrink:0}
+
     /* ========== 列表视图（今日/单日课程 + 当前时刻时间线） ========== */
     .day-list{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px 12px calc(16px + var(--safe-bottom))}
     .day-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
@@ -279,6 +293,19 @@
           <div class="sync-tip" id="syncTip"></div>
         </div>
         <button class="week-nav-btn" onclick="nextWeek()">›</button>
+      </div>
+
+      <!-- 下一节课倒计时（表格/列表通用） -->
+      <div class="next-card" id="nextCard" style="display:none" onclick="jumpToNextCourse()">
+        <div class="next-left">
+          <div class="next-badge-row">
+            <span class="next-badge">⏰ 下一节课</span>
+            <span class="next-countdown" id="nextCountdown"></span>
+          </div>
+          <div class="next-name" id="nextName">—</div>
+          <div class="next-meta" id="nextMeta">—</div>
+        </div>
+        <div class="next-bar"></div>
       </div>
 
       <!-- 课表表格 -->
@@ -706,6 +733,7 @@
         </div>
         <div class="modal-body" id="sugFail" style="display:none">
           <div style="font-size:13px;color:#b45309;line-height:1.6">📶 网络不稳，建议已暂存本机，联网后会自动送达，不会丢。</div>
+          <div id="sugReason" style="font-size:12px;color:var(--text-sub);margin-top:6px"></div>
           <div id="sugPending" style="font-size:12px;color:var(--text-sub);margin-top:8px">🕒 暂存待发 · 0</div>
           <div style="display:flex;gap:8px;margin-top:10px">
             <button class="btn btn-primary" style="flex:1" onclick="submitSuggest()">再试一次</button>
@@ -1019,6 +1047,7 @@ function render(){
   applyStyles();
   if(isList){document.getElementById('timeLine').style.display='none'}
   else{updateTimeLine()}
+  renderNextCard(); // 顶栏下一节课倒计时
   pushNotifyData(); // 同步今日概要给原生常驻通知（仅原生环境生效）
 }
 function toggleView(){
@@ -1033,13 +1062,17 @@ function buildNotifySummary(){
   const today=new Date();
   const ds=getDateStr(today);
   const base={date:ds,title:'🐔🩸课表',text:'打开应用查看今日课程与下一节课',lines:[]};
-  if(state.selectedWeek!==getCurrentWeek())return base;
   const todayWd=today.getDay()===0?7:today.getDay();
   const nowMin=today.getHours()*60+today.getMinutes();
-  const res=getDayCourses(state.selectedWeek,todayWd);
+  const res=getDayCourses(getCurrentWeek(),todayWd); // 始终按「今天」算，与用户停留的周次无关
   if(res.holiday){base.title=res.holiday.name+' · 停课';base.text='今天不用上课 🎉';return base}
   const list=res.list;
-  if(!list.length){base.title='今天没有课';base.text='好好休息 ☕️';return base}
+  if(!list.length){
+    const nc0=computeNextCourse();
+    if(nc0){base.title='下一节 '+nc0.weekdayLabel+' '+PERIOD_FMT[nc0.startPeriod]+' · '+nc0.course.name;base.text=(nc0.date.getMonth()+1)+'/'+nc0.date.getDate()+' 第'+nc0.startPeriod+'-'+nc0.endPeriod+'节 · '+nc0.loc}
+    else{base.title='今天没有课';base.text='好好休息 ☕️'}
+    return base;
+  }
   let live=null,next=null;
   for(const it of list){
     const s=PERIOD_START[it.start],e=PERIOD_END[it.end];
@@ -1054,8 +1087,10 @@ function buildNotifySummary(){
     base.title='下一节 '+PERIOD_FMT[next.start]+' · 今日'+list.length+'节';
     base.text=next.course.name+' · '+locOf(next)+' · '+(next.course.teacher||'');
   }else{
-    base.title='今日 '+list.length+' 节课已上完';
-    base.text='明天见 🎉';
+    // 今日已上完 → 给出跨天的下一节，别只说「明天见」
+    const nc=computeNextCourse();
+    if(nc){base.title='下一节 '+nc.weekdayLabel+' '+PERIOD_FMT[nc.startPeriod]+' · '+nc.course.name;base.text=(nc.date.getMonth()+1)+'/'+nc.date.getDate()+' 第'+nc.startPeriod+'-'+nc.endPeriod+'节 · '+nc.loc}
+    else{base.title='今日 '+list.length+' 节课已上完';base.text='明天见 🎉'}
   }
   base.lines=list.slice(0,5).map(it=>PERIOD_FMT[it.start]+'-'+PERIOD_FMT_END[it.end]+' '+it.course.name+' · '+locOf(it));
   return base;
@@ -1301,6 +1336,81 @@ function renderDayList(){
   }
   document.getElementById('dayList').innerHTML=html;
 }
+// ==================== 下一节课倒计时 ====================
+let nextCourseInfo = null;
+/** 从今天起找下一节课（跨天最多看 7 天，处理假日/补课/调课/调入） */
+function computeNextCourse() {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const WL = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    const w = getWeekNumber(d);
+    if (w < 1 || w > 18) continue;
+    const wd = d.getDay() === 0 ? 7 : d.getDay();
+    const res = getDayCourses(w, wd);
+    if (res.holiday) continue;
+    for (const it of res.list) {
+      if (it.kind === 'moved') continue; // 该节已被调走，当天不发生
+      const s = PERIOD_START[it.start];
+      if (i === 0 && s <= nowMin) continue; // 今天已开始的不算
+      const target = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(s / 60), s % 60, 0, 0);
+      if (target <= now) continue;
+      return {
+        target, course: it.course, kind: it.kind, adj: it.adj || null,
+        weekday: wd, week: w, date: d, startPeriod: it.start, endPeriod: it.end,
+        weekdayLabel: WL[wd],
+        loc: it.kind === 'incoming' ? it.adj.destLocation : it.course.location,
+      };
+    }
+  }
+  return null;
+}
+function fmtCountdown(ms) {
+  if (ms <= 0) return '即将开始';
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600),
+        m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const p = n => String(n).padStart(2, '0');
+  return d > 0 ? (d + '天' + p(h) + ':' + p(m) + ':' + p(sec)) : (p(h) + '时' + p(m) + '分' + p(sec) + '秒');
+}
+function renderNextCard() {
+  const card = document.getElementById('nextCard');
+  if (!card) return;
+  const n = computeNextCourse();
+  nextCourseInfo = n;
+  const cd = document.getElementById('nextCountdown');
+  if (!n) {
+    card.className = 'next-card empty';
+    card.style.display = 'flex';
+    document.getElementById('nextName').textContent = '近几天没有课 🎉';
+    document.getElementById('nextMeta').textContent = '点这里回到本周课表';
+    cd.textContent = '';
+    return;
+  }
+  card.className = 'next-card';
+  card.style.display = 'flex';
+  document.getElementById('nextName').textContent = n.course.name;
+  document.getElementById('nextMeta').textContent =
+    n.weekdayLabel + ' ' + (n.date.getMonth() + 1) + '-' + n.date.getDate() +
+    ' · 第' + n.startPeriod + '-' + n.endPeriod + '节 · ' + n.loc;
+  cd.textContent = fmtCountdown(n.target - new Date());
+}
+function tickNextCountdown() {
+  if (!nextCourseInfo) return;
+  const el = document.getElementById('nextCountdown');
+  if (!el) return;
+  const ms = nextCourseInfo.target - new Date();
+  if (ms <= 0) { renderNextCard(); return; } // 到点自动滚动到再下一节
+  el.textContent = fmtCountdown(ms);
+}
+function jumpToNextCourse() {
+  state.selectedWeek = nextCourseInfo ? nextCourseInfo.week : getCurrentWeek();
+  if (state.viewMode === 'list' && nextCourseInfo) state.listDay = nextCourseInfo.weekday;
+  saveState(); render();
+  showToast(nextCourseInfo ? ('已跳到「' + nextCourseInfo.course.name + '」所在周') : '已回到本周');
+}
+
 function applyStyles(){
   const s=state.fontSize;
   document.documentElement.style.setProperty('--font-scale',s);
@@ -1856,26 +1966,48 @@ function armSugFlush(){
     setTimeout(()=>{flushSugQueue().catch(()=>{})},1500);
   }catch(e){}
 }
-async function postSuggestion(){
+async function postSuggestion(retry){
+  retry=(retry===undefined)?2:retry;
   const cfg=suggestCloudCfg();
-  if(!cfg)throw new Error('cloud off');
+  if(!cfg)throw new Error('云端未配置');
   const p=suggestParts();
-  const res=await fetch(cfg.url+'/rest/v1/wall_posts',{
-    method:'POST',
-    headers:{
-      'apikey':cfg.key,
-      'Authorization':'Bearer '+cfg.key,
-      'Content-Type':'application/json',
-      'Prefer':'return=representation'
-    },
-    body:JSON.stringify({
-      title:suggestTitle(p.type,p.text).slice(0,60),
-      content:suggestBody(p).slice(0,2000),
-      tag:SUGGEST_TAG,ptype:'normal',author:'匿名同学',anonymous:true
-    })
-  });
-  if(!res.ok)throw new Error('HTTP '+res.status);
-  return true;
+  let lastErr=null;
+  for(let i=0;i<=retry;i++){
+    try{
+      // 9 秒超时兜底（弱网下不干等），失败自动重试，间隔递增
+      const res=await Promise.race([
+        fetch(cfg.url+'/rest/v1/wall_posts',{
+          method:'POST',
+          headers:{
+            'apikey':cfg.key,
+            'Authorization':'Bearer '+cfg.key,
+            'Content-Type':'application/json',
+            'Prefer':'return=representation'
+          },
+          body:JSON.stringify({
+            title:suggestTitle(p.type,p.text).slice(0,60),
+            content:suggestBody(p).slice(0,2000),
+            tag:SUGGEST_TAG,ptype:'normal',author:'匿名同学',anonymous:true
+          })
+        }),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),9000))
+      ]);
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      return true;
+    }catch(e){
+      lastErr=e;
+      if(i<retry)await new Promise(r=>setTimeout(r,900*(i+1)));
+    }
+  }
+  throw lastErr;
+}
+/** 错误 → 用户能看懂的原因（并保留原始码便于排查） */
+function friendlyErr(e){
+  const msg=String((e&&e.message)||e||'');
+  if(/timeout/i.test(msg))return'连接超时（已自动重试仍失败）';
+  if(/^HTTP 5\d\d/.test(msg))return'云端繁忙 '+msg+'（已重试）';
+  if(/HTTP /.test(msg))return'云端返回 '+msg;
+  return'网络无法连接云端（可能当前网络被拦截）';
 }
 function setSugState(state){
   document.getElementById('sugForm').style.display=state==='form'?'block':'none';
@@ -1909,6 +2041,8 @@ async function submitSuggest(){
     // 直提失败 → 暂存本机，联网自动补交（不跳转任何第三方）
     enqueueSug({type:p.type,text:p.text,contact:p.contact,from:'鸡血课表 App'});
     setSugState('fail');
+    const rs=document.getElementById('sugReason');
+    if(rs)rs.textContent='原因：'+friendlyErr(e);
   }
   btn.disabled=false;
 }
@@ -2102,6 +2236,7 @@ function init(){
   });
   setInterval(updateTimeLine,30000);
   updateTimeLine();
+  setInterval(tickNextCountdown,1000); // 倒计时每秒刷新
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>

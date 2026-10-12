@@ -34,19 +34,38 @@ export function buildSuggestTitle(type, content) {
 
 /**
  * 直接提交到云端（校园墙「💡 建议」分区）
- * @throws 网络/云端异常时抛错，调用方转入暂存队列
+ * 失败自动重试 2 次（每次 9s 超时兜底），仍失败抛出带 code 的错误：
+ *   timeout = 连续超时 · http = 云端返回错误 · network = 网络不可达/未配置
  */
 export async function submitSuggestion({ type, content, contact, from }) {
-  if (!cloudEnabled()) throw new Error('cloud disabled')
-  await cloudCreate({
+  if (!cloudEnabled()) throw Object.assign(new Error('cloud disabled'), { code: 'network' })
+  const payload = {
     title: buildSuggestTitle(type, content),
     content: buildSuggestBody({ type, content, contact, from }),
     tag: SUGGEST_TAG,
     type: 'normal',
     anonymous: true,
     author: '匿名同学',
-  })
-  return true
+  }
+  let lastErr = null
+  for (let i = 0; i <= 2; i++) {
+    try {
+      await withTimeout(cloudCreate(payload), 9000)
+      return true
+    } catch (e) {
+      lastErr = e
+      if (i < 2) await new Promise((r) => setTimeout(r, 900 * (i + 1)))
+    }
+  }
+  const msg = String((lastErr && lastErr.message) || lastErr || '')
+  const code = /timeout|abort/i.test(msg) ? 'timeout' : /^HTTP 5\d\d/.test(msg) ? 'http' : 'network'
+  throw Object.assign(new Error(msg), { code })
+}
+
+function withTimeout(promise, ms) {
+  let timer = null
+  const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('timeout')), ms) })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
 }
 
 /* ── 暂存队列：提交失败先存本机，联网自动补交（保证「直接送达」不断链） ── */

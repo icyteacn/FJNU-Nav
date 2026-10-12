@@ -26,6 +26,7 @@ const contact = ref('')
 const sending = ref(false)
 const done = ref(false)
 const fail = ref(false)
+const failCode = ref('network')
 const copied = ref(false)
 const emptyTip = ref(false)
 const queuedCount = ref(0)
@@ -80,8 +81,9 @@ async function submit() {
       from: location.hash || '/',
     })
     done.value = true
-  } catch {
+  } catch (e) {
     // 直提失败 → 暂存本机，联网自动补交（不跳转任何第三方）
+    failCode.value = (e && e.code) || 'network'
     enqueueSuggestion({
       type: type.value,
       content: text.value.trim(),
@@ -147,6 +149,7 @@ function goWall() {
       <!-- 直提失败：暂存本机，联网自动补交（不离开本站、不跳第三方） -->
       <div v-else-if="fail" class="sugg-body">
         <div class="sugg-fail-tip">📶 {{ t('suggest.fail') }}</div>
+        <div class="sugg-reason">{{ t('suggest.err' + failCode.charAt(0).toUpperCase() + failCode.slice(1)) }}</div>
         <div class="sugg-queued">🕒 {{ t('suggest.pending') }} · {{ queuedCount }}</div>
         <div class="sugg-actions">
           <button class="sugg-btn primary" @click="doRetry">{{ t('suggest.retry') }}</button>
@@ -307,6 +310,7 @@ function goWall() {
 .sugg-done-t { font-size: 17px; font-weight: 800; margin-top: 6px; color: #16a34a; }
 .sugg-done-s { font-size: 13px; color: var(--text-sub, #6b7280); margin-top: 6px; line-height: 1.6; }
 .sugg-fail-tip { font-size: 13px; color: #b45309; line-height: 1.6; }
+.sugg-reason { font-size: 12px; color: var(--text-sub, #6b7280); margin-top: 6px; padding: 6px 8px; background: var(--soft, #f5f5f5); border-radius: 6px; }
 .sugg-queued { font-size: 12px; color: var(--text-sub, #6b7280); margin-top: 8px; }
 
 @media (max-width: 640px) {

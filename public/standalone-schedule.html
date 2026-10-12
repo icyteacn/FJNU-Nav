@@ -54,6 +54,12 @@
     .holiday-badge{display:inline-flex;align-items:center;gap:3px;margin:3px auto 5px;padding:2px 8px;border-radius:999px;font-size:9px;font-weight:700;line-height:1.4;white-space:nowrap;letter-spacing:.3px}
     .holiday-badge.holiday{background:#fca5a5;color:#991b1b}
     .holiday-badge.makeup{background:#fbbf24;color:#78350f}
+    .holiday-badge.adjust{background:#ede9fe;color:#5b21b6}
+    .sync-tip{font-size:10px;color:var(--text-sub);margin-top:1px}
+    .scope-group{display:flex;flex-direction:column;gap:8px;padding:4px 0}
+    .scope-opt{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+    .upd-new{color:#16a34a;font-weight:700}
+    .upd-sub{font-size:12px;color:var(--text-sub);margin-top:6px;line-height:1.5}
     .holiday-icon{font-size:11px}
     .holiday-text{font-size:9px}
     .holiday-empty-cell{text-align:center;vertical-align:middle;background:repeating-linear-gradient(45deg,#fef2f2,#fef2f2 10px,#fff5f5 10px,#fff5f5 20px);border-left:2px dashed #fca5a5;border-right:2px dashed #fca5a5}
@@ -169,7 +175,7 @@
     .confirm-overlay.show{display:flex}
     .confirm-box{background:var(--card);border-radius:12px;padding:20px;width:280px;text-align:center}
     .confirm-title{font-size:16px;font-weight:700;margin-bottom:8px}
-    .confirm-msg{font-size:14px;color:var(--text-sub);margin-bottom:20px;line-height:1.5}
+    .confirm-msg{font-size:14px;color:var(--text-sub);margin-bottom:20px;line-height:1.5;white-space:pre-line}
     .confirm-btns{display:flex;gap:12px}
     .confirm-btns .btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
 
@@ -223,6 +229,7 @@
         <div class="week-nav-info">
           <div class="week-nav-label" id="weekLabel">第1周</div>
           <div class="week-nav-major" id="majorLabel">计科学硕</div>
+          <div class="sync-tip" id="syncTip"></div>
         </div>
         <button class="week-nav-btn" onclick="nextWeek()">›</button>
       </div>
@@ -253,6 +260,14 @@
         <button class="bottom-btn" onclick="showAddModal()">
           <span class="icon">➕</span>
           <span>添加</span>
+        </button>
+        <button class="bottom-btn" onclick="openSuggest()">
+          <span class="icon">💡</span>
+          <span>提建议</span>
+        </button>
+        <button class="bottom-btn" onclick="checkUpdate()">
+          <span class="icon">🔄</span>
+          <span>检测更新</span>
         </button>
         <button class="bottom-btn" onclick="showMoreMenu()">
           <span class="icon">⚙️</span>
@@ -409,6 +424,7 @@
         </div>
         <div class="modal-body" id="detailContent"></div>
         <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="adjustFromDetail()">🔀 调课</button>
           <button class="btn btn-secondary" onclick="editCourseFromDetail()">编辑</button>
           <button class="btn btn-primary" style="background:#f44336" onclick="deleteCourseFromDetail()">删除</button>
         </div>
@@ -486,6 +502,13 @@
               <input type="number" class="form-input" id="courseCredits" placeholder="2" step="0.5">
             </div>
           </div>
+          <div class="form-group" id="editScopeGroup" style="display:none">
+            <label class="form-label">生效范围</label>
+            <div class="scope-group">
+              <label class="scope-opt"><input type="radio" name="editScope" value="all" checked><span>修改整个学期</span></label>
+              <label class="scope-opt"><input type="radio" name="editScope" value="week"><span id="editScopeWeekLabel">仅修改本周（其余周不受影响）</span></label>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
@@ -526,6 +549,118 @@
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeOverrideModal()">取消</button>
           <button class="btn btn-primary" onclick="saveOverride()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 删除范围 -->
+    <div class="modal-overlay" id="scopeModal">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title" id="scopeTitle">选择范围</div>
+          <button class="modal-close" onclick="closeScopeModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="scopeMsg" style="font-size:14px;margin-bottom:10px"></div>
+          <div class="scope-group">
+            <label class="scope-opt"><input type="radio" name="scopePick" value="all" checked><span id="scopeAllLabel">整个学期</span></label>
+            <label class="scope-opt"><input type="radio" name="scopePick" value="week"><span id="scopeWeekLabel">仅本周</span></label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeScopeModal()">取消</button>
+          <button class="btn btn-primary" id="scopeOkBtn" onclick="scopeOk()">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 调课（改期） -->
+    <div class="modal-overlay" id="adjustModal">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">🔀 调课 · 仅改第<span id="adjustWeekTag">1</span>周</div>
+          <button class="modal-close" onclick="closeAdjustModal()">×</button>
+        </div>
+        <div class="modal-body" id="adjustInfo" style="font-size:13px;color:var(--text-sub);margin-bottom:8px"></div>
+        <div class="modal-body" style="padding-top:0">
+          <div class="form-group">
+            <label class="form-label">调到第几周</label>
+            <select class="form-select" id="adjustWeek"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">调到周几</label>
+            <select class="form-select" id="adjustWeekday">
+              <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
+              <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option>
+              <option value="7">周日</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">开始节次</label>
+              <select class="form-select" id="adjustStart"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">结束节次</label>
+              <select class="form-select" id="adjustEnd"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">上课教室（不改留空）</label>
+            <input type="text" class="form-input" id="adjustLocation" placeholder="默认同原教室">
+          </div>
+          <div id="adjustNote" style="display:none;font-size:12px;color:#6d28d9;background:#f5f3ff;border:1px dashed #c4b5fd;border-radius:8px;padding:8px 10px;line-height:1.5"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="adjustRemoveBtn" style="display:none;background:#f44336;color:#fff" onclick="removeAdjust()">撤销调课</button>
+          <button class="btn btn-secondary" onclick="closeAdjustModal()">取消</button>
+          <button class="btn btn-primary" onclick="saveAdjust()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 提建议 -->
+    <div class="modal-overlay" id="sugModal">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">💡 提建议</div>
+          <button class="modal-close" onclick="closeSuggest()">×</button>
+        </div>
+        <div class="modal-body" id="sugForm">
+          <div class="form-group">
+            <label class="form-label">类型</label>
+            <select class="form-select" id="sugType">
+              <option value="feature">功能建议</option>
+              <option value="bug">问题反馈</option>
+              <option value="other">其他建议</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">建议内容 *</label>
+            <textarea id="sugText" rows="5" placeholder="说说你的想法…（在哪个页面、想要什么效果）"
+              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--card);color:var(--text);box-sizing:border-box;resize:vertical"></textarea>
+            <div id="sugEmpty" style="display:none;color:#dc2626;font-size:12px;margin-top:6px">先写点内容吧</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">联系方式（选填）</label>
+            <input type="text" class="form-input" id="sugContact" placeholder="QQ / 微信 / 邮箱，方便回你">
+          </div>
+        </div>
+        <div class="modal-body" id="sugDone" style="display:none;text-align:center">
+          <div style="font-size:40px">🎉</div>
+          <div style="font-size:17px;font-weight:700;color:#16a34a;margin-top:6px">已收到，谢谢你！</div>
+          <div style="font-size:13px;color:var(--text-sub);margin-top:6px;line-height:1.6">建议已进入校园墙「💡 建议」分区，开发者会看到。</div>
+        </div>
+        <div class="modal-body" id="sugFail" style="display:none">
+          <div style="font-size:13px;color:#b45309;line-height:1.6">⚠️ 云端暂时不可用，用下面任一方式送达：</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-secondary" style="flex:1" onclick="copySuggest()">复制文本</button>
+            <button class="btn btn-secondary" style="flex:1" onclick="openIssue()">GitHub 提交</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="sugCancelBtn" onclick="closeSuggest()">取消</button>
+          <button class="btn btn-primary" id="sugSubmitBtn" onclick="submitSuggest()">提交给开发者</button>
         </div>
       </div>
     </div>
@@ -684,20 +819,56 @@ function isInWeeks(weeksStr,week){
   return false;
 }
 function getCoursesForWeek(major,week){
-  const base=(ALL_COURSES[major]||[]).filter(c=>!state.deletedCourses.includes(c.id));
-  const custom=state.customCourses.filter(c=>c.major===major&&isInWeeks(c.weeks,week));
-  return[...base,...custom].filter(c=>isInWeeks(c.weeks,week));
+  // 「整学期」编辑会屏蔽原课；「仅本周」编辑以周覆盖形式叠加
+  const editedIds=new Set(state.customCourses.filter(c=>c._editId&&!c._weekScope).map(c=>c._editId));
+  const base=(ALL_COURSES[major]||[])
+    .filter(c=>!editedIds.has(c.id))
+    .filter(c=>!state.deletedCourses.includes(c.id)&&!state.deletedCourses.includes(c.id+'_wk'+week));
+  let custom=state.customCourses.filter(c=>c.major===major&&isInWeeks(c.weeks,week));
+  const weekOv=custom.filter(c=>c._editId&&c._weekScope===week);
+  custom=custom.filter(c=>!(c._editId&&c._weekScope));
+  const merged=base.map(c=>weekOv.find(o=>o._editId===c.id)||c);
+  return[...merged,...custom].filter(c=>isInWeeks(c.weeks,week));
 }
-function getDayType(dateStr){return state.dayOverrides[dateStr]||HOLIDAY_MAP[dateStr]||null}
+function getDayType(dateStr){
+  return state.dayOverrides[dateStr]||HOLIDAY_MAP[dateStr]||userAdjustDayInfo(dateStr);
+}
+/** 用户自建调课的源日：表头给一个「调课」标记（与官方 adjust 同款） */
+function userAdjustDayInfo(dateStr){
+  const a=loadUserAdjustments().find(x=>x.srcDate===dateStr);
+  if(!a)return null;
+  return{type:'adjust',icon:'🔀',descShort:'调课',desc:'调课'};
+}
 function getScheduleWeekday(dateStr,dayType){
   if(dayType&&dayType.type==='makeup')return dayType.scheduleWeekday;
   const d=new Date(dateStr);const day=d.getDay();return day===0?7:day;
 }
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+function rangeOf(a,b){const r=[];for(let i=a;i<=b;i++)r.push(i);return r}
 let confirmCb=null;
+let scopeCb=null;
+let editingCourseId=null;
+let adjustCourse=null;
+let adjustExisting=null;
 function showConfirm(title,msg,cb){document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmMsg').textContent=msg;document.getElementById('confirmBox').classList.add('show');confirmCb=cb}
 function confirmOk(){document.getElementById('confirmBox').classList.remove('show');if(confirmCb)confirmCb()}
 function confirmCancel(){document.getElementById('confirmBox').classList.remove('show');confirmCb=null}
+
+// ==================== 范围选择弹窗（删除/编辑用） ====================
+function openScopeModal(title,msg,labels,cb){
+  document.getElementById('scopeTitle').textContent=title;
+  document.getElementById('scopeMsg').textContent=msg;
+  document.getElementById('scopeAllLabel').textContent=labels.all;
+  document.getElementById('scopeWeekLabel').textContent=labels.week;
+  document.querySelector('#scopeModal input[value="all"]').checked=true;
+  scopeCb=cb;
+  document.getElementById('scopeModal').classList.add('show');
+}
+function closeScopeModal(){document.getElementById('scopeModal').classList.remove('show');scopeCb=null}
+function scopeOk(){
+  const v=(document.querySelector('#scopeModal input[name="scopePick"]:checked')||{value:'all'}).value;
+  const cb=scopeCb;closeScopeModal();if(cb)cb(v);
+}
 
 // ==================== 时间射线 ====================
 const PERIOD_BOUNDS=[
@@ -828,7 +999,7 @@ function renderTable(){
       if(isHol&&row.period===1){
         merged.add(key);
         const holName=dt.name||'假期';
-        bodyHtml+='<td rowspan="12" class="course-cell is-holiday-col holiday-empty-cell">';
+        bodyHtml+='<td rowspan="12" data-key="'+key+'" class="course-cell is-holiday-col holiday-empty-cell">';
         bodyHtml+='<div class="holiday-empty"><span class="holiday-empty-icon">🎉</span><span class="holiday-empty-text">'+holName+'</span><span class="holiday-empty-sub">假期停课</span></div>';
         bodyHtml+='</td>';
         return;
@@ -839,25 +1010,24 @@ function renderTable(){
       const override=getOverride(ds,row.period);
       // 检查是否有调入课程（从其他日期调来）
       let incoming=null;
-      for(const key of Object.keys(HOLIDAY_MAP)){
-        const hdt=HOLIDAY_MAP[key];
-        if(!hdt||!hdt.overrides)continue;
-        for(const ov of hdt.overrides){
-          if(ov.destDate===ds&&row.period>=ov.destPeriods[0]&&row.period<=ov.destPeriods.at(-1)){
-            const srcWd=hdt.scheduleWeekday;
-            const srcCourse=courses.find(c=>c.weekday===srcWd&&ov.srcPeriods[0]>=c.startPeriod&&ov.srcPeriods[0]<=c.endPeriod);
-            if(srcCourse)incoming={course:srcCourse,srcDate:key,srcPeriods:ov.srcPeriods,destLocation:ov.destLocation};
-          }
-        }
+      // 调入源课程要在全量课表里找：目标周可能已超出源课程的周次范围（如第8周的课调到第12周）
+      const pool=(ALL_COURSES[state.selectedMajor]||[])
+        .concat(state.customCourses.filter(x=>x.major===state.selectedMajor))
+        .filter(x=>!state.deletedCourses.includes(x.id));
+      for(const a of getAllAdjustments()){
+        if(a.destDate!==ds||!a.destPeriods)continue;
+        if(row.period<a.destPeriods[0]||row.period>a.destPeriods.at(-1))continue;
+        const srcCourse=pool.find(c=>c.weekday===a.srcWeekday&&a.srcPeriods[0]>=c.startPeriod&&a.srcPeriods[0]<=c.endPeriod);
+        if(srcCourse){incoming={course:srcCourse,srcDate:a.srcDate,srcPeriods:a.srcPeriods,destPeriods:a.destPeriods,destLocation:a.destLocation};break}
       }
-      if(incoming&&row.period===incoming.srcPeriods[0]){
-        const span=incoming.srcPeriods.length;
-        incoming.srcPeriods.forEach(p=>merged.add(wd.key+'-'+p));
+      if(incoming&&row.period===incoming.destPeriods[0]){
+        const span=incoming.destPeriods.length;
+        incoming.destPeriods.forEach(p=>merged.add(wd.key+'-'+p));
         let cls='course-cell has-course';
         if(wd.key>=6)cls+=' weekend';
         if(isTod)cls+=' is-today';
         if(isMak)cls+=' is-makeup-col';
-        bodyHtml+='<td rowspan="'+span+'" class="'+cls+'">';
+        bodyHtml+='<td rowspan="'+span+'" data-key="'+wd.key+'-'+row.period+'" class="'+cls+'">';
         bodyHtml+='<div class="course-card" style="border-left-style:dashed;border-left-color:#0369a1;background:#e0f2fe">';
         bodyHtml+='<div class="incoming-badge" style="font-size:8px;font-weight:700;color:#0369a1;background:#bae6fd;padding:1px 4px;border-radius:3px;margin-bottom:2px">⬅️ 调入 '+incoming.srcDate.slice(5)+'第'+incoming.srcPeriods[0]+'节</div>';
         bodyHtml+='<div class="course-name">'+incoming.course.name+'</div>';
@@ -870,7 +1040,7 @@ function renderTable(){
         if(wd.key>=6)cls+=' weekend';
         if(isTod)cls+=' is-today';
         if(isMak)cls+=' is-makeup-col';
-        bodyHtml+='<td rowspan="'+span+'" class="'+cls+'" onclick="showOverrideDetail(\''+ds+'\','+row.period+')">';
+        bodyHtml+='<td rowspan="'+span+'" data-key="'+wd.key+'-'+row.period+'" class="'+cls+'" onclick="showOverrideDetail(\''+ds+'\','+row.period+')">';
         bodyHtml+='<div class="moved-badge"><span class="moved-icon">↗️</span>';
         bodyHtml+='<span class="moved-text">'+override.destDate.slice(5)+' 第'+override.destPeriods[0]+'-'+override.destPeriods.at(-1)+'节</span>';
         bodyHtml+='<span class="moved-loc">📍'+override.destLocation+'</span></div></td>';
@@ -883,7 +1053,7 @@ function renderTable(){
         if(wd.key>=6)cls+=' weekend';
         if(isTod)cls+=' is-today';
         if(isMak)cls+=' is-makeup-col';
-        bodyHtml+='<td rowspan="'+span+'" class="'+cls+'" onclick="showDetail(\''+course.id+'\')">';
+        bodyHtml+='<td rowspan="'+span+'" data-key="'+wd.key+'-'+row.period+'" class="'+cls+'" onclick="showDetail(\''+course.id+'\')">';
         bodyHtml+='<div class="course-card" style="background:'+bg+';border-left-color:'+color+'">';
         bodyHtml+='<div class="course-name">'+course.name+'</div>';
         bodyHtml+='<div class="course-info"><span class="course-location">'+course.location+'</span>';
@@ -897,7 +1067,7 @@ function renderTable(){
         if(wd.key>=6)cls+=' weekend';
         if(isTod)cls+=' is-today';
         if(isMak)cls+=' is-makeup-col';
-        bodyHtml+='<td class="'+cls+'" onclick="showAddModalForCell('+wd.key+','+row.period+')">';
+        bodyHtml+='<td data-key="'+key+'" class="'+cls+'" onclick="showAddModalForCell('+wd.key+','+row.period+')">';
         if(isMak){
           bodyHtml+='<div class="course-card" style="border-left-color:transparent;cursor:pointer"></div>';
         } else {
@@ -1047,6 +1217,12 @@ function showDetail(id){
     '<div class="detail-row"><span class="detail-label">学分</span><span class="detail-value">'+(c.credits||'-')+'</span></div>'+
     '<div class="detail-row"><span class="detail-label">学时</span><span class="detail-value">'+(c.hours||'-')+'</span></div>'+
     '</div>';
+  // 每次重建底部按钮：showOverrideDetail 会覆盖 footer，否则再次打开课程详情只剩「关闭」
+  document.querySelector('#detailModal .modal-title').textContent='课程详情';
+  document.querySelector('#detailModal .modal-footer').innerHTML=
+    '<button class="btn btn-secondary" onclick="adjustFromDetail()">🔀 调课</button>'+
+    '<button class="btn btn-secondary" onclick="editCourseFromDetail()">编辑</button>'+
+    '<button class="btn btn-primary" style="background:#f44336" onclick="deleteCourseFromDetail()">删除</button>';
   document.getElementById('detailModal').classList.add('show');
 }
 function closeDetailModal(){document.getElementById('detailModal').classList.remove('show');currentCourseId=null}
@@ -1056,6 +1232,7 @@ function editCourseFromDetail(){
   const c=all.find(x=>x.id===currentCourseId);
   if(!c)return;
   closeDetailModal();
+  editingCourseId=c.id;
   document.getElementById('addModalTitle').textContent='编辑课程';
   document.getElementById('courseName').value=c.name;
   document.getElementById('courseTeacher').value=c.teacher||'';
@@ -1066,19 +1243,34 @@ function editCourseFromDetail(){
   document.getElementById('courseWeeks').value=c.weeks||'';
   document.getElementById('courseCategory').value=c.category||'专业必修课';
   document.getElementById('courseCredits').value=c.credits||'';
+  document.getElementById('editScopeGroup').style.display='block';
+  document.getElementById('editScopeWeekLabel').textContent='仅修改第'+state.selectedWeek+'周（其余周不受影响）';
+  document.querySelector('input[name="editScope"][value="all"]').checked=true;
   document.getElementById('addModal').classList.add('show');
 }
 function deleteCourseFromDetail(){
   if(!currentCourseId)return;
-  showConfirm('删除课程','确定要删除这门课程吗？',()=>{
-    state.deletedCourses.push(currentCourseId);
-    saveState();closeDetailModal();render();showToast('课程已删除');
+  const c=getCoursesForWeek(state.selectedMajor,state.selectedWeek).find(x=>x.id===currentCourseId);
+  openScopeModal('删除课程','删除「'+(c?c.name:'该课程')+'」选择范围：',{
+    all:'删除整个学期的该课程',
+    week:'仅删除第'+state.selectedWeek+'周（其余周保留）'
+  },scope=>{
+    if(scope==='week'){
+      state.deletedCourses.push(currentCourseId+'_wk'+state.selectedWeek);
+      showToast('仅删除第'+state.selectedWeek+'周');
+    }else{
+      state.deletedCourses.push(currentCourseId);
+      showToast('课程已删除');
+    }
+    saveState();closeDetailModal();render();
   });
 }
 
 // ==================== 添加课程 ====================
 function showAddModal(){
   closeMoreMenu();
+  editingCourseId=null;
+  document.getElementById('editScopeGroup').style.display='none';
   document.getElementById('addModalTitle').textContent='添加课程';
   document.getElementById('courseName').value='';
   document.getElementById('courseTeacher').value='';
@@ -1092,6 +1284,8 @@ function showAddModal(){
   document.getElementById('addModal').classList.add('show');
 }
 function showAddModalForCell(weekday,period){
+  editingCourseId=null;
+  document.getElementById('editScopeGroup').style.display='none';
   document.getElementById('addModalTitle').textContent='添加课程';
   document.getElementById('courseName').value='';
   document.getElementById('courseTeacher').value='';
@@ -1104,7 +1298,7 @@ function showAddModalForCell(weekday,period){
   document.getElementById('courseCredits').value='';
   document.getElementById('addModal').classList.add('show');
 }
-function closeAddModal(){document.getElementById('addModal').classList.remove('show')}
+function closeAddModal(){document.getElementById('addModal').classList.remove('show');editingCourseId=null}
 function saveCourse(){
   const name=document.getElementById('courseName').value.trim();
   if(!name){showToast('请输入课程名称');return}
@@ -1122,18 +1316,64 @@ function saveCourse(){
     major:state.selectedMajor
   };
   if(course.endPeriod<course.startPeriod){showToast('结束节次不能小于开始节次');return}
-  state.customCourses.push(course);saveState();closeAddModal();render();showToast('课程已添加');
+  if(editingCourseId){
+    // 编辑模式：按范围覆盖，而非新增（原实现保存即新增，会多出一门重复课）
+    const week=state.selectedWeek;
+    const scopeEl=document.querySelector('input[name="editScope"]:checked');
+    const scope=scopeEl?scopeEl.value:'all';
+    course.id=editingCourseId;
+    if(scope==='week'){
+      const payload=Object.assign({},course,{_editId:editingCourseId,_weekScope:week,_id:'wk_'+editingCourseId+'_'+week});
+      const idx=state.customCourses.findIndex(x=>x._editId===editingCourseId&&x._weekScope===week);
+      if(idx>=0)state.customCourses[idx]=payload;else state.customCourses.push(payload);
+      showToast('仅第'+week+'周已修改');
+    }else{
+      const idx=state.customCourses.findIndex(x=>x._editId===editingCourseId&&!x._weekScope);
+      if(idx>=0)state.customCourses[idx]=Object.assign({},course,{_editId:editingCourseId});
+      else state.customCourses.push(Object.assign({},course,{_editId:editingCourseId}));
+      showToast('整学期已修改');
+    }
+    editingCourseId=null;
+  }else{
+    state.customCourses.push(course);
+    showToast('课程已添加');
+  }
+  saveState();closeAddModal();render();
 }
 
-// ==================== 停课/调休 ====================
+// ==================== 调课（官方 + 用户本地） ====================
+function loadUserAdjustments(){
+  try{const l=JSON.parse(localStorage.getItem('sche_adjustments')||'[]');return Array.isArray(l)?l:[]}catch(e){return[]}
+}
+function saveUserAdjustment(a){
+  const l=loadUserAdjustments();
+  const item=Object.assign({id:'usr_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),origin:'user'},a);
+  l.push(item);
+  try{localStorage.setItem('sche_adjustments',JSON.stringify(l))}catch(e){}
+  return item;
+}
+function removeUserAdjustment(id){
+  try{localStorage.setItem('sche_adjustments',JSON.stringify(loadUserAdjustments().filter(x=>x.id!==id)))}catch(e){}
+}
+function getSiteAdjustments(){
+  const out=[];
+  Object.keys(HOLIDAY_MAP).forEach(ds=>{
+    const h=HOLIDAY_MAP[ds];
+    if(!h||!h.overrides)return;
+    h.overrides.forEach(o=>out.push({
+      id:'site_'+ds+'_'+(o.srcPeriods&&o.srcPeriods[0]),
+      srcDate:ds,srcWeekday:h.scheduleWeekday,srcPeriods:o.srcPeriods,
+      destDate:o.destDate,destPeriods:o.destPeriods,destLocation:o.destLocation,
+      courseHint:o.courseHint||'',origin:'site'
+    }));
+  });
+  return out;
+}
+function getAllAdjustments(){return getSiteAdjustments().concat(loadUserAdjustments())}
 function getOverride(dateStr,period){
-  const dt=HOLIDAY_MAP[dateStr];
-  if(dt&&dt.overrides){
-    for(const o of dt.overrides){
-      if(o.srcPeriods&&o.srcPeriods.includes(period))return o;
-    }
-  }
-  return null;
+  const a=getAllAdjustments().find(x=>x.srcDate===dateStr&&x.srcPeriods&&x.srcPeriods.includes(period));
+  if(!a)return null;
+  return{srcPeriods:a.srcPeriods,destDate:a.destDate,destPeriods:a.destPeriods,destLocation:a.destLocation,courseHint:a.courseHint,origin:a.origin,id:a.id};
 }
 function showOverrideDetail(dateStr,period){
   const o=getOverride(dateStr,period);
@@ -1178,6 +1418,78 @@ function saveOverride(){
   saveState();closeOverrideModal();render();showToast('已更新');
 }
 
+// ==================== 调课编辑器（点课程设置调到第X周周几第N节 / 换教室） ====================
+function adjustFromDetail(){
+  const c=getCoursesForWeek(state.selectedMajor,state.selectedWeek).find(x=>x.id===currentCourseId);
+  if(!c)return;
+  adjustCourse=c;
+  closeDetailModal();
+  const wl=['','周一','周二','周三','周四','周五','周六','周日'];
+  document.getElementById('adjustWeekTag').textContent=state.selectedWeek;
+  document.getElementById('adjustInfo').textContent='「'+c.name+'」第'+state.selectedWeek+'周 · '+wl[c.weekday]+' 第'+c.startPeriod+'-'+c.endPeriod+'节 · '+c.location;
+  const wk=document.getElementById('adjustWeek');
+  wk.innerHTML='';
+  for(let i=1;i<=18;i++){
+    const o=document.createElement('option');o.value=i;o.textContent='第'+i+'周';
+    if(i===state.selectedWeek)o.selected=true;
+    wk.appendChild(o);
+  }
+  const st=document.getElementById('adjustStart'),en=document.getElementById('adjustEnd');
+  st.innerHTML='';en.innerHTML='';
+  for(let i=1;i<=12;i++){
+    const o1=document.createElement('option');o1.value=i;o1.textContent=i+'节';st.appendChild(o1);
+    const o2=document.createElement('option');o2.value=i;o2.textContent=i+'节';en.appendChild(o2);
+  }
+  st.value=c.startPeriod;en.value=c.endPeriod;
+  document.getElementById('adjustWeekday').value=c.weekday;
+  document.getElementById('adjustLocation').value='';
+  const list=getAllAdjustments();
+  // 扫描当前周七列：既找「本周这节被调走」，也找「本周这格是别处调来的」
+  // （调入格所在列可能与课程自带的 weekday 不同，不能只按 course.weekday 推日期）
+  let exist=null;
+  for(let wd=1;wd<=7&&!exist;wd++){
+    const day=getDateStr(getWeekDates(state.selectedWeek)[wd-1]);
+    exist=list.find(a=>a.srcDate===day&&a.srcWeekday===wd&&a.srcPeriods&&a.srcPeriods[0]===c.startPeriod&&a.srcPeriods.at(-1)===c.endPeriod)
+      ||list.find(a=>a.destDate===day&&(a.courseId===c.id||(a.courseHint&&c.name.indexOf(a.courseHint)===0)));
+  }
+  adjustExisting=exist||null;
+  const note=document.getElementById('adjustNote');
+  const rmBtn=document.getElementById('adjustRemoveBtn');
+  if(exist){
+    note.style.display='block';
+    note.textContent='ⓘ 已有调课：'+exist.destDate+' 第'+exist.destPeriods[0]+'-'+exist.destPeriods.at(-1)+'节 '+exist.destLocation+(exist.origin==='site'?'（官方发布，不可撤销）':'');
+    rmBtn.style.display=(exist.origin==='user')?'block':'none';
+  }else{
+    note.style.display='none';rmBtn.style.display='none';
+  }
+  document.getElementById('adjustModal').classList.add('show');
+}
+function closeAdjustModal(){document.getElementById('adjustModal').classList.remove('show');adjustCourse=null;adjustExisting=null}
+function saveAdjust(){
+  const c=adjustCourse;
+  if(!c){closeAdjustModal();return}
+  const srcDate=getDateStr(getWeekDates(state.selectedWeek)[c.weekday-1]);
+  loadUserAdjustments().filter(a=>a.srcDate===srcDate&&a.srcPeriods&&a.srcPeriods[0]===c.startPeriod&&a.srcPeriods.at(-1)===c.endPeriod)
+    .forEach(a=>removeUserAdjustment(a.id));
+  const week=Math.max(1,Math.min(18,parseInt(document.getElementById('adjustWeek').value)||state.selectedWeek));
+  const wd=parseInt(document.getElementById('adjustWeekday').value)||c.weekday;
+  const s=parseInt(document.getElementById('adjustStart').value)||c.startPeriod;
+  const e=Math.max(parseInt(document.getElementById('adjustEnd').value)||c.endPeriod,s);
+  const loc=document.getElementById('adjustLocation').value.trim()||c.location;
+  const destDate=getDateStr(getWeekDates(week)[wd-1]);
+  saveUserAdjustment({
+    srcDate:srcDate,srcWeekday:c.weekday,srcPeriods:rangeOf(c.startPeriod,c.endPeriod),
+    destDate:destDate,destPeriods:rangeOf(s,e),destLocation:loc,
+    courseHint:c.name,courseId:c.id,major:c.major
+  });
+  closeAdjustModal();render();
+  showToast('已调课：'+destDate.slice(5)+' 第'+s+'-'+e+'节 · '+loc);
+}
+function removeAdjust(){
+  if(adjustExisting&&adjustExisting.origin==='user'){removeUserAdjustment(adjustExisting.id);showToast('已撤销调课')}
+  closeAdjustModal();render();
+}
+
 // ==================== 数据导入导出 ====================
 function exportData(){
   closeMoreMenu();
@@ -1208,34 +1520,191 @@ function importData(){
   input.click();
 }
 
-// ==================== 检查更新 ====================
+// ==================== 提建议（校园墙「💡 建议」分区 + 兜底） ====================
+// 与网页 src/suggest.js 同一通道：Supabase 云端 → tag=suggest；失败给复制/GitHub 兜底
+const SUGGEST_TAG='suggest';
+const SUGGEST_ISSUE='https://github.com/icyteacn/FJNU-Nav/issues/new';
+const SUGGEST_LABELS={feature:'功能建议',bug:'问题反馈',other:'其他建议'};
+function suggestCloudCfg(){
+  try{
+    const raw=localStorage.getItem('qdu_supabase');
+    if(raw){const c=JSON.parse(raw);
+      if(c&&c.off)return null;
+      if(c&&c.url&&c.key)return{url:String(c.url).replace(/\/+$/,''),key:String(c.key)}}
+  }catch(e){}
+  return{
+    url:'https://ixbodzfubgluzjrqawuw.supabase.co',
+    key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4Ym9kemZ1YmdsdXpqcnFhd3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MDI0NTAsImV4cCI6MjEwNzA3ODQ1MH0.tfHyDfXTTFVeP7F8U0MGgYVyVqGO-NRUu_sn5iGE7M4'
+  };
+}
+function suggestParts(){
+  const type=document.getElementById('sugType').value||'feature';
+  const text=(document.getElementById('sugText').value||'').trim();
+  const contact=(document.getElementById('sugContact').value||'').trim();
+  return{type,text,contact};
+}
+function suggestTitle(type,text){
+  const t=String(text).replace(/\s+/g,' ');
+  return'【'+(SUGGEST_LABELS[type]||'建议')+'】'+t.slice(0,36)+(t.length>36?'…':'');
+}
+function suggestBody(p){
+  const lines=[p.text];
+  if(p.contact)lines.push('','联系方式：'+p.contact);
+  lines.push('','—— 来自 鸡血课表 App · '+new Date().toLocaleString());
+  return lines.join('\n');
+}
+function suggestPlain(){
+  const p=suggestParts();
+  return suggestTitle(p.type,p.text)+'\n'+suggestBody(p);
+}
+function suggestIssueUrl(){
+  const p=suggestParts();
+  return SUGGEST_ISSUE+'?title='+encodeURIComponent(suggestTitle(p.type,p.text))+
+    '&body='+encodeURIComponent(suggestBody(p));
+}
+async function postSuggestion(){
+  const cfg=suggestCloudCfg();
+  if(!cfg)throw new Error('cloud off');
+  const p=suggestParts();
+  const res=await fetch(cfg.url+'/rest/v1/wall_posts',{
+    method:'POST',
+    headers:{
+      'apikey':cfg.key,
+      'Authorization':'Bearer '+cfg.key,
+      'Content-Type':'application/json',
+      'Prefer':'return=representation'
+    },
+    body:JSON.stringify({
+      title:suggestTitle(p.type,p.text).slice(0,60),
+      content:suggestBody(p).slice(0,2000),
+      tag:SUGGEST_TAG,ptype:'normal',author:'匿名同学',anonymous:true
+    })
+  });
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  return true;
+}
+function setSugState(state){
+  document.getElementById('sugForm').style.display=state==='form'?'block':'none';
+  document.getElementById('sugDone').style.display=state==='done'?'block':'none';
+  document.getElementById('sugFail').style.display=state==='fail'?'block':'none';
+  const btn=document.getElementById('sugSubmitBtn');
+  const cancel=document.getElementById('sugCancelBtn');
+  if(state==='form'){btn.textContent='提交给开发者';btn.onclick=submitSuggest;cancel.style.display=''}
+  else if(state==='done'){btn.textContent='完成';btn.onclick=closeSuggest;cancel.style.display='none'}
+  else{btn.textContent='关闭';btn.onclick=closeSuggest;cancel.style.display='none'}
+}
+function openSuggest(){
+  document.getElementById('sugType').value='feature';
+  document.getElementById('sugText').value='';
+  document.getElementById('sugContact').value='';
+  document.getElementById('sugEmpty').style.display='none';
+  setSugState('form');
+  document.getElementById('sugModal').classList.add('show');
+}
+function closeSuggest(){document.getElementById('sugModal').classList.remove('show')}
+async function submitSuggest(){
+  const p=suggestParts();
+  if(!p.text){document.getElementById('sugEmpty').style.display='block';return}
+  const btn=document.getElementById('sugSubmitBtn');
+  btn.textContent='提交中…';btn.disabled=true;
+  try{
+    await postSuggestion();
+    setSugState('done');
+    showToast('✅ 建议已送达开发者');
+  }catch(e){
+    setSugState('fail');
+  }
+  btn.disabled=false;
+}
+function copySuggest(){
+  const text=suggestPlain();
+  const done=()=>showToast('已复制，粘贴发给开发者即可');
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(()=>copyFallback());
+  }else copyFallback();
+  function copyFallback(){
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta);ta.select();
+      const ok=document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast(ok?'已复制，粘贴发给开发者即可':'复制失败，请手动长按选择');
+    }catch(err){showToast('复制失败，请手动长按选择')}
+  }
+}
+function openIssue(){
+  const url=suggestIssueUrl();
+  try{window.open(url,'_blank')}catch(e){}
+  showToast('若未自动打开，请用「复制文本」发送');
+}
+
+// ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
+const APP_VERSION='1.1'; // 与 android/app/build.gradle 的 versionName 保持一致
+const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
+
+function applyRemoteData(d){
+  if(d&&Array.isArray(d.courses)&&d.courses.length){
+    const byMajor={};
+    d.courses.forEach(c=>{if(!byMajor[c.major])byMajor[c.major]=[];byMajor[c.major].push(c)});
+    Object.keys(byMajor).forEach(m=>{ALL_COURSES[m]=byMajor[m]});
+  }
+  if(d&&d.holidayMap&&typeof d.holidayMap==='object'){
+    Object.keys(HOLIDAY_MAP).forEach(k=>delete HOLIDAY_MAP[k]);
+    Object.assign(HOLIDAY_MAP,d.holidayMap);
+  }
+  if(d&&d.semesterStart){state.semesterStart=new Date(d.semesterStart)}
+  if(d&&d.version)localStorage.setItem('sche_data_version',d.version);
+  if(d&&d.updatedAt)localStorage.setItem('sche_last_update',d.updatedAt);
+  try{localStorage.setItem('sche_data_cache',JSON.stringify(d))}catch(e){}
+}
+async function fetchJson(url){
+  const r=await fetch(url+(url.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const d=await r.json();
+  if(!d||!Array.isArray(d.courses)||!d.courses.length)throw new Error('empty payload');
+  return d;
+}
+/** 四级回退：站点绝对地址（在线最新）→ 包内接口 → localStorage 缓存 → 内置数据 */
+async function loadScheduleData(){
+  for(const url of [API_REMOTE,'data/schedule-data.json']){
+    try{const d=await fetchJson(url);applyRemoteData(d);return{ok:true,source:'remote',data:d}}catch(e){}
+  }
+  try{
+    const c=JSON.parse(localStorage.getItem('sche_data_cache')||'null');
+    if(c&&c.courses&&c.courses.length){applyRemoteData(c);return{ok:true,source:'cache',data:c}}
+  }catch(e){}
+  return{ok:false,source:'builtin',data:null};
+}
+function updateSyncTip(r){
+  const el=document.getElementById('syncTip');
+  if(!el)return;
+  if(!r){el.textContent='';return}
+  if(r.source==='remote'){
+    const t=(r.data&&r.data.updatedAt)?r.data.updatedAt.slice(5,10).replace('-','/'):'';
+    el.textContent='课表已同步 '+t;
+  }else if(r.source==='cache'){el.textContent='离线 · 上次缓存课表'}
+  else{el.textContent='离线 · 内置课表'}
+}
 function checkUpdate(){
   closeMoreMenu();
   showToast('正在检查更新...');
-  fetch('https://icyteacn.github.io/FJNU-Nav/data/schedule-courses.json')
-    .then(r=>{if(!r.ok)throw new Error('not found');return r.json()})
-    .then(data=>{
-      if(data&&data.courses){
-        const localVersion=localStorage.getItem('sche_data_version')||'';
-        const remoteVersion=data.version||'';
-        const remoteTime=data.updatedAt||'';
-        const lastUpdate=localStorage.getItem('sche_last_update')||'';
-        if(remoteTime&&remoteTime!==lastUpdate){
-          showConfirm('发现更新','发现新的课表数据（'+data.courses.length+'门课程），是否更新？',()=>{
-            const updated={};
-            data.courses.forEach(c=>{
-              if(!updated[c.major])updated[c.major]=[];
-              updated[c.major].push(c);
-            });
-            Object.keys(updated).forEach(m=>{ALL_COURSES[m]=updated[m]});
-            localStorage.setItem('sche_last_update',remoteTime);
-            localStorage.setItem('sche_data_version',remoteVersion);
-            saveState();render();
-            showToast('✅ 已更新到最新数据（'+data.courses.length+'门课程）');
-          });
-        }else showToast('已是最新数据');
-      }else showToast('暂无新数据');
-    }).catch(()=>showToast('当前离线，无法检查更新'));
+  loadScheduleData().then(r=>{
+    updateSyncTip(r);
+    if(!r.ok){showToast('当前离线，已使用内置课表');return}
+    const d=r.data;
+    const apkNew=!!(d.appVersion&&d.appVersion!==APP_VERSION);
+    let msg='课表数据：'+(r.source==='remote'?'已与站点同步':'当前离线，显示上次缓存的课表');
+    msg+='\n数据更新时间：'+(((d.updatedAt||'').slice(0,16).replace('T',' '))||'-');
+    msg+='\n学期：'+(d.semester||'-');
+    msg+='\n本机 APK：v'+APP_VERSION+' · 站点最新：v'+(d.appVersion||'?');
+    if(apkNew)msg+='\n\n⬆️ 发现新版 APK，点「确定」前往下载';
+    showConfirm('🔄 检测更新',msg,()=>{
+      render();
+      if(apkNew){switchToWeb();showToast('请在网页版中下载并安装新版 APK')}
+      else showToast('课表已是最新');
+    });
+  });
 }
 
 // ==================== 恢复默认 ====================
@@ -1299,6 +1768,12 @@ function init(){
   state.selectedWeek=getCurrentWeek();
   saveState();
   render();
+  // 启动即同步课表数据接口（调课/新学期即时生效）；失败则走缓存→内置，课表照常可开
+  loadScheduleData().then(r=>{
+    updateSyncTip(r);
+    if(r.ok){state.selectedWeek=getCurrentWeek();saveState()}
+    render();
+  });
   setInterval(updateTimeLine,30000);
   updateTimeLine();
 }

@@ -70,7 +70,7 @@ export default {
     fullStats: 'Full stats ›',
     wikiTitle: 'Campus Wiki',
     downloadTitle: 'Schedule App · Android',
-    downloadDesc: 'Standalone offline schedule app, only 1.5MB',
+    downloadDesc: 'Standalone offline schedule app, under 1MB',
     downloadBtn: 'Download APK ↗',
     wikiSite: 'Site',
     wikiDocs: 'Tencent Docs',
@@ -133,5 +133,28 @@ export default {
     bszSiteUv: 'Site visitors',
     bszLoading: 'Busuanzi loading…',
     bszFail: 'Busuanzi unavailable, see other stats'
+  },
+
+  suggest: {
+    btn: 'Feedback',
+    title: '💡 Suggest',
+    sub: 'Ideas, bugs or new features — straight to the developer',
+    typeFeature: 'Feature',
+    typeBug: 'Bug report',
+    typeOther: 'Other',
+    placeholder: 'Tell us what you think… (which page, what you expect)',
+    contact: 'Contact (optional)',
+    contactPh: 'QQ / WeChat / email, so we can reply',
+    submit: 'Send to developer',
+    sending: 'Sending…',
+    ok: 'Got it, thank you!',
+    okSub: 'Your suggestion landed in Campus Wall 「💡 Suggestions」, the developer will see it.',
+    viewWall: 'Open Campus Wall',
+    fail: 'Cloud unavailable — deliver it any way below:',
+    copy: 'Copy text',
+    copyOk: 'Copied — paste it to the developer',
+    github: 'Open on GitHub',
+    close: 'Close',
+    empty: 'Write something first'
   }
 }

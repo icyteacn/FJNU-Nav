@@ -1,18 +1,17 @@
 {
   "name": "fjnu-nav",
-  "version": "1.5.19",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/postbuild.mjs",
+    "build": "node scripts/gen-schedule-data.mjs && vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
     "server": "node server/index.mjs",
     "start": "npm run build && node server/index.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^5.7.8",
-    "@capacitor/camera": "^5.0.10",
     "@capacitor/cli": "^5.7.8",
     "@capacitor/core": "^5.7.8",
     "@capacitor/filesystem": "^5.2.2",

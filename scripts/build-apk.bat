@@ -1,31 +1,49 @@
 @echo off
 REM 🐔🩸课表 Android 构建脚本
-REM 构建前自动排除 public/downloads/ 中的 APK，避免打包自身
+REM 打包前把 APK 移出仓库目录（public/downloads 与 dist/downloads 两处副本），
+REM 并清掉上次同步残留，避免把下载用 APK / 备份文件打进安装包；
+REM 同步后再裁剪包内资产，只留课表单文件 + 数据接口（否则整个站点会被打进包）
 
-echo [1/5] 构建 Web 产物...
+echo [1/6] 构建 Web 产物...
 call npm run build
 
-echo [2/5] 临时排除 APK 文件...
-if exist "public\downloads\feike-schedule.apk" (
-    move "public\downloads\feike-schedule.apk" "public\downloads\_temp_apk.bak" >nul 2>&1
-)
+echo [2/6] 临时排除 APK 文件...
+set "HOLD=%TEMP%\feike-apk-hold"
+if not exist "%HOLD%" mkdir "%HOLD%"
+if exist "public\downloads\feike-schedule.apk" move /y "public\downloads\feike-schedule.apk" "%HOLD%\public.apk" >nul
+if exist "dist\downloads\feike-schedule.apk" move /y "dist\downloads\feike-schedule.apk" "%HOLD%\dist.apk" >nul
+if exist "android\app\src\main\assets\public" rmdir /s /q "android\app\src\main\assets\public"
 
-echo [3/5] 同步 Capacitor...
+echo [3/6] 同步 Capacitor...
 call npx cap sync android
 
-echo [4/5] 恢复 APK 文件...
-if exist "public\downloads\_temp_apk.bak" (
-    move "public\downloads\_temp_apk.bak" "public\downloads\feike-schedule.apk" >nul 2>&1
+echo [4/6] 裁剪包内资产（只留课表单文件 + 数据接口）...
+call node scripts\trim-apk-assets.mjs
+if errorlevel 1 (
+  echo 裁剪失败，已中止
+  exit /b 1
 )
 
-echo [5/5] 构建 APK...
-set JAVA_HOME=C:\Program Files\Java\jdk-17.0.10
-set ANDROID_SDK_ROOT=C:\Users\13111\AppData\Local\Android\Sdk
+echo [5/6] 恢复 APK 文件...
+if exist "%HOLD%\public.apk" move /y "%HOLD%\public.apk" "public\downloads\feike-schedule.apk" >nul
+if exist "%HOLD%\dist.apk" move /y "%HOLD%\dist.apk" "dist\downloads\feike-schedule.apk" >nul
+
+echo [6/6] 构建 APK...
+REM JDK / SDK：环境变量优先，失效时回退已知安装路径（各机器不同，勿写死单一路径）
+if not exist "%JAVA_HOME%\bin\java.exe" set "JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot"
+if not exist "%JAVA_HOME%\bin\java.exe" set "JAVA_HOME=C:\Program Files\Java\jdk-17.0.10"
+if not exist "%ANDROID_SDK_ROOT%" set "ANDROID_SDK_ROOT=%ANDROID_HOME%"
+if not exist "%ANDROID_SDK_ROOT%" if exist "F:\Android\Sdk" set "ANDROID_SDK_ROOT=F:\Android\Sdk"
+if not exist "%ANDROID_SDK_ROOT%" set "ANDROID_SDK_ROOT=C:\Users\13111\AppData\Local\Android\Sdk"
+echo       JAVA_HOME=%JAVA_HOME%
+echo       ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
 cd android
 call gradlew.bat assembleRelease
 cd ..
 
 echo.
-echo ✅ 构建完成！
-echo Release APK: android\app\build\outputs\apk\release\app-release-unsigned.apk
+echo [OK] build done
+echo Release APK: android\app\build\outputs\apk\release\app-release.apk (signed by keystore.jks)
 echo Debug APK:   android\app\build\outputs\apk\debug\app-debug.apk
+echo To update download entry:
+echo   copy /y android\app\build\outputs\apk\release\app-release.apk public\downloads\feike-schedule.apk

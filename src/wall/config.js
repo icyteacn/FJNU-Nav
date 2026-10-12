@@ -25,6 +25,7 @@ export const PARTS = [
   { id: 'trade', name: '二手', icon: '♻️', color: '#65a30d', desc: '校内二手交易（当面交易，谨防诈骗）' },
   { id: 'ride', name: '拼车', icon: '🚗', color: '#4f46e5', desc: '回家 · 返校 · 顺风拼单' },
   { id: 'rant', name: '吐槽', icon: '🗯️', color: '#be123c', desc: '理性吐槽，拒绝人身攻击' },
+  { id: 'suggest', name: '建议', icon: '💡', color: '#f59e0b', desc: '给福star提建议，开发者看得到' },
   { id: 'chat', name: '闲聊', icon: '☕', color: '#78716c', desc: '随便聊聊' }
 ]
 

@@ -385,7 +385,13 @@ export const HOLIDAY_MAP = {
 export function getDateHolidayInfo(dateStr) {
   const userOverride = loadUserOverrides()[dateStr]
   if (userOverride) return userOverride
-  return HOLIDAY_MAP[dateStr] || null
+  if (HOLIDAY_MAP[dateStr]) return HOLIDAY_MAP[dateStr]
+  // 用户自建调课的源日：表头也给一个「调课」标记（与官方 adjust 同款样式）
+  const adj = getAllAdjustments().find(a => a.srcDate === dateStr)
+  if (adj) {
+    return { type: 'adjust', icon: '🔀', descShort: '调课', desc: `${adj.courseHint || '课程'} 调至 ${adj.destDate} 第${adj.destPeriods[0]}-${adj.destPeriods.at(-1)}节` }
+  }
+  return null
 }
 
 const USER_OVERRIDE_KEY = 'fjnu_day_overrides'
@@ -399,6 +405,82 @@ export function saveUserOverride(dateStr, override) {
 }
 export function clearUserOverrides() {
   try { localStorage.removeItem(USER_OVERRIDE_KEY) } catch {}
+}
+
+/* ══════════════ 调课（改期）统一模型 ══════════════
+ * 条目：{ id, srcDate, srcWeekday, srcPeriods[], destDate, destPeriods[],
+ *         destLocation, courseHint, origin: 'site' | 'user' }
+ * site = 随数据接口下发的官方调课（HOLIDAY_MAP.overrides）
+ * user = 用户在课表里点课程设置的本地调课（localStorage）
+ */
+let userAdjustKey = 'fjnu_adjustments'
+/** 设置本地调课记录的存储键（课表 App 用 feike_adjustments 等隔离） */
+export function setUserAdjustKey(key) { userAdjustKey = key || 'fjnu_adjustments' }
+export function loadUserAdjustments() {
+  try {
+    const list = JSON.parse(localStorage.getItem(userAdjustKey) || '[]')
+    return Array.isArray(list) ? list : []
+  } catch { return [] }
+}
+export function saveUserAdjustment(adj) {
+  const all = loadUserAdjustments()
+  const id = adj.id || ('usr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6))
+  const item = { ...adj, id, origin: 'user' }
+  const idx = all.findIndex(a => a.id === id)
+  if (idx >= 0) all[idx] = item; else all.push(item)
+  try { localStorage.setItem(userAdjustKey, JSON.stringify(all)) } catch {}
+  return item
+}
+export function removeUserAdjustment(id) {
+  const all = loadUserAdjustments().filter(a => a.id !== id)
+  try { localStorage.setItem(userAdjustKey, JSON.stringify(all)) } catch {}
+}
+/** 官方调课（来自数据接口的 HOLIDAY_MAP.overrides） */
+export function getSiteAdjustments() {
+  const list = []
+  for (const date of Object.keys(HOLIDAY_MAP)) {
+    const info = HOLIDAY_MAP[date]
+    if (!info?.overrides) continue
+    for (const o of info.overrides) {
+      list.push({
+        id: `site_${date}_${o.srcPeriods[0]}`,
+        srcDate: date, srcWeekday: info.scheduleWeekday, srcPeriods: o.srcPeriods,
+        destDate: o.destDate, destPeriods: o.destPeriods,
+        destLocation: o.destLocation, courseHint: o.courseHint || '', origin: 'site',
+      })
+    }
+  }
+  return list
+}
+/** 官方 + 用户本地调课合并列表 */
+export function getAllAdjustments() {
+  return [...getSiteAdjustments(), ...loadUserAdjustments()]
+}
+
+/**
+ * 应用远程课表数据（接口 schedule-data.json）：整体替换课程与节假日/调课表。
+ * 模块内数组/对象保持引用不变（原地替换内容），调用方靠 scheduleRevision 触发重算。
+ */
+export function applyRemoteSchedule(data) {
+  if (!data || typeof data !== 'object') return false
+  let touched = false
+  if (Array.isArray(data.courses) && data.courses.length && data.courses.length !== COURSES.length) touched = true
+  else if (Array.isArray(data.courses) && data.courses.length) {
+    touched = JSON.stringify(data.courses) !== JSON.stringify(COURSES)
+  }
+  if (Array.isArray(data.courses) && data.courses.length) {
+    COURSES.length = 0
+    COURSES.push(...data.courses)
+  }
+  if (data.holidayMap && typeof data.holidayMap === 'object') {
+    const next = JSON.stringify(data.holidayMap)
+    if (next !== JSON.stringify(HOLIDAY_MAP)) {
+      touched = true
+      for (const k of Object.keys(HOLIDAY_MAP)) delete HOLIDAY_MAP[k]
+      Object.assign(HOLIDAY_MAP, data.holidayMap)
+    }
+  }
+  return touched
 }
 
 /**
@@ -416,12 +498,12 @@ export function getScheduleWeekday(originalWeekday, dateStr) {
 }
 
 /**
- * 获取调休日某节次的调课信息
+ * 获取某日某节次的调课信息（官方 + 用户本地调课合并）
  */
 export function getCourseOverride(dateStr, period) {
-  const info = HOLIDAY_MAP[dateStr]
-  if (!info?.overrides) return null
-  return info.overrides.find(o => o.srcPeriods.includes(period)) || null
+  const a = getAllAdjustments().find(x => x.srcDate === dateStr && x.srcPeriods.includes(period))
+  if (!a) return null
+  return { srcPeriods: a.srcPeriods, destDate: a.destDate, destPeriods: a.destPeriods, destLocation: a.destLocation, courseHint: a.courseHint, origin: a.origin, id: a.id }
 }
 
 /**
@@ -439,16 +521,12 @@ export function isPeriodMoved(dateStr, period) {
  * @returns {{ course, srcDate, srcPeriods, destPeriods, destLocation } | null}
  */
 export function getIncomingInfo(dateStr, period, findCourse) {
-  for (const key of Object.keys(HOLIDAY_MAP)) {
-    const info = HOLIDAY_MAP[key]
-    if (!info?.overrides) continue
-    for (const o of info.overrides) {
-      if (o.destDate === dateStr && period >= o.destPeriods[0] && period <= o.destPeriods.at(-1)) {
-        const srcWd = info.scheduleWeekday
-        const course = findCourse(srcWd, o.srcPeriods[0])
-        return course ? { course, srcDate: key, srcPeriods: o.srcPeriods, destPeriods: o.destPeriods, destLocation: o.destLocation } : null
-      }
-    }
+  for (const a of getAllAdjustments()) {
+    if (a.destDate !== dateStr) continue
+    if (period < a.destPeriods[0] || period > a.destPeriods.at(-1)) continue
+    const course = findCourse(a.srcWeekday, a.srcPeriods[0])
+    if (!course) continue
+    return { course, srcDate: a.srcDate, srcPeriods: a.srcPeriods, destPeriods: a.destPeriods, destLocation: a.destLocation, origin: a.origin }
   }
   return null
 }

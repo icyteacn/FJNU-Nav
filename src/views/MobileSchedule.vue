@@ -14,7 +14,10 @@ import {
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
   loadUserOverrides, saveUserOverride,
+  setUserAdjustKey, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, loadUserAdjustments,
 } from '../data/classSchedule.js'
+import { loadScheduleData, scheduleRevision, syncStatus } from '../data/scheduleSync.js'
+import SuggestButton from '../components/SuggestButton.vue'
 
 const CUSTOM_KEY = 'feike_custom_courses'
 const DELETED_KEY = 'feike_deleted_courses'
@@ -49,7 +52,9 @@ const todayWeekday = computed(() => { const d = now.value.getDay(); return d ===
 const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
 
 const allCourses = computed(() => {
-  const editedIds = new Set(customCourses.value.filter(c => c._editId).map(c => c._editId))
+  scheduleRevision.value // 远程课表数据替换后重算
+  // 只有「整学期」编辑才把原课排除；「仅本周」编辑以 _weekScope 覆盖形式存在
+  const editedIds = new Set(customCourses.value.filter(c => c._editId && !c._weekScope).map(c => c._editId))
   const base = COURSES.filter(c => !editedIds.has(c.id) && c.major === selectedMajor.value)
   const custom = customCourses.value.filter(c => c.major === selectedMajor.value)
   return [...base, ...custom].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
@@ -70,11 +75,17 @@ const todayCourses = computed(() => {
 const hasTodayCourses = computed(() => todayCourses.value.length > 0)
 
 const displayCourses = computed(() => {
+  scheduleRevision.value // 依赖远程课表数据修订
   let courses = showSemester.value ? majorCourses.value : majorCourses.value.filter(c => {
     if (!isCourseInWeek(c, selectedWeek.value)) return false
     if (deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
     return true
   })
+  if (!showSemester.value) {
+    courses = courses
+      .filter(c => !(c._editId && c._weekScope))
+      .map(c => customCourses.value.find(x => x._editId === c.id && x._weekScope === selectedWeek.value) || c)
+  }
   if (typeFilter.value !== 'all') courses = courses.filter(c => c.category === typeFilter.value)
   if (searchKw.value) {
     const kw = searchKw.value.toLowerCase()
@@ -244,24 +255,37 @@ function doAddCourse() {
 const showEditModal = ref(false)
 const editForm = ref({})
 const editTarget = ref(null)
+const editScope = ref('all')
 function openEditModal(course) {
   if (!course) return
   editTarget.value = course
   const [ws, we] = (course.weeks || '1-18').split('-').map(Number)
   editForm.value = { name: course.name, location: course.location, teacher: course.teacher || '', weekday: course.weekday, startPeriod: course.startPeriod, endPeriod: course.endPeriod, weekStart: ws, weekEnd: we, weekdayType: course.weekdayType || 'all', id: course.id || '', category: course.category || '专业必修课', credits: course.credits || 2, hours: course.hours || 32 }
   showDetail.value = false
+  editScope.value = 'all'
   showEditModal.value = true
 }
 function doEditCourse() {
   const f = editForm.value, c = editTarget.value
   if (!f.name.trim() || !f.location.trim() || !c) return
+  const weekScope = editScope.value === 'week'
   const updated = { ...c, name: f.name.trim(), id: f.id.trim() || c.id, teacher: f.teacher.trim() || '待定', location: f.location.trim(), weekdayType: f.weekdayType, startPeriod: f.startPeriod, endPeriod: f.endPeriod, weekday: f.weekday, credits: f.credits || 2, hours: f.hours || 32, category: f.category || '专业必修课', weeks: f.weekStart + '-' + f.weekEnd }
-  if (c._custom) {
+  if (weekScope) updated.weeks = selectedWeek.value + '-' + selectedWeek.value
+  delete updated._weekScope
+  if (weekScope && c._custom) {
+    customCourses.value.push({ ...updated, _custom: true, _id: `${c._id}_wk${selectedWeek.value}`, _editId: c.id, _weekScope: selectedWeek.value })
+  } else if (c._custom) {
     const idx = customCourses.value.findIndex(x => x._id === c._id)
     if (idx !== -1) customCourses.value[idx] = { ...updated, _custom: true, _id: c._id }
     else customCourses.value.push({ ...updated, _custom: true, _id: c._id })
+  } else if (weekScope) {
+    // 「仅本周」：新建周覆盖条目，原课在其他周照常显示
+    const payload = { ...updated, _custom: true, _editId: c.id, _weekScope: selectedWeek.value }
+    const wIdx = customCourses.value.findIndex(x => x._editId === c.id && x._weekScope === selectedWeek.value)
+    if (wIdx !== -1) customCourses.value[wIdx] = payload
+    else customCourses.value.push(payload)
   } else {
-    const existingIdx = customCourses.value.findIndex(x => x._editId === c.id && x.major === c.major)
+    const existingIdx = customCourses.value.findIndex(x => x._editId === c.id && !x._weekScope && x.major === c.major)
     if (existingIdx !== -1) customCourses.value[existingIdx] = { ...updated, _custom: true, _editId: c.id }
     else customCourses.value.push({ ...updated, _custom: true, _editId: c.id })
   }
@@ -272,11 +296,16 @@ function doEditCourse() {
 // ===== 删除课程 =====
 const showDeleteConfirm = ref(false)
 const deleteTarget = ref(null)
-function confirmDeleteCourse(course) { deleteTarget.value = course; showDeleteConfirm.value = true }
+const deleteScope = ref('all')
+function confirmDeleteCourse(course) { deleteTarget.value = course; deleteScope.value = 'all'; showDeleteConfirm.value = true }
 function doDeleteCourse() {
   const c = deleteTarget.value
   if (!c) { showDeleteConfirm.value = false; return }
-  if (c._custom) {
+  if (deleteScope.value === 'week') {
+    // 仅删除第 X 周：其余周次照常显示
+    deletedCourses.value = [...deletedCourses.value, c.id + '_wk' + selectedWeek.value]
+    saveJSON(DELETED_KEY, deletedCourses.value)
+  } else if (c._custom) {
     customCourses.value = customCourses.value.filter(x => x._id !== c._id)
   } else {
     deletedCourses.value = [...deletedCourses.value, c.id]
@@ -344,7 +373,110 @@ function doDayEdit() {
   showDayEdit.value = false
 }
 
-// ===== 截图 =====
+// ===== 调课（改期）：点课程设置调到第X周周几第N节 / 换教室 =====
+const showAdjust = ref(false)
+const adjustForm = ref({ course: null, destWeek: 1, destWeekday: 1, destStart: 1, destEnd: 2, destLocation: '' })
+const adjustExisting = ref(null)
+
+function toFullDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+function rangeOf(a, b) { const r = []; for (let i = a; i <= b; i++) r.push(i); return r }
+
+function findAdjustFor(course) {
+  // 扫描当前周七列：既找「本周这节被调走」，也找「本周这格是别处调来的」
+  const list = getAllAdjustments()
+  for (let wd = 1; wd <= 7; wd++) {
+    const day = dateStrOf(wd)
+    const asSrc = list.find(a =>
+      a.srcDate === day && a.srcWeekday === wd &&
+      a.srcPeriods[0] === course.startPeriod && a.srcPeriods.at(-1) === course.endPeriod
+    )
+    if (asSrc) return asSrc
+    const asDest = list.find(a =>
+      a.destDate === day && (a.courseId === course.id || (!!a.courseHint && course.name.startsWith(a.courseHint)))
+    )
+    if (asDest) return asDest
+  }
+  return null
+}
+function openAdjustModal(course) {
+  if (!course) return
+  adjustForm.value = {
+    course,
+    destWeek: selectedWeek.value,
+    destWeekday: course.weekday,
+    destStart: course.startPeriod,
+    destEnd: course.endPeriod,
+    destLocation: course.location,
+  }
+  adjustExisting.value = findAdjustFor(course)
+  showDetail.value = false
+  showAdjust.value = true
+}
+function doSaveAdjust() {
+  const f = adjustForm.value, c = f.course
+  if (!c) return
+  f.destWeek = Math.max(1, Math.min(18, Number(f.destWeek) || selectedWeek.value))
+  if (f.destEnd < f.destStart) f.destEnd = f.destStart
+  const srcDate = dateStrOf(c.weekday)
+  loadUserAdjustments().filter(a =>
+    a.srcDate === srcDate && a.srcWeekday === c.weekday &&
+    a.srcPeriods[0] === c.startPeriod && a.srcPeriods.at(-1) === c.endPeriod
+  ).forEach(a => removeUserAdjustment(a.id))
+  const destDate = toFullDate(getDateInWeek(f.destWeek, f.destWeekday))
+  saveUserAdjustment({
+    srcDate, srcWeekday: c.weekday,
+    srcPeriods: rangeOf(c.startPeriod, c.endPeriod),
+    destDate, destPeriods: rangeOf(f.destStart, f.destEnd),
+    destLocation: (f.destLocation || '').trim() || c.location,
+    courseHint: c.name, courseId: c.id, major: c.major,
+  })
+  scheduleRevision.value++
+  showAdjust.value = false
+}
+function doRemoveAdjust() {
+  if (adjustExisting.value && adjustExisting.value.origin !== 'site') {
+    removeUserAdjustment(adjustExisting.value.id)
+    scheduleRevision.value++
+  }
+  showAdjust.value = false
+}
+
+// ===== 数据同步 / 检测更新 =====
+const syncing = ref(false)
+async function refreshSchedule() {
+  if (syncing.value) return
+  syncing.value = true
+  try { await loadScheduleData({ preferRemote: false }) } finally { syncing.value = false }
+}
+const syncLabel = computed(() => {
+  scheduleRevision.value
+  if (syncing.value || syncStatus.value.state === 'syncing') return '同步中…'
+  const st = syncStatus.value
+  const when = st.updatedAt ? st.updatedAt.slice(5, 10).replace('-', '/') : ''
+  if (st.state === 'synced') return `课表已同步 ${when}`
+  if (st.state === 'cached') return `离线·缓存 ${when}`
+  if (st.state === 'builtin') return '内置课表'
+  return '同步课表'
+})
+/** 检测更新：拉接口比对课表版本 + APK 版本 */
+const updateInfo = ref(null)
+const showUpdate = ref(false)
+async function checkUpdate() {
+  showUpdate.value = true
+  updateInfo.value = { state: 'checking' }
+  try {
+    const res = await fetch('data/schedule-data.json?t=' + Date.now(), { cache: 'no-store' })
+    const data = await res.json()
+    const localVer = syncStatus.value.version
+    const scheduleNew = !!(data.version && localVer && data.version !== localVer)
+    updateInfo.value = { state: 'done', scheduleNew, appVersion: data.appVersion || '?', updatedAt: data.updatedAt, semester: data.semester }
+    if (scheduleNew || !syncStatus.value.updatedAt) await refreshSchedule()
+  } catch (e) {
+    updateInfo.value = { state: 'error', error: String(e.message || e) }
+  }
+}
+
+
 async function doSave() {
   try {
     if (!window.html2canvas) { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; document.head.appendChild(s); await new Promise((r, j) => { s.onload = r; s.onerror = j }) }
@@ -369,7 +501,12 @@ function onTouchEnd(e) {
   }
 }
 
-onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounted.value = true }) })
+onMounted(() => {
+  selectedWeek.value = getCurrentWeek()
+  setUserAdjustKey('feike_adjustments')
+  refreshSchedule()
+  nextTick(() => { mounted.value = true })
+})
 </script>
 
 <template>
@@ -383,9 +520,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
       </div>
       <div class="top-center">
         <span class="app-title">🩸 课表</span>
-        <span class="app-sub" v-if="displayMode === 'page'">{{ currentMajor?.short }} · {{ showSemester ? '学期' : '第' + selectedWeek + '周' }}</span>
+        <span class="app-sub" v-if="displayMode === 'page'">{{ currentMajor?.short }} · {{ showSemester ? '学期' : '第' + selectedWeek + '周' }} · {{ syncLabel }}</span>
       </div>
       <div class="top-right">
+        <SuggestButton variant="icon" />
         <button class="icon-btn" @click="showImportExport = true">📥</button>
         <button class="icon-btn" @click="doSave">📷</button>
       </div>
@@ -492,6 +630,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     <!-- ===== 页面版底部工具栏 ===== -->
     <div v-if="displayMode === 'page'" class="bottom-bar">
       <button class="bb-item" :class="{ active: typeFilter === 'all' }" @click="typeFilter = 'all'">全部</button>
+      <button class="bb-item" @click="checkUpdate">🔄 检测更新</button>
       <button class="bb-item" :class="{ active: typeFilter === '专业必修课' }" @click="typeFilter = '专业必修课'">专必</button>
       <button class="bb-item" :class="{ active: typeFilter === '专业选修课' }" @click="typeFilter = '专业选修'">专选</button>
       <button class="bb-item" :class="{ active: typeFilter === '公共必修课' }" @click="typeFilter = '公共必修'">公必</button>
@@ -505,6 +644,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     <!-- ===== 纯课表底部：简洁操作 ===== -->
     <div v-if="displayMode === 'pure'" class="pure-bottom">
       <button class="pb-btn" @click="selectedWeek = getCurrentWeek()">📍 本周</button>
+      <button class="pb-btn" @click="checkUpdate">🔄 更新</button>
       <button class="pb-btn" @click="doSave">📷 截图</button>
       <button class="pb-btn" @click="displayMode = 'page'">📄 完整</button>
     </div>
@@ -527,6 +667,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
           <div class="detail-row"><span>教师</span><b>{{ selectedCourse?.teacher }}</b></div>
         </div>
         <div class="modal-actions">
+          <button class="btn-adjust" @click="openAdjustModal(selectedCourse)">🔀 调课</button>
           <button class="btn-edit" @click="openEditModal(selectedCourse)">✏️ 编辑</button>
           <button class="btn-delete" @click="confirmDeleteCourse(selectedCourse)">🗑️ 删除</button>
         </div>
@@ -581,6 +722,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
             </div>
           </div>
           <div class="form-row"><label>周次</label><input v-model="editForm.weekStart" type="number" min="1" max="18" style="width:60px"> ~ <input v-model="editForm.weekEnd" type="number" min="1" max="18" style="width:60px"></div>
+          <div class="form-row"><label>生效范围</label>
+            <label class="radio-row"><input type="radio" v-model="editScope" value="all"><span>修改整个学期</span></label>
+            <label class="radio-row"><input type="radio" v-model="editScope" value="week"><span>仅修改第{{ selectedWeek }}周（其余周不受影响）</span></label>
+          </div>
         </div>
         <div class="modal-actions"><button class="btn-cancel" @click="showEditModal = false">取消</button><button class="btn-primary" @click="doEditCourse">保存</button></div>
       </div>
@@ -590,6 +735,10 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
     <div v-if="showDeleteConfirm" class="overlay" @click.self="showDeleteConfirm = false">
       <div class="modal small-modal">
         <div class="modal-title" style="padding:16px 16px 8px;">确认删除「{{ deleteTarget?.name }}」？</div>
+        <div class="modal-body">
+          <label class="radio-row"><input type="radio" v-model="deleteScope" value="all"><span>删除整个学期的该课程</span></label>
+          <label class="radio-row"><input type="radio" v-model="deleteScope" value="week"><span>仅删除第{{ selectedWeek }}周（其余周保留）</span></label>
+        </div>
         <div class="modal-actions"><button class="btn-cancel" @click="showDeleteConfirm = false">取消</button><button class="btn-danger" @click="doDeleteCourse">删除</button></div>
       </div>
     </div>
@@ -633,6 +782,68 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
           </div>
         </div>
         <div class="modal-actions"><button class="btn-cancel" @click="showDayEdit = false">取消</button><button class="btn-primary" @click="doDayEdit">确定</button></div>
+      </div>
+    </div>
+
+    <!-- 调课（改期） -->
+    <div v-if="showAdjust" class="overlay" @click.self="showAdjust = false">
+      <div class="modal add-modal">
+        <div class="modal-header"><span class="modal-title">🔀 调课 · 仅改第{{ selectedWeek }}周</span><button class="modal-close" @click="showAdjust = false">✕</button></div>
+        <div class="modal-body">
+          <div class="form-row" style="font-size:12px;color:#666;">
+            「{{ adjustForm.course?.name }}」第{{ selectedWeek }}周 ·
+            {{ WEEKDAYS.find(w => w.key === adjustForm.course?.weekday)?.label }}
+            第{{ adjustForm.course?.startPeriod }}-{{ adjustForm.course?.endPeriod }}节
+            <span v-if="adjustForm.course?.location"> · {{ adjustForm.course.location }}</span>
+          </div>
+          <div class="form-row"><label>调到第几周</label><input v-model.number="adjustForm.destWeek" type="number" min="1" max="18" style="width:70px"></div>
+          <div class="form-row"><label>调到周几</label>
+            <div class="btn-group">
+              <button v-for="d in 7" :key="d" class="sel-btn" :class="{ active: adjustForm.destWeekday === d }" @click="adjustForm.destWeekday = d">{{ ['一','二','三','四','五','六','日'][d-1] }}</button>
+            </div>
+          </div>
+          <div class="form-row"><label>调到节次 · 开始</label>
+            <div class="btn-group">
+              <button v-for="p in 12" :key="p" class="sel-btn sm" :class="{ active: adjustForm.destStart === p }" @click="adjustForm.destStart = p; if (adjustForm.destEnd < p) adjustForm.destEnd = p">{{ p }}</button>
+            </div>
+          </div>
+          <div class="form-row"><label>结束</label>
+            <div class="btn-group">
+              <button v-for="p in 12" :key="p" class="sel-btn sm" :class="{ active: adjustForm.destEnd === p }" :disabled="p < adjustForm.destStart" @click="adjustForm.destEnd = p">{{ p }}</button>
+            </div>
+          </div>
+          <div class="form-row"><label>上课教室（不改留空）</label><input v-model="adjustForm.destLocation" :placeholder="adjustForm.course?.location"></div>
+          <div v-if="adjustExisting" class="adjust-note">
+            ⓘ 该周已有调课：{{ adjustExisting.destDate.slice(5) }} 第{{ adjustExisting.destPeriods[0] }}-{{ adjustExisting.destPeriods.at(-1) }}节
+            {{ adjustExisting.destLocation }}<span v-if="adjustExisting.origin === 'site'">（官方发布，不可撤销）</span>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button v-if="adjustExisting && adjustExisting.origin !== 'site'" class="btn-danger" @click="doRemoveAdjust">撤销</button>
+          <button class="btn-cancel" @click="showAdjust = false">取消</button>
+          <button class="btn-primary" @click="doSaveAdjust">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 检测更新 -->
+    <div v-if="showUpdate" class="overlay" @click.self="showUpdate = false">
+      <div class="modal small-modal">
+        <div class="modal-title" style="padding:16px 16px 8px;">🔄 检测更新</div>
+        <div class="modal-body">
+          <div v-if="updateInfo?.state === 'checking'" class="upd-line">正在检查…</div>
+          <template v-else-if="updateInfo?.state === 'error'">
+            <div class="upd-line warn">检查失败：{{ updateInfo.error }}</div>
+            <div class="upd-line sub">课表仍可正常使用（当前：{{ syncLabel }}）</div>
+          </template>
+          <template v-else-if="updateInfo">
+            <div class="detail-row"><span>课表数据</span><b :class="{ 'upd-new': updateInfo.scheduleNew }">{{ updateInfo.scheduleNew ? '有新课表/调课 → 已更新' : '已是最新' }}</b></div>
+            <div class="detail-row"><span>数据更新时间</span><b>{{ (updateInfo.updatedAt || '').slice(0, 16).replace('T', ' ') }}</b></div>
+            <div class="detail-row"><span>学期</span><b>{{ updateInfo.semester || '-' }}</b></div>
+            <div class="detail-row"><span>站点 APK</span><b>v{{ updateInfo.appVersion }} · 下载见「网页版」</b></div>
+          </template>
+        </div>
+        <div class="modal-actions"><button class="btn-primary" @click="showUpdate = false">好</button></div>
       </div>
     </div>
 
@@ -752,6 +963,12 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .btn-cancel { background: #f0f0f0; color: #333; }
 .btn-danger { background: #dc2626; color: #fff; }
 .btn-edit { background: #1565c0; color: #fff; }
+.btn-adjust { background: #7c3aed; color: #fff; }
+.adjust-note { font-size: 11px; color: #6d28d9; background: #f5f3ff; border: 1px dashed #c4b5fd; border-radius: 8px; padding: 8px 10px; line-height: 1.5; }
+.upd-line { font-size: 13px; padding: 6px 0; }
+.upd-line.warn { color: #c62828; }
+.upd-line.sub { color: #888; font-size: 12px; }
+.upd-new { color: #16a34a; }
 .btn-delete { background: #dc2626; color: #fff; }
 .small-modal { max-width: 320px; border-radius: 16px; margin: auto; }
 .small-modal .modal-actions { border-radius: 0 0 16px 16px; }

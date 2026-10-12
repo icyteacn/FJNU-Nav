@@ -7,8 +7,10 @@ android {
         applicationId "com.feike.schedule"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
+        // 只保留中英文资源：App 无其他语种文案，避免把 AndroidX 的几十种翻译打进包
+        resourceConfigurations += ["zh", "en"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

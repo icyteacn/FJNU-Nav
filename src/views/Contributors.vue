@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.6.0</b> — {{ '课表同步与建议通道：课表数据接口（网页/APK 共用，断网有缓存）、点课程调课与单周删改、APK 1.1 覆盖升级且包体 2.88MB→0.99MB、三端「💡提建议」直达校园墙建议分区。' }}</li>
       <li><b>v1.5.19</b> — {{ '课表单次调课：第八周 10/20 晚人工智能通识课调至第十二周 11/19 立诚1-105（改期/调入双角标，日程助手·课程表·移动端三端同步）。' }}</li>
       <li><b>v1.5.20</b> — {{ 'GitHub 评论敏感词巡检与 QDU 同源：gh-comments 事后巡检 API。' }}</li>
       <li><b>v1.5.18</b> — {{ '评论网关与 QDU 同源加固：admin 删除评论多级子孙收敛。' }}</li>

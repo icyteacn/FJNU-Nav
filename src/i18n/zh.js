@@ -71,7 +71,7 @@ export default {
     fullStats: '查看完整统计 ›',
     wikiTitle: '校园 Wiki',
     downloadTitle: '课表 App · 安卓版',
-    downloadDesc: '独立课表应用，离线可用，仅 1.5MB',
+    downloadDesc: '独立课表应用，离线可用，不到 1MB',
     downloadBtn: '下载 APK ↗',
     wikiSite: '网站',
     wikiDocs: '腾讯文档',
@@ -134,5 +134,28 @@ export default {
     bszSiteUv: '站点访客',
     bszLoading: '不蒜子统计加载中…',
     bszFail: '不蒜子统计暂不可用，看看其他统计吧'
+  },
+
+  suggest: {
+    btn: '建议',
+    title: '💡 提建议',
+    sub: '想法、bug、想加的功能，直接告诉开发者',
+    typeFeature: '功能建议',
+    typeBug: '问题反馈',
+    typeOther: '其他',
+    placeholder: '说说你的想法…（在哪个页面、想要什么效果）',
+    contact: '联系方式（选填）',
+    contactPh: 'QQ / 微信 / 邮箱，方便回你',
+    submit: '提交给开发者',
+    sending: '提交中…',
+    ok: '已收到，谢谢你！',
+    okSub: '建议已进入校园墙「💡 建议」分区，开发者会看到。',
+    viewWall: '去校园墙看看',
+    fail: '云端暂时不可用，用下面任一方式送达：',
+    copy: '复制文本',
+    copyOk: '已复制，粘贴发给开发者即可',
+    github: '到 GitHub 提交',
+    close: '关闭',
+    empty: '先写点内容吧'
   }
 }

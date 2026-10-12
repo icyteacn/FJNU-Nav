@@ -14,7 +14,9 @@ import {
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
   loadUserOverrides, saveUserOverride,
+  setUserAdjustKey, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, loadUserAdjustments,
 } from '../data/classSchedule.js'
+import { loadScheduleData, scheduleRevision, syncStatus } from '../data/scheduleSync.js'
 import { setNavContext } from '../stores/navContext.js'
 
 const props = defineProps({
@@ -66,7 +68,9 @@ const todayWeekday = computed(() => { const d = now.value.getDay(); return d ===
 const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
 
 const allCourses = computed(() => {
-  const editedIds = new Set(customCourses.value.filter(c => c._editId).map(c => c._editId))
+  scheduleRevision.value // 远程课表数据替换后重算（COURSES 是模块数组，Vue 不追踪其内容变化）
+  // 只有「整学期」编辑才把原课排除；「仅本周」编辑以 _weekScope 覆盖形式存在，原课保留
+  const editedIds = new Set(customCourses.value.filter(c => c._editId && !c._weekScope).map(c => c._editId))
   const base = COURSES.filter(c => !editedIds.has(c.id) && c.major === selectedMajor.value)
   const custom = customCourses.value.filter(c => c.major === selectedMajor.value)
   return [...base, ...custom].filter(c => !deletedCourses.value.includes(c.id) && !deletedCourses.value.includes(c._editId || c.id))
@@ -74,6 +78,7 @@ const allCourses = computed(() => {
 const majorCourses = computed(() => allCourses.value.filter(c => c.major === selectedMajor.value))
 
 const todayCourses = computed(() => {
+  scheduleRevision.value // 依赖远程课表数据修订
   const scheduleWd = getTodayScheduleWeekday()
   if (scheduleWd === null) return []
   return majorCourses.value.filter(c => {
@@ -87,11 +92,18 @@ const todayCourses = computed(() => {
 const hasTodayCourses = computed(() => todayCourses.value.length > 0)
 
 const displayCourses = computed(() => {
+  scheduleRevision.value // 依赖远程课表数据修订（数据到达后自动重算）
   let courses = showSemester.value || showOtherWeek.value ? majorCourses.value : majorCourses.value.filter(c => {
     if (!isCourseInWeek(c, selectedWeek.value)) return false
     if (deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
     return true
   })
+  if (!showSemester.value) {
+    // 应用「仅本周」编辑：本周显示覆盖版本，覆盖项本身不单独出现在列表里
+    courses = courses
+      .filter(c => !(c._editId && c._weekScope))
+      .map(c => customCourses.value.find(x => x._editId === c.id && x._weekScope === selectedWeek.value) || c)
+  }
   if (typeFilter.value !== 'all') courses = courses.filter(c => c.category === typeFilter.value)
   if (searchKw.value) {
     const kw = searchKw.value.toLowerCase()
@@ -550,17 +562,27 @@ function doConfirmEdit() {
   const updated = pendingEditData.value
   const c = editTarget.value
   if (!updated || !c) { showEditScopeConfirm.value = false; return }
-  if (editScope.value === 'week') {
-    updated.weeks = selectedWeek.value + '-' + selectedWeek.value
-  } else {
-    updated.weeks = editForm.value.weekStart + '-' + editForm.value.weekEnd
-  }
+  const weekScope = editScope.value === 'week'
+  updated.weeks = weekScope
+    ? selectedWeek.value + '-' + selectedWeek.value
+    : editForm.value.weekStart + '-' + editForm.value.weekEnd
+  delete updated._weekScope
   if (c._custom) {
-    const idx = customCourses.value.findIndex(x => x._id === c._id)
-    if (idx !== -1) customCourses.value[idx] = { ...updated, _custom: true, _id: c._id }
-    else customCourses.value.push({ ...updated, _custom: true, _id: c._id })
+    if (weekScope) {
+      customCourses.value.push({ ...updated, _custom: true, _id: `${c._id}_wk${selectedWeek.value}`, _editId: c.id, _weekScope: selectedWeek.value })
+    } else {
+      const idx = customCourses.value.findIndex(x => x._id === c._id)
+      if (idx !== -1) customCourses.value[idx] = { ...updated, _custom: true, _id: c._id }
+      else customCourses.value.push({ ...updated, _custom: true, _id: c._id })
+    }
+  } else if (weekScope) {
+    // 「仅本周」：新建周覆盖条目，原课在其他周照常显示
+    const payload = { ...updated, _custom: true, _editId: c.id, _weekScope: selectedWeek.value }
+    const idx = customCourses.value.findIndex(x => x._editId === c.id && x._weekScope === selectedWeek.value)
+    if (idx !== -1) customCourses.value[idx] = payload
+    else customCourses.value.push(payload)
   } else {
-    const existingIdx = customCourses.value.findIndex(x => x._editId === c.id && x.major === c.major)
+    const existingIdx = customCourses.value.findIndex(x => x._editId === c.id && !x._weekScope && x.major === c.major)
     if (existingIdx !== -1) {
       customCourses.value[existingIdx] = { ...updated, _custom: true, _editId: c.id }
     } else {
@@ -620,6 +642,95 @@ function doDayEdit() {
   showDayEdit.value = false
 }
 
+// ========== 调课（改期）：点课程设置调到第X周周几第N节 / 换教室 ==========
+const showAdjust = ref(false)
+const adjustForm = ref({ course: null, destWeek: 1, destWeekday: 1, destStart: 1, destEnd: 2, destLocation: '' })
+const adjustExisting = ref(null)
+
+function toFullDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+function rangeOf(a, b) { const r = []; for (let i = a; i <= b; i++) r.push(i); return r }
+
+function findAdjustFor(course) {
+  // 扫描当前周七列：既找「本周这节被调走」，也找「本周这格是别处调来的」
+  // （调入格所在列可能与课程自带的 weekday 不同，不能只按 course.weekday 推日期）
+  const list = getAllAdjustments()
+  for (let wd = 1; wd <= 7; wd++) {
+    const day = dateStrOf(wd)
+    const asSrc = list.find(a =>
+      a.srcDate === day && a.srcWeekday === wd &&
+      a.srcPeriods[0] === course.startPeriod && a.srcPeriods.at(-1) === course.endPeriod
+    )
+    if (asSrc) return asSrc
+    const asDest = list.find(a =>
+      a.destDate === day && (a.courseId === course.id || (!!a.courseHint && course.name.startsWith(a.courseHint)))
+    )
+    if (asDest) return asDest
+  }
+  return null
+}
+function openAdjustModal(course) {
+  if (!course) return
+  adjustForm.value = {
+    course,
+    destWeek: selectedWeek.value,
+    destWeekday: course.weekday,
+    destStart: course.startPeriod,
+    destEnd: course.endPeriod,
+    destLocation: course.location,
+  }
+  adjustExisting.value = findAdjustFor(course)
+  showAdjust.value = true
+}
+function doSaveAdjust() {
+  const f = adjustForm.value, c = f.course
+  if (!c) return
+  f.destWeek = Math.max(1, Math.min(18, Number(f.destWeek) || selectedWeek.value))
+  if (f.destEnd < f.destStart) f.destEnd = f.destStart
+  const srcDate = dateStrOf(c.weekday)
+  // 同一位置先清掉旧的用户调课（避免重复条目叠加）
+  loadUserAdjustments().filter(a =>
+    a.srcDate === srcDate && a.srcWeekday === c.weekday &&
+    a.srcPeriods[0] === c.startPeriod && a.srcPeriods.at(-1) === c.endPeriod
+  ).forEach(a => removeUserAdjustment(a.id))
+  const destDate = toFullDate(getDateInWeek(f.destWeek, f.destWeekday))
+  saveUserAdjustment({
+    srcDate, srcWeekday: c.weekday,
+    srcPeriods: rangeOf(c.startPeriod, c.endPeriod),
+    destDate, destPeriods: rangeOf(f.destStart, f.destEnd),
+    destLocation: (f.destLocation || '').trim() || c.location,
+    courseHint: c.name, courseId: c.id, major: c.major,
+  })
+  scheduleRevision.value++
+  showAdjust.value = false
+  showDetail.value = false // 源格已变，详情一并关闭避免显示过期状态
+}
+function doRemoveAdjust() {
+  if (adjustExisting.value && adjustExisting.value.origin !== 'site') {
+    removeUserAdjustment(adjustExisting.value.id)
+    scheduleRevision.value++
+  }
+  showAdjust.value = false
+  showDetail.value = false
+}
+
+// ========== 课表数据同步（远程接口 / 离线回退） ==========
+const syncing = ref(false)
+async function refreshSchedule() {
+  if (syncing.value) return
+  syncing.value = true
+  try { await loadScheduleData({ preferRemote: false }) } finally { syncing.value = false }
+}
+const syncLabel = computed(() => {
+  scheduleRevision.value
+  if (syncing.value || syncStatus.value.state === 'syncing') return '同步中…'
+  const st = syncStatus.value
+  const when = st.updatedAt ? st.updatedAt.slice(5, 10).replace('-', '/') + ' ' + st.updatedAt.slice(11, 16) : ''
+  if (st.state === 'synced') return `已同步 · ${when}`
+  if (st.state === 'cached') return `离线 · 缓存 ${when}`
+  if (st.state === 'builtin') return '内置课表'
+  return '点击同步课表'
+})
+
 // ========== 联动跳转 ==========
 function goClassroomNav(room) {
   setNavContext({ room })
@@ -636,7 +747,12 @@ function goWhatToEat() {
   emit('open', 'whatToEat')
 }
 
-onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounted.value = true }) })
+onMounted(() => {
+  selectedWeek.value = getCurrentWeek()
+  setUserAdjustKey((props.storagePrefix || '') + 'fjnu_adjustments')
+  refreshSchedule()
+  nextTick(() => { mounted.value = true })
+})
 </script>
 
 <template>
@@ -706,6 +822,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 
     <div class="mode-hint">
       <span>{{ currentMajor?.short }} · {{ showSemester ? '学期课表' : '第' + selectedWeek + '周课表' }}</span>
+      <button class="sync-chip" :title="syncStatus.error || '拉取课表数据接口（调课/新学期即时同步）'" @click="refreshSchedule">{{ syncLabel }}</button>
       <button v-if="customCourses.length || deletedCourses.length" class="reset-btn" @click="showResetConfirm = true">🔄 恢复默认</button>
     </div>
 
@@ -810,6 +927,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
           <div v-if="selectedCourse?.shared" class="detail-row"><span class="detail-label">备注</span><span class="detail-value">{{ selectedCourse.shared }}</span></div>
         </div>
         <div class="detail-actions">
+          <button class="detail-action-btn adjust-btn" @click="openAdjustModal(selectedCourse)">🔀 调课</button>
           <button class="detail-action-btn nav-btn" @click="goClassroomNav(selectedCourse?.location)">🧭 教室导航</button>
           <button class="detail-action-btn eat-btn" @click="goCanteen()">🍚 去哪吃</button>
           <button class="detail-action-btn budget-btn" @click="goBudget(selectedCourse?.name)">💰 记一笔</button>
@@ -851,6 +969,59 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
         <div class="confirm-actions">
           <button class="btn-cancel" @click="showEditScopeConfirm = false">取消</button>
           <button class="btn-primary" @click="doConfirmEdit">确认修改</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 调课（改期） -->
+    <div v-if="showAdjust" class="overlay" @click.self="showAdjust = false">
+      <div class="confirm-modal adjust-modal">
+        <div class="confirm-title">🔀 调课 · 仅改这一周</div>
+        <div class="confirm-desc">
+          「{{ adjustForm.course?.name }}」第{{ selectedWeek }}周 ·
+          {{ WEEKDAYS.find(w => w.key === adjustForm.course?.weekday)?.label }}
+          第{{ adjustForm.course?.startPeriod }}-{{ adjustForm.course?.endPeriod }}节
+          <span v-if="adjustForm.course?.location"> · {{ adjustForm.course.location }}</span>
+        </div>
+        <div class="form-row">
+          <label>调到第几周</label>
+          <input v-model.number="adjustForm.destWeek" type="number" min="1" max="18">
+        </div>
+        <div class="form-row">
+          <label>调到周几</label>
+          <div class="select-grid">
+            <button v-for="d in 7" :key="d" class="select-btn" :class="{ active: adjustForm.destWeekday === d }" @click="adjustForm.destWeekday = d">{{ ['一','二','三','四','五','六','日'][d-1] }}</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>调到节次</label>
+          <div class="period-select">
+            <div class="select-group">
+              <span class="select-label">开始</span>
+              <div class="select-grid compact">
+                <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: adjustForm.destStart === p }" @click="adjustForm.destStart = p; if (adjustForm.destEnd < p) adjustForm.destEnd = p">{{ p }}</button>
+              </div>
+            </div>
+            <div class="select-group">
+              <span class="select-label">结束</span>
+              <div class="select-grid compact">
+                <button v-for="p in 12" :key="p" class="select-btn sm" :class="{ active: adjustForm.destEnd === p }" :disabled="p < adjustForm.destStart" @click="adjustForm.destEnd = p">{{ p }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>上课教室（不改留空）</label>
+          <input v-model="adjustForm.destLocation" :placeholder="adjustForm.course?.location">
+        </div>
+        <div v-if="adjustExisting" class="adjust-note">
+          ⓘ 该周已有调课：{{ adjustExisting.destDate.slice(5) }} 第{{ adjustExisting.destPeriods[0] }}-{{ adjustExisting.destPeriods.at(-1) }}节
+          {{ adjustExisting.destLocation }}<span v-if="adjustExisting.origin === 'site'">（官方）</span>
+        </div>
+        <div class="confirm-actions">
+          <button v-if="adjustExisting && adjustExisting.origin !== 'site'" class="btn-danger" @click="doRemoveAdjust">撤销调课</button>
+          <button class="btn-cancel" @click="showAdjust = false">取消</button>
+          <button class="btn-primary" @click="doSaveAdjust">保存</button>
         </div>
       </div>
     </div>
@@ -1135,6 +1306,8 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .mode-hint { padding: 6px 12px; margin: 0 12px 8px; font-size: 12px; color: var(--primary); font-weight: 600; background: var(--primary-soft); border-radius: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .reset-btn { padding: 4px 10px; border: 1px solid var(--primary); border-radius: 6px; background: transparent; color: var(--primary); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .reset-btn:hover { background: var(--primary); color: #fff; }
+.sync-chip { padding: 4px 10px; border: 1px dashed var(--primary); border-radius: 6px; background: transparent; color: var(--primary); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.sync-chip:hover { background: var(--primary); color: #fff; }
 
 /* 表格 */
 .grid-view { padding: 0; overflow-x: auto; }
@@ -1256,6 +1429,11 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .detail-actions { padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px dashed var(--border); }
 .detail-action-btn { flex: 1; min-width: calc(50% - 3px); padding: 10px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
 .detail-action-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.adjust-btn { background: #ede9fe; border-color: #7c3aed; color: #5b21b6; }
+.adjust-modal { max-height: 85vh; overflow-y: auto; box-sizing: border-box; }
+.adjust-note { font-size: 11px; color: #6d28d9; background: #f5f3ff; border: 1px dashed #c4b5fd; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; line-height: 1.5; }
+.adjust-modal .confirm-actions { display: flex; gap: 8px; }
+.adjust-modal .confirm-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .nav-btn { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
 .eat-btn { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 .budget-btn { background: #dcfce7; color: #166534; border-color: #bbf7d0; }

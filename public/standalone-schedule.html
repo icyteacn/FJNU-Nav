@@ -1019,6 +1019,7 @@ function render(){
   applyStyles();
   if(isList){document.getElementById('timeLine').style.display='none'}
   else{updateTimeLine()}
+  pushNotifyData(); // 同步今日概要给原生常驻通知（仅原生环境生效）
 }
 function toggleView(){
   state.viewMode=state.viewMode==='list'?'grid':'list';
@@ -1026,6 +1027,50 @@ function toggleView(){
   showToast(state.viewMode==='list'?'已切换到单日列表':'已切换回课表表格');
 }
 function setListDay(wd){state.listDay=wd;saveState();renderDayList()}
+
+/** 今日概要 → 写入 app 私有目录，供原生常驻通知显示（锁屏/通知栏） */
+function buildNotifySummary(){
+  const today=new Date();
+  const ds=getDateStr(today);
+  const base={date:ds,title:'🐔🩸课表',text:'打开应用查看今日课程与下一节课',lines:[]};
+  if(state.selectedWeek!==getCurrentWeek())return base;
+  const todayWd=today.getDay()===0?7:today.getDay();
+  const nowMin=today.getHours()*60+today.getMinutes();
+  const res=getDayCourses(state.selectedWeek,todayWd);
+  if(res.holiday){base.title=res.holiday.name+' · 停课';base.text='今天不用上课 🎉';return base}
+  const list=res.list;
+  if(!list.length){base.title='今天没有课';base.text='好好休息 ☕️';return base}
+  let live=null,next=null;
+  for(const it of list){
+    const s=PERIOD_START[it.start],e=PERIOD_END[it.end];
+    if(nowMin>=s&&nowMin<e)live=it;
+    else if(!live&&!next&&nowMin<s)next=it;
+  }
+  const locOf=it=>it.kind==='incoming'?it.adj.destLocation:it.course.location;
+  if(live){
+    base.title='● 上课中 · '+live.course.name;
+    base.text=PERIOD_FMT[live.start]+'-'+PERIOD_FMT_END[live.end]+' · '+locOf(live)+' · '+(live.course.teacher||'');
+  }else if(next){
+    base.title='下一节 '+PERIOD_FMT[next.start]+' · 今日'+list.length+'节';
+    base.text=next.course.name+' · '+locOf(next)+' · '+(next.course.teacher||'');
+  }else{
+    base.title='今日 '+list.length+' 节课已上完';
+    base.text='明天见 🎉';
+  }
+  base.lines=list.slice(0,5).map(it=>PERIOD_FMT[it.start]+'-'+PERIOD_FMT_END[it.end]+' '+it.course.name+' · '+locOf(it));
+  return base;
+}
+/** 通知数据写盘（仅原生环境生效；网页里静默跳过） */
+function pushNotifyData(){
+  try{
+    const cap=window.Capacitor;
+    if(!(cap&&cap.Plugins&&cap.Plugins.Filesystem))return;
+    const sum=buildNotifySummary();
+    cap.Plugins.Filesystem.writeFile({path:'notify.json',data:JSON.stringify(sum),directory:'DATA',encoding:'utf8'})
+      .then(()=>{})
+      .catch(()=>{});
+  }catch(e){}
+}
 function renderWeekNav(){
   const s=getWeekDates(state.selectedWeek);
   const e=getWeekDates(state.selectedWeek);

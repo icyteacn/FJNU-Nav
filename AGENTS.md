@@ -62,7 +62,7 @@
 
 | 日期 | 版本 | 内容 |
 | --- | --- | --- |
-| 2026-10-12 | v1.5.20 | **GitHub 评论巡检同源（patch，与 QDU 1.6.18 同步）**。`community.mjs` 字节级同步 `gh-comments` 巡检端点。**验证**：build/integrity 全绿、md5 与 QDU 一致。 |
+| 2026-10-12 | v1.5.20 | **GitHub 评论巡检同源（patch，与 QDU 1.6.18 同步）**。`community.mjs` 字节级同步 `gh-comments` 巡检端点；（10-12 追加）同步 `gh-count` 计数端点（与 QDU 1.6.19 对应）。**验证**：build/integrity 全绿、md5 与 QDU 一致。 |
 | 2026-10-12 | v1.5.19 | **课表单次调课（patch）**。应维护者要求把「第八周 10/20 周二晚人工智能通识课 → 第十二周 11/19 周四晚立诚1-105」落进课表，模式参照 9/20→10/08 既有调整：① `classSchedule.js` 新增 `HOLIDAY_MAP` 条目 `2026-10-20`（**新类型 `adjust`**：当日课表不变、仅 `overrides` 节次改期；`scheduleWeekday:2` 供调入侧反查源课表）+ `getIncomingInfo` 返回补 `destPeriods`；② 视图侧修复**跨周调入解析**——调入源改用 `majorCourses`（目标周 12 超出课程 `weeks:3-10`，原 `displayCourses` 按周过滤会解析不到导致格子空），`isCellMerged`/`getRowspan` 改按 `overrides.srcPeriods` 与 `destPeriods` 判定（不受类型筛选/搜索影响，防 rowspan 溢出），`showSemester` 下不套用改期（学期视图按周次取日期会误伤）；③ 今日课程卡/列表视图剔除当日被调走的课；④ 新增 `.holiday-badge.adjust` 紫色角标（ClassSchedule + MobileSchedule）。**验证**：`npm run build` 通过、e2e-integrity 18 项、unit×4 全绿、Python 单测 17 OK、CDP 真机断言 **34/34 全绿**（第8周改期角标/第12周调入角标+立诚1-105/合并格/列表剔除/9-20→10-08 参考回归）+ 三张截图肉眼走查。 |
 | 2026-10-11 | v1.5.18 | **评论网关同源加固（patch，与 QDU 1.6.17 同步）**。`community.mjs` 字节级同步：admin/moderate 删除评论改多级子孙收敛。**验证**：build/integrity 全绿、md5 与 QDU 一致。 |
 | 2026-10-11 | v1.5.17 | **评论网关同源增强（patch，与 QDU 1.6.16 同步）**。`server/community.mjs` 与 QDU 字节级一致（md5 相同）：新增 `/api/comments/delete`（owner token 鉴权、连删子孙楼中楼、audit 留痕）、POST 收 `owner`、GET/queue 输出剔除 owner 防盗删。虽暂无 Wiki 前端消费，保持两仓 server 同源防漂移（sync-diff 干净）。**验证**：build/integrity/unit×4 全绿。 |

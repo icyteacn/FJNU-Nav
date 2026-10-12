@@ -4,6 +4,7 @@
 
 ## v1.5.20 (2026-10-12) · GitHub 评论巡检同源（patch，与 QDU 1.6.18 同步）
 - 🔍 `community.mjs` 同步：`/api/admin/gh-comments` 敏感词事后巡检（字节级与 QDU 一致）
+- 🏅 （10-12 追加）`/api/comments/gh-count` 全网评论计数端点同步（与 QDU 1.6.19 对应，供 Wiki 徽章显示 GitHub 评论数）
 
 ## v1.5.18 (2026-10-11) · 评论网关同源加固（patch，与 QDU 1.6.17 同步）
 - 🛡 `community.mjs` 同步：admin 删除评论多级子孙收敛（字节级与 QDU 一致）

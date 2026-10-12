@@ -435,6 +435,10 @@ export function removeUserAdjustment(id) {
   const all = loadUserAdjustments().filter(a => a.id !== id)
   try { localStorage.setItem(userAdjustKey, JSON.stringify(all)) } catch {}
 }
+/** 清空全部本地调课（用于「恢复默认课表」） */
+export function clearUserAdjustments() {
+  try { localStorage.removeItem(userAdjustKey) } catch {}
+}
 /** 官方调课（来自数据接口的 HOLIDAY_MAP.overrides） */
 export function getSiteAdjustments() {
   const list = []

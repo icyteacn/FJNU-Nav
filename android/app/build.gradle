@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// versionName 单一事实来源：仓库根 package.json 的 apkVersion
+// （CI 会先 rm -rf android，若在这里硬编码，线上导出的接口会读到过期版本）
+ext.apkVersionName = '1.1'
+def apkVerFile = new File(project.projectDir, '../../package.json')
+if (apkVerFile.exists()) {
+    def m = (apkVerFile.text =~ /"apkVersion"\s*:\s*"([^"]+)"/)
+    if (m.find()) ext.apkVersionName = m.group(1)
+}
+
 android {
     namespace "com.feike.schedule"
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -7,8 +16,9 @@ android {
         applicationId "com.feike.schedule"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        // versionName 单一事实来源：仓库根 package.json 的 apkVersion（CI 会先 rm -rf android）
+        versionName apkVersionName
         // 只保留中英文资源：App 无其他语种文案，避免把 AndroidX 的几十种翻译打进包
         resourceConfigurations += ["zh", "en"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

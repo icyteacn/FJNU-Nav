@@ -23,12 +23,19 @@ const DATA_DIR = path.join(ROOT, 'public', 'data')
 const FULL_OUT = path.join(DATA_DIR, 'schedule-data.json')
 const LEGACY_OUT = path.join(DATA_DIR, 'schedule-courses.json')
 
-/** APK 版本以 android/app/build.gradle 的 versionName 为唯一事实来源 */
+/** APK 版本单一事实来源 = package.json 的 apkVersion
+ *  （CI 构建前会 rm -rf android，读不到 build.gradle，曾导致线上 appVersion 回退成 1.0） */
 function readApkVersion() {
   try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
+    if (pkg.apkVersion) return String(pkg.apkVersion)
+  } catch { /* fallthrough */ }
+  try {
     const g = fs.readFileSync(path.join(ROOT, 'android', 'app', 'build.gradle'), 'utf8')
-    return (g.match(/versionName\s+"([^"]+)"/) || [])[1] || '1.0'
-  } catch { return '1.0' }
+    const v = (g.match(/versionName\s+"([^"]+)"/) || [])[1]
+    if (v) return v
+  } catch { /* fallthrough */ }
+  return '1.2'
 }
 
 /** 读旧接口的 updatedAt（内容未变时沿用，避免时间戳每次跳变） */

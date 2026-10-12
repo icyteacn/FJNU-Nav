@@ -14,7 +14,7 @@ import {
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
   loadUserOverrides, saveUserOverride,
-  setUserAdjustKey, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, loadUserAdjustments,
+  setUserAdjustKey, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, loadUserAdjustments, clearUserAdjustments,
 } from '../data/classSchedule.js'
 import { loadScheduleData, scheduleRevision, syncStatus } from '../data/scheduleSync.js'
 import { setNavContext } from '../stores/navContext.js'
@@ -601,6 +601,8 @@ function doResetAll() {
   deletedCourses.value = []
   saveCustomCourses([])
   saveDeletedCourses([])
+  clearUserAdjustments() // 手动设置的调课也一并清掉（否则恢复默认后仍被调课生效）
+  scheduleRevision.value++
   showResetConfirm.value = false
 }
 
@@ -712,6 +714,14 @@ function doRemoveAdjust() {
   showAdjust.value = false
   showDetail.value = false
 }
+/** 从改期角标直接撤销本地调课（源位置没有课程详情可进，角标就是唯一入口） */
+function cancelAdjust(weekday, period) {
+  const o = getOverride(weekday, period)
+  if (o && o.origin !== 'site' && o.id) {
+    removeUserAdjustment(o.id)
+    scheduleRevision.value++
+  }
+}
 
 // ========== 课表数据同步（远程接口 / 离线回退） ==========
 const syncing = ref(false)
@@ -725,10 +735,21 @@ const syncLabel = computed(() => {
   if (syncing.value || syncStatus.value.state === 'syncing') return '同步中…'
   const st = syncStatus.value
   const when = st.updatedAt ? st.updatedAt.slice(5, 10).replace('-', '/') + ' ' + st.updatedAt.slice(11, 16) : ''
-  if (st.state === 'synced') return `已同步 · ${when}`
+  if (st.state === 'synced') return '🔄' // 正常态不常驻文字，只留图标（悬停看更新时间）
   if (st.state === 'cached') return `离线 · 缓存 ${when}`
   if (st.state === 'builtin') return '内置课表'
-  return '点击同步课表'
+  return '🔄'
+})
+const syncTitle = computed(() => {
+  scheduleRevision.value
+  const st = syncStatus.value
+  if (st.state === 'synced') return `课表数据已同步（${st.updatedAt ? st.updatedAt.slice(0, 16).replace('T', ' ') : '刚刚'}），点击重新拉取`
+  return '点击重新同步课表数据'
+})
+/** 是否有本地调课：决定「恢复默认」按钮是否出现（纯调课用户也要能找到恢复入口） */
+const hasUserAdjust = computed(() => {
+  scheduleRevision.value
+  try { return loadUserAdjustments().length > 0 } catch { return false }
 })
 
 // ========== 联动跳转 ==========
@@ -822,8 +843,8 @@ onMounted(() => {
 
     <div class="mode-hint">
       <span>{{ currentMajor?.short }} · {{ showSemester ? '学期课表' : '第' + selectedWeek + '周课表' }}</span>
-      <button class="sync-chip" :title="syncStatus.error || '拉取课表数据接口（调课/新学期即时同步）'" @click="refreshSchedule">{{ syncLabel }}</button>
-      <button v-if="customCourses.length || deletedCourses.length" class="reset-btn" @click="showResetConfirm = true">🔄 恢复默认</button>
+      <button class="sync-chip" :title="syncTitle" @click="refreshSchedule">{{ syncLabel }}</button>
+      <button v-if="customCourses.length || deletedCourses.length || hasUserAdjust" class="reset-btn" @click="showResetConfirm = true">🔄 恢复默认</button>
     </div>
 
     <!-- 表格 -->
@@ -856,6 +877,7 @@ onMounted(() => {
                       <span class="moved-icon">↗️</span>
                       <span class="moved-text">{{ getOverride(wd.key, row.period).destDate.slice(5) }} 第{{ getOverride(wd.key, row.period).destPeriods[0] }}-{{ getOverride(wd.key, row.period).destPeriods.at(-1) }}节</span>
                       <span class="moved-loc">📍{{ getOverride(wd.key, row.period).destLocation }}</span>
+                      <button v-if="getOverride(wd.key, row.period).origin === 'user'" class="moved-cancel" title="撤销调课" @click.stop="cancelAdjust(wd.key, row.period)">✕</button>
                     </div>
                     <div v-else-if="getCourse(wd.key, row.period)" class="course-card" :class="[colorMode, { 'is-incoming': getIncomingInfoLocal(dateStrOf(wd.key), row.period) }]" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">
                       <div v-if="getIncomingInfoLocal(dateStrOf(wd.key), row.period)" class="incoming-badge">⬅️ 调入 {{ getIncomingInfoLocal(dateStrOf(wd.key), row.period).srcDate.slice(5) }}第{{ getIncomingInfoLocal(dateStrOf(wd.key), row.period).srcPeriods[0] }}节</div>
@@ -1366,7 +1388,9 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
 .course-info { display: flex; flex-direction: column; gap: 0; }
 .course-location, .course-teacher, .course-weeks { font-size: calc(9px * var(--font-scale)); color: var(--text-sub); line-height: 1.2; }
 .course-weeks { color: var(--primary); font-weight: 600; }
-.moved-badge { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; text-align: center; background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); border-radius: 6px; border-left: 3px solid #7c3aed; height: 100%; justify-content: center; cursor: pointer; transition: all .15s; box-sizing: border-box; }
+.moved-badge { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; text-align: center; background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); border-radius: 6px; border-left: 3px solid #7c3aed; height: 100%; justify-content: center; cursor: pointer; transition: all .15s; box-sizing: border-box; position: relative; }
+.moved-cancel { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; padding: 0; border: none; border-radius: 50%; background: rgba(124, 58, 237, .16); color: #6d28d9; font-size: 11px; line-height: 18px; cursor: pointer; }
+.moved-cancel:hover { background: #7c3aed; color: #fff; }
 .moved-badge:hover { background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%); transform: scale(1.02); }
 .moved-icon { font-size: 18px; }
 .moved-text { font-size: 10px; font-weight: 700; color: #6d28d9; line-height: 1.3; }

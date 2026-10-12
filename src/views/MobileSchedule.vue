@@ -14,7 +14,7 @@ import {
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
   loadUserOverrides, saveUserOverride,
-  setUserAdjustKey, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, loadUserAdjustments,
+  setUserAdjustKey, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, loadUserAdjustments, clearUserAdjustments,
 } from '../data/classSchedule.js'
 import { loadScheduleData, scheduleRevision, syncStatus } from '../data/scheduleSync.js'
 import SuggestButton from '../components/SuggestButton.vue'
@@ -323,6 +323,8 @@ function doResetAll() {
   deletedCourses.value = []
   saveJSON(CUSTOM_KEY, [])
   saveJSON(DELETED_KEY, [])
+  clearUserAdjustments() // 手动调课一并清掉
+  scheduleRevision.value++
   showResetConfirm.value = false
 }
 
@@ -440,6 +442,14 @@ function doRemoveAdjust() {
   }
   showAdjust.value = false
 }
+/** 从改期角标直接撤销本地调课（源位置没有课程详情可进，角标就是唯一入口） */
+function cancelAdjust(weekday, period) {
+  const o = getOverride(weekday, period)
+  if (o && o.origin !== 'site' && o.id) {
+    removeUserAdjustment(o.id)
+    scheduleRevision.value++
+  }
+}
 
 // ===== 数据同步 / 检测更新 =====
 const syncing = ref(false)
@@ -453,10 +463,10 @@ const syncLabel = computed(() => {
   if (syncing.value || syncStatus.value.state === 'syncing') return '同步中…'
   const st = syncStatus.value
   const when = st.updatedAt ? st.updatedAt.slice(5, 10).replace('-', '/') : ''
-  if (st.state === 'synced') return `课表已同步 ${when}`
+  if (st.state === 'synced') return '' // 正常态不显示，避免顶栏常驻一串文字
   if (st.state === 'cached') return `离线·缓存 ${when}`
   if (st.state === 'builtin') return '内置课表'
-  return '同步课表'
+  return ''
 })
 /** 检测更新：拉接口比对课表版本 + APK 版本 */
 const updateInfo = ref(null)
@@ -520,7 +530,7 @@ onMounted(() => {
       </div>
       <div class="top-center">
         <span class="app-title">🩸 课表</span>
-        <span class="app-sub" v-if="displayMode === 'page'">{{ currentMajor?.short }} · {{ showSemester ? '学期' : '第' + selectedWeek + '周' }} · {{ syncLabel }}</span>
+        <span class="app-sub" v-if="displayMode === 'page'">{{ currentMajor?.short }} · {{ showSemester ? '学期' : '第' + selectedWeek + '周' }}<template v-if="syncLabel"> · {{ syncLabel }}</template></span>
       </div>
       <div class="top-right">
         <SuggestButton variant="icon" />
@@ -612,6 +622,7 @@ onMounted(() => {
                     <div v-if="getOverride(wd.key, row.period)" class="moved-badge">
                       <span>↗️</span>
                       <span>{{ getOverride(wd.key, row.period).destDate.slice(5) }} 第{{ getOverride(wd.key, row.period).destPeriods[0] }}-{{ getOverride(wd.key, row.period).destPeriods.at(-1) }}节</span>
+                      <button v-if="getOverride(wd.key, row.period).origin === 'user'" class="moved-cancel" title="撤销调课" @click.stop="cancelAdjust(wd.key, row.period)">✕</button>
                     </div>
                     <div v-else-if="getCourse(wd.key, row.period)" class="course-card" :class="{ 'is-incoming': getIncomingInfoLocal(dateStrOf(wd.key), row.period) }" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">
                       <div v-if="getIncomingInfoLocal(dateStrOf(wd.key), row.period)" class="incoming-badge">⬅️ 调入 {{ getIncomingInfoLocal(dateStrOf(wd.key), row.period).srcDate.slice(5) }}</div>
@@ -760,6 +771,7 @@ onMounted(() => {
             <button class="btn-primary" @click="doExport">📤 导出当前数据</button>
             <button class="btn-primary" @click="doImport" :disabled="!importText.trim()">📥 导入数据</button>
             <button class="btn-primary" v-if="importText" @click="copyExport">📋 复制</button>
+            <button @click="showImportExport = false; showResetConfirm = true">🔄 恢复默认</button>
           </div>
           <textarea v-model="importText" class="import-textarea" placeholder="粘贴导出的 JSON 数据到这里…"></textarea>
         </div>
@@ -931,7 +943,8 @@ onMounted(() => {
 .holiday-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; }
 .holiday-empty-icon { font-size: 24px; }
 .holiday-empty-text { font-size: 11px; font-weight: 700; color: #dc2626; }
-.moved-badge { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: calc(8px * var(--font-scale)); color: #b45309; font-weight: 600; }
+.moved-badge { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: calc(8px * var(--font-scale)); color: #b45309; font-weight: 600; position: relative; }
+.moved-cancel { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; padding: 0; border: none; border-radius: 50%; background: rgba(124, 58, 237, .18); color: #6d28d9; font-size: 9px; line-height: 15px; cursor: pointer; }
 .is-makeup-col { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
 .course-card.is-incoming { border-left-style: dashed; }
 .incoming-badge { font-size: calc(6.5px * var(--font-scale)); font-weight: 700; color: #0369a1; background: #e0f2fe; padding: 0 3px; border-radius: 3px; align-self: flex-start; line-height: 1.3; }

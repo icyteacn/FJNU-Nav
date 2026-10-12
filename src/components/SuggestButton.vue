@@ -7,10 +7,11 @@
  * 提交主通道 = 校园墙「💡 建议」分区（Supabase 云端，开发者打开墙即见）；
  * 失败自动给 GitHub Issue 预填链接 / 一键复制两种兜底，保证建议送得出去。
  */
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from '../i18n/index.js'
 import {
-  submitSuggestion, buildIssueUrl, buildSuggestText, copyText,
+  submitSuggestion, buildSuggestText, copyText,
+  enqueueSuggestion, armAutoFlush, loadQueue,
 } from '../suggest.js'
 
 const props = defineProps({
@@ -27,6 +28,13 @@ const done = ref(false)
 const fail = ref(false)
 const copied = ref(false)
 const emptyTip = ref(false)
+const queuedCount = ref(0)
+
+// 页面打开 / 网络恢复时自动补交暂存的建议（不跳任何第三方）
+onMounted(() => {
+  armAutoFlush()
+  queuedCount.value = loadQueue().length
+})
 
 const TYPES = computed(() => [
   { key: 'feature', label: t('suggest.typeFeature') },
@@ -38,7 +46,6 @@ const payload = computed(() => ({
   content: text.value,
   contact: contact.value,
 }))
-const issueUrl = computed(() => buildIssueUrl(payload.value))
 
 function openBox() {
   open.value = true
@@ -74,10 +81,22 @@ async function submit() {
     })
     done.value = true
   } catch {
+    // 直提失败 → 暂存本机，联网自动补交（不跳转任何第三方）
+    enqueueSuggestion({
+      type: type.value,
+      content: text.value.trim(),
+      contact: contact.value.trim(),
+      from: location.hash || '/',
+    })
+    queuedCount.value = loadQueue().length
     fail.value = true
   } finally {
     sending.value = false
   }
+}
+async function doRetry() {
+  fail.value = false
+  await submit()
 }
 async function doCopy() {
   const ok = await copyText(buildSuggestText(payload.value))
@@ -125,12 +144,13 @@ function goWall() {
         </div>
       </div>
 
-      <!-- 失败兜底 -->
+      <!-- 直提失败：暂存本机，联网自动补交（不离开本站、不跳第三方） -->
       <div v-else-if="fail" class="sugg-body">
-        <div class="sugg-fail-tip">⚠️ {{ t('suggest.fail') }}</div>
+        <div class="sugg-fail-tip">📶 {{ t('suggest.fail') }}</div>
+        <div class="sugg-queued">🕒 {{ t('suggest.pending') }} · {{ queuedCount }}</div>
         <div class="sugg-actions">
-          <button class="sugg-btn primary" @click="doCopy">{{ copied ? t('suggest.copyOk') : t('suggest.copy') }}</button>
-          <a class="sugg-btn" :href="issueUrl" target="_blank" rel="noopener">{{ t('suggest.github') }}</a>
+          <button class="sugg-btn primary" @click="doRetry">{{ t('suggest.retry') }}</button>
+          <button class="sugg-btn" @click="doCopy">{{ copied ? t('suggest.copyOk') : t('suggest.copy') }}</button>
         </div>
         <div class="sugg-actions">
           <button class="sugg-btn" @click="fail = false">←</button>
@@ -287,6 +307,7 @@ function goWall() {
 .sugg-done-t { font-size: 17px; font-weight: 800; margin-top: 6px; color: #16a34a; }
 .sugg-done-s { font-size: 13px; color: var(--text-sub, #6b7280); margin-top: 6px; line-height: 1.6; }
 .sugg-fail-tip { font-size: 13px; color: #b45309; line-height: 1.6; }
+.sugg-queued { font-size: 12px; color: var(--text-sub, #6b7280); margin-top: 8px; }
 
 @media (max-width: 640px) {
   .sugg-fab { left: 12px; bottom: 66px; padding: 8px 12px 8px 10px; }

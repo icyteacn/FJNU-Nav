@@ -652,10 +652,11 @@
           <div style="font-size:13px;color:var(--text-sub);margin-top:6px;line-height:1.6">建议已进入校园墙「💡 建议」分区，开发者会看到。</div>
         </div>
         <div class="modal-body" id="sugFail" style="display:none">
-          <div style="font-size:13px;color:#b45309;line-height:1.6">⚠️ 云端暂时不可用，用下面任一方式送达：</div>
+          <div style="font-size:13px;color:#b45309;line-height:1.6">📶 网络不稳，建议已暂存本机，联网后会自动送达，不会丢。</div>
+          <div id="sugPending" style="font-size:12px;color:var(--text-sub);margin-top:8px">🕒 暂存待发 · 0</div>
           <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-primary" style="flex:1" onclick="submitSuggest()">再试一次</button>
             <button class="btn btn-secondary" style="flex:1" onclick="copySuggest()">复制文本</button>
-            <button class="btn btn-secondary" style="flex:1" onclick="openIssue()">GitHub 提交</button>
           </div>
         </div>
         <div class="modal-footer">
@@ -1520,10 +1521,11 @@ function importData(){
   input.click();
 }
 
-// ==================== 提建议（校园墙「💡 建议」分区 + 兜底） ====================
-// 与网页 src/suggest.js 同一通道：Supabase 云端 → tag=suggest；失败给复制/GitHub 兜底
+// ==================== 提建议（校园墙「💡 建议」分区 · 直接提交） ====================
+// 与网页 src/suggest.js 同一通道：Supabase 云端 → tag=suggest；
+// 失败先存本机队列，联网自动补交（不跳 GitHub、不换渠道，全程在 App 内完成）
 const SUGGEST_TAG='suggest';
-const SUGGEST_ISSUE='https://github.com/icyteacn/FJNU-Nav/issues/new';
+const SUGGEST_QUEUE='sche_suggest_queue';
 const SUGGEST_LABELS={feature:'功能建议',bug:'问题反馈',other:'其他建议'};
 function suggestCloudCfg(){
   try{
@@ -1557,10 +1559,41 @@ function suggestPlain(){
   const p=suggestParts();
   return suggestTitle(p.type,p.text)+'\n'+suggestBody(p);
 }
-function suggestIssueUrl(){
-  const p=suggestParts();
-  return SUGGEST_ISSUE+'?title='+encodeURIComponent(suggestTitle(p.type,p.text))+
-    '&body='+encodeURIComponent(suggestBody(p));
+/* 暂存队列：直提失败先存本机，联网自动补交 */
+function loadSugQueue(){try{const q=JSON.parse(localStorage.getItem(SUGGEST_QUEUE)||'[]');return Array.isArray(q)?q:[]}catch(e){return[]}}
+function saveSugQueue(q){try{localStorage.setItem(SUGGEST_QUEUE,JSON.stringify(q.slice(-20)))}catch(e){}}
+function sugPendingCount(){return loadSugQueue().length}
+function showSugPending(){const el=document.getElementById('sugPending');if(el)el.textContent='🕒 暂存待发 · '+sugPendingCount()}
+function enqueueSug(item){const q=loadSugQueue();q.push(Object.assign({ts:Date.now()},item));saveSugQueue(q);showSugPending()}
+async function flushSugQueue(){
+  const q=loadSugQueue();
+  if(!q.length)return;
+  const rest=[];
+  for(const item of q){
+    try{
+      const cfg=suggestCloudCfg();
+      if(!cfg)throw new Error('cloud off');
+      const res=await fetch(cfg.url+'/rest/v1/wall_posts',{
+        method:'POST',
+        headers:{'apikey':cfg.key,'Authorization':'Bearer '+cfg.key,'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify({
+          title:suggestTitle(item.type,item.text).slice(0,60),
+          content:suggestBody(item).slice(0,2000),
+          tag:SUGGEST_TAG,ptype:'normal',author:'匿名同学',anonymous:true
+        })
+      });
+      if(!res.ok)throw new Error('HTTP '+res.status);
+    }catch(e){rest.push(item)}
+  }
+  saveSugQueue(rest);
+  showSugPending();
+  if(rest.length<q.length)showToast('✅ 暂存建议已自动送达 '+(q.length-rest.length)+' 条');
+}
+function armSugFlush(){
+  try{
+    window.addEventListener('online',()=>{flushSugQueue().catch(()=>{})});
+    setTimeout(()=>{flushSugQueue().catch(()=>{})},1500);
+  }catch(e){}
 }
 async function postSuggestion(){
   const cfg=suggestCloudCfg();
@@ -1591,7 +1624,7 @@ function setSugState(state){
   const cancel=document.getElementById('sugCancelBtn');
   if(state==='form'){btn.textContent='提交给开发者';btn.onclick=submitSuggest;cancel.style.display=''}
   else if(state==='done'){btn.textContent='完成';btn.onclick=closeSuggest;cancel.style.display='none'}
-  else{btn.textContent='关闭';btn.onclick=closeSuggest;cancel.style.display='none'}
+  else{btn.textContent='关闭';btn.onclick=closeSuggest;cancel.style.display='none';showSugPending()}
 }
 function openSuggest(){
   document.getElementById('sugType').value='feature';
@@ -1612,6 +1645,8 @@ async function submitSuggest(){
     setSugState('done');
     showToast('✅ 建议已送达开发者');
   }catch(e){
+    // 直提失败 → 暂存本机，联网自动补交（不跳转任何第三方）
+    enqueueSug({type:p.type,text:p.text,contact:p.contact,from:'鸡血课表 App'});
     setSugState('fail');
   }
   btn.disabled=false;
@@ -1633,11 +1668,7 @@ function copySuggest(){
     }catch(err){showToast('复制失败，请手动长按选择')}
   }
 }
-function openIssue(){
-  const url=suggestIssueUrl();
-  try{window.open(url,'_blank')}catch(e){}
-  showToast('若未自动打开，请用「复制文本」发送');
-}
+function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
 const APP_VERSION='1.1'; // 与 android/app/build.gradle 的 versionName 保持一致
@@ -1768,6 +1799,7 @@ function init(){
   state.selectedWeek=getCurrentWeek();
   saveState();
   render();
+  armSugFlush(); // 暂存的建议联网后自动补交
   // 启动即同步课表数据接口（调课/新学期即时生效）；失败则走缓存→内置，课表照常可开
   loadScheduleData().then(r=>{
     updateSyncTip(r);

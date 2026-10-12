@@ -150,10 +150,11 @@ export default {
     ok: 'Got it, thank you!',
     okSub: 'Your suggestion landed in Campus Wall 「💡 Suggestions」, the developer will see it.',
     viewWall: 'Open Campus Wall',
-    fail: 'Cloud unavailable — deliver it any way below:',
+    fail: 'Network hiccup — saved on this device and auto-sent when back online. Nothing is lost.',
     copy: 'Copy text',
     copyOk: 'Copied — paste it to the developer',
-    github: 'Open on GitHub',
+    retry: 'Try again',
+    pending: 'Queued',
     close: 'Close',
     empty: 'Write something first'
   }

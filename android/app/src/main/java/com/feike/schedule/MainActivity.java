@@ -16,6 +16,7 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         requestNotificationPermission(); // Android 13+：常驻通知需运行时授权
         ScheduleNotifier.scheduleHourly(this); // 每小时刷新通知
+        ScheduleNotifier.startLiveUpdates(this); // 30s 倒计时重绘 + notify.json 监听
         ScheduleNotifier.show(this); // 每次打开 App 都刷新今日概要
     }
 

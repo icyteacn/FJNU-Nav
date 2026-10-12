@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.6.6</b> — {{ '调课后原位置改「已调整无课」不再显示教室（三端）；APK versionName 回 1.0（versionCode 3 保证覆盖）；签名不可伪造结论与三条路线。' }}</li>
       <li><b>v1.6.5</b> — {{ '提建议增加邮件备用通道（收件人与正文预填、零后端，APK 端同时复制内容兜底）；签名诊断：维护者提供的 1.0 包为 Android Debug 签名且非本机，打包支持 -PksPath 换 keystore。' }}</li>
       <li><b>v1.6.4</b> — {{ 'APK 顶栏「⏰ 下一节课」实时倒计时卡（跨天找课、每秒刷新、点击跳周）；提建议失败自动重试 3 次并显示真实原因；常驻通知跨天给出下一节；签名诊断：仓库新旧包同证书可覆盖。' }}</li>
       <li><b>v1.6.3</b> — {{ '课表 App 常驻通知：锁屏/通知栏显示下一节课与今日课程（每小时刷新、过期自动降级、Android 13+ 授权）；清理 camera 残留权限。' }}</li>

@@ -622,6 +622,7 @@ onMounted(() => {
                     <div v-if="getOverride(wd.key, row.period)" class="moved-badge">
                       <span>↗️</span>
                       <span>{{ getOverride(wd.key, row.period).destDate.slice(5) }} 第{{ getOverride(wd.key, row.period).destPeriods[0] }}-{{ getOverride(wd.key, row.period).destPeriods.at(-1) }}节</span>
+                      <span class="moved-loc">已调整无课</span>
                       <button v-if="getOverride(wd.key, row.period).origin === 'user'" class="moved-cancel" title="撤销调课" @click.stop="cancelAdjust(wd.key, row.period)">✕</button>
                     </div>
                     <div v-else-if="getCourse(wd.key, row.period)" class="course-card" :class="{ 'is-incoming': getIncomingInfoLocal(dateStrOf(wd.key), row.period) }" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">
@@ -943,7 +944,8 @@ onMounted(() => {
 .holiday-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; }
 .holiday-empty-icon { font-size: 24px; }
 .holiday-empty-text { font-size: 11px; font-weight: 700; color: #dc2626; }
-.moved-badge { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: calc(8px * var(--font-scale)); color: #b45309; font-weight: 600; position: relative; }
+.moved-badge { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: calc(8px * var(--font-scale)); color: #b45309; font-weight: 600; position: relative; flex-wrap: wrap; }
+.moved-loc { font-size: calc(7px * var(--font-scale)); font-weight: 700; color: #6d28d9; background: #ede9fe; padding: 0 4px; border-radius: 3px; }
 .moved-cancel { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; padding: 0; border: none; border-radius: 50%; background: rgba(124, 58, 237, .18); color: #6d28d9; font-size: 9px; line-height: 15px; cursor: pointer; }
 .is-makeup-col { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
 .course-card.is-incoming { border-left-style: dashed; }

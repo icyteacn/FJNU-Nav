@@ -2,7 +2,7 @@
 
 > **🌐 在线访问：<https://icyteacn.github.io/FJNU-Nav/>**
 >
-> **🏷️ 当前版本：v1.6.5**（提建议增加**邮件备用通道**（收件人预填、零后端）；签名诊断：你提供的 1.0 包是 `Android Debug` 调试签名且非本机，已备好可换 keystore 的打包能力）
+> **🏷️ 当前版本：v1.6.6**（调课后原位置改为文字「已调整无课」、不再展示教室；APK versionName 回 1.0（versionCode 3 保证覆盖）；签名不可伪造的诊断结论与三条现实路线见版本历史）
 
 面向福建师范大学的校园服务聚合入口，暖色系「闽都红」主题、移动端优先。
 
@@ -113,6 +113,7 @@ FJNU-Nav/
 
 | 版本 | 说明 |
 | --- | --- |
+| **v1.6.6** | ①**调课后原位置改文案**：源格改期角标把 `📍目标教室` 换成 **「已调整无课」**（网页/移动端/APK 三端 + APK 单日列表同步），调入侧与调课详情仍显示目标教室（那是"调到哪上"的信息）。②**APK versionName 回 1.0**（应维护者要求，与已装显示一致），`versionCode` 保持 3 —— 覆盖安装的条件是**证书一致 + versionCode ≥ 已装**，与 versionName 无关。③**签名结论**：`Downloads (1)` 是另一台电脑 Android Studio 调试包（`CN=Android Debug` / `2277d065`），非本机 debug.keystore（`23:2AFA6D`）、非仓库 keystore.jks（`6b38568d`）；**覆盖必须持有同一把私钥，密码学上不可伪造、无法"破解"**；唯一绕过方式是 root 后改系统签名校验（不推荐、不实施）。三条现实路线：A) 找回那台电脑的 `~/.android/debug.keystore`（密码 `android`）→ 用已备好的 `-PksPath` 出覆盖版；B) 卸载重装一次后永久可覆盖（推荐）；C) root 改系统（不推荐）。 |
 | **v1.6.5** | ①**提建议邮件备用通道**（维护者提供收件邮箱）：`suggest.js` 新增 `SUGGEST_EMAIL` 与 `buildMailtoUrl()`（主题/正文预填），失败态主按钮改为 **「📧 邮件发送」**（+ 再试一次 + 复制文本），点开后提示收件人；APK `sendByMail()` 唤起 `mailto:` 并**同时复制内容兜底**（WebView 可能吞掉 mailto），toast 给出手动发送指引 → **Supabase 之外的第二条线路，零后端**。②**签名诊断结论**：维护者提供的 `Downloads (1)`（4.1MB、无扩展名）实为 `com.feike.schedule` 1.0（versionCode 1），`apksigner` 显示 `CN=Android Debug` / SHA-256 `2277d065…`，而**本机** debug.keystore 是 `23:2A:FA6D…`、仓库 keystore.jks 是 `6b38568d…`，两者都不匹配 → 该包由**另一台机器的调试私钥**签出，**没有那把私钥就签不出能覆盖它的包**。③已备好能力：`build.gradle` signingConfigs 支持 `-PksPath/-PksAlias/-PksPass` 临时换 keystore 重签，**默认仍走 keystore.jks**（验证 SHA-256 仍 `6b38568d` 不变）。维护者二选一：A 卸载重装一次（先「📤 导出数据」备份课表）后永久可覆盖；B 提供那台机器的 `~/.android/debug.keystore`（密码恒为 `android`）即可重签覆盖版。 |
 | **v1.6.4** | ①APK 顶栏新增**「⏰ 下一节课」实时倒计时卡**（与日程助手课表同款）：跨天最多找 7 天、处理假日/补课/调课/调入，显示 `周二 10-13 · 第5-6节 · 知明2-202`，每秒刷新、到点自动滚到再下一节、点击跳到该课所在周。②**提建议失败自动重试**：3 次尝试 + 9s 超时兜底 + 递增间隔（APK 与网页同逻辑），失败态显示**真实原因**（连接超时 / 云端返回错误 / 网络无法连接云端，中英词包同步），不再只有笼统的"网络不稳"。③常驻通知改为**始终按今天算**、今日课上完时跨天给出"下一节 周二 08:20 …"。④**签名诊断结论**：旧 1.0（1.58MB）与新包证书 SHA-256 `6b38568d…`、包名 `com.feike.schedule` **完全一致** → 仓库发布的版本之间可直接覆盖；遇到"签名不一致"说明手机上那个 1.0 是**不同证书的更早构建**，先用「📤 导出数据」备份课表、卸载后装 1.2，之后 1.2→1.3 皆可覆盖。⑤提建议真实链路实测浏览器 `POST 201` 成功（失败系个别网络到 Supabase 不稳，已加重试+暂存补交）。 |
 | **v1.6.3** | 课表 App **常驻通知**（Android 上等价于"负一屏/灵动岛"的可落地方案，应维护者选择）：原生 `ScheduleNotifier.java` 读网页写入的 `filesDir/notify.json` 展示锁屏/通知栏常驻通知（ongoing 不可滑掉、BigTextStyle 多行、点击回 App）；**过期保护**——文件日期非今天自动降级为"打开应用查看"，绝不显示过期课表；Android 13+ 运行时申请 `POST_NOTIFICATIONS`（未授权静默跳过）；`AlarmManager` 每小时刷新；全程 try/catch 不影响主程序。网页侧 `buildNotifySummary()` 复用 `getDayCourses` 算出**上课中 / 下一节 / 已上完 / 无课 / 停课**五态与今日课程行，每次 render 经 Capacitor Filesystem 写入（网页环境静默跳过）。Manifest 清理 camera 残留的 `CAMERA`/`READ_MEDIA_IMAGES` 权限。**通知显示效果需真机确认**（本机无 Android 设备/模拟器）。 |

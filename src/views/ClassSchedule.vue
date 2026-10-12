@@ -876,7 +876,7 @@ onMounted(() => {
                     <div v-if="getOverride(wd.key, row.period)" class="moved-badge" :title="'点击跳转至' + getOverride(wd.key, row.period).destDate.slice(5)">
                       <span class="moved-icon">↗️</span>
                       <span class="moved-text">{{ getOverride(wd.key, row.period).destDate.slice(5) }} 第{{ getOverride(wd.key, row.period).destPeriods[0] }}-{{ getOverride(wd.key, row.period).destPeriods.at(-1) }}节</span>
-                      <span class="moved-loc">📍{{ getOverride(wd.key, row.period).destLocation }}</span>
+                      <span class="moved-loc">已调整无课</span>
                       <button v-if="getOverride(wd.key, row.period).origin === 'user'" class="moved-cancel" title="撤销调课" @click.stop="cancelAdjust(wd.key, row.period)">✕</button>
                     </div>
                     <div v-else-if="getCourse(wd.key, row.period)" class="course-card" :class="[colorMode, { 'is-incoming': getIncomingInfoLocal(dateStrOf(wd.key), row.period) }]" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">

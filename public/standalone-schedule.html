@@ -1204,7 +1204,7 @@ function renderTable(){
         bodyHtml+='<td rowspan="'+span+'" data-key="'+wd.key+'-'+row.period+'" class="'+cls+'" onclick="showOverrideDetail(\''+ds+'\','+row.period+')">';
         bodyHtml+='<div class="moved-badge"><span class="moved-icon">↗️</span>';
         bodyHtml+='<span class="moved-text">'+override.destDate.slice(5)+' 第'+override.destPeriods[0]+'-'+override.destPeriods.at(-1)+'节</span>';
-        bodyHtml+='<span class="moved-loc">📍'+override.destLocation+'</span></div></td>';
+        bodyHtml+='<span class="moved-loc">已调整无课</span></div></td>';
       } else if(course&&row.period===course.startPeriod){
         const span=course.endPeriod-course.startPeriod+1;
         for(let p=course.startPeriod;p<=course.endPeriod;p++)merged.add(wd.key+'-'+p);
@@ -1325,7 +1325,7 @@ function renderDayList(){
           ? 'showIncomingDetail(\''+res.ds+'\','+it.start+')'
           : 'showDetail(\''+it.course.id+'\')';
       let note='';
-      if(it.kind==='moved')note='<div class="li-note">↗️ 已调至 '+it.ov.destDate.slice(5)+' 第'+it.ov.destPeriods[0]+'-'+it.ov.destPeriods.at(-1)+'节 · '+it.ov.destLocation+(it.ov.origin==='user'?'（点此撤销）':'')+'</div>';
+      if(it.kind==='moved')note='<div class="li-note">↗️ 已调至 '+it.ov.destDate.slice(5)+' 第'+it.ov.destPeriods[0]+'-'+it.ov.destPeriods.at(-1)+'节 · 原位置已调整无课'+(it.ov.origin==='user'?'（点此撤销）':'')+'</div>';
       if(it.kind==='incoming')note='<div class="li-note in">⬅️ 从 '+it.adj.srcDate.slice(5)+' 调入 · 原第'+it.adj.srcPeriods[0]+'-'+it.adj.srcPeriods.at(-1)+'节'+(it.adj.origin==='user'?'（点此撤销）':'')+'</div>';
       const loc=it.kind==='incoming'?it.adj.destLocation:it.course.location;
       html+='<div class="li'+(isLive?' live':'')+(it.kind==='moved'?' moved':'')+'" onclick="'+click+'">'+
@@ -2084,7 +2084,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.2'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.0'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){

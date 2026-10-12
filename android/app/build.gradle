@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 // versionName 单一事实来源：仓库根 package.json 的 apkVersion
 // （CI 会先 rm -rf android，若在这里硬编码，线上导出的接口会读到过期版本）
-ext.apkVersionName = '1.1'
+ext.apkVersionName = '1.0'
 def apkVerFile = new File(project.projectDir, '../../package.json')
 if (apkVerFile.exists()) {
     def m = (apkVerFile.text =~ /"apkVersion"\s*:\s*"([^"]+)"/)

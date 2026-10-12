@@ -38,7 +38,15 @@ if not exist "%ANDROID_SDK_ROOT%" set "ANDROID_SDK_ROOT=C:\Users\13111\AppData\L
 echo       JAVA_HOME=%JAVA_HOME%
 echo       ANDROID_SDK_ROOT=%ANDROID_SDK_ROOT%
 cd android
-call gradlew.bat assembleRelease
+REM 覆盖签名钥匙（本机文件，绝不入库）：存在则默认用它签名，
+REM 保证打出的包能覆盖用户手机上已装的 Android Debug 版；否则回退仓库 keystore.jks
+if exist "%USERPROFILE%\.android\cover-debug.keystore" (
+  echo       签名: cover-debug.keystore（可覆盖已装调试版）
+  call gradlew.bat assembleRelease "-PksPath=%USERPROFILE%\.android\cover-debug.keystore" -PksAlias=androiddebugkey -PksPass=android
+) else (
+  echo       签名: 仓库 keystore.jks
+  call gradlew.bat assembleRelease
+)
 cd ..
 
 echo.

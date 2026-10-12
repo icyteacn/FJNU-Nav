@@ -333,7 +333,11 @@ export function formatWeekdayType(type) {
 
 /**
  * 2026-2027学年节假日与调休日历
- * type: 'holiday' = 法定假日停课, 'makeup' = 调休补课（按指定周几课表上课）
+ * type: 'holiday' = 法定假日停课, 'makeup' = 调休补课（按指定周几课表上课）,
+ *       'adjust'  = 单次调课（该日课表不变，仅 overrides 指定节次改到 destDate 上）
+ * overrides: { srcPeriods, destDate, destPeriods, destLocation, courseHint }
+ *   srcPeriods = 该日被调走的节次（原格显示 ↗️ 改期角标）；
+ *   destDate/destPeriods/destLocation = 调入日期/节次/教室（目标格显示 ⬅️ 调入角标）
  */
 export const HOLIDAY_MAP = {
   // —— 中秋节 ——
@@ -361,6 +365,15 @@ export const HOLIDAY_MAP = {
     type: 'makeup', scheduleWeekday: 3, icon: '📅',
     descShort: '补周三课',
     desc: '补周三(10/7)',
+  },
+  // —— 单次调课 ——
+  '2026-10-20': {
+    type: 'adjust', scheduleWeekday: 2, icon: '🔀',
+    descShort: '调课',
+    desc: '第八周周二(10/20)晚9-12节人工智能通识课调至第12周周四(11/19)立诚1-105',
+    overrides: [
+      { srcPeriods: [9, 10, 11, 12], destDate: '2026-11-19', destPeriods: [9, 10, 11, 12], destLocation: '立诚1-105', courseHint: '人工智能通识' },
+    ],
   },
 }
 
@@ -423,7 +436,7 @@ export function isPeriodMoved(dateStr, period) {
  * @param {string} dateStr 目标日期 YYYY-MM-DD
  * @param {number} period 节次 1-12
  * @param {Function} findCourse 查找课程的回调 (weekday, startPeriod) => course | null
- * @returns {{ course, srcDate, srcPeriods, destLocation } | null}
+ * @returns {{ course, srcDate, srcPeriods, destPeriods, destLocation } | null}
  */
 export function getIncomingInfo(dateStr, period, findCourse) {
   for (const key of Object.keys(HOLIDAY_MAP)) {
@@ -433,7 +446,7 @@ export function getIncomingInfo(dateStr, period, findCourse) {
       if (o.destDate === dateStr && period >= o.destPeriods[0] && period <= o.destPeriods.at(-1)) {
         const srcWd = info.scheduleWeekday
         const course = findCourse(srcWd, o.srcPeriods[0])
-        return course ? { course, srcDate: key, srcPeriods: o.srcPeriods, destLocation: o.destLocation } : null
+        return course ? { course, srcDate: key, srcPeriods: o.srcPeriods, destPeriods: o.destPeriods, destLocation: o.destLocation } : null
       }
     }
   }

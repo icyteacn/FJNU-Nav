@@ -78,6 +78,7 @@ const todayCourses = computed(() => {
   if (scheduleWd === null) return []
   return majorCourses.value.filter(c => {
     if (c.weekday !== scheduleWd) return false
+    if (isPeriodMoved(todayDateStr.value, c.startPeriod)) return false
     if (!showSemester.value && !isCourseInWeek(c, selectedWeek.value)) return false
     if (!showSemester.value && deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
     return true
@@ -102,7 +103,8 @@ const displayCourses = computed(() => {
 const coursesByDay = computed(() => {
   const map = new Map()
   for (let wd = 1; wd <= 7; wd++) {
-    const dc = displayCourses.value.filter(c => c.weekday === wd)
+    const dayStr = showSemester.value ? null : dateStrOf(wd)
+    const dc = displayCourses.value.filter(c => c.weekday === wd && !(dayStr && isPeriodMoved(dayStr, c.startPeriod)))
     if (dc.length) map.set(wd, dc)
   }
   return [...map.entries()]
@@ -140,25 +142,26 @@ const nextInfo = computed(() => {
   return { course: nextCourse.value, countdown: nextCountdown.value, weekdayLabel: WEEKDAYS.find(w => w.key === nextCourse.value.weekday)?.label, dateStr: formatDateShort(nextCourse.value._date) }
 })
 
+/** 调入课程按源课表周几查找（跨周：调入日可能已超出源课程周次，不受当前周/筛选限制） */
+function findIncomingSource(wd, sp) {
+  return majorCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
+}
 /** 查找某日某节次是否有调入的课程（从别处调来） */
 function getIncomingCourse(dateStr, period) {
-  const info = getIncomingInfoFromData(dateStr, period, (wd, sp) => {
-    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
-  })
-  return info?.course || null
+  if (showSemester.value) return null
+  return getIncomingInfoFromData(dateStr, period, findIncomingSource)?.course || null
 }
 
 /** 获取某日某节次的调入信息（用于显示来源标记） */
 function getIncomingInfoLocal(dateStr, period) {
-  return getIncomingInfoFromData(dateStr, period, (wd, sp) => {
-    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
-  })
+  if (showSemester.value) return null
+  return getIncomingInfoFromData(dateStr, period, findIncomingSource)
 }
 
 function getCourse(weekday, period) {
   if (isHoliday(weekday)) return null
   const ds = dateStrOf(weekday)
-  if (isPeriodMoved(ds, period)) return null
+  if (!showSemester.value && isPeriodMoved(ds, period)) return null
   const incoming = getIncomingCourse(ds, period)
   if (incoming) return incoming
   const effectiveWd = getMakeupWeekday(weekday)
@@ -168,12 +171,22 @@ function getCourse(weekday, period) {
   return displayCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
 }
 function getCourseSpan(course) { return course ? (course.endPeriod - course.startPeriod + 1) : 1 }
+/** 该格纵向跨度：优先改期角标（源节次）→ 调入节次 → 课程本身 */
+function getRowspan(weekday, period) {
+  const o = getOverride(weekday, period)
+  if (o) return o.srcPeriods.length
+  const inInfo = getIncomingInfoLocal(dateStrOf(weekday), period)
+  if (inInfo) return inInfo.destPeriods.length
+  return getCourseSpan(getCourse(weekday, period))
+}
 function isCellMerged(weekday, period) {
   if (isHoliday(weekday)) return false
   const ds = dateStrOf(weekday)
-  const incoming = getIncomingCourse(ds, period)
-  if (incoming) {
-    return displayCourses.value.some(c => c.weekday === incoming.weekday && period > c.startPeriod && period <= c.endPeriod)
+  if (!showSemester.value) {
+    const o = getCourseOverride(ds, period)
+    if (o) return period > o.srcPeriods[0] && period <= o.srcPeriods.at(-1)
+    const inInfo = getIncomingInfoLocal(ds, period)
+    if (inInfo) return period > inInfo.destPeriods[0] && period <= inInfo.destPeriods.at(-1)
   }
   const effectiveWd = getMakeupWeekday(weekday)
   if (effectiveWd !== weekday) {
@@ -207,6 +220,7 @@ function getMakeupWeekday(weekday) {
 }
 /** 获取某节课的调课信息 */
 function getOverride(weekday, period) {
+  if (showSemester.value) return null
   return getCourseOverride(dateStrOf(weekday), period) || null
 }
 
@@ -718,7 +732,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
                   <td v-if="isHoliday(wd.key) && row.period === 1" :rowspan="12" class="course-cell is-holiday-col holiday-empty-cell">
                     <div class="holiday-empty"><span class="holiday-empty-icon">🎉</span><span class="holiday-empty-text">{{ getHolidayInfo(wd.key)?.name }}</span><span class="holiday-empty-sub">假期停课</span></div>
                   </td>
-                  <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getOverride(wd.key, row.period) ? getOverride(wd.key, row.period).srcPeriods.length : getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
+                  <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getRowspan(wd.key, row.period)" class="course-cell" :data-key="wd.key + '-' + row.period"
                     :class="{ 'has-course': getCourse(wd.key, row.period) || getOverride(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key), 'other-week': showOtherWeek && getCourse(wd.key, row.period) && !isCourseInWeek(getCourse(wd.key, row.period), selectedWeek), 'is-flashing': flashingCourse === wd.key + '-' + row.period }"
                     @click="getOverride(wd.key, row.period) ? jumpToOverride(wd.key, row.period) : getCourse(wd.key, row.period) ? openCourseDetail(getCourse(wd.key, row.period)) : openAddModal(wd.key, row.period)">
                     <div v-if="getOverride(wd.key, row.period)" class="moved-badge" :title="'点击跳转至' + getOverride(wd.key, row.period).destDate.slice(5)">
@@ -1145,6 +1159,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .holiday-badge.badge-for-save { display: block !important; text-align: center; font-size: 11px; padding: 3px 6px; }
 .holiday-badge.holiday { background: #fca5a5; color: #991b1b; }
 .holiday-badge.makeup { background: #fbbf24; color: #78350f; }
+.holiday-badge.adjust { background: #ede9fe; color: #5b21b6; }
 .holiday-icon { font-size: 11px; }
 .holiday-text { font-size: 9px; }
 .holiday-empty-cell { text-align: center; vertical-align: middle; background: repeating-linear-gradient(45deg, #fef2f2, #fef2f2 10px, #fff5f5 10px, #fff5f5 20px); border-left: 2px dashed #fca5a5; border-right: 2px dashed #fca5a5; }

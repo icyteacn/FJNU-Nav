@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.5.19</b> — {{ '课表单次调课：第八周 10/20 晚人工智能通识课调至第十二周 11/19 立诚1-105（改期/调入双角标，日程助手·课程表·移动端三端同步）。' }}</li>
       <li><b>v1.5.18</b> — {{ '评论网关与 QDU 同源加固：admin 删除评论多级子孙收敛。' }}</li>
       <li><b>v1.5.17</b> — {{ '评论网关与 QDU 同源增强：delete owner 鉴权 + GET 防盗删过滤。' }}</li>
       <li><b>v1.5.16</b> — {{ '视觉走查：顶栏短名/私信一行/洞察柱防挤出/EN 欢迎页与首页夹生清零（真机截图肉眼审查）。' }}</li>

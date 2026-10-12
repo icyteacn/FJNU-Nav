@@ -61,6 +61,7 @@ const todayCourses = computed(() => {
   if (scheduleWd === null) return []
   return majorCourses.value.filter(c => {
     if (c.weekday !== scheduleWd) return false
+    if (isPeriodMoved(todayDateStr.value, c.startPeriod)) return false
     if (!showSemester.value && !isCourseInWeek(c, selectedWeek.value)) return false
     if (!showSemester.value && deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
     return true
@@ -121,22 +122,23 @@ const nextInfo = computed(() => {
   return { course: nextCourse.value, countdown: nextCountdown.value, weekdayLabel: WEEKDAYS.find(w => w.key === nextCourse.value.weekday)?.label, dateStr: formatDateShort(nextCourse.value._date) }
 })
 
+/** 调入课程按源课表周几查找（跨周：调入日可能已超出源课程周次，不受当前周/筛选限制） */
+function findIncomingSource(wd, sp) {
+  return majorCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
+}
 function getIncomingCourse(dateStr, period) {
-  const info = getIncomingInfoFromData(dateStr, period, (wd, sp) => {
-    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
-  })
-  return info?.course || null
+  if (showSemester.value) return null
+  return getIncomingInfoFromData(dateStr, period, findIncomingSource)?.course || null
 }
 function getIncomingInfoLocal(dateStr, period) {
-  return getIncomingInfoFromData(dateStr, period, (wd, sp) => {
-    return displayCourses.value.find(c => c.weekday === wd && sp >= c.startPeriod && sp <= c.endPeriod) || null
-  })
+  if (showSemester.value) return null
+  return getIncomingInfoFromData(dateStr, period, findIncomingSource)
 }
 
 function getCourse(weekday, period) {
   if (isHoliday(weekday)) return null
   const ds = dateStrOf(weekday)
-  if (isPeriodMoved(ds, period)) return null
+  if (!showSemester.value && isPeriodMoved(ds, period)) return null
   const incoming = getIncomingCourse(ds, period)
   if (incoming) return incoming
   const effectiveWd = getMakeupWeekday(weekday)
@@ -146,11 +148,23 @@ function getCourse(weekday, period) {
   return displayCourses.value.find(c => c.weekday === effectiveWd && period >= c.startPeriod && period <= c.endPeriod) || null
 }
 function getCourseSpan(course) { return course ? (course.endPeriod - course.startPeriod + 1) : 1 }
+/** 该格纵向跨度：优先改期角标（源节次）→ 调入节次 → 课程本身 */
+function getRowspan(weekday, period) {
+  const o = getOverride(weekday, period)
+  if (o) return o.srcPeriods.length
+  const inInfo = getIncomingInfoLocal(dateStrOf(weekday), period)
+  if (inInfo) return inInfo.destPeriods.length
+  return getCourseSpan(getCourse(weekday, period))
+}
 function isCellMerged(weekday, period) {
   if (isHoliday(weekday)) return false
   const ds = dateStrOf(weekday)
-  const incoming = getIncomingCourse(ds, period)
-  if (incoming) return displayCourses.value.some(c => c.weekday === incoming.weekday && period > c.startPeriod && period <= c.endPeriod)
+  if (!showSemester.value) {
+    const o = getCourseOverride(ds, period)
+    if (o) return period > o.srcPeriods[0] && period <= o.srcPeriods.at(-1)
+    const inInfo = getIncomingInfoLocal(ds, period)
+    if (inInfo) return period > inInfo.destPeriods[0] && period <= inInfo.destPeriods.at(-1)
+  }
   const effectiveWd = getMakeupWeekday(weekday)
   if (effectiveWd !== weekday) return majorCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
   return displayCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
@@ -172,7 +186,10 @@ function getMakeupWeekday(weekday) {
   if (h?.type === 'makeup') return h.scheduleWeekday
   return weekday
 }
-function getOverride(weekday, period) { return getCourseOverride(dateStrOf(weekday), period) || null }
+function getOverride(weekday, period) {
+  if (showSemester.value) return null
+  return getCourseOverride(dateStrOf(weekday), period) || null
+}
 function getTodayScheduleWeekday() {
   const info = getDateHolidayInfo(todayDateStr.value)
   if (!info) return todayWeekday.value
@@ -451,16 +468,17 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
                   <td v-if="isHoliday(wd.key) && row.period === 1" :rowspan="12" class="course-cell is-holiday-col holiday-empty-cell">
                     <div class="holiday-empty"><span class="holiday-empty-icon">🎉</span><span class="holiday-empty-text">{{ getHolidayInfo(wd.key)?.name }}</span></div>
                   </td>
-                  <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getOverride(wd.key, row.period) ? getOverride(wd.key, row.period).srcPeriods.length : getCourseSpan(getCourse(wd.key, row.period))" class="course-cell" :data-key="wd.key + '-' + row.period"
+                  <td v-else-if="!isHoliday(wd.key) && !isCellMerged(wd.key, row.period)" :rowspan="getRowspan(wd.key, row.period)" class="course-cell" :data-key="wd.key + '-' + row.period"
                     :class="{ 'has-course': getCourse(wd.key, row.period) || getOverride(wd.key, row.period), weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday-col': isHoliday(wd.key), 'is-makeup-col': isMakeup(wd.key) }"
                     @click="getOverride(wd.key, row.period) ? null : getCourse(wd.key, row.period) ? openCourseDetail(getCourse(wd.key, row.period)) : openAddModal(wd.key, row.period)">
                     <div v-if="getOverride(wd.key, row.period)" class="moved-badge">
                       <span>↗️</span>
                       <span>{{ getOverride(wd.key, row.period).destDate.slice(5) }} 第{{ getOverride(wd.key, row.period).destPeriods[0] }}-{{ getOverride(wd.key, row.period).destPeriods.at(-1) }}节</span>
                     </div>
-                    <div v-else-if="getCourse(wd.key, row.period)" class="course-card" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">
+                    <div v-else-if="getCourse(wd.key, row.period)" class="course-card" :class="{ 'is-incoming': getIncomingInfoLocal(dateStrOf(wd.key), row.period) }" :style="colorMode === 'color' ? { background: getCourseColor(getCourse(wd.key, row.period), 0.15), borderLeftColor: getCourseColor(getCourse(wd.key, row.period)) } : { borderLeftColor: getCourse(wd.key, row.period).color }">
+                      <div v-if="getIncomingInfoLocal(dateStrOf(wd.key), row.period)" class="incoming-badge">⬅️ 调入 {{ getIncomingInfoLocal(dateStrOf(wd.key), row.period).srcDate.slice(5) }}</div>
                       <div class="course-name">{{ getCourse(wd.key, row.period).name }}</div>
-                      <div class="course-info">{{ getCourse(wd.key, row.period).location }} · {{ getCourse(wd.key, row.period).teacher }}</div>
+                      <div class="course-info"><span :class="{ 'new-location': getIncomingInfoLocal(dateStrOf(wd.key), row.period)?.destLocation }">{{ (getIncomingInfoLocal(dateStrOf(wd.key), row.period) || {}).destLocation || getCourse(wd.key, row.period).location }}</span> · {{ getCourse(wd.key, row.period).teacher }}</div>
                     </div>
                   </td>
                 </template>
@@ -689,6 +707,7 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .holiday-badge { display: inline-flex; align-items: center; gap: 2px; margin: 2px auto; padding: 1px 6px; border-radius: 999px; font-size: calc(8px * var(--font-scale)); font-weight: 700; }
 .holiday-badge.holiday { background: #fca5a5; color: #991b1b; }
 .holiday-badge.makeup { background: #fbbf24; color: #78350f; }
+.holiday-badge.adjust { background: #ede9fe; color: #5b21b6; }
 .course-cell { padding: 1px; height: calc(38px * var(--font-scale)); vertical-align: middle; cursor: pointer; }
 .course-cell.weekend { background: #fafafa; }
 .course-cell.is-today { background: #eff6ff; }
@@ -703,6 +722,9 @@ onMounted(() => { selectedWeek.value = getCurrentWeek(); nextTick(() => { mounte
 .holiday-empty-text { font-size: 11px; font-weight: 700; color: #dc2626; }
 .moved-badge { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: calc(8px * var(--font-scale)); color: #b45309; font-weight: 600; }
 .is-makeup-col { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+.course-card.is-incoming { border-left-style: dashed; }
+.incoming-badge { font-size: calc(6.5px * var(--font-scale)); font-weight: 700; color: #0369a1; background: #e0f2fe; padding: 0 3px; border-radius: 3px; align-self: flex-start; line-height: 1.3; }
+.course-info .new-location { color: #dc2626; font-weight: 700; }
 
 /* 底部工具栏 */
 .bottom-bar { display: flex; align-items: center; gap: 4px; padding: 8px 12px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid #eee; flex-shrink: 0; overflow-x: auto; }

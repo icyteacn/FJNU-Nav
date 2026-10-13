@@ -226,9 +226,10 @@ public final class ScheduleNotifier {
     }
 
     /**
-     * 桌面小组件 4x4 数据快照：{top1, top2, n1, n2, n3}
-     *   上半区 top1/top2 —— 正在上课（含下课倒计时）/ 上一节已下课 / 今日第一节预告
-     *   下半区 n1..n3    —— 接下来 3 节列表（与应用内倒计时卡同源：时间 课名 · 教室 · 倒计时）
+     * 桌面小组件 4x2 数据快照：{状态行, 下一节信息, 下一节倒计时}
+     *   行1 —— 正在上课（含下课倒计时）/ 上一节已下课 / 今日第一节预告
+     *   行2 —— 下一节课：时间 课名 · 教室（与应用内倒计时卡同源）
+     *   行3 —— 下一节课距开始倒计时
      * 数据缺失 / 过期返回 null（小组件显示占位）。
      */
     public static String[] widgetSnapshot(Context context) {
@@ -238,47 +239,41 @@ public final class ScheduleNotifier {
             JSONObject s = readSummary(ctx);
             if (s == null || !today.equals(s.optString("date"))) return null;
             String l1 = s.optString("text", "");
+            if (l1.isEmpty()) l1 = s.optString("l1", ""); // 兼容 1.1 旧 schema
             if (l1.isEmpty()) return null;
             long now = System.currentTimeMillis();
             JSONArray lines = s.optJSONArray("lines");
-            String line2 = lines != null ? lines.optString(0, "") : "";
-            String top1, top2;
+            String line2 = lines != null ? lines.optString(0, "") : s.optString("l2", "");
+            String top1;
             if ("live".equals(s.optString("mode"))) {
                 long anchor = s.optLong("anchor", 0);
-                top1 = l1;
-                top2 = line2 + (anchor > now ? " · ⏳ 还有 " + fmtCd(anchor - now) + "下课" : " · 💤 即将下课");
+                top1 = l1 + (anchor > now ? " · 还剩 " + fmtCd(anchor - now) + "下课" : " · 即将下课");
             } else {
                 JSONObject prev = s.optJSONObject("prev");
                 if (prev != null) {
-                    top1 = "💤 上一节 · " + prev.optString("name", "");
-                    top2 = prev.optString("time", "") + " · " + prev.optString("loc", "") + " · 已下课";
+                    top1 = "上一节 · " + prev.optString("name", "") + " · 已下课";
                 } else {
-                    top1 = "☕️ 今天还没有上过的课";
                     JSONArray up0 = s.optJSONArray("upcoming");
                     JSONObject first = up0 != null && up0.length() > 0 ? up0.optJSONObject(0) : null;
-                    top2 = (first != null && first.optBoolean("today", false))
-                            ? "🌅 今日第一节课 " + first.optString("time", "") + " 开始"
+                    top1 = (first != null && first.optBoolean("today", false))
+                            ? "今日第一节课 " + first.optString("time", "") + " 开始"
                             : "打开 App 查看今日课程";
                 }
             }
-            String n1 = "", n2 = "", n3 = "";
+            String top2 = "", top3 = "";
             JSONArray up = s.optJSONArray("upcoming");
-            if (up != null) {
-                StringBuilder[] sb = { new StringBuilder(), new StringBuilder(), new StringBuilder() };
-                for (int i = 0; i < up.length() && i < 3; i++) {
-                    JSONObject u = up.optJSONObject(i);
-                    if (u == null) continue;
-                    long at = u.optLong("at", 0);
-                    String when = (u.optBoolean("today", false) ? "" : u.optString("day", "") + " ") + u.optString("time", "");
-                    String rest = at > now ? " · " + fmtCountShort(at - now) + "后" : "";
-                    sb[i].append(when).append(" ").append(u.optString("name", ""))
-                         .append(" · ").append(u.optString("loc", "")).append(rest);
-                }
-                n1 = sb[0].toString();
-                n2 = sb[1].toString();
-                n3 = sb[2].toString();
+            JSONObject u = up != null && up.length() > 0 ? up.optJSONObject(0) : null;
+            if (u != null) {
+                String when = (u.optBoolean("today", false) ? "" : u.optString("day", "") + " ") + u.optString("time", "");
+                top2 = "下一节 " + when + " " + u.optString("name", "") + " · " + u.optString("loc", "");
+                long at = u.optLong("at", 0);
+                top3 = at > now ? "还有 " + fmtCountShort(at - now) + "开始" : "即将开始";
+            } else if (s.optLong("nextStart", 0) > now) {
+                // 兼容 1.1 旧 schema：无 upcoming 时用 next* 字段
+                top2 = "下一节 " + s.optString("nextTime", "") + " " + s.optString("nextName", "") + " · " + s.optString("nextLoc", "");
+                top3 = "还有 " + fmtCountShort(s.optLong("nextStart", 0) - now) + "开始";
             }
-            return new String[]{ top1, top2, n1, n2, n3 };
+            return new String[]{ top1, top2, top3 };
         } catch (Throwable t) {
             return null;
         }

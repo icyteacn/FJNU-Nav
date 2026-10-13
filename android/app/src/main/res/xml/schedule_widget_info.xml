@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<!-- 只用 API 21+ 稳定属性（不写 targetCell*/description 等 API31 属性，旧 ROM 解析更稳） -->
+<!-- 只用 API 21+ 稳定属性；4x2（250x110dp）三行：状态 / 下一节 / 倒计时 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/schedule_widget"
-    android:minHeight="250dp"
+    android:minHeight="110dp"
     android:minWidth="250dp"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"

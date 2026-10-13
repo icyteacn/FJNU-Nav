@@ -7,9 +7,10 @@ import android.content.Context;
 import android.widget.RemoteViews;
 
 /**
- * 桌面小组件 4x4 列表倒计时：
- *   上半区 —— 正在上课（下课倒计时）/ 上一节已下课 / 今日第一节预告（随状态切换）
- *   下半区 —— 接下来 3 节列表（时间 课名 · 教室 · 距开始倒计时，与应用内倒计时卡同源）
+ * 桌面小组件 4x2 三行：
+ *   行1 —— 正在上课（下课倒计时）/ 上一节已下课 / 今日第一节预告（随状态切换）
+ *   行2 —— 下一节课：时间 课名 · 教室（与应用内倒计时卡同源）
+ *   行3 —— 下一节课距开始倒计时
  * 数据：notify.json 经 ScheduleNotifier.widgetSnapshot；刷新由 show() 推送（30s 节流）
  *      + 系统半小时兜底；点击进 MainActivity。
  */
@@ -46,15 +47,11 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
             if (snap != null) {
                 rv.setTextViewText(R.id.w_top1, safe(snap[0]));
                 rv.setTextViewText(R.id.w_top2, safe(snap[1]));
-                rv.setTextViewText(R.id.w_n1, safe(snap[2]));
-                rv.setTextViewText(R.id.w_n2, safe(snap[3]));
-                rv.setTextViewText(R.id.w_n3, safe(snap[4]));
+                rv.setTextViewText(R.id.w_top3, safe(snap[2]));
             } else {
                 rv.setTextViewText(R.id.w_top1, "🐔🩸课表");
                 rv.setTextViewText(R.id.w_top2, "打开应用查看今日课程");
-                rv.setTextViewText(R.id.w_n1, " ");
-                rv.setTextViewText(R.id.w_n2, " ");
-                rv.setTextViewText(R.id.w_n3, " ");
+                rv.setTextViewText(R.id.w_top3, " ");
             }
             rv.setOnClickPendingIntent(R.id.w_root, ScheduleNotifier.launchIntent(ctx));
             for (int id : ids) {

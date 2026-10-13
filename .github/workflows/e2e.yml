@@ -26,3 +26,11 @@ jobs:
           for i in $(seq 1 30); do curl -sf http://localhost:${PORT:-8787}/api/health && break; sleep 2; done
           E2E_BASE=http://localhost:${PORT:-8787} node scripts/e2e-browser.mjs
           kill $(cat /tmp/gw.pid) || true
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-shots
+          path: /tmp/nav-e2e-shots/
+          if-no-files-found: ignore
+          retention-days: 7

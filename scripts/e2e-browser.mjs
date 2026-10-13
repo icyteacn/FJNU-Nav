@@ -75,32 +75,36 @@ try {
 }
 
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+const WT = (name, dft) => Number(process.env['E2E_T_' + name]) || dft
+const T_NAV = WT('NAV', 30000)      // goto
+const T_WAIT = WT('WAIT', 30000)    // 元素出现
+const T_CARD = WT('CARD', 40000)    // 智能体出卡（CI 慢 runner 放宽）
 try {
   // 1. 首页（欢迎屏）
   await ok(page, '首页欢迎屏', async () => {
-    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 30000 })
-    await page.getByText(/进入校园导航/).first().waitFor({ timeout: 20000 })
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: T_NAV })
+    await page.getByText(/进入校园导航/).first().waitFor({ timeout: T_WAIT })
   })
   // 2. 进入主界面（以应用网格为准，不依赖文案可见性）
   await ok(page, '进入主界面', async () => {
     await page.getByText(/进入校园导航/).first().click()
-    await page.locator('.service-tile').first().waitFor({ state: 'visible', timeout: 20000 })
+    await page.locator('.service-tile').first().waitFor({ state: 'visible', timeout: T_WAIT })
     const n = await page.locator('.service-tile').count()
     assert(n >= 10, '应用网格过少: ' + n)
   })
   // 3. 智能体办事（今日简报出卡）
   await ok(page, '智能体今日简报出卡', async () => {
-    await page.goto(BASE + '/#/app/assistant', { waitUntil: 'domcontentloaded', timeout: 30000 })
+    await page.goto(BASE + '/#/app/assistant', { waitUntil: 'domcontentloaded', timeout: T_NAV })
     const input = page.locator('.ac-input').first()
-    await input.waitFor({ timeout: 20000 })
+    await input.waitFor({ timeout: T_WAIT })
     await input.fill('今日简报')
     await page.keyboard.press('Enter')
-    await page.locator('.ac-card').first().waitFor({ timeout: 25000 })
+    await page.locator('.ac-card').first().waitFor({ timeout: T_CARD })
   })
   // 4. 校园墙列表
   await ok(page, '校园墙列表', async () => {
-    await page.goto(BASE + '/#/app/campusWall', { waitUntil: 'domcontentloaded', timeout: 30000 })
-    await page.getByText(/校园墙/).first().waitFor({ timeout: 20000 })
+    await page.goto(BASE + '/#/app/campusWall', { waitUntil: 'domcontentloaded', timeout: T_NAV })
+    await page.getByText(/校园墙/).first().waitFor({ timeout: T_WAIT })
   })
   // 5. 墙内搜索不崩
   await ok(page, '墙内搜索', async () => {
@@ -121,24 +125,24 @@ try {
   })
   // 7. 技能市场看板
   await ok(page, '技能市场看板', async () => {
-    await page.goto(BASE + '/#/app/skills', { waitUntil: 'domcontentloaded', timeout: 30000 })
-    await page.getByText(/技能市场/).first().waitFor({ timeout: 20000 })
+    await page.goto(BASE + '/#/app/skills', { waitUntil: 'domcontentloaded', timeout: T_NAV })
+    await page.getByText(/技能市场/).first().waitFor({ timeout: T_WAIT })
   })
   // 8. 管理页可开（登录框）
   await ok(page, '管理页登录框', async () => {
-    await page.goto(BASE + '/admin.html', { timeout: 30000 })
-    await page.locator('#tokenInput, #loginView').first().waitFor({ timeout: 20000 })
+    await page.goto(BASE + '/admin.html', { timeout: T_NAV })
+    await page.locator('#tokenInput, #loginView').first().waitFor({ timeout: T_WAIT })
   })
   // 9. 404 兜底（乱地址回应用壳）
   await ok(page, '404兜底', async () => {
-    const r = await page.goto(BASE + '/nope-xyz-' + Date.now(), { timeout: 30000 })
+    const r = await page.goto(BASE + '/nope-xyz-' + Date.now(), { timeout: T_NAV })
     assert(r && r.ok(), '状态码 ' + (r && r.status()))
   })
   // 10. 移动端页（仅 FJNU 有）
   if (!SKIP_MOBILE && IS_FJNU) {
     await ok(page, '移动端课表页', async () => {
-      await page.goto(BASE + '/mobile.html', { waitUntil: 'domcontentloaded', timeout: 30000 })
-      await page.locator('#agent-fab, #app').first().waitFor({ timeout: 20000 })
+      await page.goto(BASE + '/mobile.html', { waitUntil: 'domcontentloaded', timeout: T_NAV })
+      await page.locator('#agent-fab, #app').first().waitFor({ timeout: T_WAIT })
     })
   }
   // 11. 375 全应用横向溢出扫描（防手机端撑破；E2E_SKIP_375=1 跳过）
@@ -150,8 +154,8 @@ try {
       await page.setViewportSize({ width: 375, height: 740 })
       const bad = []
       for (const id of ids) {
-        await page.goto(BASE + '/#/app/' + id, { waitUntil: 'domcontentloaded', timeout: 30000 })
-        await page.waitForTimeout(450)
+        await page.goto(BASE + '/#/app/' + id, { waitUntil: 'domcontentloaded', timeout: T_NAV })
+        await page.waitForTimeout(700)
         const over = await page.evaluate(() => {
           const d = document.scrollingElement || document.documentElement
           return d.scrollWidth - d.clientWidth

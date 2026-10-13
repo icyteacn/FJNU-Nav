@@ -42,6 +42,25 @@
         <receiver
             android:name=".ScheduleNotifier$SoonTick"
             android:exported="false" />
+        <!-- 重启手机后自动恢复通知 / 闹钟 / 小组件 -->
+        <receiver
+            android:name=".ScheduleNotifier$Boot"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <!-- 桌面小组件：下一节课 + 倒计时（三行与通知同源） -->
+        <receiver
+            android:name=".ScheduleWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/schedule_widget_info" />
+        </receiver>
     </application>
 
     <!-- Permissions -->
@@ -52,6 +71,6 @@
     <!-- Android 13+ 常驻通知运行时授权 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- 下课前 30 分钟精确提醒（Android 12+ 默认关闭时代码自动回退非精确） -->
+    <!-- 课前提醒精确闹钟（Android 12+ 默认关闭时代码自动回退非精确） -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 </manifest>

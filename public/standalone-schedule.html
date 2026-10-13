@@ -43,10 +43,64 @@
     /* 下一节课倒计时卡片 */
     .next-card{display:flex;align-items:stretch;gap:10px;margin:8px 10px;padding:10px 12px;border-radius:14px;
       background:linear-gradient(135deg,var(--primary),#ad1457);color:#fff;cursor:pointer;flex-shrink:0;
-      box-shadow:0 6px 18px rgba(198,40,40,.28);transition:transform .15s}
+      box-shadow:0 6px 18px rgba(198,40,40,.28);transition:transform .15s,background .35s ease,box-shadow .35s ease}
     .next-card:active{transform:scale(.985)}
     .next-card.empty{background:linear-gradient(135deg,#64748b,#475569);box-shadow:none}
     .next-card.live{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 6px 18px rgba(22,163,74,.28)}
+
+    /* ========== 桌宠（热血鸡伙伴） ========== */
+    .pet-fab{position:fixed;right:14px;bottom:calc(78px + var(--safe-bottom));width:54px;height:54px;border-radius:50%;
+      background:radial-gradient(circle at 32% 28%,#fff8d6,#fbbf24);box-shadow:0 6px 18px rgba(0,0,0,.24);
+      z-index:70;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:27px;
+      border:2px solid #f59e0b;user-select:none;-webkit-user-select:none;
+      transition:transform .28s cubic-bezier(.34,1.56,.64,1),box-shadow .28s}
+    .pet-fab:active{transform:scale(.88)}
+    .pet-fab.hidden{display:none}
+    .pet-fab.celebrate{animation:petJump .6s cubic-bezier(.34,1.56,.64,1)}
+    .pet-fab .pet-ring{position:absolute;inset:-5px;border-radius:50%;border:2px dashed rgba(251,191,36,.85);
+      animation:petSpin 9s linear infinite;display:none}
+    .pet-fab.rb .pet-ring{display:block}
+    .pet-fab .pet-float{position:absolute;top:-18px;right:-2px;background:#ef4444;color:#fff;font-size:10px;
+      font-weight:800;border-radius:999px;padding:1px 6px;display:none;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+    .pet-fab .pet-float.show{display:block}
+    @keyframes petJump{0%{transform:translateY(0) scale(1)}30%{transform:translateY(-14px) scale(1.08)}55%{transform:translateY(0) scale(.94)}80%{transform:translateY(-5px) scale(1.03)}100%{transform:translateY(0)}}
+    @keyframes petSpin{to{transform:rotate(360deg)}}
+    .pet-panel{position:fixed;right:12px;bottom:calc(146px + var(--safe-bottom));width:238px;border-radius:18px;
+      background:var(--card);border:1px solid var(--border);box-shadow:0 14px 36px rgba(0,0,0,.20);z-index:71;
+      padding:14px;display:none}
+    .pet-panel.show{display:block;animation:petPop .26s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes petPop{from{opacity:0;transform:translateY(16px) scale(.9)}to{opacity:1;transform:none}}
+    .pet-head{display:flex;align-items:center;gap:10px}
+    .pet-avatar{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:34px;background:radial-gradient(circle at 32% 28%,#fff8d6,#fcd34d);border:2px solid #f59e0b;position:relative;flex-shrink:0}
+    .pet-avatar .pet-ring2{position:absolute;inset:-4px;border-radius:50%;border:2px dashed rgba(251,191,36,.9);animation:petSpin 9s linear infinite;display:none}
+    .pet-fab.rb~.pet-panel .pet-ring2,.pet-panel .pet-avatar.rb .pet-ring2{display:block}
+    .pet-avatar.breathe{animation:petBreathe 2.6s ease-in-out infinite}
+    @keyframes petBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    .pet-id{flex:1;min-width:0}
+    .pet-name{font-size:14px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pet-sub{font-size:11px;color:var(--text-sub);margin-top:2px}
+    .pet-exp{height:8px;border-radius:99px;background:var(--soft-fg);overflow:hidden;margin:10px 0 4px;border:1px solid var(--border)}
+    .pet-exp-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#f59e0b,#ef4444);transition:width .55s cubic-bezier(.22,1,.36,1)}
+    .pet-exp-label{font-size:10.5px;color:var(--text-sub);text-align:right}
+    .pet-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+    .pet-btn{flex:1 1 46%;padding:8px 4px;border-radius:11px;border:1px solid var(--border);background:var(--soft-fg);
+      color:var(--text);font-size:12px;cursor:pointer;text-align:center;transition:transform .12s}
+    .pet-btn:active{transform:scale(.93)}
+    .pet-btn:disabled{opacity:.42;cursor:not-allowed}
+    .pet-btn.grow{flex-basis:100%}
+    .pet-bubble{position:fixed;right:14px;bottom:calc(142px + var(--safe-bottom));max-width:210px;padding:9px 12px;
+      background:var(--card);border:1px solid var(--border);border-radius:14px 14px 4px 14px;font-size:12.5px;
+      line-height:1.45;z-index:69;display:none;box-shadow:0 8px 20px rgba(0,0,0,.14);color:var(--text)}
+    .pet-bubble.show{display:block;animation:petPop .22s cubic-bezier(.34,1.56,.64,1)}
+
+    /* ========== 增删动画 ========== */
+    @keyframes justAdded{0%{transform:scale(.55);opacity:.15}58%{transform:scale(1.07)}100%{transform:scale(1);opacity:1}}
+    @keyframes addGlow{0%{box-shadow:0 0 0 2px rgba(34,197,94,.9) inset,0 0 14px rgba(34,197,94,.45)}100%{box-shadow:0 0 0 0 transparent}}
+    .course-cell.just-added{animation:justAdded .55s cubic-bezier(.34,1.56,.64,1)}
+    .course-cell.just-added .course-card{animation:addGlow 1.25s ease forwards}
+    .ptcl{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:300;
+      transition:transform .72s cubic-bezier(.17,.67,.38,1),opacity .72s ease}
     .next-left{flex:1;min-width:0}
     .next-badge-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
     .next-badge{font-size:11px;font-weight:800;background:rgba(255,255,255,.22);padding:2px 9px;border-radius:999px;letter-spacing:.3px}
@@ -373,6 +427,29 @@
       </div>
     </div>
 
+    <!-- ==================== 桌宠 ==================== -->
+    <div class="pet-fab" id="petFab" onclick="togglePetPanel(event)">
+      <span class="pet-ring"></span><span class="pet-float" id="petFloat">+exp</span><span id="petFabEmoji">🐔</span>
+    </div>
+    <div class="pet-bubble" id="petBubble"></div>
+    <div class="pet-panel" id="petPanel" onclick="event.stopPropagation()">
+      <div class="pet-head">
+        <div class="pet-avatar breathe" id="petAvatar"><span class="pet-ring2"></span><span id="petAvatarEmoji">🐔</span></div>
+        <div class="pet-id">
+          <div class="pet-name" id="petName">热血小鸡</div>
+          <div class="pet-sub" id="petSub">Lv.1 · 陪伴第1天</div>
+        </div>
+      </div>
+      <div class="pet-exp"><div class="pet-exp-fill" id="petExpFill"></div></div>
+      <div class="pet-exp-label" id="petExpLabel">0 / 75 经验</div>
+      <div class="pet-btns">
+        <button class="pet-btn" onclick="petFeed()">🍚 投喂</button>
+        <button class="pet-btn" onclick="petSwitchShape()">🎭 换形象</button>
+        <button class="pet-btn" id="petRebirthBtn" onclick="petRebirth()">✨ 转生</button>
+        <button class="pet-btn" onclick="hidePet()">💤 收起</button>
+      </div>
+    </div>
+
     <!-- ==================== 弹窗 ==================== -->
     <!-- 更多菜单 -->
     <div class="modal-overlay" id="moreMenu">
@@ -403,6 +480,12 @@
             </li>
             <li class="menu-item" onclick="toggleNextCard()">
               <span class="icon">⏰</span><span class="text">下一节课倒计时</span><span class="menu-state" id="nextCardMenuState">显示中</span><span class="arrow">›</span>
+            </li>
+            <li class="menu-item" onclick="cycleLead()">
+              <span class="icon">🔔</span><span class="text">课前提醒时间</span><span class="menu-state" id="leadMenuState">提前30分钟</span><span class="arrow">›</span>
+            </li>
+            <li class="menu-item" onclick="togglePet()">
+              <span class="icon">🐔</span><span class="text">桌宠伙伴</span><span class="menu-state" id="petMenuState">陪伴中</span><span class="arrow">›</span>
             </li>
             <li class="menu-item" onclick="toggleTheme()">
               <span class="icon">🌙</span><span class="text" id="themeMenuText">夜间模式</span><span class="arrow">›</span>
@@ -926,7 +1009,15 @@ function getCoursesForWeek(major,week){
   const base=(ALL_COURSES[major]||[])
     .filter(c=>!editedIds.has(c.id))
     .filter(c=>!state.deletedCourses.includes(c.id)&&!state.deletedCourses.includes(c.id+'_wk'+week));
-  let custom=state.customCourses.filter(c=>c.major===major&&isInWeeks(c.weeks,week));
+  // 自定义课程同样吃删除记录（整课删 / 周删 / 编辑变体联动），否则新增的课永远删不掉
+  let custom=state.customCourses.filter(c=>{
+    if(c.major!==major||!isInWeeks(c.weeks,week))return false;
+    if(state.deletedCourses.includes(c.id))return false;
+    if(c._editId&&state.deletedCourses.includes(c._editId))return false;
+    if(c._editId&&c._weekScope&&state.deletedCourses.includes(c._editId+'_wk'+c._weekScope))return false;
+    if(!c._weekScope&&state.deletedCourses.includes(c.id+'_wk'+week))return false;
+    return true;
+  });
   const weekOv=custom.filter(c=>c._editId&&c._weekScope===week);
   custom=custom.filter(c=>!(c._editId&&c._weekScope));
   const merged=base.map(c=>weekOv.find(o=>o._editId===c.id)||c);
@@ -1062,6 +1153,7 @@ function render(){
   if(isList){document.getElementById('timeLine').style.display='none'}
   else{updateTimeLine()}
   renderNextCard(); // 顶栏下一节课倒计时
+  playJustAdded();  // 新增课程格入场动画
   pushNotifyData(); // 同步今日概要给原生常驻通知（仅原生环境生效）
 }
 function toggleView(){
@@ -1085,8 +1177,10 @@ function buildNotifySummary(){
   const WL=['','周一','周二','周三','周四','周五','周六','周日'];
   const todayWd=today.getDay()===0?7:today.getDay();
   const base={date:ds,text:'',lines:[],mode:'rest',
-              anchor:0,anchorVerb:'',
-              nextStart:0,nextName:'',nextLoc:'',nextTime:'',nextWhen:''};
+              anchor:0,anchorVerb:'',liveStart:0,week:getCurrentWeek(),
+              leadMin:(parseInt(localStorage.getItem('sche_lead'),10)||30),
+              nextStart:0,nextName:'',nextLoc:'',nextTime:'',nextWhen:'',
+              upcoming:[]};
   const nc=computeNextCourse(); // 全局下一节课（跨天，供半小时提醒与跨天行1使用）
   if(nc){
     base.nextStart=+nc.target;base.nextName=nc.course.name;base.nextLoc=nc.loc;
@@ -1111,9 +1205,21 @@ function buildNotifySummary(){
     else if(!live&&!next&&nowMin<s)next=it;
   }
   const atMin=m=>+new Date(today.getFullYear(),today.getMonth(),today.getDate(),Math.floor(m/60),m%60,0,0);
+  // 上一节（今天已下课的最后一节）+ 接下来 3 节列表 —— 桌面小组件 4x4 用
+  let prev=null;
+  for(const it of list){ if(nowMin>=PERIOD_END[it.end])prev=it; }
+  if(prev){
+    base.prev={name:prev.course.name,loc:locOf(prev),
+               time:PERIOD_FMT[prev.start]+'-'+PERIOD_FMT_END[prev.end]};
+  }
+  base.upcoming=computeUpcoming(3).map(u=>({
+    name:u.course.name,loc:u.loc,time:PERIOD_FMT[u.startPeriod],
+    day:u.weekdayLabel,today:getDateStr(u.date)===ds,at:+u.target
+  }));
   if(live){
     base.mode='live';
     base.anchor=atMin(PERIOD_END[live.end]);base.anchorVerb='下课';
+    base.liveStart=atMin(PERIOD_START[live.start]); // 供原生渲染本节课进度条
     base.text='📖 正在上课 · '+WL[todayWd]+' '+PERIOD_FMT[live.start]+' '+live.course.name;
     base.lines=['📅 '+dateLabel+' 第'+live.start+'-'+live.end+'节 · '+locOf(live),
                 '⏳ 还有 '+fmtCd(base.anchor-Date.now())+'下课'];
@@ -1136,7 +1242,7 @@ function buildNotifySummary(){
   }
   return base;
 }
-/** 通知数据写盘（仅原生环境生效；内容没变不重复写） */
+/** 通知数据写盘（仅原生环境生效；内容没变不重复写，写失败回滚缓存以便下次重试） */
 let lastNotifyPush='';
 function pushNotifyData(){
   try{
@@ -1144,10 +1250,11 @@ function pushNotifyData(){
     if(!(cap&&cap.Plugins&&cap.Plugins.Filesystem))return;
     const payload=JSON.stringify(buildNotifySummary());
     if(payload===lastNotifyPush)return;
+    const prev=lastNotifyPush;
     lastNotifyPush=payload;
     cap.Plugins.Filesystem.writeFile({path:'notify.json',data:payload,directory:'DATA',encoding:'utf8'})
       .then(()=>{})
-      .catch(()=>{});
+      .catch(()=>{lastNotifyPush=prev});
   }catch(e){}
 }
 function renderWeekNav(){
@@ -1399,12 +1506,14 @@ function getTodayLiveInfo() {
   } catch (e) {}
   return null;
 }
-/** 从今天起找下一节课（跨天最多看 7 天，处理假日/补课/调课/调入） */
-function computeNextCourse() {
+/** 从今天起收集接下来的课（跨天最多看 8 天，处理假日/补课/调课/调入）；桌面小组件列表用 */
+function computeUpcoming(max) {
+  const out = [];
+  max = max || 1;
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const WL = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 8 && out.length < max; i++) {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
     const w = getWeekNumber(d);
     if (w < 1 || w > 18) continue;
@@ -1412,20 +1521,25 @@ function computeNextCourse() {
     const res = getDayCourses(w, wd);
     if (res.holiday) continue;
     for (const it of res.list) {
+      if (out.length >= max) break;
       if (it.kind === 'moved') continue; // 该节已被调走，当天不发生
       const s = PERIOD_START[it.start];
       if (i === 0 && s <= nowMin) continue; // 今天已开始的不算
       const target = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(s / 60), s % 60, 0, 0);
       if (target <= now) continue;
-      return {
+      out.push({
         target, course: it.course, kind: it.kind, adj: it.adj || null,
         weekday: wd, week: w, date: d, startPeriod: it.start, endPeriod: it.end,
         weekdayLabel: WL[wd],
         loc: it.kind === 'incoming' ? it.adj.destLocation : it.course.location,
-      };
+      });
     }
   }
-  return null;
+  return out;
+}
+/** 从今天起找下一节课（computeUpcoming 的单节兼容包装） */
+function computeNextCourse() {
+  return computeUpcoming(1)[0] || null;
 }
 function fmtCountdown(ms) {
   if (ms <= 0) return '即将开始';
@@ -1536,6 +1650,352 @@ function toggleNextCard() {
   saveState(); renderNextCard(); syncNextCardMenu();
   showToast(state.showNextCard ? '已显示「下一节课」倒计时 ⏰' : '已隐藏「下一节课」倒计时 · 可在菜单里重新开启');
 }
+// ==================== 课前提醒时间（10/15/30/60 分钟循环切换） ====================
+const LEAD_OPTIONS = [10, 15, 30, 60];
+function currentLead() {
+  const v = parseInt(localStorage.getItem('sche_lead'), 10);
+  return LEAD_OPTIONS.includes(v) ? v : 30;
+}
+function syncLeadMenu() {
+  const el = document.getElementById('leadMenuState');
+  if (el) el.textContent = '提前' + currentLead() + '分钟';
+}
+function cycleLead() {
+  const cur = currentLead();
+  const next = LEAD_OPTIONS[(LEAD_OPTIONS.indexOf(cur) + 1) % LEAD_OPTIONS.length];
+  try { localStorage.setItem('sche_lead', String(next)); } catch (e) {}
+  syncLeadMenu();
+  pushNotifyData(); // 内容变化 → 写盘 → 原生重排提醒闹钟
+  showToast('课前提醒已设为上课前 ' + next + ' 分钟 🔔');
+}
+
+// ==================== 桌宠（热血鸡伙伴） ====================
+const PET_SHAPES = [
+  { key: 'chick', emoji: '🐔', name: '热血小鸡' },
+  { key: 'fox',   emoji: '🦊', name: '元气狐狸' },
+  { key: 'cat',   emoji: '🐱', name: '高冷猫猫' },
+  { key: 'bot',   emoji: '🤖', name: '课表机器人' }
+];
+function petLoad() {
+  try {
+    const p = JSON.parse(localStorage.getItem('sche_pet')) || {};
+    return {
+      exp: p.exp || 0, level: p.level || 1, rebirth: p.rebirth || 0,
+      shape: PET_SHAPES.some(x => x.key === p.shape) ? p.shape : 'chick',
+      hide: !!p.hide, lastFeed: p.lastFeed || 0, lastReward: p.lastReward || 0,
+      lastTalk: p.lastTalk || 0, lastAmbient: p.lastAmbient || 0,
+      mealDone: p.mealDone || '', firstDay: p.firstDay || getDateStr(new Date()),
+      pos: (p.pos && isFinite(p.pos.x) && isFinite(p.pos.y)) ? p.pos : null,
+      attend: (Array.isArray(p.attend) ? p.attend : []).filter(k => typeof k === 'string' && k.startsWith(getDateStr(new Date())))
+    };
+  } catch (e) {
+    return { exp:0, level:1, rebirth:0, shape:'chick', hide:false, lastFeed:0, lastReward:0,
+             lastTalk:0, lastAmbient:0, mealDone:'', firstDay:getDateStr(new Date()), pos:null, attend:[] };
+  }
+}
+function petSave(p) { try { localStorage.setItem('sche_pet', JSON.stringify(p)); } catch (e) {} }
+function petShape() { return PET_SHAPES.find(x => x.key === petLoad().shape) || PET_SHAPES[0]; }
+function petNameLabel() {
+  const p = petLoad();
+  return petShape().name + (p.rebirth > 0 ? '·' + p.rebirth + '转' : '');
+}
+function petExpNeed(lv) { return 50 + lv * 25; }
+function petDays() {
+  const p = petLoad();
+  return Math.max(1, Math.round((Date.now() - new Date(p.firstDay + 'T00:00:00').getTime()) / 864e5) + 1);
+}
+function petAddExp(n) {
+  const p = petLoad();
+  n = Math.max(1, Math.round(n * (1 + 0.1 * p.rebirth)));
+  p.exp += n;
+  let up = false;
+  while (p.exp >= petExpNeed(p.level)) { p.exp -= petExpNeed(p.level); p.level++; up = true; }
+  petSave(p);
+  petRender();
+  petFloat('+' + n);
+  if (up) {
+    petCelebrate();
+    petTalk(p.rebirth > 0 ? '转生之力涌动！现在是 Lv.' + p.level + ' 了 ✨' : '升级啦！' + petNameLabel() + ' Lv.' + p.level + ' 🎉', true);
+  }
+  return n;
+}
+function petFloat(txt) {
+  const el = document.getElementById('petFloat');
+  if (!el) return;
+  el.textContent = txt;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1600);
+}
+function petCelebrate() {
+  const fab = document.getElementById('petFab');
+  if (!fab) return;
+  fab.classList.remove('celebrate');
+  void fab.offsetWidth;
+  fab.classList.add('celebrate');
+  setTimeout(() => fab.classList.remove('celebrate'), 700);
+}
+let petBubbleTimer = null;
+function petTalk(msg, force) {
+  const p = petLoad();
+  const now = Date.now();
+  if (!force && now - p.lastTalk < 3 * 60000) return; // 自动消息 3min 冷却防烦；force=操作反馈不吞
+  p.lastTalk = now;
+  petSave(p);
+  const b = document.getElementById('petBubble');
+  if (!b) return;
+  b.textContent = msg;
+  b.classList.add('show');
+  clearTimeout(petBubbleTimer);
+  petBubbleTimer = setTimeout(() => b.classList.remove('show'), 4200);
+}
+function petFeed() {
+  const p = petLoad();
+  if (Date.now() - p.lastFeed < 2 * 3600000) {
+    const left = Math.ceil((2 * 3600000 - (Date.now() - p.lastFeed)) / 60000);
+    petTalk('刚吃饱啦，' + left + ' 分钟后再投喂吧～');
+    return;
+  }
+  p.lastFeed = Date.now();
+  petSave(p);
+  const got = petAddExp(5);
+  petCelebrate();
+  petTalk('谢谢投喂！+' + got + ' 经验，干饭最有劲了 🍚', true);
+}
+function petSwitchShape() {
+  const p = petLoad();
+  const idx = PET_SHAPES.findIndex(x => x.key === p.shape);
+  p.shape = PET_SHAPES[(idx + 1) % PET_SHAPES.length].key;
+  petSave(p);
+  petRender();
+  petTalk('变身！现在是' + petShape().name + ' ' + petShape().emoji, true);
+}
+function petRebirth() {
+  const p = petLoad();
+  if (p.level < 10) {
+    petTalk('想转生要先到 Lv.10 哦，现在 Lv.' + p.level + '，加油！');
+    return;
+  }
+  const btn = document.getElementById('petRebirthBtn');
+  if (btn && btn.dataset.arm !== '1') { // 两步确认防误触
+    btn.dataset.arm = '1';
+    btn.textContent = '✨ 再点确认';
+    petTalk('转生会重置等级，保留转生次数并获得永久经验加成！确认请再点一次。', true);
+    setTimeout(() => { if (btn) { btn.dataset.arm = ''; btn.textContent = '✨ 转生'; } }, 6000);
+    return;
+  }
+  if (btn) { btn.dataset.arm = ''; btn.textContent = '✨ 转生'; }
+  p.rebirth++;
+  p.level = 1;
+  p.exp = 0;
+  petSave(p);
+  petAddExp(30); // 转生礼包
+  petCelebrate();
+  petTalk('转世重生！我是 ' + petNameLabel() + '，经验获取 +' + (p.rebirth * 10) + '% ✨', true);
+}
+function petAttend() {
+  const p = petLoad();
+  const now = Date.now();
+  if (now - p.lastReward > 3600000) { // 打开 App 陪伴奖励（1h 冷却）
+    p.lastReward = now;
+    petSave(p);
+    petAddExp(10);
+  }
+  const live = getTodayLiveInfo();
+  if (live) {
+    const key = getDateStr(new Date()) + '#' + live.it.start;
+    if (!p.attend.includes(key)) {
+      p.attend.push(key);
+      petSave(p);
+      const got = petAddExp(25);
+      petTalk('上课打卡成功！+' + got + ' 经验，这节课也要认真听哦 📖', true);
+    }
+  }
+}
+function petMealCheck() {
+  const p = petLoad();
+  const today = getDateStr(new Date());
+  const now = new Date();
+  const hm = now.getHours() * 60 + now.getMinutes();
+  const tag = today === String(p.mealDone).slice(0, 10) ? p.mealDone : '';
+  if (!tag && hm >= 690 && hm <= 735) { // 11:30-12:15 午饭
+    p.mealDone = today + '-l';
+    petSave(p);
+    petTalk('11 点半啦，该去吃饭了 🍚 食堂走起！', true);
+    return;
+  }
+  if ((!tag || tag === today + '-l') && hm >= 1035 && hm <= 1080 && p.mealDone !== today + '-d') { // 17:15-18:00 晚饭
+    p.mealDone = today + '-d';
+    petSave(p);
+    petTalk('晚上 5 点多啦，晚饭别忘记 🍜', true);
+  }
+}
+function petAmbient() {
+  const p = petLoad();
+  if (Date.now() - p.lastAmbient < 6 * 60000) return;
+  p.lastAmbient = Date.now();
+  petSave(p);
+  const nc = computeNextCourse();
+  const live = getTodayLiveInfo();
+  const lines = [];
+  if (live) lines.push('认真听课的你最帅/最美 💪');
+  else if (nc) lines.push('下一节：' + nc.weekdayLabel + ' ' + PERIOD_FMT[nc.startPeriod] + ' ' + nc.course.name + '，别迟到～');
+  else lines.push('今天没有课，好好休息 ☕️');
+  lines.push('点我投喂有惊喜 🍚');
+  lines.push('好好学习，天天向上！');
+  lines.push('记得多喝水、少熬夜 🌙');
+  lines.push('教室那么远，提前出发哦 🏃');
+  petTalk(lines[Math.floor(Math.random() * lines.length)]);
+}
+function petRender() {
+  const p = petLoad();
+  const fab = document.getElementById('petFab');
+  const avatar = document.getElementById('petAvatar');
+  if (fab) {
+    fab.classList.toggle('hidden', p.hide);
+    fab.classList.toggle('rb', p.rebirth > 0);
+    if (p.pos && isFinite(p.pos.x) && isFinite(p.pos.y)) { // 恢复拖动后的位置
+      fab.style.left = p.pos.x + 'px';
+      fab.style.top = p.pos.y + 'px';
+      fab.style.right = 'auto';
+      fab.style.bottom = 'auto';
+    }
+  }
+  if (avatar) avatar.classList.toggle('rb', p.rebirth > 0);
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('petFabEmoji', petShape().emoji);
+  set('petAvatarEmoji', petShape().emoji);
+  set('petName', petNameLabel());
+  set('petSub', 'Lv.' + p.level + ' · 陪伴第' + petDays() + '天' + (p.rebirth > 0 ? ' · 转生×' + p.rebirth : ''));
+  const need = petExpNeed(p.level);
+  const fill = document.getElementById('petExpFill');
+  if (fill) fill.style.width = Math.min(100, Math.round(p.exp / need * 100)) + '%';
+  set('petExpLabel', p.exp + ' / ' + need + ' 经验');
+  const rb = document.getElementById('petRebirthBtn');
+  if (rb) { rb.disabled = p.level < 10; rb.textContent = p.level < 10 ? ('✨ 转生(Lv.10)') : '✨ 转生'; }
+  const ms = document.getElementById('petMenuState');
+  if (ms) ms.textContent = p.hide ? '已收起' : '陪伴中';
+}
+function togglePetPanel(e) {
+  if (e) e.stopPropagation();
+  if (petDragJustDone) return; // 刚拖动完，不当成点击
+  const panel = document.getElementById('petPanel');
+  if (!panel) return;
+  const open = panel.classList.contains('show');
+  document.getElementById('petPanel').classList.toggle('show', !open);
+  if (!open) { petRender(); petTalk('找到我啦～今天也要加油！', true); }
+}
+function hidePet() {
+  const p = petLoad();
+  p.hide = true;
+  petSave(p);
+  petRender();
+  const panel = document.getElementById('petPanel');
+  if (panel) panel.classList.remove('show');
+  showToast('桌宠已收起，可从菜单重新唤出 💤');
+}
+function togglePet() {
+  const p = petLoad();
+  p.hide = !p.hide;
+  petSave(p);
+  petRender();
+  showToast(p.hide ? '桌宠已收起 💤' : '桌宠回来啦 🐔');
+  if (!p.hide) { const fab = document.getElementById('petFab'); if (fab) { fab.classList.add('celebrate'); setTimeout(() => fab.classList.remove('celebrate'), 700); } }
+}
+function petInit() {
+  try {
+    petRender();
+    petAttend();
+    petMealCheck();
+  } catch (e) {}
+}
+function petTick() {
+  try {
+    const p = petLoad();
+    if (p.hide) return;
+    petMealCheck();
+    petAmbient();
+  } catch (e) {}
+}
+
+// ==================== 增删动画（粒子 / 高亮） ====================
+let lastClickXY = { x: 0, y: 0 };
+document.addEventListener('click', e => { lastClickXY = { x: e.clientX, y: e.clientY }; }, true);
+let justAddedCell = null;
+function burstParticles(x, y, color) {
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div');
+    p.className = 'ptcl';
+    const a = Math.PI * 2 * i / 14 + (Math.random() - .5) * .6, d = 26 + Math.random() * 46;
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.background = color;
+    const sz = 5 + Math.random() * 4;
+    p.style.width = p.style.height = sz + 'px';
+    document.body.appendChild(p);
+    requestAnimationFrame(() => {
+      p.style.transform = 'translate(' + Math.cos(a) * d + 'px,' + (Math.sin(a) * d - 16) + 'px) scale(.15)';
+      p.style.opacity = '0';
+    });
+    setTimeout(() => p.remove(), 780);
+  }
+}
+function playJustAdded() {
+  if (!justAddedCell) return;
+  const cell = document.querySelector('.course-cell[data-key="' + justAddedCell + '"]');
+  if (cell) {
+    cell.classList.add('just-added');
+    setTimeout(() => cell.classList.remove('just-added'), 1300);
+  }
+  justAddedCell = null;
+}
+document.addEventListener('click', e => {
+  const panel = document.getElementById('petPanel');
+  if (panel && panel.classList.contains('show') && !e.target.closest('#petPanel') && !e.target.closest('#petFab')) {
+    panel.classList.remove('show');
+  }
+});
+
+// 桌宠悬浮球可拖动（移动 >6px 判定为拖动，不触发面板；位置持久化）
+let petDrag = null, petDragMoved = false;
+(function initPetDrag() {
+  const fab = document.getElementById('petFab');
+  if (!fab) return;
+  fab.addEventListener('pointerdown', e => {
+    petDrag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, rect: fab.getBoundingClientRect() };
+    try { fab.setPointerCapture(e.pointerId); } catch (err) {}
+  }, { passive: true });
+  fab.addEventListener('pointermove', e => {
+    if (!petDrag || e.pointerId !== petDrag.id) return;
+    const dx = e.clientX - petDrag.x0, dy = e.clientY - petDrag.y0;
+    if (!petDragMoved && Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+    petDragMoved = true;
+    let x = petDrag.rect.left + dx, y = petDrag.rect.top + dy;
+    x = Math.max(6, Math.min(window.innerWidth - 60, x));
+    y = Math.max(64, Math.min(window.innerHeight - 70, y));
+    fab.style.left = x + 'px';
+    fab.style.top = y + 'px';
+    fab.style.right = 'auto';
+    fab.style.bottom = 'auto';
+  }, { passive: true });
+  const end = e => {
+    if (!petDrag || (e && e.pointerId !== petDrag.id)) return;
+    petDrag = null;
+    if (petDragMoved) {
+      petDragMoved = false;
+      const x = parseFloat(fab.style.left), y = parseFloat(fab.style.top);
+      if (isFinite(x) && isFinite(y)) {
+        const p = petLoad();
+        p.pos = { x: Math.round(x), y: Math.round(y) };
+        petSave(p);
+      }
+      petDragJustDone = true; // 抑制紧随的 click 误开面板
+      setTimeout(() => { petDragJustDone = false; }, 350);
+    }
+  };
+  fab.addEventListener('pointerup', end, { passive: true });
+  fab.addEventListener('pointercancel', end, { passive: true });
+})();
+let petDragJustDone = false;
 
 function applyStyles(){
   const s=state.fontSize;
@@ -1581,7 +2041,7 @@ tableEl.addEventListener('touchend',e=>{
 },{passive:true});
 
 // ==================== 菜单 ====================
-function showMoreMenu(){syncNextCardMenu();document.getElementById('moreMenu').classList.add('show')}
+function showMoreMenu(){syncNextCardMenu();syncLeadMenu();petRender();document.getElementById('moreMenu').classList.add('show')}
 function closeMoreMenu(){document.getElementById('moreMenu').classList.remove('show')}
 function switchToWeb(){
   closeMoreMenu();
@@ -1631,7 +2091,7 @@ function searchCourses(){
   const q=document.getElementById('searchInput').value.trim().toLowerCase();
   if(!q){document.getElementById('searchResults').innerHTML='';return}
   const all=getCoursesForWeek(state.selectedMajor,state.selectedWeek);
-  const results=all.filter(c=>c.name.toLowerCase().includes(q)||c.teacher.toLowerCase().includes(q)||c.location.toLowerCase().includes(q));
+  const results=all.filter(c=>c.name.toLowerCase().includes(q)||(c.teacher||'').toLowerCase().includes(q)||(c.location||'').toLowerCase().includes(q));
   document.getElementById('searchResults').innerHTML=results.length?results.map(c=>'<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="closeSearchModal();showDetail(\''+c.id+'\')"><div style="font-weight:600">'+c.name+'</div><div style="font-size:12px;color:var(--text-sub)">'+c.teacher+' | '+c.location+' | 周'+['','一','二','三','四','五','六','日'][c.weekday]+c.startPeriod+'-'+c.endPeriod+'节</div></div>').join(''):'<div style="text-align:center;color:var(--text-sub);padding:20px">未找到相关课程</div>';
 }
 
@@ -1712,6 +2172,7 @@ function deleteCourseFromDetail(){
     all:'删除整个学期的该课程',
     week:'仅删除第'+state.selectedWeek+'周（其余周保留）'
   },scope=>{
+    burstParticles(lastClickXY.x || innerWidth / 2, lastClickXY.y || innerHeight * 0.42, '#f87171'); // 删除粒子消散
     if(scope==='week'){
       state.deletedCourses.push(currentCourseId+'_wk'+state.selectedWeek);
       showToast('仅删除第'+state.selectedWeek+'周');
@@ -1795,6 +2256,7 @@ function saveCourse(){
     state.customCourses.push(course);
     showToast('课程已添加');
   }
+  if(course.weekday>=1&&course.weekday<=7&&course.startPeriod>=1)justAddedCell=course.weekday+'-'+course.startPeriod;
   saveState();closeAddModal();render();
 }
 
@@ -2207,7 +2669,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.1'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.2'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -2379,6 +2841,8 @@ function init(){
   updateTimeLine();
   setInterval(tickNextCountdown,1000); // 倒计时每秒刷新
   setInterval(pushNotifyData,30000); // 上课/下课状态跨边界时及时同步给原生通知（内容没变不写盘）
+  petInit(); // 桌宠：首屏渲染 + 打开陪伴奖励 + 上课打卡 + 吃饭提醒
+  setInterval(petTick,30000); // 桌宠：吃饭提醒 / 随机说话（页面打开时）
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>

@@ -1,7 +1,7 @@
 {
   "name": "fjnu-nav",
   "version": "1.6.8",
-  "apkVersion": "1.1",
+  "apkVersion": "1.2",
   "private": true,
   "type": "module",
   "scripts": {

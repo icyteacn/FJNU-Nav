@@ -1,8 +1,8 @@
 # AGENTS.md — 本站维护须知（每次会话必读）
 
-> 本文件是 AI 助手与本仓库协作的「维护手册」：先读本项目须知，再读下方「维护清单」与「更新日志」，
-> 确保每次改动都遵循既有架构与发布流程。更新日志的机制与 `FJNU-Wiki/prompt/AGENT-GUIDE.md` 一脉相承：
-> **每次发布都把「改了什么 / 为什么改 / 验证结果」追加到日志**，方便后续会话快速接续上下文。
+> 本文件是 AI 助手与本仓库协作的「维护手册」：先读本项目须知与**红线**，再看下方「更新日志」接续上下文。
+> **操作型知识已拆入本仓库技能 `skills/fjnu-nav-maintainer/`**——架构速览、数据链路、发布 8 步清单、课表调课套路、APK 打包签名均在该技能的 `references/` 下；接到任何维护任务时加载该技能，按其路由读取对应文档执行。发布收尾时按技能 `release.md` 第 7 步回到本文件追加日志。
+> 更新日志的机制与 `FJNU-Wiki/prompt/AGENT-GUIDE.md` 一脉相承：**每次发布都把「改了什么 / 为什么改 / 验证结果」追加到日志**，方便后续会话快速接续上下文。
 
 ## 一、项目是什么
 
@@ -12,40 +12,7 @@
 - 数据策略：**「优先抓实时、回退用快照」**——有 server 网关时请求实时接口，纯静态托管下读取 `public/data/` 下的静态快照。
 - 定时数据：GitHub Actions `snapshot.yml` 每 6 小时抓取福建师范大学教务处公开数据并自动提交；前端「数据洞察 / 贴吧舆情 / 食堂空座率」等依赖该产物。
 
-## 二、架构速览（改动前先确认位置）
-
-| 模块 | 路径 | 说明 |
-| --- | --- | --- |
-| 应用注册 | `src/data/apps.js` | 首页应用网格的唯一来源 |
-| 路由注册 | `src/router.js` | 应用 id → 视图组件的映射（新增页面必须双登记） |
-| 站点配置 | `src/config/site.js` | 站点名 / 副标题 / 版本号（**版本号唯一维护点**） |
-| 视图 | `src/views/*.vue` | 各应用页面 |
-| 静态数据 | `src/data/*.js` | 校历、食堂、学院官网、题库、配置等前端内置数据 |
-| 数据抓取（Python 首选） | `crawler/` | `fetcher.py` 抓取 / `parsers.py` 解析 / `build_snapshot.py` 快照 / `analysis.py` 洞察 / `canteen.py` 食堂空座率 / `tieba.py` 贴吧舆情 / `validate.py` 校验 / `diff.py` 差异摘要 / `make_baseline.py` 离线基线 |
-| 数据抓取（Node 回退） | `scripts/snapshot.mjs`、`scripts/tieba.mjs`、`scripts/canteen.mjs` | 与 Python 版输出格式一致 |
-| 静态产物 | `public/data/*.json` | `snapshot.json`、`course_stats.json`、`tieba_stats.json`、`canteen_live.json`（由 CI 提交） |
-| 定时任务 | `.github/workflows/snapshot.yml` | 每 6h 抓取并自动提交；`deploy.yml` 构建部署 |
-
-## 三、数据链路（新增数据源时照此办理）
-
-1. 在 `crawler/` 新增抓取/解析脚本（requests 优先、标准库回退；保持 `scripts/` 有 Node 回退）。
-2. 在 `.github/workflows/snapshot.yml` 的 crawl job 中加入步骤，并在 `git add` 中登记产物文件。
-3. 前端在 `src/views/` 下新建视图，在 `apps.js` + `router.js` 双登记。
-4. 抓取应「尽力而为」：失败不覆盖上一次成功数据、不阻塞整体提交（参见 `crawler/tieba.py` 的处理方式）。
-5. 静态数据文件必须能被 404 优雅降级（前端做好空态），因为首次部署前产物文件可能不存在。
-
-## 四、维护清单（每次改动必须按序执行）
-
-1. **改完跑 Python 单测**：`python -m unittest discover -s tests`（解析器/构建器改动必须补单测）。
-2. **前端构建**：`npm run build`，确认无报错、JS 体积合理。
-3. **回归**：用 `node server/index.mjs` 起服务（端口 8787），跑 CDP 回归脚本（基线见 `C:\Users\13111\AppData\Local\Temp\opencode\fjnu-nav\`），确认全绿。
-4. **更新 README**：功能表 / 数据来源 / 版权说明如有变化需同步；版本历史追加一行。
-5. **更新贡献者墙**：`Contributors.vue` 的「社区贡献记录」务必追加一条新版本简介（与 README 版本历史同步），这是每次版本更新的固定动作。
-6. **更新版本号**：按 `x.y.z`——小更新（bug 修复 / 文案 / 维护性改动）只加 z（如 1.0.0→1.0.1）；功能迭代 / 新功能等大更新加 y 并归零 z（如 1.0.x→1.1.0）。版本号只在 `src/config/site.js` 维护，README 头部版本行同步。
-7. **追加本文件「更新日志」**：写清楚改了什么、为什么、验证结果。
-8. **提交并推送**：commit message 用 `feat:` / `fix:` / `data:` 前缀；push 前先 `git fetch` 处理定时任务的自动提交（需要时 rebase）。
-
-## 五、红线
+## 二、红线
 
 - 不引入前端注释（除非必要）；不新增未经确认的依赖库。
 - 不编造数据：抓不到就如实降级（空态 + 提示），绝不捏造课程/食堂/舆情数据。
@@ -58,10 +25,11 @@
 
 ---
 
-## 六、更新日志
+## 三、更新日志
 
 | 日期 | 版本 | 内容 |
 | --- | --- | --- |
+| 2026-10-13 | **v1.6.10** | **维护知识 skill 化（工程 patch，应维护者「把 AGENTS.md 做成本项目独有的 skill」要求）**。①新建项目专属技能 `skills/fjnu-nav-maintainer/`（SKILL.md 路由 + `references/` 四篇：`architecture.md` 架构速览与数据链路、`release.md` 发布 8 步与命令速查、`schedule-adjust.md` 课表调课落地套路（条目结构/前置数据验证/三端同步/渲染链路与「调入日看不到课」回归点/验证清单）、`apk.md` 打包签名与版本链），其中调课套路与 APK 签名知识从历史日志 v1.5.19/v1.6.x 提炼为可复用操作指南；description 覆盖全部维护触发场景（改代码/调课表/发布/打包/跑门禁，明确「即使未提维护二字也加载」）。②AGENTS.md 瘦身：二、架构速览 + 三、数据链路 + 四、维护清单迁出，保留「项目是什么 / 红线 / 更新日志」常驻三段（91 行），头部改为指向技能的分工说明，章节重编号一/二/三。③加载配置：`~/.config/opencode/opencode.jsonc` 的 `skills` 数组追加项目 `skills/` 路径（**仓库外配置**，换设备克隆后需按实际路径调整该行，已在配置内注释说明）；技能源文件随 git 分发。**验证**：技能已被 OpenCode 识别加载（会话技能列表出现 `fjnu-nav-maintainer`）、`npm run build` 通过、integrity 18 项全绿。 |
 | 2026-10-13 | **v1.6.9** | **课表调课与体验修复（patch，应维护者要求）**。①**调课落地**：「26级所有专业 10/13 周二晚 9-12 节人工智能通识课 → 10/15 周四晚、地点改笃行1-114」写入 `classSchedule.js` `HOLIDAY_MAP` 新条目 `2026-10-13`（type `adjust`，参照 10/20 既有模式；数据验证：6 个专业该课均 weekday:2 节 9-12 周 3-10，第 7 周在范围内；**10/15 周四晚 9-12 节各专业无课，调入零冲突**）；APK `standalone-schedule.html` 内置 `HOLIDAY_MAP` 同步补 `2026-10-13` 与**此前遗漏的 `2026-10-20`**（离线回退数据与接口对齐）。②**修复调入日看不到课（三处）**：`ClassSchedule`/`MobileSchedule` 的「今日课程卡 `todayCourses`」「列表视图 `coursesByDay`」「下一节课倒计时 `futureCourses`」原只按 `weekday` 过滤 + 剔除 moved，**不识别 incoming**——调入日当天今日卡无课、倒计时漏调入课且会把已调走的课报成「下一节课」；现三处补 incoming 解析（`destDate` 匹配 → `findIncomingSource` 找源课 → 覆写 `weekday/startPeriod/endPeriod/location` 为目标题次、带 `_incomingAdj`）+ `futureCourses` 补 `isPeriodMoved` 跳过；`jumpToCourse` 对 `_incomingAdj` 按 destDate 反算周次（不再错跳到源课第一周）。③**日程助手课表可切专业**：`OrientationSchedule` 嵌入的 `<ClassSchedule>` 原 `:show-major-selector="false"` 固定 cs-master，非计科学生看到错课表 → 去掉该 prop；`ClassSchedule`/`MobileSchedule` 的 `selectedMajor` 持久化到 `localStorage['fjnu_selected_major']`（三端共享记忆）。**验证**：`npm run build` 通过、`schedule-data.json` version `46f85d11d2→864b176a00`（adjustments 2→3）、`e2e-integrity` 18 项、`unit×4` = 175 全绿；**浏览器实测（第7周·当天 10/13）**：源格 `↗️ 10-15 第9-12节 已调整无课`、目标格 `⬅️ 调入 10-13第9节`、今日卡仅剩当代科技（被调走的 AI 课正确剔除）、倒计时卡为「当代科技 2时17分」（未误报）、日程助手专业选择器出现（`major-chip` 存在）。 |
 | 2026-10-12 | **v1.6.8（修订，APK 1.2，未推送）** | **课表 App 全面升级（桌宠 + 小组件 4x4 + 通知高级化 + 动画 + bug 修复；`versionName 1.2 / versionCode 4`，cover 签名，维护者试用后决定发布）**。① **通知三行落实 + 高级化**：notify.json 严格三行 schema（`text`=行1 🔔/📖、`lines[0]`=行2 📅、`lines[1]`=行3 ⏳+`anchor`），原生展开恰好三行（大标题=行1、正文=行2+行3，应用名系统自动显示不重复），行3**每秒读秒**（`TICK_MS=1s`，过期显示「本节课已下课/即将开始」）；上课中加**本节课进度条**（setProgress 0→100%）、品牌红着色、锁屏 PUBLIC、CATEGORY_EVENT、「第X周」副标题。② **课前提醒**：菜单可配提前量 10/15/30/60 分钟（`sche_lead`→notify.json `leadMin`，默认 30 保底不失效）；heads-up 提醒独立高优先级 channel（**新 id `schedule_soon_hi`**——旧 `schedule_soon` 已被建为 DEFAULT 不可改，换 id 才能升 HIGH 横幅），文案按剩余分钟动态（25-35 分钟显示「还有半小时上课」），按 `nextStart` 去重、精确闹钟（无权限回退非精确）+每秒 ticker+每小时三层触发。③ **桌面小组件 4x2 三行**：行1 状态双态切换「正在上课（含下课倒计时）/ 上一节已下课 / 今日第一节预告」，行2 下一节课（时间 课名 · 教室，与应用内倒计时卡同源 `computeUpcoming`+`prev`），行3 距开始倒计时；`widgetSnapshot` 快照 + 30s 节流刷新 + 系统半小时兜底，点击进 App。**兼容性收敛**：首版 4x4 因 provider 带 API31 属性（targetCell*/description）+ 布局含 shape/View/emoji 引用致部分桌面「无法安装小部件」，改为仅 6 个 API21+ 稳定属性 + 纯色背景 3 TextView 极简布局（并兼容 1.1 旧 schema 渲染）。④ **桌宠「热血鸡」**：右下可拖动悬浮球（位置持久化 `sche_pet.pos`），Lv/经验条（打开+10·1h冷却 / 上课打卡+25 / 投喂+5·2h冷却）、**Lv.10 可转生**（重置等级、经验加成+10%/世、虚线光环）、4 形象循环切换（🐔热血小鸡/🦊元气狐狸/🐱高冷猫猫/🤖课表机器人）、气泡说话（3min 冷却防烦）联动课程、**11:30/17:30 吃饭提醒**、收起 + 菜单开关。⑤ **动画**：新增课程格入场弹跳+绿色辉光（`.just-added`）、删除课程点击处粒子消散（14 颗 0.72s）；**左右滑动手势回滚旧版「弹一下」**（用户否了跟手滑出版）。⑥ **bug 修复**：**自定义课程永远删不掉**（`getCoursesForWeek` 的 custom 链漏接 `deletedCourses` 过滤——历史 bug，CDP 复现 8/8 修复验证含周删）、pushNotifyData 写失败回滚缓存可重试、BOOT_COMPLETED 开机恢复通知/闹钟/小组件、搜索 teacher/location 空值防护、petLoad attend/pos 类型防护、`computeNextCourse` 重构为 `computeUpcoming` 兼容包装。**验证**：CDP 桌宠 23 断言 + 删除复现/修复 8+5 + upcoming/prev 7+2 全过；integrity 18、unit×4=175；重打包 1.01MB、`aapt` `versionCode=4 versionName=1.2`、`apksigner` `2277d065…` 覆盖签名、resources.arsc 含 widget 配置、下载入口 public/dist hash 一致。**⚠ 未提交未推送**——维护者明天试用后再说。 |
 | 2026-10-12 | **v1.6.8（修订，版本号不变）** | **通知三行逻辑落实 + 倒计时卡开关（覆盖打包，`versionName 1.1 / versionCode 3` 不动）**。① **notify.json 严格三行 schema**：`text`=行1「🔔 下一节课 / 📖 正在上课 · 周几 几点 什么课」、`lines[0]`=行2「📅 几月几日 第几节 哪个教室」、`lines[1]`=行3「⏳ 倒计时」+ `anchor` 锚点；原生 BigTextStyle 展开恰好三行：**大标题=行1（🔔/📖 行）、正文=行2+行3**，不设品牌标题（系统自动显示应用名「🐔🩸课表」，避免重复），行3由原生按锚点**每秒读秒重绘**（`TICK_MS=1s`，锁屏走秒；过期显示「本节课已下课/即将开始」）；收起态=行1+行2。② **距下节课 ≤30 分钟额外弹非常驻有声通知**：「⏰ 还有半小时上课 · 时间+课程 · 请前往教室」，按 `nextStart` 每节只弹一次，精确闹钟（无权限自动回退非精确）+ 每秒 ticker + 每小时 alarm 三层触发。③ **应用内倒计时卡双态**：正在上的课（绿色 📖，倒计时到下课「还剩 XX 下课」）/ 下一节课（⏰，到开始），到点自动切换；卡片右上 ✕ 一键隐藏（toast 提示「可在菜单里重新开启」）+ 菜单「⏰ 下一节课倒计时」开关，`sche_nextcard` 持久化。④ **修复本机打包事故**：本机 `node_modules/@capacitor` 缺 `filesystem/splash-screen/status-bar` 三插件 → `cap sync` 把插件从 gradle 清掉 → APK 里无 Filesystem、`notify.json` 写不进、通知永远降级「打开应用查看…」（维护者实机所见的根因），`npm install` 补齐后重建；`build-apk.bat` 需 `JAVA_HOME` 指 JDK17（本机默认 JAVA_HOME 指 JDK8 会挂 AGP8）。⑤ 顺带：`moved`（被调走）的课不再误报「正在上课」、`pushNotifyData` 内容去重防重复写盘、空 text 兜底防空白正文。**验证**：CDP 三行/双态/开关 22 断言全过、integrity 18、unit×4=175；重打包 1.00MB、`aapt` `versionCode=3 versionName=1.1`（不变）、`apksigner` `2277d065…` 覆盖签名、dex 含 filesystem 插件、下载入口 public/dist SHA256 一致。 |

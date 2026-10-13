@@ -2,7 +2,7 @@
 
 > **🌐 在线访问：<https://icyteacn.github.io/FJNU-Nav/>**
 >
-> **🏷️ 当前版本：v1.6.9**（APK **1.2** · 可覆盖签名（Android Debug `2277d065`，与手机已装 1.0 同证书，直接覆盖安装）；打包脚本默认自动使用该钥匙；调课原位置显示「已调整无课」）
+> **🏷️ 当前版本：v1.6.10**（APK **1.2** · 可覆盖签名（Android Debug `2277d065`，与手机已装 1.0 同证书，直接覆盖安装）；打包脚本默认自动使用该钥匙；调课原位置显示「已调整无课」）
 
 面向福建师范大学的校园服务聚合入口，暖色系「闽都红」主题、移动端优先。
 
@@ -113,6 +113,7 @@ FJNU-Nav/
 
 | 版本 | 说明 |
 | --- | --- |
+| **v1.6.10** | **维护知识 skill 化（工程 patch）**：AGENTS.md 操作章节（架构速览/数据链路/维护清单 8 步）+ 从历史日志提炼的课表调课套路、APK 打包签名，拆入项目专属技能 `skills/fjnu-nav-maintainer/`（SKILL.md 路由 + 4 篇 references，随 git 分发、`opencode.jsonc` 指向加载，按需读取省上下文）；AGENTS.md 瘦身为「项目简介 + 红线 + 更新日志」常驻三段并指向技能。 |
 | **v1.6.9** | 课表调课与体验修复（patch）：①**调课落地**——第七周周二 10/13 晚 9-12 节人工智能通识课（26级全部 6 个专业）调至**周四 10/15 晚 9-12 节、笃行1-114**（`HOLIDAY_MAP` 新增 `adjust` 条目，日程助手/课程表研究生课表/移动端课表三端同步，APK 内置数据补齐 10/13 与 10/20 两条调课）；②**修复调入日看不到课**——「今日课程卡」「列表视图」「下一节课倒计时」原只按周几过滤、不识别调入课程，调入日当天学生看不到课且倒计时会误报被调走的课，现三处均识别调入/调走（点击调入课按目标日期定位周次列）；③**日程助手课表可切专业**（原固定计科，非计科学生看到错课表），专业选择三端持久化（`fjnu_selected_major`）。 |
 | **v1.6.8** | **APK 版本号改 1.1**（应维护者纠正，v1.6.7 出的包是 `versionName=1.0`）：`package.json.apkVersion`、standalone `APP_VERSION`、gradle 回退值三处 → **1.1**，`versionCode` 仍 3（覆盖条件 ≥ 已装 1 ✓，且不降级）。重打包实测 `versionCode=3 versionName=1.1`、签名仍 `CN=Android Debug 2277d065`（可覆盖手机上的 1.0）、1.00MB、下载入口 hash 与构建产物一致。 |
 | **v1.6.7** | **APK 换用可覆盖签名（路线 A 走通）**：从原电脑取回 `debug.keystore`，`keytool` 验指纹 **`2277d0655b73…`（与用户手机已装 1.0 完全一致）**，以 `-PksPath -PksAlias=androiddebugkey -PksPass=android` 重签 → 新包 `versionCode=3 / versionName=1.0 / 1.00MB`、签名 `CN=Android Debug 2277d065`，**可直接覆盖安装**（站点下载入口已同步，hash 与构建产物一致）。`build-apk.bat` 增加：探测到 `%USERPROFILE%\.android\cover-debug.keystore` 就**默认用它签名**（防止下次打包回退成仓库 keystore.jks 又断掉覆盖链），否则回退 `keystore.jks`。**keystore 保存在仓库外，不提交进公开仓库**（红线）。⚠️ 签名自此固定 `2277d065`：此前 `CN=Feike` 签的 1.1/1.2 包**无法覆盖**本包（那类设备需卸载一次），用户手机的 1.0 可直接覆盖。**验证**：keytool/apksigner 双指纹核对、aapt 版本包名、入口 hash 一致、回归 84/84。 |

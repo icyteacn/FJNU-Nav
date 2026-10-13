@@ -34,7 +34,8 @@ const deletedCourses = ref(loadJSON(DELETED_KEY, []))
 const displayMode = ref(localStorage.getItem(MODE_KEY) || 'page')
 watch(displayMode, v => localStorage.setItem(MODE_KEY, v))
 
-const selectedMajor = ref('cs-master')
+const selectedMajor = ref(localStorage.getItem('fjnu_selected_major') || 'cs-master')
+watch(selectedMajor, v => { try { localStorage.setItem('fjnu_selected_major', v) } catch {} })
 const selectedWeek = ref(getCurrentWeek())
 const showSemester = ref(false)
 const typeFilter = ref('all')
@@ -64,13 +65,29 @@ const majorCourses = computed(() => allCourses.value.filter(c => c.major === sel
 const todayCourses = computed(() => {
   const scheduleWd = getTodayScheduleWeekday()
   if (scheduleWd === null) return []
-  return majorCourses.value.filter(c => {
+  const ds = todayDateStr.value
+  const list = majorCourses.value.filter(c => {
     if (c.weekday !== scheduleWd) return false
-    if (isPeriodMoved(todayDateStr.value, c.startPeriod)) return false
+    if (isPeriodMoved(ds, c.startPeriod)) return false
     if (!showSemester.value && !isCourseInWeek(c, selectedWeek.value)) return false
     if (!showSemester.value && deletedCourses.value.includes(c.id + '_wk' + selectedWeek.value)) return false
     return true
-  }).sort((a, b) => a.startPeriod - b.startPeriod)
+  })
+  // 当日从别处调入的课也要进今日卡（否则调入日当天学生看不到课）
+  if (!showSemester.value) {
+    for (const a of getAllAdjustments()) {
+      if (a.destDate !== ds) continue
+      const src = findIncomingSource(a.srcWeekday, a.srcPeriods[0])
+      if (!src) continue
+      const dw = new Date(a.destDate.replace(/-/g, '/')).getDay() || 7
+      list.push({
+        ...src, weekday: dw,
+        startPeriod: a.destPeriods[0], endPeriod: a.destPeriods.at(-1),
+        location: a.destLocation || src.location, _incomingAdj: a,
+      })
+    }
+  }
+  return list.sort((a, b) => a.startPeriod - b.startPeriod)
 })
 const hasTodayCourses = computed(() => todayCourses.value.length > 0)
 
@@ -112,8 +129,23 @@ const futureCourses = computed(() => {
     const startTime = SINGLE_PERIOD_TIMES[course.startPeriod]; if (!startTime) continue
     const [sh, sm] = startTime.split('-')[0].split(':').map(Number)
     const targetDate = new Date(courseDate); targetDate.setHours(sh, sm, 0, 0)
+    // 该节次当天已被调走，不算「下一节课」
+    const ds = `${courseDate.getFullYear()}-${String(courseDate.getMonth() + 1).padStart(2, '0')}-${String(courseDate.getDate()).padStart(2, '0')}`
+    if (isPeriodMoved(ds, course.startPeriod)) continue
     if (targetDate.getTime() > today.getTime() || (course.weekday === currentDay && nowMinutes < sh * 60 + sm))
       result.push({ ...course, _date: targetDate })
+  }
+  // 调入的课：按目标日期/节次参与倒计时
+  for (const a of getAllAdjustments()) {
+    const src = findIncomingSource(a.srcWeekday, a.srcPeriods[0]); if (!src) continue
+    const [y, m, d] = a.destDate.split('-').map(Number)
+    const destDate = new Date(y, m - 1, d)
+    const startTime = SINGLE_PERIOD_TIMES[a.destPeriods[0]]; if (!startTime) continue
+    const [sh, sm] = startTime.split('-')[0].split(':').map(Number)
+    const targetDate = new Date(destDate); targetDate.setHours(sh, sm, 0, 0)
+    if (targetDate.getTime() <= today.getTime()) continue
+    const destWd = destDate.getDay() === 0 ? 7 : destDate.getDay()
+    result.push({ ...src, weekday: destWd, startPeriod: a.destPeriods[0], endPeriod: a.destPeriods.at(-1), location: a.destLocation || src.location, _incomingAdj: a, _date: targetDate })
   }
   result.sort((a, b) => a._date - b._date || a.startPeriod - b.startPeriod)
   return result

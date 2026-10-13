@@ -1,15 +1,15 @@
 {
   "schema": 2,
-  "version": "46f85d11d2",
+  "version": "864b176a00",
   "appVersion": "1.2",
   "semester": "2026-2027学年第一学期",
   "semesterStart": "2026-08-31",
   "weeks": 18,
   "currentWeek": 7,
-  "updatedAt": "2026-10-12T05:13:16.212Z",
+  "updatedAt": "2026-10-13T03:40:49.861Z",
   "counts": {
     "courses": 28,
-    "adjustments": 2
+    "adjustments": 3
   },
   "majors": [
     {
@@ -721,6 +721,32 @@
       "icon": "📅",
       "descShort": "补周三课",
       "desc": "补周三(10/7)"
+    },
+    "2026-10-13": {
+      "type": "adjust",
+      "scheduleWeekday": 2,
+      "icon": "🔀",
+      "descShort": "调课",
+      "desc": "第七周周二(10/13)晚9-12节人工智能通识课调至周四(10/15)笃行1-114",
+      "overrides": [
+        {
+          "srcPeriods": [
+            9,
+            10,
+            11,
+            12
+          ],
+          "destDate": "2026-10-15",
+          "destPeriods": [
+            9,
+            10,
+            11,
+            12
+          ],
+          "destLocation": "笃行1-114",
+          "courseHint": "人工智能通识"
+        }
+      ]
     },
     "2026-10-20": {
       "type": "adjust",

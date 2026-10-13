@@ -367,6 +367,14 @@ export const HOLIDAY_MAP = {
     desc: '补周三(10/7)',
   },
   // —— 单次调课 ——
+  '2026-10-13': {
+    type: 'adjust', scheduleWeekday: 2, icon: '🔀',
+    descShort: '调课',
+    desc: '第七周周二(10/13)晚9-12节人工智能通识课调至周四(10/15)笃行1-114',
+    overrides: [
+      { srcPeriods: [9, 10, 11, 12], destDate: '2026-10-15', destPeriods: [9, 10, 11, 12], destLocation: '笃行1-114', courseHint: '人工智能通识' },
+    ],
+  },
   '2026-10-20': {
     type: 'adjust', scheduleWeekday: 2, icon: '🔀',
     descShort: '调课',

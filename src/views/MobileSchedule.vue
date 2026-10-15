@@ -32,7 +32,7 @@ function saveJSON(key, val) { try { localStorage.setItem(key, JSON.stringify(val
 const customCourses = ref(loadJSON(CUSTOM_KEY, []))
 const deletedCourses = ref(loadJSON(DELETED_KEY, []))
 const displayMode = ref(localStorage.getItem(MODE_KEY) || 'page')
-watch(displayMode, v => localStorage.setItem(MODE_KEY, v))
+watch(displayMode, v => { try { localStorage.setItem(MODE_KEY, v) } catch { /* 存储不可用不影响切换 */ } })
 
 const selectedMajor = ref(localStorage.getItem('fjnu_selected_major') || 'cs-master')
 watch(selectedMajor, v => { try { localStorage.setItem('fjnu_selected_major', v) } catch {} })

@@ -111,6 +111,30 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.7 (2026-10-15) · 健壮性收尾：全面扫描 + 修 2 处真实缺陷 + 存储写入兜底（patch）
+对 src/ 做了一次跨仓机器扫描（JSON.parse 有无 try 兜底 / localStorage 写入有无保护 / innerHTML 与 v-html 赋值的
+数据来源），逐条人工核对后处置：
+
+【修掉 2 处本仓特有的真实缺陷】
+- src/views/Budget.vue：`achShown = ref(JSON.parse(localStorage.getItem('fjnu_ach') || '{}'))` 无兜底——
+  一旦本机存储被历史版本/手工编辑污染成非法 JSON，**进入生活费计数器就会直接崩页**（QDU 侧早已是带 try 的写法，
+  本仓漏同步）。现改为等价的可捕获写法。
+- src/views/MobileSchedule.vue：`watch(displayMode, v => localStorage.setItem(MODE_KEY, v))` 裸写——
+  禁用存储/配额满时切换页面/纯课表模式会抛异常；紧邻的 selectedMajor 写入本来就带 try，属同文件内不一致。现统一。
+
+【兜底补齐】
+- WhatToEat.vue 2 处 sessionStorage.setItem 包 try（禁用存储时退化为内存态）。
+
+【扫描结论（未新增注入面）】
+- JSON.parse 共 66 处，扫描点名的 navContext.js:17 实际已在 try 内（假阳性）；其余 64 处均带兜底。
+- v-html/innerHTML 6 处逐条确认：NoticeDetail 用白名单消毒后的 safeBody；AgentChat/CommentTree/RichEditor 先转义再渲染；
+  main.js 为固定错误文案。
+- setItem 报出的位置经核对多数已带 try（扫描窗口假阳性）；剩余已在本次一并补齐。
+
+验证：npm run build 通过；test_schedule / test_favorites / test_sanitize / test_budgetengine / test_budgetbackup /
+test_billimport 全绿；e2e-integrity 18/18；audit-refs 0/0；e2e-standalone 8/8。
+
+
 ## v1.7.6 (2026-10-15) · APK 升级 + 课表页健壮性 + 两处真实缺陷修复（patch）
 【APK 安卓优势功能】
 ① 静态 App Shortcuts（长按桌面图标直达）：新增 res/xml/shortcuts.xml，三项「今日 / 下一节课 / 课表」，

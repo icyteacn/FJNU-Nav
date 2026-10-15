@@ -112,7 +112,7 @@ async function roll() {
   await new Promise(r => setTimeout(r, 600))
   picks.value = pickFrom(filteredPool.value, 3)
   pickedCount.value += 1
-  sessionStorage.setItem('fjnu_food_picked', String(pickedCount.value))
+  try { sessionStorage.setItem('fjnu_food_picked', String(pickedCount.value)) } catch { /* 存储不可用：仅在本次会话内退化为内存态 */ }
   drawing.value = false
 }
 
@@ -122,7 +122,7 @@ function pickOne() {
   selectedDish.value = picks.value[i]
   showDetail.value = true
   pickedCount.value += 1
-  sessionStorage.setItem('fjnu_food_picked', String(pickedCount.value))
+  try { sessionStorage.setItem('fjnu_food_picked', String(pickedCount.value)) } catch { /* 存储不可用：仅在本次会话内退化为内存态 */ }
 }
 
 function openDetail(f) {

@@ -425,7 +425,7 @@ const achStates = computed(() => {
   return map
 })
 const achCount = computed(() => ACHIEVEMENTS.filter((a) => achStates.value[a.key].unlocked).length)
-const achShown = ref(JSON.parse(localStorage.getItem('fjnu_ach') || '{}'))
+const achShown = ref((() => { try { return JSON.parse(localStorage.getItem('fjnu_ach') || '{}') } catch { return {} } })())
 function markAch(key) {
   try {
     const m = JSON.parse(localStorage.getItem('fjnu_ach') || '{}')

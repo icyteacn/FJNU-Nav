@@ -111,6 +111,27 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.5 (2026-10-15) · 课表三端一致性回归测试（patch）
+背景：课表有三份实现——src/data/classSchedule.js（网页数据源）、public/standalone-schedule.html（APK/移动端
+单文件内置一份 HOLIDAY_MAP）、public/data/schedule-data.json（构建产物，供远程同步）。历史上真实出过一次事故：
+改课表时 APK 内置的 HOLIDAY_MAP 漏同步（见 skills/fjnu-nav-maintainer/references/schedule-adjust.md），三端因此长期漂移，
+而当时没有任何自动手段能发现。
+
+新增 scripts/test_schedule.mjs（10 项），把「三端一致」与「调课语义」变成可自动回归的断言：
+- 三端 HOLIDAY_MAP 键集合一致（源 / APK 内置 / 构建产物三方交叉）
+- 三端条目内容逐条深度相等（含 type / scheduleWeekday / overrides 的 srcPeriods、destDate、destLocation）
+- 版本单一事实来源链：package.json.apkVersion == APK 内置 APP_VERSION == 接口产物 appVersion
+- 构建产物数量口径：课程数 / 专业数 / 节假日条目数与源一致，schema 与内容哈希 version 存在
+- 语义：停课日无课；调休补课日映射到被补的那天（9/20→周二、10/10→周三）；调课源日节次被标记 moved、
+  目标日能解析出调入；跨周调课 10/20→11/19 立诚1-105；课程节次不倒挂
+- 用户自定义调课写独立键、删除可还原、且不污染站点调课集合（getSiteAdjustments 与 getAllAdjustments 分离）
+
+**有效性验证**：故意把 APK 内置 2026-10-20 条目的 scheduleWeekday 由 2 改成 3（模拟漏同步）→ 测试立即失败并
+指出是哪条不一致；还原后恢复全绿。这直接防住了历史事故的复发。
+
+该测试为纯 JS、零依赖、毫秒级，已接入 deploy.yml 部署门禁（与其余前端单测同批）。
+
+
 ## v1.7.4 (2026-10-15) · 首屏性能优化：智能体大脑移出首屏 + 预载按网络状况收敛（patch）
 用户反馈「好卡／首次缓冲太大」，实测定位到根因：App.vue 静态 import 了智能体悬浮舱，依赖链一路静态到
 agent/engine.js → navAnswer.js → kb-nav.json（121KB）+ workflows.js（79KB）——也就是「打开首页就把整个智能体

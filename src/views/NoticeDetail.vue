@@ -2,6 +2,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { apiFetch } from '../api/index.js'
+import { sanitizeHtml } from '../utils/sanitizeHtml.js'
 
 const props = defineProps({ notice: { type: Object, required: true } })
 const emit = defineEmits(['back'])
@@ -9,6 +10,8 @@ const emit = defineEmits(['back'])
 const loading = ref(true)
 const error = ref('')
 const detail = ref(null)
+/** 详情正文来自校外服务器 → 一律经白名单消毒后再渲染 */
+const safeBody = ref('')
 
 onMounted(async () => {
   const m = props.notice.url.match(/info\/1009\/(\d+)\.htm/)
@@ -21,6 +24,7 @@ onMounted(async () => {
   const r = await apiFetch('/notice?id=' + id)
   if (r && r.body) {
     detail.value = r
+    safeBody.value = sanitizeHtml(r.body)
   } else {
     error.value = '抓取详情失败，请稍后重试或直接查看官方原文'
   }
@@ -61,7 +65,7 @@ onMounted(async () => {
     <h1 class="detail-title">{{ detail.title }}</h1>
     <div class="detail-meta">发布日期：{{ notice.date }}</div>
 
-    <article class="article-body" v-html="detail.body"></article>
+    <article class="article-body" v-html="safeBody"></article>
 
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;">
       <a class="btn ghost" :href="notice.url" target="_blank" rel="noopener" style="text-decoration:none;">查看官方原文 ↗</a>

@@ -12,6 +12,7 @@ import {
 } from '../utils/budgetBackup.js'
 import { SITE } from '../config/site.js'
 import { navCtx } from '../stores/navContext.js'
+import { safeSet, setJson } from '../utils/safeStorage.js'
 
 const emit = defineEmits(['back', 'open'])
 
@@ -117,7 +118,7 @@ function fmt(n) {
 }
 
 const records = ref(load())
-watch(records, () => localStorage.setItem(STORAGE, JSON.stringify(records.value)), { deep: true })
+watch(records, () => setJson(STORAGE, records.value), { deep: true })
 
 /** 生成不重复的本地记录 id */
 const newId = () => Date.now() + Math.random()
@@ -315,7 +316,7 @@ let holdTimer = null
 function unlockCyber() {
   if (cyberOn.value) return
   cyberOn.value = true
-  localStorage.setItem('fjnu_cyber', '1')
+  safeSet('fjnu_cyber', '1')
   showToast('⚡ 解锁隐藏皮肤：赛博账本', 3000)
 }
 function segTap() {

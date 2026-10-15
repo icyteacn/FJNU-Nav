@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { quiz } from '../data/quiz.js'
 import CountUp from '../components/CountUp.vue'
+import { setJson, safeSet } from '../utils/safeStorage.js'
 
 const emit = defineEmits(['back'])
 
@@ -58,8 +59,8 @@ function next() {
     done.value = true
     rounds.value += 1
     best.value = Math.max(best.value, score.value)
-    localStorage.setItem('fjnu_quiz_best', String(best.value))
-    localStorage.setItem('fjnu_quiz_rounds', String(rounds.value))
+    safeSet('fjnu_quiz_best', String(best.value))
+    safeSet('fjnu_quiz_rounds', String(rounds.value))
     scores.value.unshift({
       score: score.value,
       correct: correct.value,
@@ -67,7 +68,7 @@ function next() {
       date: new Date().toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })
     })
     scores.value = scores.value.slice(0, 100)
-    localStorage.setItem('fjnu_quiz_scores', JSON.stringify(scores.value))
+    setJson('fjnu_quiz_scores', scores.value)
   } else {
     index.value += 1
     picked.value = null

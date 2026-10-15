@@ -46,3 +46,50 @@ aapt dump badging app.apk | findstr version        # versionCode / versionName �
 apksigner verify --print-certs app.apk             # 指纹 = 2277d065...（可覆盖）
 # 包体 ~1MB；下载入口副本 SHA256 与构建产物一致
 ```
+
+---
+
+## 附：APK 1.3（versionCode 5）新增能力与验证（2026-10-15）
+
+### 新增能力
+| 能力 | 落点 | 说明 |
+| --- | --- | --- |
+| 静态 App Shortcuts | `res/xml/shortcuts.xml` + `AndroidManifest.xml` 的 `android.app.shortcuts` meta-data | 长按桌面图标直达「今日 / 下一节课 / 课表」三项；走自定义 action `com.feike.schedule.OPEN_VIEW` + extra `view` |
+| 深链入口 | `MainActivity.extractView/consumePendingView` | 读 extra/Uri → `getBridge().getServerUrl() + "/index.html?view=xxx"`；`trim-apk-assets` 的 index 垫片保留 `location.search` 转发到单文件课表 |
+| 网页端视图切换 | `public/standalone-schedule.html` 的 `applyDeepLink()` | `?view=today` 切单日列表（按今天定位）/ `week` 回周课表 / `next` 滚到「下一节课」卡片；非法参数静默忽略 |
+| 2x2「下一节课」小组件 | `ScheduleWidgetProviderNext.java` + `res/layout/schedule_widget_next.xml` + `res/xml/schedule_widget_info_next.xml` | 与 4x2 组件**同源数据**（`notify.json` → `ScheduleNotifier.widgetSnapshot` 三行快照），版式改为竖排、课程名与倒计时加粗；点击打开应用 |
+| 精确闹钟权限 | `USE_EXACT_ALARM` | Android 13+ 日历/闹钟类应用可直接用精确闹钟（无需用户手动开开关），配合既有 `SCHEDULE_EXACT_ALARM`，课前提醒更可靠 |
+
+### 构建环境的坑（已修，但请记住）
+- **`JAVA_HOME` 必须指向 JDK 17**：AGP 8 在 JDK 8 上会报一个很绕的错误
+  （`Could not resolve com.android.tools.build:gradle:8.0.0 … compatible with Java 8`）。
+  原 `build-apk.bat` 只在「路径不存在」时才回退 JDK17——本机 `JAVA_HOME=E:\G\JDK1.8` 是存在的，
+  于是**不会回退**、构建必失败。现脚本改为**优先选用 `C:\Program Files\Java\jdk-17.0.10`**（存在即用）。
+- **脚本曾无论成败都打印 `[OK]`**：gradle 失败时也会走到结尾提示，容易把旧 APK 当新包发出。
+  现已在 gradle 之后传播 `errorlevel`，失败即 `exit /b 1` 并提示 JAVA_HOME 需为 JDK 17。
+- 本机 `aapt` 读不了含中文的仓库路径（`Illegal byte sequence`）——验证 APK 时先把它复制到纯 ASCII 路径再 dump。
+
+### 验证命令（本机实测通过）
+```powershell
+# 1) 打包（脚本自动选 JDK17、自动检测可覆盖签名钥匙）
+scripts\build-apk.bat
+
+# 2) 把产物复制到 ASCII 路径后核验
+copy android\app\build\outputs\apk\release\app-release.apk %TEMP%\check.apk
+"%LOCALAPPDATA%\Android\Sdk\build-tools\35.0.0\aapt.exe" dump badging %TEMP%\check.apk
+#   期望：package name='com.feike.schedule' versionCode='5' versionName='1.3'
+#         uses-permission … USE_EXACT_ALARM / SCHEDULE_EXACT_ALARM
+"%LOCALAPPDATA%\Android\Sdk\build-tools\35.0.0\aapt.exe" dump xmltree %TEMP%\check.apk AndroidManifest.xml
+#   期望：android.app.shortcuts / ScheduleWidgetProviderNext / 两个 appwidget.provider meta-data
+"%LOCALAPPDATA%\Android\Sdk\build-tools\35.0.0\apksigner.bat" verify --print-certs %TEMP%\check.apk
+#   期望：Signer #1 … SHA-256 2277d065…4c4b（可覆盖用户已装版本）
+
+# 3) 网页层回归（无需真机）
+node scripts/e2e-standalone.mjs      # 8 项：初始化/周表/?view=today|week|next/非法深链/脏存储/零异常
+```
+
+### 发布收尾（沿用既有纪律）
+1. 版本三处同步：`package.json.apkVersion` = 单文件 `APP_VERSION` = 接口产物 `appVersion`
+   （`node scripts/test_schedule.mjs` 会断言三者一致）；`build.gradle` 的 `versionCode` 递增。
+2. 覆盖 `public/downloads/feike-schedule.apk` 与 `releases/feike-schedule.apk`，两者 SHA256 必须一致。
+3. 首页 APK 卡片文案与 README 的版本/体积说明同步。

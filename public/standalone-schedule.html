@@ -1680,7 +1680,8 @@ const PET_SHAPES = [
 ];
 function petLoad() {
   try {
-    const p = JSON.parse(localStorage.getItem('sche_pet')) || {};
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem('sche_pet')) || {}; } catch(e) { p = {}; }
     return {
       exp: p.exp || 0, level: p.level || 1, rebirth: p.rebirth || 0,
       shape: PET_SHAPES.some(x => x.key === p.shape) ? p.shape : 'chick',
@@ -2469,7 +2470,8 @@ function importData(){
     const reader=new FileReader();
     reader.onload=ev=>{
       try{
-        const data=JSON.parse(ev.target.result);
+        let data=null;
+        try { data=JSON.parse(ev.target.result); } catch(e) { showToast('导入文件不是合法的 JSON'); return; }
         if(data.customCourses)state.customCourses=data.customCourses;
         if(data.deletedCourses)state.deletedCourses=data.deletedCourses;
         if(data.dayOverrides)state.dayOverrides=data.dayOverrides;
@@ -2491,7 +2493,7 @@ const SUGGEST_LABELS={feature:'功能建议',bug:'问题反馈',other:'其他建
 function suggestCloudCfg(){
   try{
     const raw=localStorage.getItem('qdu_supabase');
-    if(raw){const c=JSON.parse(raw);
+    if(raw){let c=null;try{c=JSON.parse(raw);}catch(e){c=null;}
       if(c&&c.off)return null;
       if(c&&c.url&&c.key)return{url:String(c.url).replace(/\/+$/,''),key:String(c.key)}}
   }catch(e){}
@@ -2671,7 +2673,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.2'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -2826,6 +2828,49 @@ function toggleTheme(){
 }
 
 // ==================== 初始化 ====================
+/** HTML 转义：远程课表数据与用户自定义课程都可能含 < > & " ，拼 innerHTML 前一律先转义 */
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+/**
+ * 深链视图切换：App Shortcuts / 桌面组件点击会带 ?view=today|next|week 进来。
+ * 纯前端实现，参数缺失或非法时静默忽略，绝不影响正常启动。
+ */
+function applyDeepLink(){
+  try{
+    const v=(new URLSearchParams(location.search).get('view')||'').toLowerCase();
+    if(v==='today'){
+      state.viewMode='list';
+      state.listDay=(new Date().getDay()+6)%7; // 课表以周一为 0
+      saveState();render();
+      showToast('已定位到今日课程');
+      return true;
+    }
+    if(v==='week'){
+      state.viewMode='grid';
+      saveState();render();
+      return true;
+    }
+    if(v==='next'){
+      render();
+      setTimeout(function(){
+        const el=document.getElementById('nextCard');
+        if(el&&el.style.display!=='none'){
+          el.scrollIntoView({behavior:'smooth',block:'center'});
+          showToast('下一节课');
+        }else{
+          showToast('近几天没有课 🎉');
+        }
+      },350);
+      return true;
+    }
+  }catch(e){/* 深链失败不影响启动 */}
+  return false;
+}
+
 function init(){
   loadState();
   applyTheme();
@@ -2839,6 +2884,7 @@ function init(){
     if(r.ok){state.selectedWeek=getCurrentWeek();saveState()}
     render();
   });
+  applyDeepLink(); // 深链：?view=today|next|week
   setInterval(updateTimeLine,30000);
   updateTimeLine();
   setInterval(tickNextCountdown,1000); // 倒计时每秒刷新

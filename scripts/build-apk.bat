@@ -30,6 +30,9 @@ if exist "%HOLD%\dist.apk" move /y "%HOLD%\dist.apk" "dist\downloads\feike-sched
 
 echo [6/6] 构建 APK...
 REM JDK / SDK：环境变量优先，失效时回退已知安装路径（各机器不同，勿写死单一路径）
+REM Prefer a real JDK 17: AGP 8 requires it, and merely checking that JAVA_HOME exists
+REM would silently keep an existing JDK 8 (build then fails with a cryptic variant error).
+if exist "C:\Program Files\Java\jdk-17.0.10\bin\java.exe" set "JAVA_HOME=C:\Program Files\Java\jdk-17.0.10"
 if not exist "%JAVA_HOME%\bin\java.exe" set "JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot"
 if not exist "%JAVA_HOME%\bin\java.exe" set "JAVA_HOME=C:\Program Files\Java\jdk-17.0.10"
 if not exist "%ANDROID_SDK_ROOT%" set "ANDROID_SDK_ROOT=%ANDROID_HOME%"
@@ -48,6 +51,12 @@ if exist "%USERPROFILE%\.android\cover-debug.keystore" (
   call gradlew.bat assembleRelease
 )
 cd ..
+REM gradle failure must not be reported as success (was printing [OK] either way)
+if errorlevel 1 (
+  echo [FAIL] gradle assembleRelease failed - no new APK produced. See errors above.
+  echo        JAVA_HOME must point to JDK 17 (AGP 8 requires it).
+  exit /b 1
+)
 
 echo.
 echo [OK] build done

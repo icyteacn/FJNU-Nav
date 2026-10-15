@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  静态 App Shortcuts（长按桌面图标直达）——安卓相对 Web 的天然优势。
+  发 ACTION 给 MainActivity，用 extra "view" 传递目标视图；
+  MainActivity 读取后用 getBridge().getServerUrl() 把 WebView 定位到
+  index.html?view=xxx（trim-apk-assets 的垫片会保留 search 转发到 standalone-schedule.html）。
+  action 用自定义串，避免被系统/其它应用误触发。
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="today"
+        android:shortcutLongLabel="@string/sc_today_long"
+        android:shortcutShortLabel="@string/sc_today_short">
+        <intent
+            android:action="com.feike.schedule.OPEN_VIEW"
+            android:targetClass="com.feike.schedule.MainActivity"
+            android:targetPackage="com.feike.schedule">
+            <extra
+                android:name="view"
+                android:value="today" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="next"
+        android:shortcutLongLabel="@string/sc_next_long"
+        android:shortcutShortLabel="@string/sc_next_short">
+        <intent
+            android:action="com.feike.schedule.OPEN_VIEW"
+            android:targetClass="com.feike.schedule.MainActivity"
+            android:targetPackage="com.feike.schedule">
+            <extra
+                android:name="view"
+                android:value="next" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="week"
+        android:shortcutLongLabel="@string/sc_week_long"
+        android:shortcutShortLabel="@string/sc_week_short">
+        <intent
+            android:action="com.feike.schedule.OPEN_VIEW"
+            android:targetClass="com.feike.schedule.MainActivity"
+            android:targetPackage="com.feike.schedule">
+            <extra
+                android:name="view"
+                android:value="week" />
+        </intent>
+    </shortcut>
+</shortcuts>

@@ -23,6 +23,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- 长按图标直达：今日课表 / 下一节课 / 完整周课表（静态 App Shortcuts） -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+
         </activity>
 
         <provider
@@ -61,6 +66,17 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/schedule_widget_info" />
         </receiver>
+        <!-- 2x2「下一节课」小组件（与 4x2 同源数据，见 ScheduleWidgetProviderNext） -->
+        <receiver
+            android:name=".ScheduleWidgetProviderNext"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/schedule_widget_info_next" />
+        </receiver>
     </application>
 
     <!-- Permissions -->
@@ -73,4 +89,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- 课前提醒精确闹钟（Android 12+ 默认关闭时代码自动回退非精确） -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Android 13+：日历/闹钟类应用可声明 USE_EXACT_ALARM，无需用户手动授予精确闹钟开关 -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 </manifest>

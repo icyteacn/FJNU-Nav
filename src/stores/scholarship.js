@@ -93,7 +93,21 @@ export function getCount(gid, item) {
   return state.counts[gid + ':' + item.id] || 0
 }
 
-export function factorIdxOf(gid) { return state.factors[gid] || 0 }
+export function factorIdxOf(gid) {
+  const n = Number(state.factors[gid])
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0
+}
+
+/**
+ * 成员系数取值。
+ * `state.factors[gid]` 来自 localStorage，可能被历史版本/手工编辑污染成越界下标，
+ * 直接 `MEMBER_FACTORS[i].f` 会抛 `Cannot read properties of undefined`，
+ * 导致整个综测面板渲染失败。这里统一回落：越界或非法一律按「独立作者 ×1」。
+ */
+function memberFactor(gid) {
+  const m = MEMBER_FACTORS[factorIdxOf(gid)]
+  return m && Number.isFinite(m.f) ? m.f : 1
+}
 export function setFactorIdx(gid, i) { state.factors = { ...state.factors, [gid]: i } }
 
 /** 检查某竞赛档位是否已选中（供竞赛界面 chips 高亮用） */
@@ -106,7 +120,7 @@ function evalGroups(groups, picks) {
   return groups.map(g => {
     let rows = picks.filter(p => p.gid === g.id).map(p => ({
       ...p,
-      effPts: +(p.pts * (g.factor ? MEMBER_FACTORS[factorIdxOf(g.id)].f : 1)).toFixed(2),
+      effPts: +(p.pts * (g.factor ? memberFactor(g.id) : 1)).toFixed(2),
     }))
     for (const item of groups.find(x => x.id === g.id).items) {
       if (!item.count) continue

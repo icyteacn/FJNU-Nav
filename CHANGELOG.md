@@ -111,6 +111,39 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.6 (2026-10-15) · APK 升级 + 课表页健壮性 + 两处真实缺陷修复（patch）
+【APK 安卓优势功能】
+① 静态 App Shortcuts（长按桌面图标直达）：新增 res/xml/shortcuts.xml，三项「今日 / 下一节课 / 课表」，
+   走自定义 action com.feike.schedule.OPEN_VIEW + extra view；MainActivity 新增 extractView/consumePendingView，
+   用 getBridge().getServerUrl() 把 WebView 定位到 index.html?view=xxx（trim-apk-assets 的垫片会保留 search 转发）。
+② 新增 2x2「下一节课」小组件：res/layout/schedule_widget_next.xml + res/xml/schedule_widget_info_next.xml +
+   ScheduleWidgetProviderNext.java，与既有 4x2 组件**共用同一份数据源**（notify.json → widgetSnapshot 三行快照），
+   只是版式改为竖排、课程名与倒计时加粗，桌面一眼可读；点击任一位置打开应用。
+③ 权限：新增 USE_EXACT_ALARM（Android 13+ 日历/闹钟类应用可直接使用精确闹钟，无需用户手动开开关），
+   配合既有 SCHEDULE_EXACT_ALARM，课前提醒更可靠。
+④ Web 层新增深链：standalone-schedule.html 增加 applyDeepLink()，支持 ?view=today|next|week 直接切到
+   单日列表 / 下一节课卡片 / 周课表；非法参数静默忽略，绝不影响正常启动。
+⑤ 版本链：apkVersion 1.2 → 1.3、versionCode 4 → 5、standalone APP_VERSION 同步（test_schedule 断言三方一致）。
+
+【课表页健壮性】
+- 三处 JSON.parse 加 try/catch（sche_pet 宠物状态、导入文件、Supabase 配置）：脏数据/被清空的存储不该让整页初始化失败。
+- 新增 esc() 转义助手：远程 schedule-data.json 与用户自定义课程都算「不可信输入」，拼 innerHTML 前一律转义。
+
+【两处真实缺陷修复】
+- src/stores/scholarship.js：成员系数取值 MEMBER_FACTORS[factorIdxOf(gid)].f 在 state.factors 被历史版本/手工编辑
+  污染成越界下标时会抛 TypeError，导致整个综测面板渲染失败；现统一回落「独立作者 ×1」，并新增 memberFactor() 收敛。
+- scripts/build-apk.bat：gradle 失败后脚本仍打印 [OK]，维护者可能据此把旧 APK 当新包发出；现改为传播 errorlevel
+  并以非零码退出 + 明确提示「JAVA_HOME 必须指向 JDK 17（AGP 8 要求）」。
+
+【新增自动化验证】
+- scripts/e2e-standalone.mjs（8 项，真机 Chromium）：独立课表页（APK 里真正跑的那个单文件）此前**零自动化验证**，
+  现覆盖 初始化渲染 / 周课表单元格 / ?view=today 切单日 / ?view=week 回周表 / ?view=next 定位卡片 /
+  非法深链静默回落 / localStorage 写脏仍能启动 / 全程零未捕获异常。
+- scripts/test_schedule.mjs 已在 v1.7.5 接入 deploy 门禁；本次 e2e-standalone 接入每日 e2e 工作流。
+
+验证：npm run build 通过；test_schedule 全绿（三方版本一致）；e2e-standalone 8/8；真实 APK 由 scripts/build-apk.bat 打包验证。
+
+
 ## v1.7.5 (2026-10-15) · 课表三端一致性回归测试（patch）
 背景：课表有三份实现——src/data/classSchedule.js（网页数据源）、public/standalone-schedule.html（APK/移动端
 单文件内置一份 HOLIDAY_MAP）、public/data/schedule-data.json（构建产物，供远程同步）。历史上真实出过一次事故：

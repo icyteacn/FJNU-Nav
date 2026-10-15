@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  2x2「下一节课」小组件布局：状态行 + 课程/教室 + 倒计时胶囊。
+  刻意只用 LinearLayout / TextView / ProgressBar 这些 API 21+ 基础控件与纯色背景，
+  与 4x2 组件同一套数据源（notify.json → ScheduleNotifier.widgetSnapshot），零额外 I/O。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/wn_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E61C1E22"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/wn_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="@string/widget_next_default_state"
+        android:textColor="#FFE8B84B"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/wn_course"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="2"
+        android:text="@string/widget_next_default_course"
+        android:textColor="#FFFFFFFF"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/wn_clock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:text=" "
+        android:textColor="#FF7EE2C4"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+</LinearLayout>

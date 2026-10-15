@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- 2x2「下一节课」小组件：只保留 API 21+ 稳定属性，避免部分桌面「无法安装小部件」 -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/schedule_widget_next"
+    android:minHeight="110dp"
+    android:minWidth="110dp"
+    android:previewImage="@mipmap/ic_launcher"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />

@@ -1,0 +1,153 @@
+/**
+ * APK 网页层冒烟：node scripts/e2e-standalone.mjs
+ *
+ * @职责  对 public/standalone-schedule.html（APK 里真正跑的那个单文件课表）做真机验证：
+ *        ① 页面能正常初始化并渲染周课表；② 深链 ?view=today|next|week 生效；
+ *        ③ 表格/单日列表可切换；④ localStorage 被写脏时不崩；⑤ 全程零 JS 运行时错误。
+ *        这个文件此前**没有任何自动化验证**（全靠人工按 references/apk.md 走查）。
+ * @用法  node scripts/e2e-standalone.mjs（缺 playwright-core / 浏览器时 SKIP，不拦本地）
+ * @说明  自带零依赖静态服务器托管 public/（不需要 python / 不需要网关）。
+ */
+import fs from 'node:fs'
+import http from 'node:http'
+import os from 'node:os'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
+const PUB = path.join(ROOT, 'public')
+const PORT = Number(process.env.PORT || 8797)
+const SHOTS = path.join(os.tmpdir(), 'nav-e2e-shots')
+
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp' }
+const CHROME = [
+  process.env.CHROME_PATH,
+  path.join(os.homedir(), 'AppData', 'Local', 'ms-playwright', 'chromium-1234', 'chrome-win64', 'chrome.exe'),
+  path.join(os.homedir(), 'AppData', 'Local', 'ms-playwright', 'chromium-1208', 'chrome-win64', 'chrome.exe'),
+  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  '/usr/bin/google-chrome'
+].filter(Boolean)
+
+let pass = 0
+let fail = 0
+const log = (s) => process.stdout.write(s + '\n')
+
+async function main() {
+  if (!fs.existsSync(path.join(PUB, 'standalone-schedule.html'))) {
+    log('e2e-standalone: SKIP（找不到 public/standalone-schedule.html）')
+    process.exit(0)
+  }
+  let pw = null
+  try { pw = await import('playwright-core') } catch {
+    log('e2e-standalone: SKIP（无 playwright-core）')
+    process.exit(0)
+  }
+  const exe = CHROME.find((p) => { try { return fs.existsSync(p) } catch { return false } })
+  if (!exe) {
+    log('e2e-standalone: SKIP（找不到浏览器；CHROME_PATH 可指定）')
+    process.exit(0)
+  }
+
+  const server = http.createServer((req, res) => {
+    const url = decodeURIComponent((req.url || '/').split('?')[0])
+    let f = path.join(PUB, url)
+    if (!f.startsWith(PUB)) { res.writeHead(403); res.end(); return }
+    if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html')
+    if (!fs.existsSync(f)) { res.writeHead(404); res.end('nf'); return }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(f).toLowerCase()] || 'application/octet-stream' })
+    fs.createReadStream(f).pipe(res)
+  })
+  await new Promise((r) => server.listen(PORT, '127.0.0.1', r))
+  const BASE = `http://127.0.0.1:${PORT}`
+
+  const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] })
+  const errs = []
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
+  page.on('pageerror', (e) => errs.push(String(e && e.message)))
+
+  const assert = (c, m) => { if (!c) throw new Error(m || '断言失败') }
+  async function ok(name, fn) {
+    try { await fn(); pass++; log('  PASS  ' + name) } catch (e) {
+      fail++
+      log('  FAIL  ' + name + ' → ' + String(e && e.message).slice(0, 240))
+      try { await page.screenshot({ path: path.join(SHOTS, 'standalone-' + name.replace(/\W+/g, '_') + '.png') }) } catch { /* noop */ }
+    }
+  }
+  const body = async () => (await page.locator('body').innerText()).replace(/\s+/g, ' ')
+
+  try {
+    await ok('独立课表页正常初始化并渲染', async () => {
+      await page.goto(`${BASE}/standalone-schedule.html`, { waitUntil: 'load', timeout: 30000 })
+      await page.waitForTimeout(1200)
+      const t = await body()
+      assert(t.length > 20, '页面几乎是空的：' + t.slice(0, 80))
+      assert(await page.locator('#tableContainer').count() === 1, '缺少周课表容器')
+    })
+
+    await ok('周课表渲染出课程格或空态说明', async () => {
+      const cells = await page.locator('#tableContainer td').count()
+      assert(cells > 20, '课表单元格过少：' + cells)
+    })
+
+    await ok('深链 ?view=today 切到单日列表', async () => {
+      await page.goto(`${BASE}/standalone-schedule.html?view=today`, { waitUntil: 'load', timeout: 30000 })
+      await page.waitForTimeout(1200)
+      const listDisplay = await page.locator('#dayList').evaluate((el) => getComputedStyle(el).display)
+      const tblDisplay = await page.locator('#tableContainer').evaluate((el) => getComputedStyle(el).display)
+      assert(listDisplay !== 'none', '单日列表未显示（display=' + listDisplay + '）')
+      assert(tblDisplay === 'none', '周课表未隐藏（display=' + tblDisplay + '）')
+    })
+
+    await ok('深链 ?view=week 回到周课表', async () => {
+      await page.goto(`${BASE}/standalone-schedule.html?view=week`, { waitUntil: 'load', timeout: 30000 })
+      await page.waitForTimeout(1000)
+      const tblDisplay = await page.locator('#tableContainer').evaluate((el) => getComputedStyle(el).display)
+      assert(tblDisplay !== 'none', '周课表未显示')
+    })
+
+    await ok('深链 ?view=next 不报错且定位到卡片', async () => {
+      await page.goto(`${BASE}/standalone-schedule.html?view=next`, { waitUntil: 'load', timeout: 30000 })
+      await page.waitForTimeout(1200)
+      assert(await page.locator('#nextCard').count() === 1, '缺少下一节课卡片')
+    })
+
+    await ok('非法/缺参深链静默忽略（回落到默认视图）', async () => {
+      await page.goto(`${BASE}/standalone-schedule.html?view=__bad__`, { waitUntil: 'load', timeout: 30000 })
+      await page.waitForTimeout(900)
+      assert((await body()).length > 20, '页面应正常渲染')
+    })
+
+    await ok('localStorage 被写脏时仍能启动', async () => {
+      await page.goto(`${BASE}/standalone-schedule.html`, { waitUntil: 'load', timeout: 30000 })
+      await page.evaluate(() => {
+        localStorage.setItem('sche_pet', '{不是合法 JSON')
+        localStorage.setItem('sche_state', '###')
+        localStorage.setItem('sche_adjustments', 'none')
+      })
+      const errsBefore = errs.length
+      await page.goto(`${BASE}/standalone-schedule.html`, { waitUntil: 'load', timeout: 30000 })
+      await page.waitForTimeout(1200)
+      assert((await body()).length > 20, '脏存储下页面未渲染')
+      const added = errs.slice(errsBefore).filter((m) => !/favicon|net::ERR/.test(m))
+      assert(added.length === 0, '脏存储触发了未捕获异常：' + added.slice(0, 2).join(' | '))
+    })
+
+    await ok('全程无未捕获 JS 错误', async () => {
+      const real = errs.filter((m) => !/favicon|net::ERR/.test(m))
+      assert(real.length === 0, real.slice(0, 3).join(' | '))
+    })
+  } finally {
+    await browser.close()
+    server.close()
+  }
+
+  log('')
+  log(`e2e-standalone: pass=${pass} fail=${fail}`)
+  if (fail) log(`失败截图目录：${SHOTS}`)
+  process.exit(fail ? 1 : 0)
+}
+
+main().catch((e) => {
+  log('e2e-standalone: FATAL ' + (e && e.stack ? e.stack : e))
+  process.exit(1)
+})

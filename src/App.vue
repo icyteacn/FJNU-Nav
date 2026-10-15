@@ -5,14 +5,17 @@
  * 视图注册、路由解析、导航逻辑集中在 src/router.js；
  * 品牌、版权、文案集中在 src/config/site.js。此处只做组装。
  */
-import { ref, computed, onMounted, watch, nextTick, provide } from 'vue'
+import { ref, computed, onMounted, watch, nextTick, provide, defineAsyncComponent } from 'vue'
 import Welcome from './views/Welcome.vue'
 import TourOverlay from './components/TourOverlay.vue'
-import ChatDock from './components/agent/ChatDock.vue'
+/* 智能体悬浮舱改为异步组件：静态引入会把 agent engine + workflows + kb-nav.json(121KB)
+ * 一并打进首屏，手机端表现为「首次加载慢 / 打开就卡」。首帧后闲时预载，弱网跳过。 */
+const ChatDock = defineAsyncComponent(() => import('./components/agent/ChatDock.vue'))
 import SuggestButton from './components/SuggestButton.vue'
 import { SITE } from './config/site.js'
 import { useI18n } from './i18n/index.js'
 import { NAV_APPS, useViewState, preloadPopular } from './router.js'
+import { whenIdle, isSlowConnection } from './utils/netHint.js'
 import { useTour } from './utils/useTour.js'
 import { adminUrl, verifyAdminToken } from './wall/apiBase.js'
 import { getTourSteps, getSubTourSteps } from './data/tourSteps.js'
@@ -179,6 +182,8 @@ onMounted(loadNotices)
 // 预加载热门应用（减少首次点击延迟）
 onMounted(() => {
   setTimeout(preloadPopular, 1000)
+  // 首帧后再预热智能体悬浮舱（弱网/省流模式跳过，不与首屏抢带宽）
+  if (!isSlowConnection()) whenIdle(() => { import('./components/agent/ChatDock.vue').catch(() => {}) }, 3000)
 })
 </script>
 

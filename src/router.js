@@ -12,6 +12,7 @@ import { ref, computed, markRaw } from 'vue'
 import { hitBusuanzi } from './utils/busuanzi.js'
 import Home from './views/Home.vue'
 import { recordAppOpen } from './agent/profile.js'
+import { whenIdle, isSlowConnection } from './utils/netHint.js'
 
 /** 首页组件同步加载，其他页面懒加载（减少首屏 JS 体积） */
 const VIEWS = {
@@ -147,8 +148,12 @@ export function useViewState() {
 
 /** 预加载热门应用（首页加载完成后调用，减少首次点击延迟） */
 export function preloadPopular() {
+  // 弱网/省流模式不预载：预载是锦上添花，不该和首屏抢带宽
+  if (isSlowConnection()) return
   const popular = ['orientationSchedule', 'graduatePlan', 'campusNews', 'officialSites', 'canteen', 'timetable', 'whatToEat']
-  popular.forEach(id => {
-    if (VIEWS[id]) loadComponent(id)
+  whenIdle(() => {
+    popular.forEach(id => {
+      if (VIEWS[id]) loadComponent(id)
+    })
   })
 }

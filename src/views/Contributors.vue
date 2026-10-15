@@ -72,6 +72,7 @@ function hueOf(i) {
     <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>版本历史</div>
     <ul class="changelog">
       
+      <li><b>v1.7.0</b> — {{ '生活费预算引擎：与 QDU 同一套统计算法（稳健月均 / 剔除进行中当月 + 跑量外推 / 加权分类占比 / 样本置信度 / 趋势预测 / 订阅体检 / 占比一键配平）；账单导入扩展银行通用流水并补齐独立收入词表。' }}</li>
       <li><b>v1.6.11</b> — {{ '账单导入修复：中行 PDF 解析改为按需加载 pdfjs（Vite ?url 打包同版本本地 worker，修正原 CDN 旧版 worker 不匹配），Budget 分包 605KB→120KB。' }}</li>
       <li><b>v1.6.10</b> — {{ '维护知识 skill 化：架构/发布清单/调课套路/APK 打包拆入项目专属技能 fjnu-nav-maintainer（随 git 分发、按需加载），AGENTS.md 瘦身为项目简介+红线+更新日志。' }}</li>
       <li><b>v1.6.9</b> — {{ '课表调课与体验修复：10/13 周二晚人工智能通识课调至 10/15 周四晚·笃行1-114（26级全专业三端同步）；修复调入日今日课程卡/列表/倒计时看不到调入课；日程助手课表可切专业并持久化。' }}</li>

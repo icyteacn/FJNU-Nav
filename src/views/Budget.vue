@@ -7,6 +7,10 @@ import BudgetPro from './BudgetPro.vue'
 import BarRow from '../components/BarRow.vue'
 import PieChart from '../components/PieChart.vue'
 import { parseBillFile } from '../utils/billImport.js'
+import {
+  buildBackup, serializeBackup, parseBackup, mergeRecords, summarize, backupFileName
+} from '../utils/budgetBackup.js'
+import { SITE } from '../config/site.js'
 import { navCtx } from '../stores/navContext.js'
 
 const emit = defineEmits(['back', 'open'])
@@ -661,6 +665,60 @@ function clearAll() {
   }
 }
 
+/* ================= 备份 / 恢复（数据只存本机 → 给用户一条自己保管的通道） ================= */
+const backupMsg = ref('')
+const backupInfo = computed(() => summarize(records.value))
+
+function exportBackup() {
+  if (!records.value.length) {
+    backupMsg.value = '还没有任何记录，先记几笔或导入账单再导出。'
+    return
+  }
+  const payload = buildBackup(records.value, { app: 'FJNU-Nav', version: SITE.version })
+  const blob = new Blob([serializeBackup(payload)], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = backupFileName('fstar-记账')
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 2000)
+  backupMsg.value = `✅ 已导出 ${payload.summary.count} 笔备份（支出 ¥${fmt(payload.summary.expense)} / 收入 ¥${fmt(payload.summary.income)}）`
+}
+
+/** 导入方式：追加去重（默认）或整体替换，二选一由用户确认 */
+async function importBackup(file, mode = 'append') {
+  backupMsg.value = ''
+  if (!file) return
+  let text = ''
+  try {
+    text = await file.text()
+  } catch {
+    backupMsg.value = '无法读取该文件，请确认是本应用导出的 .json 备份。'
+    return
+  }
+  const parsed = parseBackup(text)
+  if (!parsed.ok) {
+    backupMsg.value = parsed.error === 'not-json'
+      ? '这不是有效的 JSON 文件。'
+      : parsed.error === 'no-records'
+        ? '文件里没找到记账记录（应为本应用导出的备份）。'
+        : '文件里的记录全部无法识别，可能来自其它程序。'
+    return
+  }
+  const ok = mode === 'replace'
+    ? window.confirm(`将用备份里的 ${parsed.records.length} 笔记录【整体替换】当前全部记录，当前数据会丢失，确认？`)
+    : window.confirm(`将追加导入 ${parsed.records.length} 笔记录（与现有记录重复的会自动跳过），确认？`)
+  if (!ok) return
+  const res = mergeRecords(records.value, parsed.records, { mode })
+  records.value = res.records
+  const drop = parsed.meta.dropped || 0
+  backupMsg.value = mode === 'replace'
+    ? `✅ 已替换为 ${res.records.length} 笔记录（忽略无效 ${drop} 笔）`
+    : `✅ 已追加 ${res.added} 笔（跳过重复 ${res.dup} 笔，忽略无效 ${drop} 笔）`
+}
+
 /** 检测左右手倒钱：同一天或相近日期内，金额相同、类型相反的交易对 */
 const transferPairs = ref([])
 const showTransferClean = ref(false)
@@ -928,6 +986,25 @@ const monthLabel = computed(() => {
     <div class="privacy-note">
       🔒 隐私说明：本站为纯静态网页（无后端服务器），账单文件只在你自己的浏览器里本地解析，<b>不会上传到任何服务器</b>，也不会被任何服务方获取；导入的记账记录仅保存在本机浏览器 localStorage，可安心试用。清除浏览器数据会一并清空记录。
     </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title" style="margin:0 0 10px;"><span class="bar"></span>💾 备份与恢复（数据只存本机，请自行保管）</div>
+    <p class="muted" style="font-size:12px;margin-bottom:10px;">记账数据只保存在本机浏览器，清缓存 / 换设备 / 换浏览器都会丢。导出一份 JSON 备份放到网盘或聊天窗口收藏，换设备时再导入即可恢复。</p>
+    <div class="backup-summary">
+      <span>当前共 {{ backupInfo.count }} 笔记录</span>
+      <span class="muted">日期范围：{{ backupInfo.firstDate || '—' }} ~ {{ backupInfo.lastDate || '—' }}</span>
+      <span class="muted">累计支出 ¥{{ fmt(backupInfo.expense) }} · 累计收入 ¥{{ fmt(backupInfo.income) }}</span>
+    </div>
+    <div class="backup-btns">
+      <button class="btn ghost" @click="exportBackup">⬇️ 导出备份（JSON）</button>
+      <label class="btn ghost backup-label" for="backup-file-append">⬆️ 导入并追加</label>
+      <input id="backup-file-append" type="file" accept=".json,application/json" style="display:none;" @change="importBackup($event.target.files[0], 'append'); $event.target.value = ''" />
+      <label class="btn ghost backup-label" for="backup-file-replace">♻️ 导入并替换</label>
+      <input id="backup-file-replace" type="file" accept=".json,application/json" style="display:none;" @change="importBackup($event.target.files[0], 'replace'); $event.target.value = ''" />
+    </div>
+    <div v-if="backupMsg" class="import-msg">{{ backupMsg }}</div>
+    <p class="muted" style="font-size:11px;margin-top:8px;">备份文件只包含日期 / 类型 / 分类 / 金额 / 备注 / 商户，不含任何账号或身份信息；导入全程在本机完成，不会上传。</p>
   </div>
 
   <div class="panel" v-if="records.length > 0">
@@ -1282,6 +1359,21 @@ const monthLabel = computed(() => {
   border-radius: 12px;
 }
 .clean-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* 备份 / 恢复面板 */
+.backup-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  padding: 10px;
+  background: var(--bar);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.backup-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.backup-label { display: inline-flex; align-items: center; cursor: pointer; }
+.backup-btns .btn { flex: 0 0 auto; }
 .active-btn { border-color: var(--primary) !important; color: var(--primary) !important; background: var(--primary-soft) !important; }
 .transfer-empty {
   font-size: 13px;

@@ -98,6 +98,17 @@ function skipTour() {
 }
 
 /** 当前步骤数据 */
+/**
+ * 收起当前引导但**不标记完成**。
+ * 用于「用户在引导进行中切换了页面」：遮罩挂在 App 层，锚点元素已随视图卸载，
+ * 遮罩会残留在新页面上并吞掉用户的所有点击。不标记完成，是为了让用户下次回到该页仍能看到引导。
+ */
+function cancelTour() {
+  activeTour.value = null
+  currentStep.value = 0
+  tourSteps.value = []
+}
+
 const currentStepData = computed(() => tourSteps.value[currentStep.value] || null)
 /** 总步骤数 */
 const totalSteps = computed(() => tourSteps.value.length)
@@ -125,6 +136,7 @@ export function useTour() {
     goToStep,
     completeTour,
     skipTour,
+    cancelTour,
     isTourCompleted,
     resetAllTours
   }

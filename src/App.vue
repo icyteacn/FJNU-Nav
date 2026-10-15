@@ -17,7 +17,7 @@ import { useTour } from './utils/useTour.js'
 import { adminUrl, verifyAdminToken } from './wall/apiBase.js'
 import { getTourSteps, getSubTourSteps } from './data/tourSteps.js'
 
-const { startTour, isTourCompleted, isActive, markTourCompleted } = useTour()
+const { startTour, isTourCompleted, isActive, markTourCompleted, cancelTour } = useTour()
 
 /** i18n：模板用的 lang/toggleLang/navLabel 在此补齐（此前漏接导致主界面白屏） */
 const { lang, t, toggleLang } = useI18n()
@@ -133,6 +133,9 @@ watch(stage, (val) => {
 
 // 切换页面时检查是否需要自动触发引导
 watch(current, (val) => {
+  // 切页时先收起进行中的引导：遮罩挂在 App 层，视图卸载后锚点已失效，
+  // 若不收起会残留在新页面上吞掉点击（历史缺陷）
+  if (isActive.value) cancelTour()
   if (!isActive.value && val && !isTourCompleted(val)) {
     nextTick(() => {
       setTimeout(() => {

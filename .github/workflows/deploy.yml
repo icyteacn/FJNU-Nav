@@ -18,13 +18,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: rm -rf android ios node_modules
+      - name: 清理重依赖目录（减小 checkout 体积，避免 APK/gradle 产物拖慢）
+        run: rm -rf android ios node_modules
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm run build
+      - name: 安装依赖（npm ci，失败自动回退 npm install）
+        run: |
+          set -e
+          npm ci --no-audit --no-fund || {
+            echo "::warning::npm ci 失败，回退到 npm install（锁文件可能与 package.json 有漂移）"
+            npm install --no-audit --no-fund
+          }
+      - name: 生成课表数据 + 构建 + 产物校验
+        run: npm run build
       - name: Deploy integrity gate (registry cross-refs + dist artifacts)
         run: node scripts/e2e-integrity.mjs
       - name: Frontend unit gates (agent/wall/im/grow + budget engine + bill parser)
@@ -44,6 +52,27 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+      # 无论成败都留一份现场：下次失败不用再猜，日志直接摆在 run 页面底部
+      - name: 诊断信息（失败时也执行）
+        if: always()
+        run: |
+          {
+            echo "### 诊断"
+            echo ""
+            echo "- commit: \`$(git log -1 --format='%h %s')\`"
+            echo "- node: $(node -v) / npm: $(npm -v)"
+            echo "- runner: ${{ runner.os }} ${{ runner.arch }}"
+            echo ""
+            echo "**dist 产物（$(ls dist 2>/dev/null | wc -l) 项）：**"
+            echo '```'
+            ls dist 2>/dev/null | head -40 || echo "(dist 不存在)"
+            echo '```'
+            echo ""
+            echo "**关键产物校验：**"
+            for f in index.html mobile.html standalone-schedule.html 404.html admin.html admin/index.html console/index.html downloads/feike-schedule.apk; do
+              if [ -f "dist/$f" ]; then echo "- ✅ $f ($(stat -c%s "dist/$f") bytes)"; else echo "- ❌ $f 缺失"; fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     needs: build

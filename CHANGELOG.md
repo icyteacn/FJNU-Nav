@@ -111,6 +111,35 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.9 (2026-10-15) · 部署加固（npm ci 失败自动回退 + 失败现场诊断摘要）（patch）
+【背景】上一次 push 的 deploy 在 21 秒内挂在 build job（exit code 1）。本地严格模拟 CI
+（rm -rf android ios → npm run build → integrity → 全部门禁）全部通过，锁文件也与 package.json 一致，
+因此判定失败发生在 Ubuntu 侧的某一步（最可能是 npm ci 的平台/网络差异），而**本机看不到 Actions 日志**。
+与其继续猜，不如让部署更不容易被单点卡死，并让下次失败当场看清原因。
+
+【加固 1】依赖安装带回退
+  `npm ci --no-audit --no-fund` 失败时自动回退 `npm install --no-audit --no-fund` 并打 warning。
+  个人站点要的是「能部署」，锁文件严格性不该成为整站上线的单点故障。
+  （NCSS-Nav 上一轮已修过同类问题：package-lock.json 未同步导致 npm ci 快速失败。）
+
+【加固 2】失败现场摘要（if: always()）
+  无论成败都往 run 页面底部写一份 Step Summary：commit、node/npm 版本、runner 平台、
+  dist 产物清单，以及 index.html / mobile.html / standalone-schedule.html / 404.html /
+  admin.html / admin/index.html / console/index.html / downloads/feike-schedule.apk
+  八个关键产物的存在性与字节数。下次再挂，不用猜就能直接看出是"构建没产物"还是"产物缺哪个"。
+
+【步骤命名】原先 `npm ci`、`npm run build` 都是匿名步骤，失败时 GitHub 只显示 job 名；
+现在每步都有中文名，失败定位一眼可见。
+
+【顺带】同步共享冒烟脚本（QDU-Nav 新增的绩点/分学期断言：本站无该应用时自动跳过）。
+
+验证：YAML 语法解析通过；本地模拟 CI（android/ios 移开）build / integrity 18/18 / audit 0/0 /
+7 个专项单测全绿；真机冒烟 22/22。
+
+注：本机无 gh CLI/token，**仍看不到 Actions 结果**，需你在网页端确认这次 run 是否通过；
+若仍失败，run 页面底部的诊断摘要会直接写明失败位置与产物状态。
+
+
 ## v1.7.8 (2026-10-15) · APK 1.4 组件全面升级 + i18n 按需加载 + 冒烟日期动态化（patch）
 【APK 1.4（versionCode 6）—— 针对「长按出不来快捷方式 / 组件不好看、不能拉伸」的反馈】
 ① **1x1「今日」小部件**（ScheduleWidgetProviderToday）：部分国产桌面不支持 App Shortcuts（长按图标），

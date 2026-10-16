@@ -49,6 +49,16 @@
     .next-card.live{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 6px 18px rgba(22,163,74,.28)}
 
     /* ========== 桌宠（热血鸡伙伴） ========== */
+    /* 电池优化引导条：只在原生报告「未加白名单」时出现一次 */
+    .battery-tip{position:fixed;left:9px;right:9px;bottom:calc(9px + var(--safe-bottom));z-index:80;
+      display:none;align-items:center;gap:9px;padding:10px 12px;border-radius:14px;
+      background:#1f2937;color:#e5e7eb;font-size:11.5px;line-height:1.45;
+      box-shadow:0 10px 26px rgba(0,0,0,.34);border:1px solid rgba(255,255,255,.08)}
+    .battery-tip.show{display:flex}
+    .battery-tip span{flex:1;min-width:0}
+    .battery-tip button{border:none;border-radius:9px;padding:6px 11px;font-size:11px;font-weight:800;
+      background:#f59e0b;color:#3b2a05;cursor:pointer;white-space:nowrap}
+    .battery-tip button.ghost{background:transparent;color:#9ca3af;padding:6px 7px;font-size:15px;line-height:1}
     .pet-fab{position:fixed;right:14px;bottom:calc(78px + var(--safe-bottom));width:54px;height:54px;border-radius:50%;
       background:radial-gradient(circle at 32% 28%,#fff8d6,#fbbf24);box-shadow:0 6px 18px rgba(0,0,0,.24);
       z-index:70;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:27px;
@@ -2856,6 +2866,48 @@ function esc(s){
  * 深链视图切换：App Shortcuts / 桌面组件点击会带 ?view=today|next|week 进来。
  * 纯前端实现，参数缺失或非法时静默忽略，绝不影响正常启动。
  */
+/* ── 供原生返回键调用 ──────────────────────────────────────────────
+   返回 true 表示「已消费」（原生不会退出应用）：
+     1) 有弹层 → 关掉最上层那个（confirm/详情/添加/更多菜单/桌宠面板…）
+     2) 处于单日列表视图 → 回到周课表
+     3) 都没有 → 返回 false，交给原生退出
+   用固定 id 列表而不是 class 选择器：这些弹层全部靠 class 'show' 切换，显式列表更可控也更省性能。 */
+const BACK_LAYERS=['confirmBox','scopeModal','webMode','moreMenu','majorModal','searchModal','filterModal','colorModal','fontModal','detailModal','addModal','overrideModal','adjustModal','sugModal','petPanel'];
+window.__feikeBack=function(){
+  try{
+    for(let i=BACK_LAYERS.length-1;i>=0;i--){
+      const el=document.getElementById(BACK_LAYERS[i]);
+      if(el&&el.classList.contains('show')){el.classList.remove('show');return true;}
+    }
+    if(state.viewMode==='list'){state.viewMode='grid';saveState();render();return true;}
+  }catch(e){/* 返回键处理绝不能抛错 */}
+  return false;
+};
+
+/* ── 电池优化白名单引导 ───────────────────────────────────────────
+   只在原生桥存在、且当前**未**加入白名单时提示一次；用户点「去设置」后不再打扰。 */
+function closeBatteryTip(){
+  const el=document.getElementById('batteryTip');
+  if(el){el.classList.remove('show');el.style.display='none';}
+  try{localStorage.setItem('sche_battery_tip','dismissed');}catch(e){}
+}
+function openBatterySettings(){
+  try{if(window.FeikeNative&&FeikeNative.openBatterySettings)FeikeNative.openBatterySettings();}catch(e){}
+  closeBatteryTip();
+}
+function maybeBatteryTip(){
+  try{
+    if(!window.FeikeNative||typeof FeikeNative.isIgnoringBattery!=='function')return;
+    if(localStorage.getItem('sche_battery_tip'))return;
+    if(FeikeNative.isIgnoringBattery()){localStorage.setItem('sche_battery_tip','ok');return;}
+    setTimeout(function(){
+      const el=document.getElementById('batteryTip');
+      if(el)el.classList.add('show');
+    },1500);
+  }catch(e){}
+}
+setTimeout(maybeBatteryTip,600);
+
 function applyDeepLink(){
   try{
     const v=(new URLSearchParams(location.search).get('view')||'').toLowerCase();
@@ -2911,5 +2963,10 @@ function init(){
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
+<div class="battery-tip" id="batteryTip">
+  <span>🔔 想让课前提醒更可靠？把本应用加入「电池优化白名单」（国产系统的后台限制常导致提醒不响）</span>
+  <button onclick="openBatterySettings()">去设置</button>
+  <button class="ghost" onclick="closeBatteryTip()">✕</button>
+</div>
 </body>
 </html>

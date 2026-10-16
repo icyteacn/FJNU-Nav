@@ -4,6 +4,9 @@ import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.drawable.Icon;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +17,7 @@ import android.os.Build;
 import android.os.FileObserver;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -24,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +48,8 @@ import java.util.Locale;
  *   3. 权限 —— Android 13+ 未授予 POST_NOTIFICATIONS 时静默跳过，授权后下次刷新自动出现。
  */
 public final class ScheduleNotifier {
+
+    private static final String TAG = "FeikeSchedule";
 
     private static final String CHANNEL_ID = "schedule_daily";
     private static final String CHANNEL_SOON = "schedule_soon_hi"; // 新 id：旧包已把 schedule_soon 建成 DEFAULT，换 id 才能升为 HIGH 横幅
@@ -195,6 +202,14 @@ public final class ScheduleNotifier {
                     .setOngoing(true)
                     .setOnlyAlertOnce(true)
                     .setShowWhen(false);
+            // 通知上的操作按钮：深链修好后可真正直达（Android 7+ 才有操作按钮，低版本忽略即可）
+            if (Build.VERSION.SDK_INT >= 16) {
+                try {
+                    b.addAction(new Notification.Action.Builder(null, "今日", launchIntentView(ctx, "today")).build());
+                    b.addAction(new Notification.Action.Builder(null, "周课表", launchIntentView(ctx, "week")).build());
+                } catch (Throwable ignored) {
+                }
+            }
             if (fresh) {
                 int week = s.optInt("week", 0);
                 if (week > 0) b.setSubText("第" + week + "周"); // 右侧小字：当前周次
@@ -219,6 +234,10 @@ public final class ScheduleNotifier {
             if (fresh) {
                 maybeSoonNotify(ctx, s, nm, now);
                 scheduleSoonAlarm(ctx, s, now);
+            }
+            try {
+                if (fresh) syncNextShortcut(ctx, s); // 长按图标的「下一节课」实时更新
+            } catch (Throwable ignored) {
             }
             try {
                 ScheduleWidgetProvider.updateAll(ctx);
@@ -551,6 +570,13 @@ public final class ScheduleNotifier {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) b.setPriority(Notification.PRIORITY_HIGH);
             if (!when.isEmpty()) {
                 b.setStyle(new Notification.BigTextStyle().setBigContentTitle(head).bigText(body + "\n" + when));
+        if (Build.VERSION.SDK_INT >= 16) {
+            try {
+                b.addAction(new Notification.Action.Builder(null, "看课表", launchIntentView(ctx, "today")).build());
+                b.addAction(new Notification.Action.Builder(null, "下一节", launchIntentView(ctx, "next")).build());
+            } catch (Throwable ignored) {
+            }
+        }
             }
             nm.notify(SOON_NOTIFICATION_ID, b.build());
         } catch (Throwable ignored) {
@@ -673,18 +699,69 @@ public final class ScheduleNotifier {
         }
     }
 
-    /** 开机恢复：重启手机后无需打开 App，通知 / 每小时闹钟 / 课前提醒 / 小组件全部自动恢复 */
+    /**
+     * 系统事件恢复：重启 / 改时间 / 换时区 / 跨零点 / 应用升级后，
+     * 无需打开 App 即可把通知、每小时闹钟、课前提醒闹钟、桌面小组件、动态快捷方式全部重排一遍。
+     */
     public static class Boot extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             try {
-                if (intent == null || !Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
                 Context app = context.getApplicationContext();
+                String action = intent == null ? null : intent.getAction();
+                Log.i(TAG, "system event -> reschedule: " + action);
                 startLiveUpdates(app);
                 scheduleHourly(app);
-                show(app); // 内含课前提醒闹钟重排 + 小组件刷新
+                show(app); // 内含课前提醒闹钟重排 + 小组件刷新 + 动态快捷方式
             } catch (Throwable ignored) {
             }
         }
+    }
+
+    /**
+     * 动态快捷方式「下一节课」：长按图标即可看到**实时**的下一节课与时间，
+     * 比静态快捷方式更实用（静态只有固定的「下一节课」四个字）。
+     * 用独立 id（next_live），避免与静态 shortcuts.xml 的 next 冲突。
+     */
+    private static void syncNextShortcut(Context ctx, JSONObject s) {
+        try {
+            if (Build.VERSION.SDK_INT < 25) return; // Android 7.1 以下没有动态快捷方式
+            ShortcutManager sm = ctx.getSystemService(ShortcutManager.class);
+            if (sm == null) return;
+            String[] d = widgetDashboard(ctx);
+            String name = trimOrSpace(d[W_TITLE]);
+            String time = "";
+            try {
+                time = s == null ? "" : s.optString("nextTime", "");
+            } catch (Throwable ignored) {
+            }
+            String shortLabel;
+            if (name.isEmpty()) {
+                shortLabel = "今天没课";
+            } else if (!time.isEmpty()) {
+                shortLabel = time + " " + clip(name, 7);
+            } else {
+                shortLabel = clip(name, 10);
+            }
+            Intent it = new Intent(ctx, MainActivity.class);
+            it.setAction("com.feike.schedule.OPEN_VIEW");
+            it.putExtra("view", "next");
+            it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ShortcutInfo info = new ShortcutInfo.Builder(ctx, "next_live")
+                    .setShortLabel(shortLabel)
+                    .setLongLabel(trimOrSpace(d[W_BADGE]) + " · " + trimOrSpace(d[W_SUB]))
+                    .setIcon(Icon.createWithResource(ctx, R.mipmap.ic_launcher))
+                    .setIntent(it)
+                    .build();
+            sm.setDynamicShortcuts(Collections.singletonList(info));
+        } catch (Throwable ignored) {
+            // 动态快捷方式失败绝不影响通知主流程
+        }
+    }
+
+    private static String clip(String s, int n) {
+        if (s == null) return "";
+        String v = s.trim();
+        return v.length() <= n ? v : v.substring(0, n);
     }
 }

@@ -132,6 +132,78 @@ async function main() {
       assert(added.length === 0, '脏存储触发了未捕获异常：' + added.slice(0, 2).join(' | '))
     })
 
+    // ───────── APK 配套能力（返回键 / 电池优化引导）─────────
+    await ok('返回键钩子：默认视图交还原生', async () => {
+      await page.goto(BASE + '/standalone-schedule.html', { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(500)
+      const r = await page.evaluate(() => {
+        try {
+          return { has: typeof window.__feikeBack === 'function', ret: window.__feikeBack() }
+        } catch (e) {
+          return { err: String(e) }
+        }
+      })
+      assert(r.has, '页面未暴露 __feikeBack（原生返回键会盲目退出应用）')
+      assert(r.ret === false, '周课表视图应返回 false（交还原生退出），实际：' + JSON.stringify(r))
+    })
+
+    await ok('返回键钩子：先关弹层，再把单日视图退回周课表', async () => {
+      const closed = await page.evaluate(() => {
+        const el = document.getElementById('moreMenu')
+        if (!el) return 'no-moreMenu'
+        el.classList.add('show')
+        const consumed = window.__feikeBack()
+        return { consumed, stillOpen: el.classList.contains('show') }
+      })
+      assert(closed !== 'no-moreMenu', '找不到 moreMenu，弹层 id 可能改名了')
+      assert(closed.consumed === true && closed.stillOpen === false, '弹层应被关闭并消费返回键：' + JSON.stringify(closed))
+
+      const grid = await page.evaluate(() => {
+        try {
+          state.viewMode = 'list'
+          saveState()
+          render()
+          const consumed = window.__feikeBack()
+          return { consumed, mode: state.viewMode }
+        } catch (e) {
+          return { err: String(e) }
+        }
+      })
+      assert(grid.consumed === true && grid.mode === 'grid', '单日视图按返回应回到周课表：' + JSON.stringify(grid))
+    })
+
+    await ok('电池优化引导：未加白名单时提示、点「去设置」调原生后不再打扰', async () => {
+      await page.goto(BASE + '/standalone-schedule.html', { waitUntil: 'domcontentloaded' })
+      await page.evaluate(() => {
+        localStorage.removeItem('sche_battery_tip')
+        window.__openedBattery = false
+        window.FeikeNative = { isIgnoringBattery: () => false, openBatterySettings: () => { window.__openedBattery = true } }
+        maybeBatteryTip()
+      })
+      // 页面故意延迟 1.5s 才弹（避免刚打开就打扰用户），所以这里要等够
+      await page.waitForTimeout(2200)
+      const shown = await page.evaluate(() => document.getElementById('batteryTip').classList.contains('show'))
+      assert(shown === true, '未加白名单时应弹出引导条')
+
+      await page.evaluate(() => openBatterySettings())
+      const after = await page.evaluate(() => ({
+        opened: !!window.__openedBattery,
+        hidden: !document.getElementById('batteryTip').classList.contains('show'),
+        remembered: !!localStorage.getItem('sche_battery_tip')
+      }))
+      assert(after.opened, '点「去设置」应调用原生 openBatterySettings')
+      assert(after.hidden, '点击后引导条应收起')
+      assert(after.remembered, '应记住已提示过，不再重复打扰')
+
+      const again = await page.evaluate(() => {
+        localStorage.removeItem('sche_battery_tip')
+        window.FeikeNative = { isIgnoringBattery: () => true }
+        maybeBatteryTip()
+        return document.getElementById('batteryTip').classList.contains('show')
+      })
+      assert(again === false, '已在白名单里就不该再提示')
+    })
+
     await ok('全程无未捕获 JS 错误', async () => {
       const real = errs.filter((m) => !/favicon|net::ERR/.test(m))
       assert(real.length === 0, real.slice(0, 3).join(' | '))

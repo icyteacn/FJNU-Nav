@@ -1,11 +1,15 @@
 package com.feike.schedule;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.util.Log;
 
@@ -30,6 +34,7 @@ public class MainActivity extends BridgeActivity {
         ScheduleNotifier.startLiveUpdates(this); // 30s 倒计时重绘 + notify.json 监听
         ScheduleNotifier.show(this); // 每次打开 App 都刷新今日概要
         consumePendingView(); // 长按图标进来的「今日 / 下一节课 / 课表」
+        installJsBridge(); // 页面可调用的少量原生能力（电池白名单引导等）
     }
 
     @Override
@@ -178,6 +183,110 @@ public class MainActivity extends BridgeActivity {
             return s == null ? null : s.trim();
         } catch (Throwable t) {
             return null;
+        }
+    }
+
+    /**
+     * 返回键接管（Android 用户的肌肉记忆，不该一按就退出应用）。
+     *
+     * 顺序：页面若消费（关闭当前弹层 / 从单日视图回到周课表）→ 什么都不做；
+     *      否则 WebView 有历史 → 后退；再否则才退出。
+     * 注意 evaluateJavascript 是异步的，所以这里**不调用 super**，由回调决定是否 finish。
+     */
+    @Override
+    public void onBackPressed() {
+        try {
+            Bridge bridge = getBridge();
+            final WebView web = bridge == null ? null : bridge.getWebView();
+            if (web != null) {
+                web.evaluateJavascript(
+                        "(function(){try{return window.__feikeBack?window.__feikeBack()===true:false}catch(e){return false}})()",
+                        value -> {
+                            try {
+                                if ("true".equals(value)) return;      // 页面已处理
+                                if (web.canGoBack()) {
+                                    web.goBack();
+                                    return;
+                                }
+                                finish();                               // 真的到头了才退出
+                            } catch (Throwable e) {
+                                finish();
+                            }
+                        });
+                return;
+            }
+        } catch (Throwable e) {
+            Log.w(TAG, "onBackPressed fallback", e);
+        }
+        super.onBackPressed();
+    }
+
+    /**
+     * 给网页暴露极少量原生能力（对象名 FeikeNative）。
+     * 只暴露「打开电池优化设置」这类无副作用动作，且页面加载的是本地 assets，风险可控。
+     * 用途：国产 ROM（MIUI/ColorOS/EMUI…）会杀后台，是「课前提醒不响」的头号原因，
+     * 需要引导用户把本应用加进电池优化白名单。
+     */
+    private void installJsBridge() {
+        try {
+            Bridge bridge = getBridge();
+            WebView web = bridge == null ? null : bridge.getWebView();
+            if (web == null) {
+                Log.w(TAG, "js bridge skipped: webview null");
+                return;
+            }
+            web.addJavascriptInterface(new FeikeBridge(), "FeikeNative");
+            Log.i(TAG, "js bridge installed");
+        } catch (Throwable e) {
+            Log.w(TAG, "js bridge install failed", e);
+        }
+    }
+
+    /** 暴露给网页的能力集合 */
+    private class FeikeBridge {
+        @JavascriptInterface
+        public boolean isIgnoringBattery() {
+            return MainActivity.this.isIgnoringBattery();
+        }
+
+        @JavascriptInterface
+        public void openBatterySettings() {
+            MainActivity.this.openBatterySettings();
+        }
+
+        @JavascriptInterface
+        public String apkVersion() {
+            return "1.3";
+        }
+    }
+
+    /** 是否已在电池优化白名单里（Android 6 以下视为已优化） */
+    private boolean isIgnoringBattery() {
+        try {
+            if (Build.VERSION.SDK_INT < 23) return true;
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            return pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+        } catch (Throwable t) {
+            return true; // 判断不了就当已优化，避免无端打扰用户
+        }
+    }
+
+    /** 打开系统的电池优化白名单列表（无需任何权限；拿不到就退到应用详情页） */
+    private void openBatterySettings() {
+        try {
+            Intent i = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+            return;
+        } catch (Throwable ignored) {
+        }
+        try {
+            Intent i2 = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            i2.setData(android.net.Uri.parse("package:" + getPackageName()));
+            i2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i2);
+        } catch (Throwable e) {
+            Log.w(TAG, "open battery settings failed", e);
         }
     }
 

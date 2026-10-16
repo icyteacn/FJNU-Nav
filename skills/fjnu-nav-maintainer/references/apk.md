@@ -135,3 +135,17 @@ native 组件**完全依赖**它，因此改网页字段时要一并想好 nativ
 adb logcat -s FeikeSchedule     # 深链会打印 "deep link -> https://localhost/standalone-schedule.html?view=week (attempt 0)"
 adb shell am start -n com.feike.schedule/.MainActivity -e view week   # 直接模拟快捷方式
 ```
+### 1.3 稳健性清单（审计后补齐，改动 APK 时对照检查）
+
+| 面 | 现状 | 要点 |
+|---|---|---|
+| 系统事件恢复 | Manifest `ScheduleNotifier$Boot` 监听 BOOT_COMPLETED / TIME_SET / TIMEZONE_CHANGED / DATE_CHANGED / MY_PACKAGE_REPLACED / LOCALE_CHANGED | **升级 APK 后闹钟会丢**，必须靠 MY_PACKAGE_REPLACED 恢复；`onReceive` 里不要再用 if 限定单一 action |
+| 返回键 | `MainActivity.onBackPressed` + 页面 `window.__feikeBack()` | 弹层→关；单日视图→回周课表；否则退出。evaluateJavascript 是异步的，**不要调 super** |
+| 通知按钮 | 常驻通知「今日/周课表」、课前提醒「看课表/下一节」 | 走 `launchIntentView()` 深链，深链坏了按钮就是死键 |
+| 动态快捷方式 | `ScheduleNotifier.syncNextShortcut()`（id `next_live`） | 不能与静态 shortcuts.xml 的 id 重复；API 25+ |
+| 电池白名单 | JS 桥 `FeikeNative`（isIgnoringBattery/openBatterySettings/apkVersion） | 只跳系统设置列表页，**不申请** REQUEST_IGNORE_BATTERY_OPTIMIZATIONS（Play 政策风险） |
+| 权限 | 仅 INTERNET / POST_NOTIFICATIONS / RECEIVE_BOOT_COMPLETED / SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM | 外部存储权限已删（零引用）；`requestLegacyExternalStorage` 在 targetSdk 33 无效已删 |
+| 不动的点 | allowBackup=true 保留（换机恢复有价值）；Capacitor 自带 WebView 错误页；外链默认走系统浏览器；精确闹钟已有 canScheduleExactAlarms 回退 | 审计结论，别重复加功能 |
+
+**JS 桥测试要点**：页面里 `window.FeikeNative` 在真机才存在，e2e 通过注入假对象验证；
+电池引导条**故意延迟 1.5s** 弹出，断言要等够时间。

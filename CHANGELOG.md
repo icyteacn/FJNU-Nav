@@ -111,6 +111,72 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.12 (2026-10-15) · APK 全面审计：补齐 5 处稳健性/实用性缺口（系统事件恢复 / 返回键 / 通知按钮 / 动态快捷方式 / 电池白名单引导）
+本轮不是加装饰，而是把 APK 当"要长期装在学生手机上天天用"的产品重新过了一遍。逐项结论如下。
+
+【R1 系统性缺口 · 已修】提醒只在「开机」时恢复
+Manifest 里 Boot 接收器**只挂了 BOOT_COMPLETED**，而 Boot.onReceive 里还额外做了
+`if (!ACTION_BOOT_COMPLETED.equals(action)) return;` 双重限制。后果：
+  · 手机时间被改（晚自习调时间、跨时区出差）→ 课前提醒算的是旧时间轴，可能不响或早响；
+  · 跨零点 → 今天/明天的课判断错，要等最长 1 小时的下一次 Tick 才纠正；
+  · **升级 APK 后**（MY_PACKAGE_REPLACED）闹钟全丢 → 要等下次开机或手动打开 App 才恢复。
+改为监听 TIME_SET / TIMEZONE_CHANGED / DATE_CHANGED / MY_PACKAGE_REPLACED / LOCALE_CHANGED，
+任一事件立即重排「常驻通知 + 每小时 Tick + 课前精确闹钟 + 桌面小组件 + 动态快捷方式」，
+并打日志 `system event -> reschedule: <action>`。
+
+【U1 高频触点 · 已修】返回键一按就退出应用
+MainActivity 没有接管 onBackPressed，Android 用户在课表页按返回是**肌肉记忆**，直接退出很突兀。
+新增：页面暴露 `window.__feikeBack()`，原生按返回时先问页面——
+  ① 有弹层（详情/添加/更多菜单/桌宠面板等 15 个）→ 关掉最上层；
+  ② 处于单日列表视图 → 回到周课表；
+  ③ 都不是 → 返回 false，原生再退出。
+（evaluateJavascript 是异步的，所以 onBackPressed 里**不调用 super**，由回调决定是否 finish。）
+新增真机断言 2 项覆盖。
+
+【U2 · 已修】通知只能点进去一次，没有操作按钮
+常驻通知加「今日」「周课表」两个按钮，课前提醒加「看课表」「下一节」。
+这些按钮走的就是本轮刚修好的深链，因此点击直达对应视图。
+
+【U3 · 已修】长按图标只有固定文案
+新增**动态快捷方式**「下一节课」：长按图标直接看到实时内容（如「08:20 高数」），
+随课表刷新同步；用独立 id（next_live）避免与静态 shortcuts.xml 的 next 冲突。
+
+【U4 · 已修】提醒不响的头号原因没人管：国产 ROM 杀后台
+MIUI/ColorOS/EMUI 等会限制后台，导致课前提醒不触发。新增 JS 桥 `FeikeNative` 暴露
+`isIgnoringBattery()` / `openBatterySettings()` / `apkVersion()`；页面在**未加白名单**时弹一次引导条
+（延迟 1.5s、可关闭、跳过即不再打扰），点「去设置」直达系统电池优化白名单列表。
+刻意**不申请** REQUEST_IGNORE_BATTERY_OPTIMIZATIONS（那是敏感权限且有 Play 政策限制），
+只跳转到系统设置列表页，零权限、零政策风险。
+新增真机断言 1 项覆盖（含"已加白名单就不打扰"）。
+
+【U5 · 已修】两个权限从头到尾没用过
+`READ_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE` 全仓 grep 零引用（课表数据只写应用私有目录
+filesDir/notify.json），且在 Android 11+ 基本失效 —— 留着只会让用户安装时看到莫名其妙的「存储」权限。
+已删除；顺带清掉 targetSdk 33 下已无意义的 `requestLegacyExternalStorage`。
+核验：包内权限从 7 条降到 5 条（INTERNET / POST_NOTIFICATIONS / RECEIVE_BOOT_COMPLETED /
+SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM）。
+
+【审计后确认「不需要动」的点（同样重要，说明是真审计而不是乱加）】
+· `allowBackup="true"`：保留。换手机时课表/自定义课程能随系统备份恢复，是有价值的；页面早已对
+  localStorage 写脏做容错（有真机断言覆盖）。
+· WebView 加载失败：Capacitor 自带错误页，无需自造。
+· 外部链接：Capacitor 默认用系统浏览器打开，不会把用户困在应用内。
+· 精确闹钟：已有 `canScheduleExactAlarms()` 判断 + 非精确回退，Android 12/13 行为正确。
+· minSdk 22：高于 addJavascriptInterface 的安全分界（API 17），JS 桥无历史漏洞风险。
+
+版本：versionName 仍是 **1.3**（按你要求）；versionCode 升到 **8**（必须单调递增才能覆盖安装并被识别为升级）。
+
+验证：gradle BUILD SUCCESSFUL；build-apk.bat exit=0 且有 [OK]；aapt 核验 versionCode=8 / versionName=1.3 /
+权限已精简 / 新增 4 个系统广播 / 三个 widget provider / android.app.shortcuts 全部在包内；
+包内 standalone-schedule.html 抽查确认 __feikeBack、FeikeNative、batteryTip 已进包；
+产物 1.03MB 已同步 public/downloads 与 releases（两处 SHA256 一致）。
+真机断言：standalone **8 → 11 项**全绿（新增返回键 2 项 + 电池引导 1 项）；真机冒烟 24/24；integrity 18/18。
+
+说明：本机无安卓设备，仍未真机安装验证。建议装上后依次试：
+长按图标（应看到静态三项 +「08:20 课名」动态项）、通知上的四个按钮、课表页按返回（应回周课表而不是退出）、
+以及首屏 1.5s 后是否出现电池白名单引导条。
+
+
 ## v1.7.11 (2026-10-15) · 修「快捷方式打不开」的真正根因（WebView 相对 URL）+ 修 bat 成功却报错（patch）
 【现象】长按图标三个快捷方式点进去：`网页无法打开 · http://standalone-schedule.html/?view=week ·
 net::ERR_CLEARTEXT_NOT_PERMITTED`。

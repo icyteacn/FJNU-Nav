@@ -7,7 +7,6 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:requestLegacyExternalStorage="true"
         android:theme="@style/AppTheme">
 
         <activity
@@ -47,12 +46,20 @@
         <receiver
             android:name=".ScheduleNotifier$SoonTick"
             android:exported="false" />
-        <!-- 重启手机后自动恢复通知 / 闹钟 / 小组件 -->
+        <!-- 系统事件后自动恢复通知 / 闹钟 / 小组件：
+             重启、改时间、换时区、跨零点、应用被覆盖安装（升级）都会重排一次。
+             此前只挂了 BOOT_COMPLETED —— 于是改时间/跨天/升级 APK 后提醒要等下一次小时级 Tick 才恢复，
+             晚间调时间或升级版本的学生第二天早上很容易收不到课前提醒。 -->
         <receiver
             android:name=".ScheduleNotifier$Boot"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
         </receiver>
         <!-- 桌面小组件：下一节课 + 倒计时（三行与通知同源） -->
@@ -93,8 +100,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- 外部存储读写权限已移除：代码里从未使用（课表数据只写应用私有目录 filesDir/notify.json），
+         且 Android 11+ 对这两个权限基本失效。留着只会让用户在安装时看到莫名其妙的「存储」权限提示。 -->
     <!-- Android 13+ 常驻通知运行时授权 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

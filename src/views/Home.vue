@@ -10,6 +10,7 @@ import { SITE } from '../config/site.js'
 import { createFavorites } from '../utils/favorites.js'
 import { useI18n } from '../i18n/index.js'
 import VisitStats from '../components/VisitStats.vue'
+import { cachedRelease, fetchApkRelease } from '../utils/apkRelease.js'
 
 const emit = defineEmits(['open'])
 
@@ -38,6 +39,25 @@ function appTitle(a) {
 function appDesc(a) {
   try { return (lang.value === 'en' && a.descEn) ? a.descEn : a.desc } catch { return a.desc }
 }
+
+/* ── APK 下载量 ──────────────────────────────────────────────────────────
+   本站托管在 GitHub Pages（纯静态，没有服务端），页面上的下载**无法计数**。
+   唯一免费又真实的是 GitHub Releases 的 download_count，所以：
+     · 只有当 Releases 里存在**与当前版本同名**的 asset 时，下载入口才切到 Releases；
+     · 否则保持本地 downloads/feike-schedule.apk —— 保证不 404、也绝不会给到旧版本；
+     · 读取失败（限流/断网/国内慢）一律静默降级，不阻塞首屏。 */
+const apkInfo = ref(cachedRelease())
+const apkHref = computed(() => (apkInfo.value && apkInfo.value.currentUrl) || 'downloads/feike-schedule.apk')
+const apkDownloads = computed(() => {
+  const n = Number(apkInfo.value && apkInfo.value.currentDownloads)
+  return Number.isFinite(n) && n > 0 ? n : null
+})
+onMounted(async () => {
+  try {
+    const d = await fetchApkRelease()
+    if (d) apkInfo.value = d
+  } catch { /* 计数失败绝不影响首页 */ }
+})
 
 const keyword = ref('')
 
@@ -135,12 +155,13 @@ function askAgent(text) {
     </section>
 
     <section class="section">
-      <a href="downloads/feike-schedule.apk" class="app-download-card" download>
+      <a :href="apkHref" class="app-download-card" download>
         <div class="download-left">
           <span class="download-icon">🐔🩸</span>
           <div>
             <div class="download-title">{{ t('home.downloadTitle') }}</div>
             <div class="download-desc">{{ t('home.downloadDesc') }}</div>
+            <div v-if="apkDownloads !== null" class="download-count">🔥 {{ t('home.downloadCount', { n: apkDownloads.toLocaleString() }) }}</div>
           </div>
         </div>
         <span class="download-btn">{{ t('home.downloadBtn') }}</span>
@@ -426,4 +447,6 @@ function askAgent(text) {
   font-family: inherit;
 }
 .hero-chip:hover { border-color: var(--primary, #1b66c9); color: var(--primary, #1b66c9); }
+
+.download-count { font-size: 11px; margin-top: 2px; font-weight: 600; color: var(--primary, #1b66c9); }
 </style>

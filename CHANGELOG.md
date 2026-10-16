@@ -111,6 +111,47 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.15 (2026-10-15) · APK 新增「下载量计数」（数据来自 GitHub Releases，真实可查）+ 发布脚本（patch）
+【为什么不能像网页统计那样做】
+本站托管在 GitHub Pages，是**纯静态**托管：没有服务端就没人能记录"谁下载了这个文件"，
+页面上那个 `<a href="downloads/feike-schedule.apk" download>` 点了多少次，服务端一无所知。
+所以要么自建计数服务（QDU 那个 Deno 版已额度超限），要么换一个**天然带计数**的下载出口。
+GitHub Releases 的 asset 正好自带 `download_count`：用户下载一次 +1，公开 API 直接可读，
+免费、无额度、无需任何后端 —— 这是目前最省事又真实的路子。
+
+【做法：智能切换，绝不因为"加计数"而影响下载】
+src/utils/apkRelease.js + Home.vue：
+ · 读 `api.github.com/repos/icyteacn/FJNU-Nav/releases`，汇总各版本 .apk 的 download_count；
+ · **只有当 Releases 里存在与当前版本同名（feike-schedule-<apkVersion>.apk）的 asset 时**，
+   才把下载入口切到 Releases 并显示「已被下载 N 次」；
+ · 找不到匹配版本（例如仓库里只有旧的 v1.0.0 包）就**保持本地 downloads/ 下载** ——
+   这样升级后绝不会 404、也绝不会把旧版本发给用户；
+ · 读取失败（限流 403 / 断网 / 国内访问慢）一律**静默降级**，不阻塞首屏，不影响下载；
+ · 结果缓存 10 分钟（未认证的 GitHub API 限流 60 次/时/IP，校园网共用出口很容易打满），
+   首屏先用缓存、后台再刷新。
+
+【配套】
+ · `scripts/release-apk.mjs`：一键把 APK 发布到 Releases（复用 tag `apk-v<版本>`，同名 asset 先删后传，
+   可重复执行）。没配 token 时会打印**两种做法**：本地跑（需 PAT）或网页手动上传（附完整步骤）。
+ · `scripts/test_apkRelease.mjs`：10 项单测，重点覆盖「版本不匹配时绝不暴露旧版链接」「异常输入不产 NaN」
+   「缓存有效期边界」等容易出错的判断。
+ · 真机断言新增 1 项：**统计失败也必须能下载**（校验 href 指向 .apk、不指向非 GitHub 外部地址、
+   不出现未翻译的 i18n 键）。两站冒烟 25 → 26 项。
+ · vite.config.js 注入 `__APK_VERSION__` / `__APK_REPO__`（构建期替换成字面量，运行期零成本；
+   源码里用 typeof 兜底，node 直接 import 做单测也不会报未定义）。
+ · i18n 中英各加 1 键（downloadCount），过 integrity 双向对等门禁。
+
+验证：npm run build；e2e-integrity 18/18；audit-refs 0/0；test_apkRelease 10 项全绿；
+真机冒烟 26/26（含新断言，当前正确回退到本地下载）；独立课表页 11/11。
+
+【需要你做一步才能看到数字】计数要等 APK 上传到 Releases 之后才生效（在此之前首页保持原样、
+不显示次数，这是刻意的保护）。二选一：
+  A. 本地：`$env:GITHUB_TOKEN="ghp_xxx"; node scripts/release-apk.mjs`
+  B. 网页：在仓库 Releases 页新建 tag `apk-v1.3`，把 public/downloads/feike-schedule.apk
+     改名为 `feike-schedule-1.3.apk` 上传即可。
+上传后首页下载按钮会自动切到 Releases 链接，并显示累计下载量（每次下载 +1，API 读取有分钟级延迟）。
+
+
 ## v1.7.14 (2026-10-15) · APK：移除 4x2 课表小组件（部分桌面无法添加），只保留 2x2 与 1x1（patch）
 【缘由】你反馈 4x2 课表小组件「每次都是这个无法添加」——在部分桌面（尤其国产 ROM 的启动器）上
 反复添加失败，而另外两个组件正常。既然它添不上，留着只是干扰项，按要求 **删掉**：

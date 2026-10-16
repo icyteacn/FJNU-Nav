@@ -155,3 +155,49 @@ adb shell am start -n com.feike.schedule/.MainActivity -e view week   # 直接�
 
 **JS 桥测试要点**：页面里 `window.FeikeNative` 在真机才存在，e2e 通过注入假对象验证；
 电池引导条**故意延迟 1.5s** 弹出，断言要等够时间。
+
+## APK 下载量计数（v1.7.15 起）
+
+**为什么不能沿用网页统计**：GitHub Pages 是纯静态托管，`public/downloads/feike-schedule.apk`
+被点了多少次**服务端无从记录**（busuanzi/Vercount 只管页面 PV/UV，管不到文件下载）。
+所以改用 **GitHub Releases 的 asset `download_count`**：真实、免费、无额度、公开 API 可读。
+
+### 关键设计（改之前先读懂，否则容易把下载搞坏）
+
+| 规则 | 原因 |
+|---|---|
+| 只有 Releases 里存在**与当前版本同名**的 asset（`feike-schedule-<apkVersion>.apk`）才切到 Releases | 否则会把旧包当新版发出去 |
+| 找不到匹配版本 → 回退 `downloads/feike-schedule.apk` | 保证永不 404 |
+| 读取失败（403 限流 / 断网）→ 静默降级，不显示次数 | 计数不能影响下载与首屏 |
+| 结果缓存 10 分钟 | GitHub 未认证 API 限流 60 次/时/IP，校园网共用出口极易打满 |
+| asset 文件名必须带版本号 | 前端靠文件名判断"是不是当前版本" |
+
+相关文件：`src/utils/apkRelease.js`（取数与汇总）、`Home.vue`（渲染）、
+`vite.config.js`（注入 `__APK_VERSION__` / `__APK_REPO__`）、`scripts/test_apkRelease.mjs`（单测）。
+
+### 发布新 APK 后如何让计数生效（二选一）
+
+```powershell
+# A. 本地（需 PAT，经典 token 勾 repo 即可）
+$env:GITHUB_TOKEN="ghp_xxx"; node scripts/release-apk.mjs
+#   可选：--tag=apk-v1.3  --file=path/to/apk
+```
+```
+B. 网页手动：Releases → Draft a new release → Tag 填 apk-v1.3 →
+   把 public/downloads/feike-schedule.apk 改名为 feike-schedule-1.3.apk 后拖进去 → Publish
+```
+
+发布脚本可重复执行：同 tag 复用、同名 asset 先删后传（旧下载数会随之清零，属正常）。
+
+### 排查
+
+- 首页不显示次数：先确认 Releases 里 asset 名**完全等于** `feike-schedule-<package.json 的 apkVersion>.apk`。
+- 打开 DevTools 看 `api.github.com/repos/icyteacn/FJNU-Nav/releases` 是否 403（限流属正常，等一小时或换个网络）。
+- download_count 有分钟级延迟，刚上传后显示 0 是正常的。
+
+### 已知取舍
+
+- 下载数的**统计口径是"经过 Releases 的下载"**：如果用户在别处（网盘、群文件）转发 APK，不会被计入。
+  想要"真实安装量"需要 APK 首启上报 + 一个计数端点，属于另一套东西，暂未做。
+- 国内直连 GitHub Releases 的下载速度可能不如 CDN，若日后觉得慢，可保留 Releases 计数、
+  同时把下载按钮换回 Pages 本地文件（此时计数不再增长，需要在首页文案上说明）。

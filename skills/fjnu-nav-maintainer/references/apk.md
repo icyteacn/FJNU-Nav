@@ -221,3 +221,25 @@ $env:GITHUB_TOKEN="ghp_xxx"; node scripts/release-apk.mjs
   想要"真实安装量"需要 APK 首启上报 + 一个计数端点，属于另一套东西，暂未做。
 - 国内直连 GitHub Releases 的下载速度可能不如 CDN，若日后觉得慢，可保留 Releases 计数、
   同时把下载按钮换回 Pages 本地文件（此时计数不再增长，需要在首页文案上说明）。
+
+### 版本号规则（v1.7.18 起）
+
+`apkVersion` 统一写成 **`主.次.构建号`**，其中**构建号（末段）与 `build.gradle` 的 `versionCode` 同值**，
+每重新打包一次 +1。例：`1.3.9` → `1.3.10`；将来大版本升级让构建号继续递增即可（`1.4.11`），规则不变。
+
+**为什么**：曾经 apkVersion 一直是 `1.3`，但底下连续重打包了三次（深链修复 / 全面审计 / 删 4x2 组件），
+用户在系统「应用信息」里看到的都是 1.3，无法判断装的是不是最新那版。
+
+**改版本号要同步的三处**（漏一处就对不起用户）：
+1. `package.json` → `apkVersion`
+2. `public/standalone-schedule.html` → `APP_VERSION`
+3. `android/app/build.gradle` → `versionCode`（等于 apkVersion 末段）
+
+`public/data/schedule-data.json` 的 `appVersion` 由构建自动生成，不用手改。
+
+**门禁**：`scripts/test_schedule.mjs` 会校验「三段式 + 末段 == versionCode」；
+CI 里（`rm -rf android` 之后）读不到 build.gradle 会跳过，本地改了忘同步会直接失败。
+实测：故意把 versionCode 改成 99 → 断言报 `10 !== 99` 并 exit=1。
+
+**注意**：重新打包后 APK 的 sha256 会变，首页的 GitHub 镜像入口与下载量会**暂时隐藏**（保护用户不下到旧包），
+把新包重新发布到 Releases（打 tag 即可）后自动恢复。

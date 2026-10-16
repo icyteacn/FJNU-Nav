@@ -89,6 +89,17 @@ check('三端 HOLIDAY_MAP 内容逐条一致（含 type/scheduleWeekday/override
 check('版本单一事实来源链：package.json.apkVersion = APK 内置 = 接口产物', () => {
   const apkVersion = pkg.apkVersion
   assert.ok(apkVersion, 'package.json 缺少 apkVersion')
+  // 版本号必须是「主.次.构建号」三段式，且末段与 build.gradle 的 versionCode 一致：
+  // 这样同一个主次版本内多次重新打包，用户在系统「应用信息」里也能一眼区分新旧。
+  const parts = String(apkVersion).split('.')
+  assert.ok(parts.length >= 3, `apkVersion 应为 x.y.z（末段=构建号），当前 ${apkVersion}`)
+  const gradlePath = path.join(ROOT, 'android', 'app', 'build.gradle')
+  if (fs.existsSync(gradlePath)) {
+    const code = (fs.readFileSync(gradlePath, 'utf8').match(/versionCode\s+(\d+)/) || [])[1]
+    assert.ok(code, 'build.gradle 未找到 versionCode')
+    assert.equal(Number(parts[parts.length - 1]), Number(code),
+      `apkVersion 末段(${parts[parts.length - 1]}) 与 versionCode(${code}) 不一致 —— 改版本号时请同步 build.gradle`)
+  }
   const m = standaloneSrc.match(/APP_VERSION\s*=\s*'([^']+)'/)
   assert.ok(m, '未找到 standalone 的 APP_VERSION')
   assert.equal(m[1], apkVersion, `APK 内置 APP_VERSION(${m[1]}) 与 package.json.apkVersion(${apkVersion}) 不一致`)

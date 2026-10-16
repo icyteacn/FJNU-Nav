@@ -111,6 +111,34 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.18 (2026-10-15) · APK 版本号带构建号：1.3 → 1.3.10（末段 = versionCode）+ 门禁防忘记同步（patch）
+【问题】此前 apkVersion 一直是「1.3」，但它底下连续重新打包了三次（versionCode 7/8/9）：
+深链修复、APK 全面审计（返回键/通知按钮/动态快捷方式/电池引导）、删除 4x2 组件。
+后果是**用户在系统「应用信息」里看到的都是 1.3，无法判断自己装的是不是最新的那个 1.3**。
+
+【规则】apkVersion 统一为 `主.次.构建号`，其中**构建号（末段）= build.gradle 的 versionCode**，
+每次重新打包 +1。所以现在是 **1.3.10 / versionCode 10**：
+ · 同一个 1.3 主线内多次修复也能一眼区分（1.3.9 → 1.3.10）；
+ · 将来大版本升级只要让构建号继续递增即可（如 1.4.11），规则不变、不需要改机制；
+ · 版本比较函数 isNewer() 本就支持任意段数（1.3.10 > 1.3），页面上的"发现新版 APK"提示照常工作。
+
+【门禁】scripts/test_schedule.mjs 新增校验：`apkVersion` 必须是三段式，且**末段 == versionCode**；
+CI 里因为 `rm -rf android` 读不到 build.gradle 会自动跳过，本地改了忘同步则直接失败。
+实测有效：把 versionCode 故意改成 99 → 断言报 `10 !== 99`、exit=1；改回即通过。
+
+【重打包发布】新包 versionCode=10 / versionName=1.3.10，已同步 public/downloads 与 releases
+（1047.8 KB）。注意 sha256 因此变化（510E30A6…），所以**首页的 GitHub 镜像入口与下载量会暂时隐藏** ——
+这是刻意的保护（内容变了就不能再让你下到旧包），重新上传 Releases 后自动恢复。
+
+【顺手验证 CI 自动发布】本次改完直接打 tag `apk-v1.3.10` 触发新增的 release-apk.yml，
+用 Actions 内置 GITHUB_TOKEN 自动创建 Release 并上传 —— 这样既恢复了计数，也实测了工作流。
+
+验证：build-apk.bat exit=0；aapt 核验 versionCode=10 / versionName=1.3.10；
+npm run build；e2e-integrity 18/18；audit-refs 0/0；test_schedule（含新门禁）通过；
+test_apkRelease 13 项通过；真机冒烟 26/26；独立课表页 11/11。
+文档 apk.md 补「版本号规则」：改版本号要同步的三处、门禁位置与原因。
+
+
 ## v1.7.17 (2026-10-15) · 下载体验优先：主下载走同域本地文件 + CI 打 tag 自动发布 Release（patch）
 【下载不再"跳界面"】
 上一版把主下载按钮指向了 GitHub Releases 直链 —— 虽然那也是直接下载，但把"能否顺利下载"

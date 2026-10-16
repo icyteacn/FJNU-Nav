@@ -16,7 +16,9 @@ android {
         applicationId "com.feike.schedule"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 9
+        // versionCode 与 package.json 的 apkVersion 末段保持一致（规则：主.次.构建号），
+        // 每次重新打包 +1 —— 有 scripts/test_schedule.mjs 的门禁守着，忘了同步会直接失败。
+        versionCode 10
         // versionName 单一事实来源：仓库根 package.json 的 apkVersion（CI 会先 rm -rf android）
         versionName apkVersionName
         // 只保留中英文资源：App 无其他语种文案，避免把 AndroidX 的几十种翻译打进包

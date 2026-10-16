@@ -204,6 +204,46 @@ async function main() {
       assert(again === false, '已在白名单里就不该再提示')
     })
 
+    // ───────── 列表模式：星期标签与今日定位（曾出现整格错位/偏一天）─────────
+    await ok('列表模式：星期标签不串位，且今日高亮落在真实的星期上', async () => {
+      await page.goto(BASE + '/standalone-schedule.html', { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(600)
+      await page.evaluate(() => { state.viewMode = 'list'; saveState(); render() })
+      await page.waitForTimeout(400)
+      const info = await page.evaluate(() => {
+        const chips = Array.from(document.querySelectorAll('.day-chip'))
+        const g = new Date().getDay()
+        return {
+          count: chips.length,
+          labels: chips.map((c) => (c.querySelector('b') || {}).textContent || ''),
+          todayIdx: chips.findIndex((c) => c.classList.contains('today')),
+          onIdx: chips.findIndex((c) => c.classList.contains('on')),
+          jsWeekday: g === 0 ? 7 : g
+        }
+      })
+      assert(info.count === 7, '应有 7 个星期按钮，实际 ' + info.count)
+      // 修前：数组多了前导空串，导致周一显示空白、周二显示「一」…周日显示「六」
+      assert(['一', '今'].includes(info.labels[0]), '第 1 个(周一)标签应为「一」(或今天的「今」)，实际：' + JSON.stringify(info.labels[0]))
+      assert(['日', '今'].includes(info.labels[6]), '第 7 个(周日)标签应为「日」(或今天的「今」)，实际：' + JSON.stringify(info.labels[6]))
+      // 今日高亮必须落在真实星期（修前会偏一天或整个落空）
+      assert(info.todayIdx === info.jsWeekday - 1,
+        `今日高亮应在索引 ${info.jsWeekday - 1}（今天第 ${info.jsWeekday} 天），实际 ${info.todayIdx}`)
+      // 刚切进列表模式时，默认选中日就是今天
+      assert(info.onIdx === info.todayIdx, `默认选中应为今天(索引 ${info.todayIdx})，实际选中 ${info.onIdx}`)
+    })
+
+    await ok('深链 ?view=today 定位到真正的今天（不偏一天）', async () => {
+      await page.goto(BASE + '/standalone-schedule.html?view=today', { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const r = await page.evaluate(() => {
+        const chips = Array.from(document.querySelectorAll('.day-chip'))
+        const g = new Date().getDay()
+        return { listDay: state.listDay, onIdx: chips.findIndex((c) => c.classList.contains('on')), expect: (g === 0 ? 7 : g) - 1 }
+      })
+      assert(r.listDay >= 1 && r.listDay <= 7, 'listDay 必须是 1-7 的约定，实际 ' + r.listDay)
+      assert(r.onIdx === r.expect, `深链应选中今天（索引 ${r.expect}），实际 ${r.onIdx}`)
+    })
+
     await ok('全程无未捕获 JS 错误', async () => {
       const real = errs.filter((m) => !/favicon|net::ERR/.test(m))
       assert(real.length === 0, real.slice(0, 3).join(' | '))

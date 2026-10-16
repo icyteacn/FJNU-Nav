@@ -994,7 +994,11 @@ function loadState(){
   state.filterType=localStorage.getItem('sche_filter')||'all';
   state.viewMode=localStorage.getItem('sche_view')==='list'?'list':'grid';
   const dd=new Date().getDay();
-  state.listDay=parseInt(localStorage.getItem('sche_listday'))||(dd===0?7:dd);
+  const _todayWd=(dd===0?7:dd);
+  // 历史版本曾把 listDay 写成 0-6（见 applyDeepLink 的旧实现），越界值一律纠正为今天，
+  // 否则老用户升级后会出现"没有任何一天被选中"或定位到错误的一天。
+  const _saved=parseInt(localStorage.getItem('sche_listday'),10);
+  state.listDay=(_saved>=1&&_saved<=7)?_saved:_todayWd;
   try{state.customCourses=JSON.parse(localStorage.getItem('sche_custom'))||[]}catch(e){state.customCourses=[]}
   try{state.deletedCourses=JSON.parse(localStorage.getItem('sche_deleted'))||[]}catch(e){state.deletedCourses=[]}
   try{state.dayOverrides=JSON.parse(localStorage.getItem('sche_overrides'))||{}}catch(e){state.dayOverrides={}}
@@ -1457,7 +1461,7 @@ function renderDayList(){
     const d=dates[i-1];const ds=getDateStr(d);
     const isToday=ds===todayStr;
     html+='<button class="day-chip'+(i===sel?' on':'')+(isToday?' today':'')+'" onclick="setListDay('+i+')">'+
-      '<b>'+(isToday?'今':['','一','二','三','四','五','六','日'][i-1])+'</b>'+
+      '<b>'+(isToday?'今':['一','二','三','四','五','六','日'][i-1])+'</b>'+
       '<span>'+(d.getMonth()+1)+'/'+d.getDate()+'</span></button>';
   }
   html+='</div>';
@@ -2700,7 +2704,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.10'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.11'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -2913,7 +2917,10 @@ function applyDeepLink(){
     const v=(new URLSearchParams(location.search).get('view')||'').toLowerCase();
     if(v==='today'){
       state.viewMode='list';
-      state.listDay=(new Date().getDay()+6)%7; // 课表以周一为 0
+      // listDay 的约定是 1-7（周一=1…周日=7），与 loadState/renderDayList 保持一致；
+      // 原来这里写成 (getDay()+6)%7（0-6），会让「今日」整体偏一天。
+      const _g=new Date().getDay();
+      state.listDay=(_g===0?7:_g);
       saveState();render();
       showToast('已定位到今日课程');
       return true;

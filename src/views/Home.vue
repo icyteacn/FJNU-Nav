@@ -49,8 +49,12 @@ function appDesc(a) {
 const apkInfo = ref(cachedRelease())
 const apkHref = computed(() => (apkInfo.value && apkInfo.value.currentUrl) || 'downloads/feike-schedule.apk')
 const apkDownloads = computed(() => {
-  const n = Number(apkInfo.value && apkInfo.value.currentDownloads)
-  return Number.isFinite(n) && n > 0 ? n : null
+  const d = apkInfo.value
+  // 只有已经切到 Releases（说明认出了当前这份包）才显示次数；此时 0 也显示，
+  // 便于刚发布后立刻确认「计数已生效」，之后随下载增长。
+  if (!d || !d.currentUrl) return null
+  const n = Number(d.currentDownloads)
+  return Number.isFinite(n) ? n : null
 })
 onMounted(async () => {
   try {

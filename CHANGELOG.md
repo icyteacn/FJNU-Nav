@@ -111,6 +111,37 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.16 (2026-10-15) · APK 下载量：改用「内容哈希」识别（手动上传改名也能认出）+ 实测已生效（patch）
+【问题】你按指引在网页手动上传后，我实测发现**没生效**：前端当时是按文件名
+`feike-schedule-<版本>.apk` 去找 asset，而实际上传上去的名字是 `feike-schedule.apk`（没带版本号），
+匹配不上 → 依然回退本地下载。要求用户严格按文件名命名是脆弱设计。
+
+【改法】改用**内容哈希**识别，与文件名彻底解耦：
+ · `vite.config.js` 构建时计算本地 `public/downloads/feike-schedule.apk` 的 sha256 并注入前端；
+ · `apkRelease.js` 的匹配逻辑改为 ① 优先比 GitHub asset 的 `digest`（形如 `sha256:...`）与本地哈希：
+   一致即认定为「当前这份发布包」——**随便改名都能认出**；② 没有 digest 时才退化为文件名匹配；
+   ③ digest 存在但**不一致**则坚决不认（避免把旧包当新版发出去），此时仍回退本地下载。
+ · 顺带把 `isCurrentAsset` / `summarizeReleases` 的 sha/version 做成可注参，否则 digest 分支（生产主路径）
+   在 node 单测里永远走不到。
+
+【同时】已切到 Releases 后，下载数为 0 也照常显示（`🔥 已被下载 0 次`），
+便于发布后立刻确认「计数已生效」，而不是显示为空让人以为没接上。
+
+【实测结果】（本机打开构建产物首页，跳过首屏欢迎页）
+ · 本地包 sha256 = `97f3523fab7c003e…`，GitHub asset digest = `sha256:97f3523fab7c003e…` → **一致**
+ · 下载链接已切到：`https://github.com/icyteacn/FJNU-Nav/releases/download/v1.0.0/feike-schedule.apk`
+ · 首页文案：`🔥 已被下载 0 次`；本地缓存写入正确
+ · API 只发一次请求（`?per_page=20`），失败/限流会走缓存并静默降级
+
+【单测】test_apkRelease 10 → 13 项，新增三条守着关键风险：
+① digest 一致但文件名不同 → 仍应识别（手动上传改名场景）；
+② digest 存在但不一致 → **必须拒绝且不得回退文件名匹配**（防止把旧包当新版）；
+③ 无 digest 时回退文件名匹配。
+
+验证：npm run build；e2e-integrity 18/18；audit-refs 0/0；test_apkRelease 13 项全绿；
+真机冒烟 26/26；独立课表页 11/11。文档 apk.md 同步补充「内容哈希识别」的规则与排查方法。
+
+
 ## v1.7.15 (2026-10-15) · APK 新增「下载量计数」（数据来自 GitHub Releases，真实可查）+ 发布脚本（patch）
 【为什么不能像网页统计那样做】
 本站托管在 GitHub Pages，是**纯静态**托管：没有服务端就没人能记录"谁下载了这个文件"，

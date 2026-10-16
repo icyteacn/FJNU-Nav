@@ -166,7 +166,9 @@ adb shell am start -n com.feike.schedule/.MainActivity -e view week   # 直接�
 
 | 规则 | 原因 |
 |---|---|
-| 只有 Releases 里存在**与当前版本同名**的 asset（`feike-schedule-<apkVersion>.apk`）才切到 Releases | 否则会把旧包当新版发出去 |
+| **优先按内容哈希识别**：asset 的 `digest`(sha256) 与构建时算出的本地包哈希一致即认定为当前包（**与文件名无关**，手动上传随便改名都认得） | 靠文件名匹配太脆：实测手动上传得到的是 `feike-schedule.apk`，按名字找不到 |
+| digest 存在但**不一致** → 坚决不认，回退本地下载 | 防止把旧包当新版发出去 |
+| 没有 digest 时才退化为文件名匹配（要求 `feike-schedule-<apkVersion>.apk`） | 兼容旧 API 行为 |
 | 找不到匹配版本 → 回退 `downloads/feike-schedule.apk` | 保证永不 404 |
 | 读取失败（403 限流 / 断网）→ 静默降级，不显示次数 | 计数不能影响下载与首屏 |
 | 结果缓存 10 分钟 | GitHub 未认证 API 限流 60 次/时/IP，校园网共用出口极易打满 |

@@ -102,5 +102,38 @@ check('isFresh：10 分钟有效期与边界', () => {
   assert.equal(isFresh({ at: now + 60_000 }, now), false, '未来时间戳视为无效')
 })
 
+check('★ digest 匹配：文件名不同也能认出当前包（手动上传改名的场景）', () => {
+  const sha = 'a'.repeat(64)
+  const r = summarizeReleases([{
+    tag_name: 'v1.0.0',
+    draft: false,
+    assets: [{ name: 'feike-schedule.apk', digest: 'sha256:' + sha, download_count: 0, browser_download_url: 'https://gh/apk' }]
+  }], '1.3', sha)
+  assert.equal(r.currentUrl, 'https://gh/apk', '内容一致即应识别，与文件名无关')
+  assert.equal(r.currentDownloads, 0)
+})
+
+check('★ digest 存在但不一致 → 不识别，且不得回退文件名匹配', () => {
+  const sha = 'a'.repeat(64)
+  const r = summarizeReleases([{
+    tag_name: 'apk-v1.3',
+    draft: false,
+    // 名字对得上，但内容不是当前这份包（比如上传的是旧版本）
+    assets: [{ name: 'feike-schedule-1.3.apk', digest: 'sha256:' + 'b'.repeat(64), download_count: 99, browser_download_url: 'https://gh/old' }]
+  }], '1.3', sha)
+  assert.equal(r.currentUrl, null, '内容不同就必须拒绝，否则会把旧包当新版发出去')
+  assert.equal(r.totalDownloads, 99, '总下载量仍统计')
+})
+
+check('无 digest 时回退文件名匹配', () => {
+  const r = summarizeReleases([{
+    tag_name: 'apk-v1.3',
+    draft: false,
+    assets: [{ name: 'feike-schedule-1.3.apk', download_count: 4, browser_download_url: 'https://gh/f' }]
+  }], '1.3', '')
+  assert.equal(r.currentUrl, 'https://gh/f')
+  assert.equal(r.currentDownloads, 4)
+})
+
 console.log(failed ? `\n${failed} 项失败` : '\n全部通过')
 process.exit(failed ? 1 : 0)

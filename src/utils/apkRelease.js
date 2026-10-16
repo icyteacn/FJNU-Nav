@@ -16,8 +16,25 @@
 
 const REPO = (typeof __APK_REPO__ !== 'undefined' && __APK_REPO__) || 'icyteacn/FJNU-Nav'
 const APK_VERSION = (typeof __APK_VERSION__ !== 'undefined' && __APK_VERSION__) || ''
+const APK_SHA256 = (typeof __APK_SHA256__ !== 'undefined' && __APK_SHA256__) || ''
 const CACHE_KEY = 'fjnu_apk_release_v1'
 const TTL_MS = 10 * 60 * 1000
+
+/**
+ * 这个 asset 是不是「当前这份发布包」。
+ * ① 优先比内容哈希：GitHub 会给 asset 返回 digest（形如 sha256:xxx），
+ *    与构建时算出的本地 APK 哈希一致即为同一份文件 —— **与文件名无关**，
+ *    所以手动上传时随便改名（如 feike-schedule.apk）也能正确识别；
+ * ② 没有 digest 时退化为文件名匹配（要求 feike-schedule-<版本>.apk）；
+ * ③ 都不满足 → 视为不是当前版本，前端会回退本地下载，避免把旧包发出去。
+ */
+export function isCurrentAsset(a, sha256 = APK_SHA256, version = APK_VERSION) {
+  if (!a || !a.browser_download_url) return false
+  const digest = String(a.digest || '').toLowerCase()
+  if (digest && sha256) return digest === 'sha256:' + String(sha256).toLowerCase()
+  const want = version ? `feike-schedule-${version}.apk`.toLowerCase() : ''
+  return !!want && String(a.name || '').toLowerCase() === want
+}
 
 /** 当前版本对应的 asset 文件名（发布脚本上传时就用这个名字） */
 export function apkAssetName(version = APK_VERSION) {
@@ -46,10 +63,11 @@ function writeCache(obj) {
 /**
  * 纯函数（可单测）：从 GitHub `GET /releases` 的返回体里汇总下载信息。
  * @param {Array} releases API 返回的 release 数组
- * @param {string} version 当前 APK 版本（用于挑选匹配的 asset）
+ * @param {string} version 当前 APK 版本（无 digest 时按此匹配文件名）
+ * @param {string} sha256 本地发布包的内容哈希（有 digest 时优先用它比对）
  * @returns {{ totalDownloads:number, assets:number, currentUrl:string|null, currentTag:string|null, currentDownloads:number }}
  */
-export function summarizeReleases(releases, version = APK_VERSION) {
+export function summarizeReleases(releases, version = APK_VERSION, sha256 = APK_SHA256) {
   const out = { totalDownloads: 0, assets: 0, currentUrl: null, currentTag: null, currentDownloads: 0 }
   if (!Array.isArray(releases)) return out
   const want = version ? `feike-schedule-${version}.apk` : ''
@@ -61,8 +79,8 @@ export function summarizeReleases(releases, version = APK_VERSION) {
       const n = Number(a.download_count)
       out.totalDownloads += Number.isFinite(n) && n > 0 ? n : 0
       out.assets += 1
-      // 只认「文件名与当前版本完全一致」的 asset，避免把旧版本链接暴露出去
-      if (want && (a.name || '').toLowerCase() === want.toLowerCase()) {
+      // 只认「内容/名字与当前版本一致」的 asset，避免把旧版本链接暴露出去
+      if (isCurrentAsset(a, sha256, version)) {
         out.currentUrl = a.browser_download_url
         out.currentTag = r.tag_name || ''
         out.currentDownloads += Number.isFinite(n) && n > 0 ? n : 0
@@ -109,4 +127,4 @@ export async function fetchApkRelease({ force = false } = {}) {
   }
 }
 
-export default { apkAssetName, summarizeReleases, isFresh, cachedRelease, fetchApkRelease }
+export default { apkAssetName, isCurrentAsset, summarizeReleases, isFresh, cachedRelease, fetchApkRelease }

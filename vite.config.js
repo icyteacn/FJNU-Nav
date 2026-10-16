@@ -11,16 +11,30 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
+import { createHash } from 'crypto'
 
 const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8'))
+
+/** 本地发布包的内容哈希：前端用它跟 Releases 里 asset 的 digest 比对，
+ *  只要内容一致就认（与文件名无关，避免手动上传改名导致识别不到）。 */
+function apkSha256() {
+  try {
+    const p = resolve(__dirname, 'public/downloads/feike-schedule.apk')
+    if (!existsSync(p)) return ''
+    return createHash('sha256').update(readFileSync(p)).digest('hex')
+  } catch {
+    return ''
+  }
+}
 
 export default defineConfig({
   plugins: [vue()],
   base: './',
   define: {
     __APK_VERSION__: JSON.stringify(pkg.apkVersion || ''),
-    __APK_REPO__: JSON.stringify('icyteacn/FJNU-Nav')
+    __APK_REPO__: JSON.stringify('icyteacn/FJNU-Nav'),
+    __APK_SHA256__: JSON.stringify(apkSha256())
   },
   build: {
     rollupOptions: {

@@ -15,5 +15,4 @@
     <string name="sc_next_long">跳到下一节课：教室与倒计时</string>
     <string name="sc_week_short">课表</string>
     <string name="sc_week_long">打开完整周课表</string>
-    <string name="widget_description">桌面小组件：正在上课状态 + 接下来三节课倒计时列表</string>
 </resources>

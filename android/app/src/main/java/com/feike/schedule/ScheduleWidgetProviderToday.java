@@ -51,7 +51,7 @@ public class ScheduleWidgetProviderToday extends AppWidgetProvider {
         try {
             String[] d = ScheduleNotifier.widgetDashboard(ctx);
             RemoteViews rv = new RemoteViews(ctx.getPackageName(), R.layout.schedule_widget_today);
-            ScheduleWidgetProvider.applyBadge(rv, R.id.wt_badge, d);
+            WidgetKit.applyBadge(rv, R.id.wt_badge, d);
             rv.setTextViewText(R.id.wt_count, d[ScheduleNotifier.W_SHORT]);
             rv.setTextViewText(R.id.wt_title, d[ScheduleNotifier.W_TITLE]);
             rv.setOnClickPendingIntent(R.id.wt_root, ScheduleNotifier.launchIntentView(ctx, "today"));

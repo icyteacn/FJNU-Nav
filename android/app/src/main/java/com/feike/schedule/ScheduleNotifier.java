@@ -157,8 +157,7 @@ public final class ScheduleNotifier {
             Context ctx = context.getApplicationContext();
             // 小组件先刷：它不依赖通知权限，不能被下方权限检查连带卡死
             try {
-                ScheduleWidgetProvider.updateAll(ctx);
-        ScheduleWidgetProviderToday.updateAll(ctx);
+            ScheduleWidgetProviderToday.updateAll(ctx);
         ScheduleWidgetProviderNext.updateAll(ctx);  // 内部 30s 节流
             } catch (Throwable ignored) {
             }
@@ -240,8 +239,7 @@ public final class ScheduleNotifier {
             } catch (Throwable ignored) {
             }
             try {
-                ScheduleWidgetProvider.updateAll(ctx);
-        ScheduleWidgetProviderToday.updateAll(ctx);
+            ScheduleWidgetProviderToday.updateAll(ctx);
         ScheduleWidgetProviderNext.updateAll(ctx);  // 同步桌面小组件（内部 30s 节流）
             } catch (Throwable ignored) {
             }

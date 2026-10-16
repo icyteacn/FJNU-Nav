@@ -111,6 +111,39 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.14 (2026-10-15) · APK：移除 4x2 课表小组件（部分桌面无法添加），只保留 2x2 与 1x1（patch）
+【缘由】你反馈 4x2 课表小组件「每次都是这个无法添加」——在部分桌面（尤其国产 ROM 的启动器）上
+反复添加失败，而另外两个组件正常。既然它添不上，留着只是干扰项，按要求 **删掉**：
+ · AndroidManifest 移除 `ScheduleWidgetProvider` 的 receiver 与 meta-data；
+ · 删除 `ScheduleWidgetProvider.java`、`res/xml/schedule_widget_info.xml`、
+   `res/layout/schedule_widget.xml`（紧凑版）、`res/layout/schedule_widget_large.xml`（大号自适应版）、
+   `res/values/widget_styles.xml`（`QduWidgetRow` 仅供大号版使用）；
+ · `ScheduleNotifier.show()` 里对它的两处刷新调用一并去掉；
+ · `strings.xml` 清掉只服务于它的 `widget_description`。
+
+【顺手修掉一个隐患】`applyBadge()`（状态徽章换色：在上课=绿 / 下一节=金 / 假期=蓝 / 空闲=灰）
+原本写在 4x2 组件里，却被 2x2 与 1x1 **共用**——直接删类会让另两个组件编译不过。现迁到
+新建的 `WidgetKit.java`。教训记进文档：**共用渲染逻辑不要挂在某个具体组件类上**，
+否则删一个组件会带崩其余组件。
+
+【保留】2x2「下一节课」（倒计时为主角 + 课程/教室 + 今日进度条）与 1x1「今日」
+（状态徽章 + 一句最短结论），两者继续共用 `ScheduleNotifier.widgetDashboard()` 的数据面板。
+静态 App Shortcuts（今日/下一节课/课表）与动态快捷方式「下一节课」不受影响。
+
+版本：versionName 仍 **1.3**（按你要求）；versionCode 升到 **9**（单调递增才能覆盖安装）。
+
+验证：gradle BUILD SUCCESSFUL；build-apk.bat exit=0 且有 [OK]；aapt 核验 versionCode=9 / versionName=1.3，
+**包内只剩 `ScheduleWidgetProviderNext` 与 `ScheduleWidgetProviderToday` 两个组件**（4x2 已完全不在包内），
+`android.app.shortcuts` 仍在；源码资源目录已无 4x2 残留（只余 next/today 的 layout 与 info）；
+产物 1.02MB 已同步 public/downloads 与 releases（两处 SHA256 一致）。
+回归：e2e-integrity 18/18；audit-refs 0/0；test_schedule 通过；独立课表页 11/11。
+文档：skills/fjnu-nav-maintainer/references/apk.md 组件表改为 ×2，并写明移除原因与
+「共用逻辑勿挂具体组件类」的教训。
+
+说明：本机无安卓设备，仍未真机验证。装上后请在桌面小组件列表里确认：只应看到
+「下一节课」与「今日」两个，且都能正常添加；此前已添加过 4x2 的桌面会显示为失效占位，手动移除即可。
+
+
 ## v1.7.13 (2026-10-15) · 统计上报加「本地/测试环境绝不打点」硬闸 + 真机断言（patch）
 【缘由】核对线上「独立访客」是否被本地测试污染时，做了四条实测：
  ① QDU-Nav 打开本地首页，**零请求**打到自建计数服务（site.js staticMode=true 生效，读写都被挡住）；

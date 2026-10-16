@@ -94,20 +94,26 @@ node scripts/e2e-standalone.mjs      # 8 项：初始化/周表/?view=today|week
 2. 覆盖 `public/downloads/feike-schedule.apk` 与 `releases/feike-schedule.apk`，两者 SHA256 必须一致。
 3. 首页 APK 卡片文案与 README 的版本/体积说明同步。
 
-## 1.3 组件与深链（versionCode 7 / versionName 1.3）
+## 1.3 组件与深链（versionCode 9 / versionName 1.3）
 
 | 能力 | 实现 | 说明 |
 |---|---|---|
-| 桌面组件 ×3 | `ScheduleWidgetProvider`(4x2 紧凑/大号自适应) · `ScheduleWidgetProviderNext`(2x2) · `ScheduleWidgetProviderToday`(1x1) | 三套**共用** `ScheduleNotifier.widgetDashboard()` 的 14 槽位数据面板 |
-| 组件信息量 | 日期 / 状态徽章 / 课程 / 教室·节次 / 倒计时 / 今日进度 / 今日剩余 4 条 / 明日首节 / 进度条 | 大号版比紧凑版多「进度条 + 今日剩余课程 + 明日首节」 |
+| 桌面组件 ×2 | `ScheduleWidgetProviderNext`(2x2「下一节课」) · `ScheduleWidgetProviderToday`(1x1「今日」) | 两套**共用** `ScheduleNotifier.widgetDashboard()` 的 14 槽位数据面板 |
+| 组件信息量 | 日期 / 状态徽章 / 课程 / 教室·节次 / 倒计时 / 今日进度 / 进度条 | 2x2 以倒计时为主角；1x1 只放「状态 + 一句最短结论」 |
+| 共用渲染工具 | `WidgetKit.applyBadge()` | 徽章换色逻辑从这里走（原先挂在已移除的 4x2 组件上） |
 | 状态徽章 | 正在上课=绿 `badge_live` / 下一节=金 `badge_next` / 假期=蓝 `badge_holiday` / 空闲=灰 `badge_idle` | 用 `rv.setInt(id,"setBackgroundResource",res)` 反射换底色 |
 | 长按快捷方式 | `res/xml/shortcuts.xml` 三个静态 shortcut（today/next/week） | 显式 intent + extra `view` |
 | 深链跳转 | `MainActivity.buildViewUrl()` + `consumePendingView()` | base 规范化→拿不到就退回相对 URL；延迟 400ms 跳 + 1200ms 兜底重试；日志 tag `FeikeSchedule` |
 
 **改动组件时必须同步的三处**：
 1. `ScheduleNotifier.widgetDashboard()` 的槽位常量（`W_DATE`…`W_SHORT`，顺序即下标）
-2. 三个 `layout/schedule_widget*.xml` 的 view id
+2. 两个 `layout/schedule_widget_{next,today}.xml` 的 view id
 3. 对应 Provider 里的 `setTextViewText` / `setProgressBar` 调用
+
+**⚠️ 4x2 课表组件已按要求移除**（versionCode 9）：它在部分桌面「一添加就失败」，
+用户实测反复无法添加，故只保留 2x2 与 1x1。移除时注意 `applyBadge` 被另两个组件复用，
+已迁到 `WidgetKit.java`——**不要再把共用逻辑挂在某个具体组件类上**，否则删组件会带崩其余组件。
+若要重新加回，务必先在两三种国产桌面（MIUI/ColorOS/EMUI）实测「能否添加」，而不是只看编译通过。
 
 **网页侧数据源**：`notify.json`（由 `standalone-schedule.html` 的 `buildNotifySummary()` 写）。
 native 组件**完全依赖**它，因此改网页字段时要一并想好 native 有没有消费；新增字段记得在

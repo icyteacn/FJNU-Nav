@@ -46,7 +46,7 @@ public class ScheduleWidgetProviderNext extends AppWidgetProvider {
             String[] d = ScheduleNotifier.widgetDashboard(ctx);
             RemoteViews rv = new RemoteViews(ctx.getPackageName(), R.layout.schedule_widget_next);
             rv.setTextViewText(R.id.wn_date, d[ScheduleNotifier.W_DATE]);
-            ScheduleWidgetProvider.applyBadge(rv, R.id.wn_badge, d);
+            WidgetKit.applyBadge(rv, R.id.wn_badge, d);
             rv.setTextViewText(R.id.wn_count, d[ScheduleNotifier.W_COUNT]);
             rv.setTextViewText(R.id.wn_title, d[ScheduleNotifier.W_TITLE]);
             rv.setTextViewText(R.id.wn_sub, d[ScheduleNotifier.W_SUB]);

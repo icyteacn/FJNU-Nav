@@ -4,7 +4,7 @@
  * 服务端持久化，支持跨设备共享真实 UV/PV
  */
 import { ref, computed, onMounted } from 'vue'
-import { bsz } from '../utils/busuanzi.js'
+import { bsz, isLocalEnv } from '../utils/busuanzi.js'
 import { useI18n } from '../i18n/index.js'
 
 const { t } = useI18n()
@@ -36,6 +36,8 @@ function setUvCookie() {
 }
 
 function fetchFromAPI() {
+  // 本地/测试环境直连 API 也一律不调（Vercount 会据此累计站点 UV）
+  if (isLocalEnv()) return Promise.resolve(null)
   const url = location.href
   const isNewUv = !getUvCookie()
   if (isNewUv) setUvCookie()
@@ -51,6 +53,8 @@ function fetchFromAPI() {
 }
 
 function loadScript() {
+  // 本地/测试环境不注入 Vercount 脚本（脚本自身会打点）
+  if (isLocalEnv()) return Promise.resolve()
   return new Promise(resolve => {
     if (document.querySelector('script[src="' + VERCOUNT_SCRIPT + '"]')) {
       resolve(); return

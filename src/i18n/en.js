@@ -81,7 +81,7 @@ export default {
     downloadTitle: 'Schedule App · Android',
     downloadDesc: 'Standalone offline schedule app, under 1MB',
     downloadBtn: 'Download APK ↗',
-    downloadCount: 'Downloaded {n} times',
+    downloadMirror: '🐙 GitHub mirror (direct download too) · {n} downloads via mirror',
     wikiSite: 'Site',
     wikiDocs: 'Tencent Docs',
     matchLabel: 'Match: ',

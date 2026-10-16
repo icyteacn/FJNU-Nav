@@ -1,0 +1,81 @@
+name: release-apk
+
+# 打 tag 即自动把 APK 发布到 GitHub Releases —— 首页的「下载量」就是读它的 download_count。
+#
+# 用法（发新版本时）：
+#   1) 先跑 scripts/build-apk.bat 生成新包，并把 public/downloads/feike-schedule.apk 提交推送
+#   2) git tag apk-v1.4 && git push origin apk-v1.4
+#   3) 本工作流自动创建 Release 并上传 asset（文件名 feike-schedule-<apkVersion>.apk）
+#
+# 为什么用 secrets.GITHUB_TOKEN 而不是自备 PAT：它是 GitHub Actions 内置的临时令牌，
+# 配合下面的 permissions: contents: write 就够上传 Release，**无需任何人工配置**。
+# 注意：tag 触发的工作流默认使用仓库当前默认分支上的 workflow 文件，所以本文件要先合进 main。
+
+on:
+  push:
+    tags:
+      - 'apk-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的 tag（留空则用 apk-v<package.json 的 apkVersion>）'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-apk-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 校验待发布的 APK 存在
+        run: |
+          set -e
+          APK=public/downloads/feike-schedule.apk
+          if [ ! -f "$APK" ]; then
+            echo "::error::找不到 $APK —— 请先本地跑 scripts/build-apk.bat 并提交该文件"
+            exit 1
+          fi
+          echo "APK 大小: $(du -h "$APK" | cut -f1)"
+          echo "APK sha256: $(sha256sum "$APK" | cut -d' ' -f1)"
+          echo "package.json apkVersion: $(node -p "require('./package.json').apkVersion")"
+
+      - name: 发布到 GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 优先用触发本次运行的 tag；手动触发且留空时，脚本会回退到 apk-v<apkVersion>
+          TAG_INPUT: ${{ github.event.inputs.tag }}
+        run: |
+          set -e
+          if [ -n "$TAG_INPUT" ]; then
+            node scripts/release-apk.mjs --tag="$TAG_INPUT"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            node scripts/release-apk.mjs --tag="${GITHUB_REF_NAME}"
+          else
+            node scripts/release-apk.mjs
+          fi
+
+      - name: 结果摘要
+        if: always()
+        run: |
+          {
+            echo "### APK Release 发布结果"
+            echo ""
+            echo "- 触发: \`${GITHUB_REF_TYPE:-manual}\` \`${GITHUB_REF_NAME:-}\`"
+            echo "- 版本: \`$(node -p "require('./package.json').apkVersion")\`"
+            echo "- APK: \`feike-schedule-$(node -p "require('./package.json').apkVersion").apk\`"
+            echo ""
+            echo "首页「下载量」读取的是 Release asset 的 download_count；"
+            echo "若前端未显示计数，检查 asset 的 sha256 是否与仓库内 public/downloads/feike-schedule.apk 一致。"
+          } >> "$GITHUB_STEP_SUMMARY"

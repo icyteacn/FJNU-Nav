@@ -177,19 +177,37 @@ adb shell am start -n com.feike.schedule/.MainActivity -e view week   # 直接�
 相关文件：`src/utils/apkRelease.js`（取数与汇总）、`Home.vue`（渲染）、
 `vite.config.js`（注入 `__APK_VERSION__` / `__APK_REPO__`）、`scripts/test_apkRelease.mjs`（单测）。
 
-### 发布新 APK 后如何让计数生效（二选一）
+### 发布新 APK 后如何让计数生效
 
+**推荐：打 tag 自动发布（无需任何令牌）**
+```bash
+# 1) 本地跑 scripts/build-apk.bat，把 public/downloads/feike-schedule.apk 一并提交推送
+# 2) 打 tag 并推送 —— .github/workflows/release-apk.yml 会自动创建 Release 并上传 asset
+git tag apk-v1.4 && git push origin apk-v1.4
+```
+工作流用的是 Actions 内置 `secrets.GITHUB_TOKEN`（配 `permissions: contents: write`），
+**不需要自备 PAT**，也不用在网页上手动拖文件。也可在 Actions 页面手动触发并指定 tag。
+
+**备用：本地手动跑（需要 PAT）**
 ```powershell
-# A. 本地（需 PAT，经典 token 勾 repo 即可）
 $env:GITHUB_TOKEN="ghp_xxx"; node scripts/release-apk.mjs
-#   可选：--tag=apk-v1.3  --file=path/to/apk
+# 可选：--tag=apk-v1.3  --file=path/to/apk
 ```
-```
-B. 网页手动：Releases → Draft a new release → Tag 填 apk-v1.3 →
-   把 public/downloads/feike-schedule.apk 改名为 feike-schedule-1.3.apk 后拖进去 → Publish
-```
+或网页手动：Releases → Draft a new release → Tag 填 `apk-v<版本>` →
+把 `public/downloads/feike-schedule.apk` 拖进去 → Publish。
 
 发布脚本可重复执行：同 tag 复用、同名 asset 先删后传（旧下载数会随之清零，属正常）。
+
+### 两条下载路径（别搞混）
+
+| 路径 | 位置 | 是否计数 |
+|---|---|---|
+| **主下载按钮** | 同域 `downloads/feike-schedule.apk` | ❌ 不计数（Pages 无服务端） |
+| **GitHub 镜像入口** | Release asset 直链 | ✅ 计数（页面显示的「镜像通道已下载 N 次」） |
+
+主下载刻意走本地文件：**点击即下载、不跳界面、不依赖外网**（体验优先）。
+页面上的数字只反映镜像通道，因此文案里明确标注，不冒充总下载量。
+想要"真实总下载量/安装量"，需要 APK 首启上报 + 一个计数端点，属于另一套东西。
 
 ### 排查
 

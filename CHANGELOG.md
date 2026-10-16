@@ -111,6 +111,44 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.17 (2026-10-15) · 下载体验优先：主下载走同域本地文件 + CI 打 tag 自动发布 Release（patch）
+【下载不再"跳界面"】
+上一版把主下载按钮指向了 GitHub Releases 直链 —— 虽然那也是直接下载，但把"能否顺利下载"
+交给了外网（国内访问 github.com 不稳定）。按你的要求改成**体验优先**：
+ · **主按钮固定走同域本地文件** `downloads/feike-schedule.apk`：点击立即开始下载，
+   带 download 属性、不受跨域限制、不依赖任何第三方，**绝不会跳到别的界面**；
+ · GitHub Releases 降级为**单独的镜像入口**（页面上另起一行小字链接，同样是点击即下载），
+   它同时承担「下载量」数据源；
+ · 计数文案明确标注为**镜像通道的下载量**，不冒充总下载量（Pages 是纯静态托管，本地文件
+   的下载次数服务端根本无从记录，这点无法回避，只能如实标注）。
+
+【CI 自动发布：以后不用手动传了】
+新增 .github/workflows/release-apk.yml：
+ · 触发方式：`git push` 带 `apk-v*` 的 tag（也可在 Actions 页面手动触发并指定 tag）；
+ · 用的是 **GitHub Actions 内置的 secrets.GITHUB_TOKEN**（配合 `permissions: contents: write`），
+   **无需任何 PAT、无需人工配置**；
+ · 发布前先校验 public/downloads/feike-schedule.apk 存在，并打印其 sha256；
+ · 成功后写 Step Summary（版本、asset 名、以及"前端不显示计数时该查什么"的提示）。
+
+发新版流程（三步）：
+  1) 本地跑 scripts/build-apk.bat，把 public/downloads/feike-schedule.apk 一起提交推送；
+  2) git tag apk-v1.4 && git push origin apk-v1.4
+  3) 等 Actions 跑完即可（也可在 Actions 里手动触发）。
+
+【实测验证】（本机打开构建产物首页，跳过首屏欢迎页）
+ · 主下载 href = `downloads/feike-schedule.apk`，带 download 属性 → **同域、点击即下载** ✅
+ · 镜像入口 href = `https://github.com/icyteacn/FJNU-Nav/releases/download/v1.0.0/feike-schedule.apk`
+   文案 =「🐙 GitHub 镜像（同样直接下载）· 镜像通道已下载 0 次」
+ · release-apk.yml 通过 YAML 解析，触发 push(tags)+workflow_dispatch，permissions=contents:write
+
+【防回归断言】把原先的下载断言换成**守护"同域本地下载"**这条规则：
+校验主下载 href 必须是 `downloads/*.apk` 且**不得指向外站**、必须保留 download 属性、
+不出现未翻译的 i18n 键。两站冒烟均 26/26（QDU 站无 APK 自动跳过）。
+
+验证：npm run build；e2e-integrity 18/18；audit-refs 0/0；真机冒烟 26/26；独立课表页 11/11；
+test_apkRelease 13 项全绿。文档 apk.md 的发布流程改为「打 tag 自动发布」，并写明两路下载的区别。
+
+
 ## v1.7.16 (2026-10-15) · APK 下载量：改用「内容哈希」识别（手动上传改名也能认出）+ 实测已生效（patch）
 【问题】你按指引在网页手动上传后，我实测发现**没生效**：前端当时是按文件名
 `feike-schedule-<版本>.apk` 去找 asset，而实际上传上去的名字是 `feike-schedule.apk`（没带版本号），

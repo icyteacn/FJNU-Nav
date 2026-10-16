@@ -82,7 +82,7 @@ export default {
     downloadTitle: '课表 App · 安卓版',
     downloadDesc: '独立课表应用，离线可用，不到 1MB',
     downloadBtn: '下载 APK ↗',
-    downloadCount: '已被下载 {n} 次',
+    downloadMirror: '🐙 GitHub 镜像（同样直接下载）· 镜像通道已下载 {n} 次',
     wikiSite: '网站',
     wikiDocs: '腾讯文档',
     matchLabel: '匹配：',

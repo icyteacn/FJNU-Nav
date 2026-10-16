@@ -40,21 +40,25 @@ function appDesc(a) {
   try { return (lang.value === 'en' && a.descEn) ? a.descEn : a.desc } catch { return a.desc }
 }
 
-/* ── APK 下载量 ──────────────────────────────────────────────────────────
-   本站托管在 GitHub Pages（纯静态，没有服务端），页面上的下载**无法计数**。
-   唯一免费又真实的是 GitHub Releases 的 download_count，所以：
-     · 只有当 Releases 里存在**与当前版本同名**的 asset 时，下载入口才切到 Releases；
-     · 否则保持本地 downloads/feike-schedule.apk —— 保证不 404、也绝不会给到旧版本；
-     · 读取失败（限流/断网/国内慢）一律静默降级，不阻塞首屏。 */
+/* ── APK 下载 ────────────────────────────────────────────────────────────
+   主下载一律走**同域本地文件** downloads/feike-schedule.apk：
+   点击即下、带 download 属性、不受网络与跨域影响 —— 用户体验优先，绝不跳转到别的界面。
+   GitHub Releases 只承担两件事（都不影响主下载）：
+     ① 备用镜像入口（同样点击即下载，不是跳到 Release 页面）；
+     ② 下载量来源：Pages 是纯静态托管、本地文件的下载次数无从记录，只有 Releases 的
+        download_count 能免费又真实地拿到，所以那里的数字单独标注为「镜像下载」。
+   读取失败（限流/断网）静默降级，不阻塞首屏、不影响下载。 */
 const apkInfo = ref(cachedRelease())
-const apkHref = computed(() => (apkInfo.value && apkInfo.value.currentUrl) || 'downloads/feike-schedule.apk')
-const apkDownloads = computed(() => {
+/** GitHub 镜像直链：只有认清「是当前这份包（内容哈希一致）」时才给，否则为 null */
+const apkMirrorUrl = computed(() => {
   const d = apkInfo.value
-  // 只有已经切到 Releases（说明认出了当前这份包）才显示次数；此时 0 也显示，
-  // 便于刚发布后立刻确认「计数已生效」，之后随下载增长。
+  return d && d.currentUrl ? d.currentUrl : null
+})
+const apkMirrorDownloads = computed(() => {
+  const d = apkInfo.value
   if (!d || !d.currentUrl) return null
   const n = Number(d.currentDownloads)
-  return Number.isFinite(n) ? n : null
+  return Number.isFinite(n) ? n : 0
 })
 onMounted(async () => {
   try {
@@ -159,17 +163,24 @@ function askAgent(text) {
     </section>
 
     <section class="section">
-      <a :href="apkHref" class="app-download-card" download>
+      <a href="downloads/feike-schedule.apk" class="app-download-card" download>
         <div class="download-left">
           <span class="download-icon">🐔🩸</span>
           <div>
             <div class="download-title">{{ t('home.downloadTitle') }}</div>
             <div class="download-desc">{{ t('home.downloadDesc') }}</div>
-            <div v-if="apkDownloads !== null" class="download-count">🔥 {{ t('home.downloadCount', { n: apkDownloads.toLocaleString() }) }}</div>
           </div>
         </div>
         <span class="download-btn">{{ t('home.downloadBtn') }}</span>
       </a>
+      <!-- GitHub 镜像：点击同样是直接下载（不是跳 Release 页面）；计数为镜像通道的下载量 -->
+      <a
+        v-if="apkMirrorUrl"
+        :href="apkMirrorUrl"
+        class="download-mirror"
+        target="_blank"
+        rel="noopener"
+      >{{ t('home.downloadMirror', { n: apkMirrorDownloads.toLocaleString() }) }}</a>
     </section>
 
     <section class="section">
@@ -452,5 +463,6 @@ function askAgent(text) {
 }
 .hero-chip:hover { border-color: var(--primary, #1b66c9); color: var(--primary, #1b66c9); }
 
-.download-count { font-size: 11px; margin-top: 2px; font-weight: 600; color: var(--primary, #1b66c9); }
+.download-mirror { display: block; margin-top: 8px; font-size: 11.5px; color: var(--text-sub, #6b7280); text-decoration: none; }
+.download-mirror:hover { color: var(--primary, #1b66c9); text-decoration: underline; }
 </style>

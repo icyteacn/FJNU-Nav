@@ -111,6 +111,46 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.11 (2026-10-15) · 修「快捷方式打不开」的真正根因（WebView 相对 URL）+ 修 bat 成功却报错（patch）
+【现象】长按图标三个快捷方式点进去：`网页无法打开 · http://standalone-schedule.html/?view=week ·
+net::ERR_CLEARTEXT_NOT_PERMITTED`。
+
+【根因（上一版没修对，这次是实测报错直接指认的）】
+WebView.loadUrl() **不会把相对路径按"当前页"解析**：上一版我在拿不到 getServerUrl() 时回退成
+相对 URL "standalone-schedule.html?view=week"，WebView 把 `standalone-schedule.html` 当成了**主机名**，
+补成 `http://standalone-schedule.html/?view=week`（所以路径变成了 `/?view=week`），而 Capacitor 只对
+localhost 放行明文 → Android 9+ 直接 ERR_CLEARTEXT_NOT_PERMITTED。
+（项目里 capacitor.config.json 配的是 androidScheme: https，正确目标应是
+ `https://localhost/standalone-schedule.html?view=week`。）
+同时旧实现把 getServerUrl() 拼进 onCreate 极早路径，拿不到 base 时还会拼出 "/index.html?view=x"，
+并且 catch 静默吞异常 —— 手机上完全看不到线索。
+
+【修法】
+- origin **只从 WebView 当前地址取**（`web.getUrl()`，此刻必为 https://localhost），
+  getServerUrl() 仅作次要兜底；
+- `originOf()` 对 about:blank / data: / blob: / 非 http(s) 一律返回 null；
+- 拿不到 origin 就**递归重试**（400ms × 最多 8 次 ≈ 3.2s，覆盖冷启动首帧慢的机型）；
+- 跳转后 **1s 校验**：若仍不在目标页（部分机型首次 loadUrl 会被首帧加载盖掉）就补跳一次，上限 2 次；
+- 全程打日志（tag=FeikeSchedule）：`adb logcat -s FeikeSchedule` 能看到实际跳转地址与重试次数。
+
+【顺带修掉一个会误导人的 bat 缺陷】
+build-apk.bat 里我上一轮加的失败检查块内含未转义的括号：
+    echo  ... JAVA_HOME must point to JDK 17 (AGP 8 requires it).
+cmd 在**解析** if(...) 块时会把 `)` 当成块结束，剩下的 `.` 变成意外符号 → 无论构建成败都打印
+「此时不应有 .」，并且其后的 `echo [OK] build done` 被整体跳过 —— 也就是"打包明明成功，脚本却报错、
+还看不到 [OK]"。已去掉括号（改为逗号从句），实测 `bat exit=0` 且正常输出 `[OK] build done`。
+
+验证：真实 gradle 编译 BUILD SUCCESSFUL；build-apk.bat exit=0 且输出 [OK]；aapt 核验
+versionCode=7 / versionName=1.3 / 三个 widget provider / android.app.shortcuts 均在包内；
+产物 1.02MB 已同步 public/downloads 与 releases（两处 SHA256 一致）。
+skills/fjnu-nav-maintainer/references/apk.md 补充两条「已知坑」：
+① WebView 深链必须给绝对 URL（相对路径会被当成域名 + 明文拦截）；
+② cmd 的 if(...) 块内不能有未转义括号。
+
+说明：本机无安卓设备，**仍未真机验证**。装上后若快捷方式还有问题，把
+`adb logcat -s FeikeSchedule` 的输出发我，日志会直接显示它试图跳转的完整地址。
+
+
 ## v1.7.10 (2026-10-15) · APK 修「长按快捷方式打不开网页」+ 桌面组件全面升级 + 桌宠拖动去卡顿 + 版本号回 1.3（patch）
 【① 修 Bug：长按图标的三个快捷方式点进去都是「网页无法打开」】
 根因在 MainActivity.consumePendingView()：它把 bridge.getServerUrl() 的返回值直接拼成

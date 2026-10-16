@@ -77,61 +77,108 @@ public class MainActivity extends BridgeActivity {
         final String v = pendingView;
         if (v == null) return;
         pendingView = null;
-        final String url = buildViewUrl(v);
         try {
             Bridge bridge = getBridge();
             if (bridge == null) {
-                Log.w(TAG, "deep link skipped: bridge not ready, view=" + v);
+                Log.w(TAG, "deep link: bridge not ready, view=" + v);
                 return;
             }
             final WebView web = bridge.getWebView();
             if (web == null) {
-                Log.w(TAG, "deep link skipped: webview null, view=" + v);
+                Log.w(TAG, "deep link: webview null, view=" + v);
                 return;
             }
-            Log.i(TAG, "deep link -> " + url);
-            // 400ms：给 Capacitor 首次加载首页让路；1200ms 再兜一次（部分机型首帧很慢）
+            // 300ms 后开始尝试：此时 Capacitor 才刚把首页交给 WebView
             web.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        web.loadUrl(url);
-                    } catch (Throwable e) {
-                        Log.w(TAG, "deep link loadUrl failed: " + url, e);
-                    }
+                    navigateDeepLink(web, v, 0);
                 }
-            }, 400);
-            web.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        String cur = web.getUrl();
-                        if (cur != null && cur.indexOf("view=" + v) >= 0) return; // 已经在目标页
-                        web.loadUrl(url);
-                    } catch (Throwable e) {
-                        Log.w(TAG, "deep link retry failed: " + url, e);
-                    }
-                }
-            }, 1200);
+            }, 300);
         } catch (Throwable e) {
             Log.w(TAG, "deep link error, view=" + v, e);
         }
     }
 
-    /** 拼目标视图地址：base 规范化；拿不到 base 就返回相对 URL，由 WebView 按当前页解析 */
-    private String buildViewUrl(String v) {
-        String base = "";
+    /**
+     * 深链跳转：**必须给绝对 URL**，origin 只能来自 WebView 当前地址。
+     *
+     * 【两次踩坑记录，别再走回头路】
+     * 1) 旧实现把 getServerUrl() 直接拼成 "base + /index.html?view=x"，且 catch 静默吞异常；
+     *    onCreate 早期 serverUrl 可能为空 → 拼出 "/index.html?view=x" → 打不开且无任何线索。
+     * 2) 改成"拿不到 base 就用相对 URL"同样不行：WebView.loadUrl() 不按当前页解析相对路径，
+     *    会把 "standalone-schedule.html?view=week" 当成域名 → 补成
+     *    http://standalone-schedule.html/?view=week → Android 9+ 直接
+     *    ERR_CLEARTEXT_NOT_PERMITTED（Capacitor 只对 localhost 放行明文）。
+     * 因此：origin 取自 web.getUrl()（此刻必为 https://localhost），拿不到就等下一轮重试。
+     */
+    private void navigateDeepLink(final WebView web, final String v, final int attempt) {
         try {
-            Bridge bridge = getBridge();
-            if (bridge != null) base = String.valueOf(bridge.getServerUrl());
-        } catch (Throwable ignored) {
+            String origin = originOf(web.getUrl());
+            if (origin == null) origin = originOf(serverUrlSafe());
+            if (origin == null) {
+                if (attempt < 8) { // 最多等约 3.2s，冷启动首帧慢的机型也够
+                    web.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            navigateDeepLink(web, v, attempt + 1);
+                        }
+                    }, 400);
+                } else {
+                    Log.w(TAG, "deep link given up: no absolute origin after retries, view=" + v);
+                }
+                return;
+            }
+            String url = origin + "/standalone-schedule.html?view=" + v;
+            Log.i(TAG, "deep link -> " + url + " (attempt " + attempt + ")");
+            web.loadUrl(url);
+            // 校验：1s 后若仍不在目标页，再补一次（部分机型首次 loadUrl 会被首帧加载盖掉）
+            if (attempt < 2) {
+                web.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String cur = web.getUrl();
+                            if (cur == null || cur.indexOf("view=" + v) < 0) {
+                                navigateDeepLink(web, v, attempt + 1);
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                }, 1000);
+            }
+        } catch (Throwable e) {
+            Log.w(TAG, "deep link navigate failed, view=" + v, e);
         }
-        base = base.trim();
-        while (base.endsWith("/")) base = base.substring(0, base.length() - 1);
-        String path = "standalone-schedule.html?view=" + v;
-        if (base.isEmpty()) return path;          // 相对 URL
-        if (base.indexOf("://") < 0) return path; // 不是合法绝对地址就别硬拼
-        return base + "/" + path;
+    }
+
+    /** 取 origin（scheme://host[:port]）；about:blank / data: / 非法地址一律返回 null */
+    private static String originOf(String u) {
+        if (u == null) return null;
+        String s = u.trim();
+        if (s.isEmpty() || s.startsWith("about:") || s.startsWith("data:") || s.startsWith("blob:")) return null;
+        try {
+            Uri uri = Uri.parse(s);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            if (scheme == null || host == null) return null;
+            if (!"http".equals(scheme) && !"https".equals(scheme)) return null;
+            int port = uri.getPort();
+            return scheme + "://" + host + (port > 0 ? ":" + port : "");
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private String serverUrlSafe() {
+        try {
+            Bridge b = getBridge();
+            if (b == null) return null;
+            String s = b.getServerUrl();
+            return s == null ? null : s.trim();
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private void requestNotificationPermission() {

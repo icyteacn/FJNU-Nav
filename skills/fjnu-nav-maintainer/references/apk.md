@@ -117,3 +117,21 @@ native 组件**完全依赖**它，因此改网页字段时要一并想好 nativ
 - `RemoteViews` 没有 `setBackgroundResource` 直调方法，必须 `setInt(viewId,"setBackgroundResource",res)`；
 - Java 字符串里写 `\p{...}` 正则要双层转义，写在 Python heredoc 里极易丢一层 —— 优先用字符类判断代替正则；
 - release 构建资源名会被混淆成短名，`aapt list` 查不到 `badge_xxx` 属正常，编译通过即代表资源有效。
+### 深链踩坑（1.3 实测两连坑，务必别走回头路）
+
+1. **WebView 深链必须给绝对 URL**。`web.loadUrl("standalone-schedule.html?view=week")` 不会按当前页解析，
+   它把 `standalone-schedule.html` 当成**主机名**并补 `http://` → `http://standalone-schedule.html/?view=week`
+   → Android 9+ 报 `net::ERR_CLEARTEXT_NOT_PERMITTED`（Capacitor 只对 localhost 放行明文）。
+   正确做法：origin 取自 `web.getUrl()`（此刻必为 `https://localhost`），拼
+   `origin + "/standalone-schedule.html?view=" + v`；拿不到 origin 就递归重试，跳转后再校验一次。
+2. **cmd 的 `if (...)` 块内不能有未转义括号**。块内写 `echo ... JDK 17 (AGP 8 requires it).` 会让 cmd
+   在解析阶段把 `)` 当成块结束，剩下的 `.` 变成意外符号 → 无论条件真假都打印「此时不应有 .」，
+   且块后的 `echo [OK]` 被整体跳过（表现为"打包成功但脚本报错、看不到 [OK]"）。
+   规避：块内文案不要用圆括号，或写成 `^(` `^)`。
+
+### 排查快捷方式的命令
+
+```
+adb logcat -s FeikeSchedule     # 深链会打印 "deep link -> https://localhost/standalone-schedule.html?view=week (attempt 0)"
+adb shell am start -n com.feike.schedule/.MainActivity -e view week   # 直接模拟快捷方式
+```

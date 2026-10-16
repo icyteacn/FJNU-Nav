@@ -54,7 +54,7 @@ cd ..
 REM gradle failure must not be reported as success (was printing [OK] either way)
 if errorlevel 1 (
   echo [FAIL] gradle assembleRelease failed - no new APK produced. See errors above.
-  echo        JAVA_HOME must point to JDK 17 (AGP 8 requires it).
+  echo        JAVA_HOME must point to JDK 17, which AGP 8 requires.
   exit /b 1
 )
 

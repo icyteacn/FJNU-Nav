@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- 小组件统一背景：深色渐变 + 圆角 + 细边框（三个组件共用，保证视觉一致） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="18dp" />
+    <gradient
+        android:angle="315"
+        android:endColor="#F21E2430"
+        android:startColor="#F21B1E22"
+        android:type="linear" />
+    <stroke
+        android:width="1dp"
+        android:color="#33FFFFFF" />
+    <padding
+        android:bottom="0dp"
+        android:left="0dp"
+        android:right="0dp"
+        android:top="0dp" />
+</shape>

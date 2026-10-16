@@ -53,11 +53,11 @@ public class ScheduleWidgetProviderNext extends AppWidgetProvider {
                 rv.setTextViewText(R.id.wn_course, safe(snap[1]));
                 rv.setTextViewText(R.id.wn_clock, safe(snap[2]));
             } else {
-                rv.setTextViewText(R.id.wn_state, ctx.getString(R.string.widget_next_default_state));
-                rv.setTextViewText(R.id.wn_course, ctx.getString(R.string.widget_next_default_course));
+                rv.setTextViewText(R.id.wn_state, ctx.getString(R.string.widget_brand));
+                rv.setTextViewText(R.id.wn_course, ctx.getString(R.string.widget_placeholder_hint));
                 rv.setTextViewText(R.id.wn_clock, " ");
             }
-            rv.setOnClickPendingIntent(R.id.wn_root, ScheduleNotifier.launchIntent(ctx));
+            rv.setOnClickPendingIntent(R.id.wn_root, ScheduleNotifier.launchIntentView(ctx, "next"));
             for (int id : ids) {
                 mgr.updateAppWidget(id, rv);
             }

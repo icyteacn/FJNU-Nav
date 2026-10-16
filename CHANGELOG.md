@@ -111,6 +111,33 @@
 
 > 汇总 v1.2.23–v1.2.27。站内公告已发布。
 
+## v1.7.8 (2026-10-15) · APK 1.4 组件全面升级 + i18n 按需加载 + 冒烟日期动态化（patch）
+【APK 1.4（versionCode 6）—— 针对「长按出不来快捷方式 / 组件不好看、不能拉伸」的反馈】
+① **1x1「今日」小部件**（ScheduleWidgetProviderToday）：部分国产桌面不支持 App Shortcuts（长按图标），
+   小部件是所有启动器都有的能力，因此新增一个 1x1 入口：显示「🗓 今日 + 首节课时间」，点一下直达今日课程
+   （走 ScheduleNotifier.launchIntentView(ctx,"today") 深链）。
+② **课表组件改为真正的「尺寸自适应 + 可拉伸」**：
+   - 4x2 起支持横纵拉伸，补 minResizeWidth/minResizeHeight（缺它部分桌面不给拖拽把手）、
+     targetCellWidth/Height 与 previewLayout（API 31+ 桌面显示真实预览而非图标）。
+   - 新增 onAppWidgetOptionsChanged：拉高到 170dp 以上**自动切换为大号布局**（状态行 + 今日后续课程最多 4 条 +
+     底部下一节倒计时），而不是把三行硬撑开——这才是「可拉伸」的实际意义；三个区域还能分别点进 今日/课表/下一节。
+   - 2x2 与 1x1 组件同样补齐可拉伸与预览；三个组件统一使用新的圆角渐变背景 widget_bg，视觉一致、更像系统原生卡片。
+③ 三套组件的刷新收敛到同一条链路（show() → Provider/Today/Next.updateAll，各自 30s 节流），避免各刷各的。
+④ 版本链：apkVersion 1.3 → 1.4、versionCode 5 → 6、APP_VERSION 同步（test_schedule 断言三方一致）。
+   产物 1.02MB，签名 2277d065…（可覆盖安装），已同步 public/downloads 与 releases。
+
+【性能】i18n 英文包（约 49KB）改为按需动态 import：main.js 挂载前 await ensureLang()，
+中文用户零开销；英文用户不会闪中文。实测 FJNU 首屏入口 main chunk 再降。
+
+【测试】真机冒烟脚本原先把日期写死（一跨天就误报），现按当前月份动态生成样本与期望值；
+新增 2 项断言（首屏不请求英文包 / 切换后界面变英文），18 → 20 项。
+
+验证：npm run build；test_schedule / test_favorites / test_sanitize / test_budgetengine / test_budgetbackup /
+test_billimport 全绿；e2e-integrity 18/18；audit-refs 0/0；e2e-standalone 8/8；真机冒烟 20/20；
+真实 APK 由 build-apk.bat 打包并 aapt/apksigner 核验（versionCode 6、versionName 1.4、三个 widget provider、
+android.app.shortcuts、USE_EXACT_ALARM 均在包内）。
+
+
 ## v1.7.7 (2026-10-15) · 健壮性收尾：全面扫描 + 修 2 处真实缺陷 + 存储写入兜底（patch）
 对 src/ 做了一次跨仓机器扫描（JSON.parse 有无 try 兜底 / localStorage 写入有无保护 / innerHTML 与 v-html 赋值的
 数据来源），逐条人工核对后处置：

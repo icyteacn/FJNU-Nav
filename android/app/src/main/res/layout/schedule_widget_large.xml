@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- 课表小组件（大号版）：拉伸到较高尺寸时由 ScheduleWidgetProvider 自动切换
+     内容 = 状态行 + 今日后续课程最多 4 条 + 底部下一节倒计时
+     只用 LinearLayout/TextView + weight，任意宽高都能自适应而不裁切 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/wl_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/wl_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1AE8B84B"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingLeft="12dp"
+        android:paddingTop="7dp"
+        android:paddingRight="12dp"
+        android:paddingBottom="7dp"
+        android:text="今日课程"
+        android:textColor="#FFE8B84B"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingLeft="12dp"
+        android:paddingTop="4dp"
+        android:paddingRight="12dp">
+
+        <TextView
+            android:id="@+id/wl_c1"
+            style="@style/QduWidgetRow" />
+        <TextView
+            android:id="@+id/wl_c2"
+            style="@style/QduWidgetRow" />
+        <TextView
+            android:id="@+id/wl_c3"
+            style="@style/QduWidgetRow" />
+        <TextView
+            android:id="@+id/wl_c4"
+            style="@style/QduWidgetRow" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/wl_foot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingLeft="12dp"
+        android:paddingTop="4dp"
+        android:paddingRight="12dp"
+        android:paddingBottom="10dp"
+        android:text=" "
+        android:textColor="#FF7EE2C4"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+</LinearLayout>

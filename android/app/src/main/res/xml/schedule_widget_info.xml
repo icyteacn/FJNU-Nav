@@ -1,9 +1,18 @@
 <?xml version='1.0' encoding='utf-8'?>
-<!-- 只用 API 21+ 稳定属性；4x2（250x110dp）三行：状态 / 下一节 / 倒计时 -->
+<!-- 课表小组件（4x2 起）：
+     · resizeMode 横纵可拉伸 + minResize* 给出拖拽下限（否则部分桌面不给拉伸把手）
+     · targetCellWidth/Height 与 previewLayout 供 API 31+ 桌面显示真实预览
+     · 拉伸到较高时由 ScheduleWidgetProvider 切到大号布局（今日课程列表） -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
     android:initialLayout="@layout/schedule_widget"
     android:minHeight="110dp"
+    android:minResizeHeight="60dp"
+    android:minResizeWidth="180dp"
     android:minWidth="250dp"
+    android:previewLayout="@layout/schedule_widget"
     android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:targetCellWidth="4"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

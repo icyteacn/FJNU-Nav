@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -148,7 +150,9 @@ public final class ScheduleNotifier {
             Context ctx = context.getApplicationContext();
             // 小组件先刷：它不依赖通知权限，不能被下方权限检查连带卡死
             try {
-                ScheduleWidgetProvider.updateAll(ctx); // 内部 30s 节流
+                ScheduleWidgetProvider.updateAll(ctx);
+        ScheduleWidgetProviderToday.updateAll(ctx);
+        ScheduleWidgetProviderNext.updateAll(ctx);  // 内部 30s 节流
             } catch (Throwable ignored) {
             }
             NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -217,7 +221,9 @@ public final class ScheduleNotifier {
                 scheduleSoonAlarm(ctx, s, now);
             }
             try {
-                ScheduleWidgetProvider.updateAll(ctx); // 同步桌面小组件（内部 30s 节流）
+                ScheduleWidgetProvider.updateAll(ctx);
+        ScheduleWidgetProviderToday.updateAll(ctx);
+        ScheduleWidgetProviderNext.updateAll(ctx);  // 同步桌面小组件（内部 30s 节流）
             } catch (Throwable ignored) {
             }
         } catch (Throwable ignored) {
@@ -276,6 +282,62 @@ public final class ScheduleNotifier {
             return new String[]{ top1, top2, top3 };
         } catch (Throwable t) {
             return null;
+        }
+    }
+
+    /**
+     * 「大号组件」数据：首行状态 + 今日后续课程逐条（最多 4 条）。
+     *   [0] 状态行（正在上课 / 下一节课 / 今日已上完 …）
+     *   [1..] "08:20 高等数学 · 知明2-202"（只取 today=true 的 upcoming）
+     * 数据缺失/日期过期返回 null，由组件显示占位文案。
+     */
+    public static String[] widgetTodayLines(Context context) {
+        try {
+            Context ctx = context.getApplicationContext();
+            String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+            JSONObject s = readSummary(ctx);
+            if (s == null || !today.equals(s.optString("date"))) return null;
+            String status = s.optString("text", "");
+            if (status.isEmpty()) status = s.optString("l1", "");
+            List<String> out = new ArrayList<>();
+            out.add(status.isEmpty() ? "" : status);
+            JSONArray up = s.optJSONArray("upcoming");
+            int shown = 0;
+            if (up != null) {
+                for (int i = 0; i < up.length() && shown < 4; i++) {
+                    JSONObject u = up.optJSONObject(i);
+                    if (u == null || !u.optBoolean("today", false)) continue;
+                    String time = u.optString("time", "");
+                    String name = u.optString("name", "");
+                    String loc = u.optString("loc", "");
+                    if (name.isEmpty()) continue;
+                    out.add((time.isEmpty() ? "" : time + " ") + name + (loc.isEmpty() ? "" : " · " + loc));
+                    shown++;
+                }
+            }
+            if (shown == 0) {
+                JSONArray lines = s.optJSONArray("lines");
+                String hint = lines != null ? lines.optString(0, "") : "";
+                out.add(hint.isEmpty() ? "今日没有课程 🎉" : hint);
+            }
+            return out.toArray(new String[0]);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** 带目标视图的启动意图（供组件/快捷方式直达「今日 / 下一节课 / 课表」） */
+    public static PendingIntent launchIntentView(Context context, String view) {
+        try {
+            Intent it = new Intent(context, MainActivity.class);
+            it.setAction("com.feike.schedule.OPEN_VIEW");
+            if (view != null && !view.isEmpty()) it.putExtra("view", view);
+            it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
+            return PendingIntent.getActivity(context, (view == null ? "app" : view).hashCode(), it, flags);
+        } catch (Throwable t) {
+            return launchIntent(context);
         }
     }
 

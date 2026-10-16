@@ -8,7 +8,7 @@
     android:id="@+id/wn_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E61C1E22"
+    android:background="@drawable/widget_bg"
     android:gravity="center_vertical"
     android:orientation="vertical"
     android:padding="12dp">
@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="@string/widget_next_default_state"
+        android:text="@string/widget_brand"
         android:textColor="#FFE8B84B"
         android:textSize="11sp"
         android:textStyle="bold" />
@@ -33,7 +33,7 @@
         android:ellipsize="end"
         android:gravity="center_vertical"
         android:maxLines="2"
-        android:text="@string/widget_next_default_course"
+        android:text="@string/widget_placeholder_hint"
         android:textColor="#FFFFFFFF"
         android:textSize="13sp"
         android:textStyle="bold" />

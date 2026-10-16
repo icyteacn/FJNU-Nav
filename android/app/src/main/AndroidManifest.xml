@@ -66,6 +66,17 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/schedule_widget_info" />
         </receiver>
+        <!-- 1x1「今日」快捷小部件：部分国产桌面不支持 App Shortcuts 时的可靠替代入口 -->
+        <receiver
+            android:name=".ScheduleWidgetProviderToday"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/schedule_widget_info_today" />
+        </receiver>
         <!-- 2x2「下一节课」小组件（与 4x2 同源数据，见 ScheduleWidgetProviderNext） -->
         <receiver
             android:name=".ScheduleWidgetProviderNext"

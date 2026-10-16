@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
-<!-- 1x1「今日」小部件：Launch 无关的快捷入口（部分国产桌面不支持 App Shortcuts，
-     用一个小部件同样能一键直达今日课程） -->
+<!-- 1x1「今日」小部件：Launch 无关的快捷入口 + 极简信息（状态 / 今日节数 / 下节时间）
+     空间极小，所以只放三行、字号分级，靠颜色区分层级 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/wt_root"
     android:layout_width="match_parent"
@@ -8,32 +8,48 @@
     android:background="@drawable/widget_bg"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="4dp">
+    android:paddingLeft="5dp"
+    android:paddingTop="6dp"
+    android:paddingRight="5dp"
+    android:paddingBottom="6dp">
 
     <TextView
-        android:id="@+id/wt_icon"
+        android:id="@+id/wt_badge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="🗓"
-        android:textSize="20sp" />
-
-    <TextView
-        android:id="@+id/wt_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:background="@drawable/badge_idle"
+        android:ellipsize="end"
         android:maxLines="1"
+        android:paddingLeft="6dp"
+        android:paddingTop="1dp"
+        android:paddingRight="6dp"
+        android:paddingBottom="1dp"
         android:text="今日"
-        android:textColor="#FFFFFFFF"
-        android:textSize="11sp"
+        android:textColor="#FFCBD8E6"
+        android:textSize="9sp"
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/wt_sub"
+        android:id="@+id/wt_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
         android:ellipsize="end"
+        android:gravity="center"
         android:maxLines="1"
+        android:text="--"
+        android:textColor="#FFE8B84B"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/wt_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
         android:text=" "
-        android:textColor="#FF7EE2C4"
+        android:textColor="#FFCBD8E6"
         android:textSize="9sp" />
 </LinearLayout>

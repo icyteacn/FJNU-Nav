@@ -93,3 +93,27 @@ node scripts/e2e-standalone.mjs      # 8 项：初始化/周表/?view=today|week
    （`node scripts/test_schedule.mjs` 会断言三者一致）；`build.gradle` 的 `versionCode` 递增。
 2. 覆盖 `public/downloads/feike-schedule.apk` 与 `releases/feike-schedule.apk`，两者 SHA256 必须一致。
 3. 首页 APK 卡片文案与 README 的版本/体积说明同步。
+
+## 1.3 组件与深链（versionCode 7 / versionName 1.3）
+
+| 能力 | 实现 | 说明 |
+|---|---|---|
+| 桌面组件 ×3 | `ScheduleWidgetProvider`(4x2 紧凑/大号自适应) · `ScheduleWidgetProviderNext`(2x2) · `ScheduleWidgetProviderToday`(1x1) | 三套**共用** `ScheduleNotifier.widgetDashboard()` 的 14 槽位数据面板 |
+| 组件信息量 | 日期 / 状态徽章 / 课程 / 教室·节次 / 倒计时 / 今日进度 / 今日剩余 4 条 / 明日首节 / 进度条 | 大号版比紧凑版多「进度条 + 今日剩余课程 + 明日首节」 |
+| 状态徽章 | 正在上课=绿 `badge_live` / 下一节=金 `badge_next` / 假期=蓝 `badge_holiday` / 空闲=灰 `badge_idle` | 用 `rv.setInt(id,"setBackgroundResource",res)` 反射换底色 |
+| 长按快捷方式 | `res/xml/shortcuts.xml` 三个静态 shortcut（today/next/week） | 显式 intent + extra `view` |
+| 深链跳转 | `MainActivity.buildViewUrl()` + `consumePendingView()` | base 规范化→拿不到就退回相对 URL；延迟 400ms 跳 + 1200ms 兜底重试；日志 tag `FeikeSchedule` |
+
+**改动组件时必须同步的三处**：
+1. `ScheduleNotifier.widgetDashboard()` 的槽位常量（`W_DATE`…`W_SHORT`，顺序即下标）
+2. 三个 `layout/schedule_widget*.xml` 的 view id
+3. 对应 Provider 里的 `setTextViewText` / `setProgressBar` 调用
+
+**网页侧数据源**：`notify.json`（由 `standalone-schedule.html` 的 `buildNotifySummary()` 写）。
+native 组件**完全依赖**它，因此改网页字段时要一并想好 native 有没有消费；新增字段记得在
+`buildNotifySummary()` 的 `base` 初始对象里也声明（holiday 分支会提前 return）。
+
+**已知坑**：
+- `RemoteViews` 没有 `setBackgroundResource` 直调方法，必须 `setInt(viewId,"setBackgroundResource",res)`；
+- Java 字符串里写 `\p{...}` 正则要双层转义，写在 Python heredoc 里极易丢一层 —— 优先用字符类判断代替正则；
+- release 构建资源名会被混淆成短名，`aapt list` 查不到 `badge_xxx` 属正常，编译通过即代表资源有效。

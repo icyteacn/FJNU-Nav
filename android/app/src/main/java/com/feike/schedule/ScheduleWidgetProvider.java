@@ -8,15 +8,16 @@ import android.os.Bundle;
 import android.widget.RemoteViews;
 
 /**
- * 课表小组件（自适应尺寸）。
+ * 课表小组件（尺寸自适应）。
  *
- * 数据源与常驻通知同源：notify.json → {@link ScheduleNotifier}。
- *   · 紧凑布局 {@code schedule_widget}：状态行 / 下一节课 / 倒计时三行（默认 4x2）
- *   · 大号布局 {@code schedule_widget_large}：状态行 + 今日后续课程（最多 4 条）+ 底部倒计时
- *     —— 由 {@link #onAppWidgetOptionsChanged} 按实际高度自动切换，因此**拉伸后内容会变多，
- *     而不是把三行硬撑开**（这是「可拉伸」真正的意义）。
+ * 数据源与常驻通知同源：notify.json → {@link ScheduleNotifier#widgetDashboard}，
+ * 三套组件共用同一份面板数据，因此口径永远一致、也不会各读各的解析出不同结果。
  *
- * 刷新沿用既有策略：show() 每次调用 {@link #updateAll}（30s 节流）+ 系统 updatePeriodMillis 兜底。
+ *   · 紧凑 {@code schedule_widget}（默认 4x2）：日期 / 状态徽章 / 课程 / 教室·节次 / 倒计时 + 今日进度
+ *   · 大号 {@code schedule_widget_large}（高度 ≥170dp 自动切换）：上面全部 + 今日进度条 +
+ *     今日剩余课程（最多 4 条）+ 底部明日首节 —— 拉伸后信息真的变多，而不是把几行硬撑开
+ *
+ * 点击分流：整体→今日、徽章→本周课表、倒计时→下一节课。
  */
 public class ScheduleWidgetProvider extends AppWidgetProvider {
 
@@ -30,7 +31,7 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         render(context, mgr, ids);
     }
 
-    /** 用户拖动改变大小时立刻重排（不依赖 30s 节流） */
+    /** 用户拖动改变大小时立刻重排（不等 30s 节流） */
     @Override
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager mgr, int id, Bundle newOptions) {
         try {
@@ -64,7 +65,9 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
             boolean tall = false;
             try {
                 Bundle o = mgr.getAppWidgetOptions(id);
-                if (o != null) tall = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) >= TALL_THRESHOLD_DP;
+                if (o != null) {
+                    tall = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) >= TALL_THRESHOLD_DP;
+                }
             } catch (Throwable ignored) {
             }
             if (tall) renderTall(ctx, mgr, id);
@@ -73,55 +76,84 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         }
     }
 
-    private static void renderCompact(Context ctx, AppWidgetManager mgr, int id) {
-        String[] snap = ScheduleNotifier.widgetSnapshot(ctx);
-        RemoteViews rv = new RemoteViews(ctx.getPackageName(), R.layout.schedule_widget);
-        if (snap != null) {
-            rv.setTextViewText(R.id.w_top1, safe(snap[0]));
-            rv.setTextViewText(R.id.w_top2, safe(snap[1]));
-            rv.setTextViewText(R.id.w_top3, safe(snap[2]));
-        } else {
-            rv.setTextViewText(R.id.w_top1, ctx.getString(R.string.widget_brand));
-            rv.setTextViewText(R.id.w_top2, ctx.getString(R.string.widget_placeholder_hint));
-            rv.setTextViewText(R.id.w_top3, " ");
+    /** 状态徽章按 kind 换底色与字色（绿=在上课 / 金=下一节 / 蓝=假期 / 灰=空闲） */
+    static void applyBadge(RemoteViews rv, int viewId, String[] d) {
+        int kind = ScheduleNotifier.KIND_IDLE;
+        try {
+            kind = Integer.parseInt(d[ScheduleNotifier.W_KIND]);
+        } catch (Throwable ignored) {
         }
+        int bg;
+        int fg;
+        if (kind == ScheduleNotifier.KIND_LIVE) {
+            bg = R.drawable.badge_live;
+            fg = 0xFFD8FFF0;
+        } else if (kind == ScheduleNotifier.KIND_NEXT) {
+            bg = R.drawable.badge_next;
+            fg = 0xFFFFE9B0;
+        } else if (kind == ScheduleNotifier.KIND_HOLIDAY) {
+            bg = R.drawable.badge_holiday;
+            fg = 0xFFD3E7FF;
+        } else {
+            bg = R.drawable.badge_idle;
+            fg = 0xFFCBD8E6;
+        }
+        rv.setTextViewText(viewId, d[ScheduleNotifier.W_BADGE]);
+        rv.setTextColor(viewId, fg);
+        // RemoteViews 没有 setBackgroundResource 直调方法，要用 setInt 走反射 setter
+        rv.setInt(viewId, "setBackgroundResource", bg);
+    }
+
+    private static void setProgress(RemoteViews rv, int viewId, String[] d) {
+        try {
+            int pct = Integer.parseInt(d[ScheduleNotifier.W_PCT]);
+            rv.setProgressBar(viewId, 100, Math.max(0, Math.min(100, pct)), false);
+        } catch (Throwable ignored) {
+            rv.setProgressBar(viewId, 100, 0, false);
+        }
+    }
+
+    private static void renderCompact(Context ctx, AppWidgetManager mgr, int id) {
+        String[] d = ScheduleNotifier.widgetDashboard(ctx);
+        RemoteViews rv = new RemoteViews(ctx.getPackageName(), R.layout.schedule_widget);
+        rv.setTextViewText(R.id.w_date, d[ScheduleNotifier.W_DATE]);
+        applyBadge(rv, R.id.w_badge, d);
+        rv.setTextViewText(R.id.w_title, d[ScheduleNotifier.W_TITLE]);
+        rv.setTextViewText(R.id.w_sub, d[ScheduleNotifier.W_SUB]);
+        rv.setTextViewText(R.id.w_count, d[ScheduleNotifier.W_COUNT]);
+        rv.setTextViewText(R.id.w_progress, d[ScheduleNotifier.W_PROGRESS]);
         rv.setOnClickPendingIntent(R.id.w_root, ScheduleNotifier.launchIntentView(ctx, "today"));
+        rv.setOnClickPendingIntent(R.id.w_badge, ScheduleNotifier.launchIntentView(ctx, "week"));
+        rv.setOnClickPendingIntent(R.id.w_count, ScheduleNotifier.launchIntentView(ctx, "next"));
         mgr.updateAppWidget(id, rv);
     }
 
     private static void renderTall(Context ctx, AppWidgetManager mgr, int id) {
-        String[] lines = ScheduleNotifier.widgetTodayLines(ctx);
+        String[] d = ScheduleNotifier.widgetDashboard(ctx);
         RemoteViews rv = new RemoteViews(ctx.getPackageName(), R.layout.schedule_widget_large);
-        int[] rows = { R.id.wl_c1, R.id.wl_c2, R.id.wl_c3, R.id.wl_c4 };
-        if (lines != null && lines.length > 0) {
-            rv.setTextViewText(R.id.wl_state, safe(lines[0]));
-            for (int i = 0; i < rows.length; i++) {
-                int idx = i + 1;
-                if (idx < lines.length) {
-                    rv.setViewVisibility(rows[i], android.view.View.VISIBLE);
-                    rv.setTextViewText(rows[i], safe(lines[idx]));
-                } else {
-                    rv.setViewVisibility(rows[i], android.view.View.GONE);
-                }
+        rv.setTextViewText(R.id.wl_date, d[ScheduleNotifier.W_DATE]);
+        applyBadge(rv, R.id.wl_badge, d);
+        rv.setTextViewText(R.id.wl_title, d[ScheduleNotifier.W_TITLE]);
+        rv.setTextViewText(R.id.wl_sub, d[ScheduleNotifier.W_SUB]);
+        rv.setTextViewText(R.id.wl_count, d[ScheduleNotifier.W_COUNT]);
+        rv.setTextViewText(R.id.wl_progress, d[ScheduleNotifier.W_PROGRESS]);
+        setProgress(rv, R.id.wl_bar, d);
+        int[] rows = {R.id.wl_c1, R.id.wl_c2, R.id.wl_c3, R.id.wl_c4};
+        for (int i = 0; i < rows.length; i++) {
+            String v = d[ScheduleNotifier.W_C1 + i];
+            boolean blank = v == null || v.trim().isEmpty();
+            if (blank) {
+                rv.setViewVisibility(rows[i], android.view.View.GONE);
+            } else {
+                rv.setViewVisibility(rows[i], android.view.View.VISIBLE);
+                rv.setTextViewText(rows[i], v);
             }
-            // 末行单独显示时序信息（保持与常驻通知同源的“下一节倒计时”口径）
-            String[] snap = ScheduleNotifier.widgetSnapshot(ctx);
-            rv.setTextViewText(R.id.wl_foot, snap != null ? safe(snap[2]) : " ");
-        } else {
-            rv.setTextViewText(R.id.wl_state, ctx.getString(R.string.widget_brand));
-            rv.setTextViewText(rows[0], ctx.getString(R.string.widget_placeholder_hint));
-            rv.setViewVisibility(rows[1], android.view.View.GONE);
-            rv.setViewVisibility(rows[2], android.view.View.GONE);
-            rv.setViewVisibility(rows[3], android.view.View.GONE);
-            rv.setTextViewText(R.id.wl_foot, " ");
         }
+        rv.setTextViewText(R.id.wl_foot, d[ScheduleNotifier.W_FOOT]);
         rv.setOnClickPendingIntent(R.id.wl_root, ScheduleNotifier.launchIntentView(ctx, "today"));
-        rv.setOnClickPendingIntent(R.id.wl_state, ScheduleNotifier.launchIntentView(ctx, "week"));
-        rv.setOnClickPendingIntent(R.id.wl_foot, ScheduleNotifier.launchIntentView(ctx, "next"));
+        rv.setOnClickPendingIntent(R.id.wl_badge, ScheduleNotifier.launchIntentView(ctx, "week"));
+        rv.setOnClickPendingIntent(R.id.wl_count, ScheduleNotifier.launchIntentView(ctx, "next"));
+        rv.setOnClickPendingIntent(R.id.wl_foot, ScheduleNotifier.launchIntentView(ctx, "week"));
         mgr.updateAppWidget(id, rv);
-    }
-
-    private static String safe(String s) {
-        return (s == null || s.isEmpty()) ? " " : s;
     }
 }

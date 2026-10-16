@@ -1,65 +1,161 @@
 <?xml version='1.0' encoding='utf-8'?>
-<!-- 课表小组件（大号版）：拉伸到较高尺寸时由 ScheduleWidgetProvider 自动切换
-     内容 = 状态行 + 今日后续课程最多 4 条 + 底部下一节倒计时
-     只用 LinearLayout/TextView + weight，任意宽高都能自适应而不裁切 -->
+<!-- 课表小组件 · 大号版：拉伸到较高尺寸时由 ScheduleWidgetProvider 自动切换
+     内容 = 头部（日期+徽章）/ 主标题 / 教室·节次 / 倒计时 + 今日进度 / 进度条 / 今日剩余课程列表 / 底部明日首节
+     所有行用 weight 分配高度，任意宽高都能自适应而不裁切 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/wl_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
-    android:orientation="vertical">
+    android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/wl_state"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#1AE8B84B"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:paddingLeft="12dp"
-        android:paddingTop="7dp"
-        android:paddingRight="12dp"
-        android:paddingBottom="7dp"
-        android:text="今日课程"
-        android:textColor="#FFE8B84B"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+    <View
+        android:layout_width="5dp"
+        android:layout_height="match_parent"
+        android:background="#E8B84B" />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
         android:orientation="vertical"
         android:paddingLeft="12dp"
-        android:paddingTop="4dp"
-        android:paddingRight="12dp">
-
-        <TextView
-            android:id="@+id/wl_c1"
-            style="@style/QduWidgetRow" />
-        <TextView
-            android:id="@+id/wl_c2"
-            style="@style/QduWidgetRow" />
-        <TextView
-            android:id="@+id/wl_c3"
-            style="@style/QduWidgetRow" />
-        <TextView
-            android:id="@+id/wl_c4"
-            style="@style/QduWidgetRow" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/wl_foot"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:paddingLeft="12dp"
-        android:paddingTop="4dp"
+        android:paddingTop="10dp"
         android:paddingRight="12dp"
-        android:paddingBottom="10dp"
-        android:text=" "
-        android:textColor="#FF7EE2C4"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/wl_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="周四 10/16"
+                android:textColor="#FF9FB4C9"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/wl_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/badge_idle"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:paddingLeft="8dp"
+                android:paddingTop="2dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="2dp"
+                android:text="课表"
+                android:textColor="#FFCBD8E6"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/wl_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text=" "
+            android:textColor="#FFFFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/wl_sub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text=" "
+            android:textColor="#FF9FB4C9"
+            android:textSize="11.5sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/wl_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text=" "
+                android:textColor="#FF7EE2C4"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/wl_progress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="right"
+                android:maxLines="1"
+                android:text=" "
+                android:textColor="#FF9FB4C9"
+                android:textSize="10.5sp" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/wl_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:layout_marginTop="5dp"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/progress_track" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="5dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/wl_c1"
+                style="@style/QduWidgetRow" />
+
+            <TextView
+                android:id="@+id/wl_c2"
+                style="@style/QduWidgetRow" />
+
+            <TextView
+                android:id="@+id/wl_c3"
+                style="@style/QduWidgetRow" />
+
+            <TextView
+                android:id="@+id/wl_c4"
+                style="@style/QduWidgetRow" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/wl_foot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingTop="5dp"
+            android:text=" "
+            android:textColor="#FF7EE2C4"
+            android:textSize="10.5sp" />
+    </LinearLayout>
 </LinearLayout>

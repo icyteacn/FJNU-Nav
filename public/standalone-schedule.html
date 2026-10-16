@@ -56,6 +56,11 @@
       transition:transform .28s cubic-bezier(.34,1.56,.64,1),box-shadow .28s}
     .pet-fab:active{transform:scale(.88)}
     .pet-fab.hidden{display:none}
+    /* 拖动性能：touch-action 交给脚本自己处理（否则与页面滚动打架）；
+       will-change 让浏览器提前把按钮提升为独立合成层，位移不再触发重排 */
+    .pet-fab{touch-action:none;will-change:transform}
+    .pet-fab.dragging{transition:none!important;animation:none!important;cursor:grabbing}
+    .pet-fab.dragging .pet-ring,.pet-fab.dragging .pet-avatar .pet-ring2{animation:none!important}
     .pet-fab.celebrate{animation:petJump .6s cubic-bezier(.34,1.56,.64,1)}
     .pet-fab .pet-ring{position:absolute;inset:-5px;border-radius:50%;border:2px dashed rgba(251,191,36,.85);
       animation:petSpin 9s linear infinite;display:none}
@@ -1182,6 +1187,7 @@ function buildNotifySummary(){
               anchor:0,anchorVerb:'',liveStart:0,week:getCurrentWeek(),
               leadMin:(parseInt(localStorage.getItem('sche_lead'),10)||30),
               nextStart:0,nextName:'',nextLoc:'',nextTime:'',nextWhen:'',
+              todayTotal:0,todayDone:0,
               upcoming:[]};
   const nc=computeNextCourse(); // 全局下一节课（跨天，供半小时提醒与跨天行1使用）
   if(nc){
@@ -1214,6 +1220,9 @@ function buildNotifySummary(){
     base.prev={name:prev.course.name,loc:locOf(prev),
                time:PERIOD_FMT[prev.start]+'-'+PERIOD_FMT_END[prev.end]};
   }
+  // 小组件进度用：今日共几节 / 已上几节（分母必须来自真实 list，upcoming 只有 3 条不够）
+  base.todayTotal=list.length;
+  for(const it of list){ if(nowMin>=PERIOD_END[it.end])base.todayDone++; }
   base.upcoming=computeUpcoming(3).map(u=>({
     name:u.course.name,loc:u.loc,time:PERIOD_FMT[u.startPeriod],
     day:u.weekdayLabel,today:getDateStr(u.date)===ds,at:+u.target
@@ -1959,40 +1968,48 @@ document.addEventListener('click', e => {
 });
 
 // 桌宠悬浮球可拖动（移动 >6px 判定为拖动，不触发面板；位置持久化）
+// 性能要点：拖动过程只写 transform（合成器层，不触发布局），松手才落一次 left/top；
+// 拖动期间挂 .dragging 停掉 transition 与旋转动画，否则会出现拖影 + 掉帧。
 let petDrag = null, petDragMoved = false;
 (function initPetDrag() {
   const fab = document.getElementById('petFab');
   if (!fab) return;
+  const clampX = (x) => Math.max(6, Math.min(window.innerWidth - 60, x));
+  const clampY = (y) => Math.max(64, Math.min(window.innerHeight - 70, y));
   fab.addEventListener('pointerdown', e => {
-    petDrag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, rect: fab.getBoundingClientRect() };
+    petDrag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, dx: 0, dy: 0, rect: fab.getBoundingClientRect() };
     try { fab.setPointerCapture(e.pointerId); } catch (err) {}
+    fab.classList.add('dragging');
   }, { passive: true });
   fab.addEventListener('pointermove', e => {
     if (!petDrag || e.pointerId !== petDrag.id) return;
     const dx = e.clientX - petDrag.x0, dy = e.clientY - petDrag.y0;
     if (!petDragMoved && Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
     petDragMoved = true;
-    let x = petDrag.rect.left + dx, y = petDrag.rect.top + dy;
-    x = Math.max(6, Math.min(window.innerWidth - 60, x));
-    y = Math.max(64, Math.min(window.innerHeight - 70, y));
-    fab.style.left = x + 'px';
-    fab.style.top = y + 'px';
-    fab.style.right = 'auto';
-    fab.style.bottom = 'auto';
+    petDrag.dx = dx; petDrag.dy = dy;
+    fab.style.transform = 'translate3d(' + dx + 'px,' + dy + 'px,0) scale(1.06)';
   }, { passive: true });
   const end = e => {
     if (!petDrag || (e && e.pointerId !== petDrag.id)) return;
+    const d = petDrag;
     petDrag = null;
+    fab.classList.remove('dragging');
     if (petDragMoved) {
       petDragMoved = false;
-      const x = parseFloat(fab.style.left), y = parseFloat(fab.style.top);
-      if (isFinite(x) && isFinite(y)) {
-        const p = petLoad();
-        p.pos = { x: Math.round(x), y: Math.round(y) };
-        petSave(p);
-      }
+      const x = clampX(d.rect.left + d.dx);
+      const y = clampY(d.rect.top + d.dy);
+      fab.style.transform = '';
+      fab.style.left = x + 'px';
+      fab.style.top = y + 'px';
+      fab.style.right = 'auto';
+      fab.style.bottom = 'auto';
+      const p = petLoad();
+      p.pos = { x: Math.round(x), y: Math.round(y) };
+      petSave(p);
       petDragJustDone = true; // 抑制紧随的 click 误开面板
       setTimeout(() => { petDragJustDone = false; }, 350);
+    } else {
+      fab.style.transform = '';
     }
   };
   fab.addEventListener('pointerup', end, { passive: true });
@@ -2673,7 +2690,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.4'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){

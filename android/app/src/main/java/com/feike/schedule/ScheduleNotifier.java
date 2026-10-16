@@ -326,6 +326,168 @@ public final class ScheduleNotifier {
         }
     }
 
+    /* ── 三套桌面小组件共用的数据面板（顺序即下标，改动请同步布局与 Provider）─────────────────
+     * W_DATE    周四 10/16
+     * W_BADGE   状态徽章：正在上课 / 下一节课 / 今日已上完 / 假期停课
+     * W_TITLE   主标题（课程名；无课时为一句提示）
+     * W_SUB     副标题：教室 · 第3-4节
+     * W_COUNT   倒计时：剩 23分 / 1小时23分
+     * W_PROGRESS 今日 4 节 · 已上 2 节
+     * W_C1..C4  今日剩余课程：08:20 高等数学 · 博学楼208
+     * W_FOOT    底部：明天 08:00 马克思主义
+     * W_PCT     今日进度百分比（0-100，喂给 ProgressBar）
+     * W_KIND    徽章样式 0 正在上课 / 1 下一节 / 2 空闲 / 3 假期
+     */
+    public static final int W_DATE = 0, W_BADGE = 1, W_TITLE = 2, W_SUB = 3,
+            W_COUNT = 4, W_PROGRESS = 5, W_C1 = 6, W_C2 = 7, W_C3 = 8, W_C4 = 9,
+            W_FOOT = 10, W_PCT = 11, W_KIND = 12, W_SHORT = 13, W_SLOTS = 14;
+    public static final int KIND_LIVE = 0, KIND_NEXT = 1, KIND_IDLE = 2, KIND_HOLIDAY = 3;
+
+    /** 组件专用课程行（今日剩余，最多 4 条） */
+    private static String courseLine(JSONObject u) {
+        if (u == null) return " ";
+        String time = u.optString("time", "");
+        String name = u.optString("name", "");
+        String loc = u.optString("loc", "");
+        if (name.isEmpty()) return " ";
+        return (time.isEmpty() ? "" : time + "  ") + name + (loc.isEmpty() ? "" : " · " + loc);
+    }
+
+    /**
+     * 桌面组件统一数据面板。数据缺失或日期过期返回带「打开 App」提示的面板，
+     * 组件因此永远有内容可渲染（不会空白，也不会抛异常）。
+     */
+    public static String[] widgetDashboard(Context context) {
+        String[] out = new String[W_SLOTS];
+        for (int i = 0; i < W_SLOTS; i++) out[i] = " ";
+        try {
+            Context ctx = context.getApplicationContext();
+            Calendar cal = Calendar.getInstance();
+            String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.getTime());
+            int wd = cal.get(Calendar.DAY_OF_WEEK);
+            String[] WD = {"", "周一", "周二", "周三", "周四", "周五", "周六", "周日"};
+            out[W_DATE] = WD[wd == 1 ? 7 : wd] + " " + (cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH);
+
+            JSONObject s = readSummary(ctx);
+            if (s == null || !today.equals(s.optString("date"))) {
+                out[W_BADGE] = "打开 App";
+                out[W_TITLE] = "还没有今日课表数据";
+                out[W_SUB] = "进入应用打开一次课表页即可";
+                out[W_KIND] = String.valueOf(KIND_IDLE);
+                return out;
+            }
+
+            long now = System.currentTimeMillis();
+            String mode = s.optString("mode", "rest");
+            int total = s.optInt("todayTotal", 0);
+            int done = s.optInt("todayDone", 0);
+            long anchor = s.optLong("anchor", 0);
+
+            // 今日剩余课程（today=true）与明天第一节（!today）
+            JSONArray up = s.optJSONArray("upcoming");
+            JSONObject live = null;
+            String[] rows = new String[]{out[W_C1], out[W_C2], out[W_C3], out[W_C4]};
+            int n = 0;
+            String foot = "";
+            if (up != null) {
+                for (int i = 0; i < up.length(); i++) {
+                    JSONObject u = up.optJSONObject(i);
+                    if (u == null) continue;
+                    if (u.optBoolean("today", false)) {
+                        if (live == null && u.optLong("at", 0) <= now) live = u; // 正在上的那节
+                        if (n < rows.length) rows[n++] = courseLine(u);
+                    } else if (foot.isEmpty()) {
+                        String time = u.optString("time", "");
+                        String name = u.optString("name", "");
+                        if (!name.isEmpty()) {
+                            String day = u.optString("day", "");
+                            foot = (day.isEmpty() ? "" : day + " ") + time + " " + name;
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < rows.length; i++) out[W_C1 + i] = rows[i];
+
+            // 状态徽章 + 主副标题 + 倒计时
+            if ("holiday".equals(mode)) {
+                out[W_KIND] = String.valueOf(KIND_HOLIDAY);
+                out[W_BADGE] = "假期停课";
+                String txt = s.optString("text", "");
+                out[W_TITLE] = stripLeadingSymbols(txt);
+                if (out[W_TITLE].isEmpty()) out[W_TITLE] = "今天不用上课";
+                out[W_SUB] = "好好休息";
+                out[W_FOOT] = foot.isEmpty() ? " " : foot;
+            } else if ("live".equals(mode) || live != null) {
+                out[W_KIND] = String.valueOf(KIND_LIVE);
+                out[W_BADGE] = "正在上课";
+                if (live != null) {
+                    out[W_TITLE] = live.optString("name", "");
+                    out[W_SUB] = live.optString("loc", "") + (live.optString("time", "").isEmpty() ? "" : " · " + live.optString("time", "") + " 节");
+                } else {
+                    out[W_TITLE] = stripLeadingSymbols(s.optString("text", "上课中"));
+                    out[W_SUB] = " ";
+                }
+                out[W_COUNT] = anchor > now ? "剩 " + fmtCd(anchor - now) : "即将下课";
+                out[W_FOOT] = foot.isEmpty() ? " " : foot;
+            } else if (s.optLong("nextStart", 0) > 0) {
+                out[W_KIND] = String.valueOf(KIND_NEXT);
+                out[W_BADGE] = "下一节课";
+                out[W_TITLE] = s.optString("nextName", "");
+                String loc = s.optString("nextLoc", "");
+                String tm = s.optString("nextTime", "");
+                out[W_SUB] = (loc.isEmpty() ? "" : loc) + (tm.isEmpty() ? "" : (loc.isEmpty() ? "" : " · ") + tm + " 节");
+                long t0 = s.optLong("nextStart", 0);
+                out[W_COUNT] = t0 > now ? fmtCd(t0 - now) + "后开课" : "即将开课";
+                out[W_FOOT] = foot.isEmpty() ? " " : foot;
+            } else {
+                out[W_KIND] = String.valueOf(KIND_IDLE);
+                out[W_BADGE] = total > 0 ? "今日已上完" : "今日无课";
+                out[W_TITLE] = total > 0 ? "今天 " + total + " 节都结束了 🎉" : "今天没有课 ☕";
+                out[W_SUB] = " ";
+                out[W_FOOT] = foot.isEmpty() ? " " : foot;
+            }
+
+            // 今日进度
+            if (total > 0) {
+                out[W_PROGRESS] = "今日 " + total + " 节 · 已上 " + Math.min(done, total) + " 节";
+                out[W_PCT] = String.valueOf(Math.max(0, Math.min(100, Math.round(done * 100f / total))));
+            } else {
+                out[W_PROGRESS] = "今日没有课程安排";
+                out[W_PCT] = "0";
+            }
+            // 1x1 只放得下几个字：给一句最短状态（剩 23分 / 还剩 2 节 / 今日无课）
+            if (out[W_KIND].equals(String.valueOf(KIND_LIVE))) {
+                out[W_SHORT] = out[W_COUNT];
+            } else if (total > done) {
+                out[W_SHORT] = "还剩 " + (total - done) + " 节";
+            } else {
+                out[W_SHORT] = total > 0 ? "都上完了" : "今日无课";
+            }
+            out[W_TITLE] = trimOrSpace(out[W_TITLE]);
+            out[W_SUB] = trimOrSpace(out[W_SUB]);
+        } catch (Throwable t) {
+            // 兜底：面板永不为空，组件不会白屏
+            out[W_BADGE] = "打开 App";
+            out[W_TITLE] = "课表数据读取失败";
+            out[W_KIND] = String.valueOf(KIND_IDLE);
+        }
+        return out;
+    }
+
+    /** 剥掉文案开头的 emoji / 符号（如 "🔔 正在上课" → "正在上课"），不用正则以避开转义坑 */
+    private static String stripLeadingSymbols(String s) {
+        if (s == null) return "";
+        int i = 0;
+        while (i < s.length() && !Character.isLetterOrDigit(s.charAt(i))) i++;
+        return (i == 0 ? s : s.substring(i)).trim();
+    }
+
+    private static String trimOrSpace(String s) {
+        if (s == null) return " ";
+        String v = s.trim();
+        return v.isEmpty() ? " " : v;
+    }
+
     /** 带目标视图的启动意图（供组件/快捷方式直达「今日 / 下一节课 / 课表」） */
     public static PendingIntent launchIntentView(Context context, String view) {
         try {

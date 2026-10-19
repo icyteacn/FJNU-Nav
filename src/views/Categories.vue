@@ -77,7 +77,8 @@ function groupName(g) {
 .cat-group-dot { width: 10px; height: 10px; border-radius: 50%; }
 .cat-group-name { font-weight: 700; font-size: 15px; }
 .cat-group-count { color: var(--text-light); font-size: 12px; }
-.cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+@media (max-width: 560px) { .cat-grid { grid-template-columns: repeat(2, 1fr); } }
 .cat-tile {
   display: flex;
   flex-direction: column;
@@ -101,6 +102,6 @@ function groupName(g) {
   justify-content: center;
   font-size: 22px;
 }
-.cat-tile-title { font-weight: 700; font-size: 14px; }
-.cat-tile-desc { font-size: 11px; color: var(--text-light); text-align: center; line-height: 1.4; }
+.cat-tile-title { font-weight: 700; font-size: 14px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-tile-desc { font-size: 11px; color: var(--text-light); text-align: center; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>

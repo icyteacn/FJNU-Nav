@@ -69,7 +69,8 @@ const full = {
   semester,
   semesterStart: semesterStartStr,
   weeks: 18,
-  currentWeek: Math.max(1, Math.min(18, Math.floor((Date.now() - new Date(semesterStartStr).getTime()) / (7 * 86400000)) + 1)),
+  // 直接用本地零点的 Date 对象（new Date('YYYY-MM-DD') 会走 UTC，周一凌晨会少算一周）
+  currentWeek: Math.max(1, Math.min(18, Math.floor((Date.now() - semesterStart.getTime()) / (7 * 86400000)) + 1)),
   updatedAt,
   counts: { courses: COURSES.length, adjustments: Object.values(HOLIDAY_MAP).filter(v => v.overrides).length },
   majors: MAJORS,

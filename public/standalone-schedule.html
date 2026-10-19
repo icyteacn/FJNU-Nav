@@ -2729,7 +2729,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.12'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.13'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -2743,6 +2743,12 @@ function applyRemoteData(d){
     Object.assign(HOLIDAY_MAP,d.holidayMap);
   }
   if(d&&d.semesterStart){state.semesterStart=parseLocalDate(d.semesterStart)}
+  // 新学期换专业列表时跟着站点走（字段齐全才采信）；原选中专业不存在时回落第一项
+  if(d&&Array.isArray(d.majors)&&d.majors.length&&d.majors.every(m=>m&&m.key&&m.short)){
+    MAJORS.length=0;
+    d.majors.forEach(m=>MAJORS.push({key:m.key,short:m.short,color:m.color||'#1565c0'}));
+    if(!MAJORS.some(m=>m.key===state.selectedMajor))state.selectedMajor=MAJORS[0].key;
+  }
   if(d&&d.version)localStorage.setItem('sche_data_version',d.version);
   if(d&&d.updatedAt)localStorage.setItem('sche_last_update',d.updatedAt);
   try{localStorage.setItem('sche_data_cache',JSON.stringify(d))}catch(e){}

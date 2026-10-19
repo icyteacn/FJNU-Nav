@@ -387,6 +387,9 @@
       .time-line::before{width:8px;height:8px;left:-4px;top:-3px}
       .time-label{font-size:9px;padding:1px 4px;border-radius:3px 0 0 3px}
     }
+    .menu-group{padding:10px 16px 4px;font-size:11px;font-weight:700;color:var(--text-sub);letter-spacing:1px;background:var(--page)}
+    .week-nav-meta{font-size:11px;color:var(--text-sub);margin-top:2px}
+    .sem-sub{display:block;font-size:11px;color:var(--text-sub);font-weight:400;margin-top:2px}
   </style>
 </head>
 <body>
@@ -402,7 +405,7 @@
             <button class="view-btn" id="viewToggleBtn" onclick="toggleView()" title="切换 表格 / 单日列表">📋</button>
           </div>
           <div class="week-nav-major" id="majorLabel">计科学硕</div>
-          <select class="sem-select" id="semSelect" onchange="onSemesterChange(this.value)" title="切换学期"></select>
+          <div class="week-nav-meta" id="weekMeta"></div>
           <div class="sync-tip" id="syncTip"></div>
         </div>
         <button class="week-nav-btn" onclick="nextWeek()">›</button>
@@ -514,24 +517,20 @@
         </div>
         <div class="modal-body">
           <ul class="menu-list">
-            <li class="menu-item" onclick="switchToWeb()">
-              <span class="icon">📄</span><span class="text">切换网页版</span><span class="arrow">›</span>
+            <li class="menu-group">课表</li>
+            <li class="menu-item" onclick="showSemModal()">
+              <span class="icon">🗓️</span><span class="text">学期</span><span class="menu-state" id="semMenuState">自动</span><span class="arrow">›</span>
             </li>
             <li class="menu-item" onclick="showMajorModal()">
-              <span class="icon">🎓</span><span class="text">选择专业</span><span class="arrow">›</span>
+              <span class="icon">🎓</span><span class="text">选择专业</span><span class="menu-state" id="majorMenuState"></span><span class="arrow">›</span>
             </li>
             <li class="menu-item" onclick="showSearchModal()">
               <span class="icon">🔍</span><span class="text">搜索课程</span><span class="arrow">›</span>
             </li>
             <li class="menu-item" onclick="showFilterModal()">
-              <span class="icon">🏷️</span><span class="text">类型筛选</span><span class="arrow">›</span>
+              <span class="icon">🏷️</span><span class="text">类型筛选</span><span class="menu-state" id="filterMenuState">全部</span><span class="arrow">›</span>
             </li>
-            <li class="menu-item" onclick="showColorModal()">
-              <span class="icon">🎨</span><span class="text">彩色/白色模式</span><span class="arrow">›</span>
-            </li>
-            <li class="menu-item" onclick="showFontModal()">
-              <span class="icon">🔤</span><span class="text">字体缩放</span><span class="arrow">›</span>
-            </li>
+            <li class="menu-group">提醒与工具</li>
             <li class="menu-item" onclick="toggleNextCard()">
               <span class="icon">⏰</span><span class="text">下一节课倒计时</span><span class="menu-state" id="nextCardMenuState">显示中</span><span class="arrow">›</span>
             </li>
@@ -541,9 +540,20 @@
             <li class="menu-item" onclick="togglePet()">
               <span class="icon">🐔</span><span class="text">桌宠伙伴</span><span class="menu-state" id="petMenuState">陪伴中</span><span class="arrow">›</span>
             </li>
+            <li class="menu-item" onclick="switchToWeb()">
+              <span class="icon">📄</span><span class="text">切换网页版</span><span class="arrow">›</span>
+            </li>
+            <li class="menu-group">外观</li>
+            <li class="menu-item" onclick="showColorModal()">
+              <span class="icon">🎨</span><span class="text">课表配色</span><span class="menu-state" id="colorMenuState">彩色</span><span class="arrow">›</span>
+            </li>
+            <li class="menu-item" onclick="showFontModal()">
+              <span class="icon">🔤</span><span class="text">字体缩放</span><span class="menu-state" id="fontMenuState">100%</span><span class="arrow">›</span>
+            </li>
             <li class="menu-item" onclick="toggleTheme()">
               <span class="icon">🌙</span><span class="text" id="themeMenuText">夜间模式</span><span class="arrow">›</span>
             </li>
+            <li class="menu-group">数据与其他</li>
             <li class="menu-item" onclick="exportData()">
               <span class="icon">📤</span><span class="text">导出数据</span><span class="arrow">›</span>
             </li>
@@ -554,7 +564,7 @@
               <span class="icon">🔄</span><span class="text">检查更新</span><span class="arrow">›</span>
             </li>
             <li class="menu-item" onclick="resetData()">
-              <span class="icon">🔄</span><span class="text">恢复默认</span><span class="arrow">›</span>
+              <span class="icon">↺</span><span class="text">恢复默认</span><span class="arrow">›</span>
             </li>
           </ul>
         </div>
@@ -570,6 +580,19 @@
         </div>
         <div class="modal-body">
           <ul class="major-list" id="majorList"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 学期选择 -->
+    <div class="modal-overlay" id="semModal">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">选择学期</div>
+          <button class="modal-close" onclick="closeSemModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <ul class="major-list" id="semList"></ul>
         </div>
       </div>
     </div>
@@ -1048,8 +1071,7 @@ function applySemester(){
   state.weeksCap=term.weeks||18;
   if(state.selectedWeek>state.weeksCap)state.selectedWeek=state.weeksCap;
   if(state.selectedWeek<1)state.selectedWeek=1;
-  const sel=document.getElementById('semSelect');
-  if(sel)sel.value=state.semesterId;
+  syncSemMenu();
 }
 function onSemesterChange(id){
   state.semesterId=id||'auto';
@@ -1057,15 +1079,34 @@ function onSemesterChange(id){
   applySemester();
   const sem=currentSem();
   if(sem.type==='term')state.selectedWeek=getCurrentWeek();
+  else state.selectedWeek=1;
   saveState();render();
 }
-function renderSemesterBar(){
-  const sel=document.getElementById('semSelect');
-  if(sel&&!sel.options.length){
-    sel.innerHTML='<option value="auto">🗓 自动（当前学期）</option>'+SEMESTERS.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');
-    sel.value=state.semesterId;
-  }
+/** 学期区间标签：'8/31 - 1/11' */
+function semRangeText(s){
+  const a=parseLocalDate(s.start),b=semEnd(s);b.setDate(b.getDate()-1);
+  return (a.getMonth()+1)+'/'+a.getDate()+' - '+(b.getMonth()+1)+'/'+b.getDate();
 }
+function syncSemMenu(){
+  const el=document.getElementById('semMenuState');if(!el)return;
+  const sem=currentSem();
+  el.textContent=state.semesterId==='auto'?'自动·'+sem.name:sem.name;
+}
+function renderSemesterBar(){syncSemMenu()}
+function showSemModal(){
+  closeMoreMenu();
+  const auto=autoSemester();
+  const items=[{id:'auto',name:'🧭 自动',sub:'跟随当前日期 · 现为 '+auto.name}]
+    .concat(SEMESTERS.map(s=>({
+      id:s.id,
+      name:(s.type==='term'?'📗':s.type==='winter_break'?'❄️':'☀️')+' '+s.name,
+      sub:semRangeText(s)
+    })));
+  document.getElementById('semList').innerHTML=items.map(o=>'<li class="major-item '+(o.id===state.semesterId?'selected':'')+'" onclick="pickSemester(\''+o.id+'\')"><span class="name">'+o.name+(o.sub?'<span class="sem-sub">'+o.sub+'</span>':'')+'</span><span class="check">✓</span></li>').join('');
+  document.getElementById('semModal').classList.add('show');
+}
+function closeSemModal(){document.getElementById('semModal').classList.remove('show')}
+function pickSemester(id){closeSemModal();onSemesterChange(id);showToast('已切换学期')}
 
 // ==================== localStorage ====================
 function saveState(){
@@ -1152,6 +1193,10 @@ function getCoursesForWeek(major,week){
 }
 function getDayType(dateStr){
   return state.dayOverrides[dateStr]||HOLIDAY_MAP[dateStr]||userAdjustDayInfo(dateStr);
+}
+// 类型筛选：'all' 全放行；否则按课程 category 匹配（无 category 的自定义课只在「全部」下显示）
+function matchFilter(c){
+  return state.filterType==='all'||!state.filterType||c.category===state.filterType;
 }
 /** 用户自建调课的源日：表头给一个「调课」标记（与官方 adjust 同款） */
 function userAdjustDayInfo(dateStr){
@@ -1391,24 +1436,30 @@ function pushNotifyData(){
 function renderWeekNav(){
   document.getElementById('weekLabel').textContent='第'+state.selectedWeek+'周';
   const major=MAJORS.find(m=>m.key===state.selectedMajor);
-  let label=major?major.short:'';
-  // 本周节数统计：与课表同口径（含自定义/调课/用户调整），让周导航一眼看出本周轻重
-  try{
-    const list=getCoursesForWeek(state.selectedMajor,state.selectedWeek);
-    const secs=list.reduce(function(n,c){return n+((c.periods&&c.periods.length)||1)},0);
-    if(list.length)label+=' · 本周'+list.length+'门/'+secs+'节';
-  }catch(e){}
-  document.getElementById('majorLabel').textContent=label;
-  renderSemesterBar();
-  const sem=currentSem(),tip=document.getElementById('syncTip');
-  if(tip&&sem.type!=='term'){
-    const days=Math.max(0,Math.ceil((state.semesterStart.getTime()-Date.now())/864e5));
-    tip.textContent='🏖 '+sem.name+'中 · 距开学约 '+days+' 天';
+  document.getElementById('majorLabel').textContent=major?major.short:'';
+  // 周信息行：日期区间 + 真实口径统计（门=去重课程名，次=上课场次，节=总课时，天=有课天数）
+  const meta=document.getElementById('weekMeta');
+  if(meta){
+    try{
+      const wd=getWeekDates(state.selectedWeek);
+      const rng=(wd[0].getMonth()+1)+'/'+wd[0].getDate()+' - '+(wd[6].getMonth()+1)+'/'+wd[6].getDate();
+      const list=getCoursesForWeek(state.selectedMajor,state.selectedWeek).filter(matchFilter);
+      if(list.length){
+        const names=new Set(list.map(c=>c.name));
+        const days=new Set(list.map(c=>c.weekday));
+        const secs=list.reduce(function(n,c){return n+((c.periods&&c.periods.length)||((c.endPeriod||0)-(c.startPeriod||0)+1)||1)},0);
+        meta.textContent=rng+' · '+names.size+'门课'+list.length+'次'+secs+'节 · '+days.size+'天有课';
+      }else{
+        meta.textContent=rng+' · 本周无课';
+      }
+    }catch(e){meta.textContent=''}
   }
+  renderSemesterBar();
+  renderSyncTip();
 }
 function renderTable(){
   const week=state.selectedWeek;
-  const courses=getCoursesForWeek(state.selectedMajor,week);
+  const courses=getCoursesForWeek(state.selectedMajor,week).filter(matchFilter);
   const today=new Date();const todayStr=getDateStr(today);
   const weekDates=getWeekDates(week);
   const todayIdx=getTodayIndex();
@@ -1550,10 +1601,11 @@ function getDayCourses(week,weekday){
   const dt=getDayType(ds);
   if(dt&&dt.type==='holiday')return{ds:ds,holiday:dt,list:[]};
   const eff=(dt&&dt.type==='makeup')?dt.scheduleWeekday:weekday;
-  const weekCourses=getCoursesForWeek(state.selectedMajor,week);
+  const weekCourses=getCoursesForWeek(state.selectedMajor,week).filter(matchFilter);
   const pool=(ALL_COURSES[state.selectedMajor]||[])
     .concat(state.customCourses.filter(x=>x.major===state.selectedMajor))
-    .filter(x=>!state.deletedCourses.includes(x.id));
+    .filter(x=>!state.deletedCourses.includes(x.id))
+    .filter(matchFilter);
   const list=[];
   weekCourses.filter(c=>c.weekday===eff).forEach(c=>{
     const o=getOverride(ds,c.startPeriod);
@@ -2204,7 +2256,16 @@ tableEl.addEventListener('touchend',e=>{
 },{passive:true});
 
 // ==================== 菜单 ====================
-function showMoreMenu(){syncNextCardMenu();syncLeadMenu();petRender();document.getElementById('moreMenu').classList.add('show')}
+function showMoreMenu(){syncMenuStates();petRender();document.getElementById('moreMenu').classList.add('show')}
+function syncMenuStates(){
+  syncNextCardMenu();syncLeadMenu();syncSemMenu();
+  const m=MAJORS.find(x=>x.key===state.selectedMajor);
+  const mj=document.getElementById('majorMenuState');if(mj)mj.textContent=m?m.short:'';
+  const FL={'all':'全部','专业必修课':'专必','专业选修课':'专选','公共必修课':'公必','公共选修课':'公选'};
+  const fl=document.getElementById('filterMenuState');if(fl)fl.textContent=FL[state.filterType]||'全部';
+  const ft=document.getElementById('fontMenuState');if(ft)ft.textContent=Math.round(state.fontSize*100)+'%';
+  const cl=document.getElementById('colorMenuState');if(cl)cl.textContent=state.colorMode==='white'?'白色':'彩色';
+}
 function closeMoreMenu(){document.getElementById('moreMenu').classList.remove('show')}
 function switchToWeb(){
   closeMoreMenu();
@@ -2833,7 +2894,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.15'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.16'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -2850,7 +2911,6 @@ function applyRemoteData(d){
   // 学期注册表远程下发（站点发新学期无需打包），字段齐全才采信
   if(d&&Array.isArray(d.semesters)&&d.semesters.length&&d.semesters.every(s=>s&&s.id&&s.name&&s.type&&s.start)){
     SEMESTERS=d.semesters;
-    const sel=document.getElementById('semSelect');if(sel)sel.innerHTML='';
   }
   applySemester();
   // 新学期换专业列表时跟着站点走（字段齐全才采信）；原选中专业不存在时回落第一项
@@ -2892,13 +2952,20 @@ function isNewer(a,b){
   }
   return false;
 }
-function updateSyncTip(r){
-  const el=document.getElementById('syncTip');
-  if(!el)return;
-  // 正常同步成功就不显示（常驻文字没必要也不好看），只在离线回退时提示
-  if(!r||r.source==='remote'){el.textContent='';return}
-  if(r.source==='cache'){el.textContent='离线 · 上次缓存课表'}
-  else{el.textContent='离线 · 内置课表'}
+let lastSyncResult=null;
+function updateSyncTip(r){lastSyncResult=r;renderSyncTip()}
+// 提示条统一出口：假期倒计时 > 离线回退 > 清空。
+// 旧实现只在写入侧判断「非学期才写」，教学学期时从不清理——
+// 导致「选寒假 → 切回自动」后倒计时文字残留。现在每次渲染都重算。
+function renderSyncTip(){
+  const el=document.getElementById('syncTip');if(!el)return;
+  const sem=currentSem();
+  if(sem.type!=='term'){
+    const days=Math.max(0,Math.ceil((state.semesterStart.getTime()-Date.now())/864e5));
+    el.textContent='🏖 '+sem.name+'中 · 距开学约 '+days+' 天';return;
+  }
+  if(!lastSyncResult||lastSyncResult.source==='remote'){el.textContent='';return}
+  el.textContent=lastSyncResult.source==='cache'?'离线 · 上次缓存课表':'离线 · 内置课表';
 }
 function checkUpdate(){
   closeMoreMenu();
@@ -3021,7 +3088,7 @@ function esc(s){
      2) 处于单日列表视图 → 回到周课表
      3) 都没有 → 返回 false，交给原生退出
    用固定 id 列表而不是 class 选择器：这些弹层全部靠 class 'show' 切换，显式列表更可控也更省性能。 */
-const BACK_LAYERS=['confirmBox','scopeModal','webMode','moreMenu','majorModal','searchModal','filterModal','colorModal','fontModal','detailModal','addModal','overrideModal','adjustModal','sugModal','petPanel'];
+const BACK_LAYERS=['confirmBox','scopeModal','webMode','moreMenu','majorModal','semModal','searchModal','filterModal','colorModal','fontModal','detailModal','addModal','overrideModal','adjustModal','sugModal','petPanel'];
 window.__feikeBack=function(){
   try{
     for(let i=BACK_LAYERS.length-1;i>=0;i--){
@@ -3133,5 +3200,3 @@ document.addEventListener('DOMContentLoaded',init);
 </div>
 </body>
 </html>
-
-<style>.sem-select{margin-top:4px;width:100%;font-size:11px;padding:3px 6px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text-sub)}</style>

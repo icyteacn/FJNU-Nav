@@ -24,36 +24,69 @@ const customEvents = ref([])
 const events = computed(() => [...(version.value?.events || []), ...customEvents.value])
 function persistCustom() { try { localStorage.setItem('fjnu_schedule_custom', JSON.stringify(customEvents.value)) } catch {} }
 const showAddEvent = ref(false)
-const evtForm = ref({ topic: '', date: '', time: '', endTime: '', location: '', category: 'other', desc: '', remind: true })
-function openAddEvent() {
+const editingId = ref(null)
+const evtForm = ref({ topic: '', date: '', time: '', endTime: '', location: '', category: 'other', desc: '', remind: true, leadMin: 0 })
+function localToday() {
   const t = new Date()
-  evtForm.value = { topic: '', date: t.toISOString().slice(0, 10), time: '09:00', endTime: '', location: '', category: 'other', desc: '', remind: true }
+  return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0')
+}
+function removeLinkedReminder(evtId) {
+  try {
+    const KEY = 'nav_agent_reminders'
+    const list = JSON.parse(localStorage.getItem(KEY) || '[]')
+    localStorage.setItem(KEY, JSON.stringify(list.filter(r => r.id !== 'sc-' + evtId)))
+  } catch {}
+}
+function openAddEvent() {
+  editingId.value = null
+  evtForm.value = { topic: '', date: localToday(), time: '09:00', endTime: '', location: '', category: 'other', desc: '', remind: true, leadMin: 0 }
+  showAddEvent.value = true
+}
+function openEditEvent(e) {
+  editingId.value = e.id
+  const startT = (e.time || '').split('-')[0] || e.time || '09:00'
+  evtForm.value = {
+    topic: e.topic || '', date: e.date || localToday(), time: startT,
+    endTime: e.endTime && e.endTime !== startT ? e.endTime : '',
+    location: e.location === '待定' ? '' : (e.location || ''),
+    category: e.category || 'other', desc: e.desc || '', remind: e.remind !== false, leadMin: e.leadMin || 0
+  }
   showAddEvent.value = true
 }
 function saveCustomEvent() {
   const f = evtForm.value
   if (!f.topic.trim() || !f.date || !f.time) return
-  const timeStr = f.endTime && f.endTime !== f.time ? `${f.time}-${f.endTime}` : f.time
+  const startTs = new Date(f.date + 'T' + f.time).getTime()
+  if (Number.isNaN(startTs)) return
+  const endTs = f.endTime ? new Date(f.date + 'T' + f.endTime).getTime() : startTs
+  const endOk = f.endTime && !Number.isNaN(endTs) && endTs > startTs ? f.endTime : ''
+  const timeStr = endOk ? `${f.time}-${endOk}` : f.time
+  const isEdit = !!editingId.value
   const ev = {
-    id: 'custom-' + Date.now().toString(36),
+    id: isEdit ? editingId.value : 'custom-' + Date.now().toString(36),
     custom: true,
     date: f.date,
     time: timeStr,
-    endTime: f.endTime || f.time,
+    endTime: endOk || f.time,
     topic: f.topic.trim(),
     location: f.location.trim() || '待定',
     audience: '自定义',
     category: f.category || 'other',
     importance: 'high',
-    desc: f.desc.trim()
+    desc: f.desc.trim(),
+    remind: !!f.remind,
+    leadMin: Math.max(0, Math.min(1440, Number(f.leadMin) || 0))
   }
-  customEvents.value = [...customEvents.value, ev]
+  removeLinkedReminder(ev.id)
+  customEvents.value = isEdit
+    ? customEvents.value.map(e => e.id === ev.id ? ev : e)
+    : [...customEvents.value, ev]
   persistCustom()
   if (f.remind) {
     try {
       const KEY = 'nav_agent_reminders'
       const list = JSON.parse(localStorage.getItem(KEY) || '[]')
-      list.push({ id: 'sc-' + ev.id, title: '📅 ' + ev.topic, ts: new Date(f.date + 'T' + f.time).getTime(), repeat: 'once', createdAt: Date.now() })
+      list.push({ id: 'sc-' + ev.id, title: '📅 ' + ev.topic, ts: startTs - ev.leadMin * 60000, repeat: 'once', createdAt: Date.now() })
       localStorage.setItem(KEY, JSON.stringify(list))
     } catch { /* 提醒写入失败不影响日程保存 */ }
   }
@@ -61,6 +94,7 @@ function saveCustomEvent() {
 }
 function removeCustomEvent(id) {
   customEvents.value = customEvents.value.filter(e => e.id !== id)
+  removeLinkedReminder(id)
   persistCustom()
 }
 
@@ -81,7 +115,7 @@ onUnmounted(() => clearInterval(tick))
 
 /* 时间预览功能 */
 const previewMode = ref(false)
-const previewDate = ref(new Date().toISOString().slice(0, 10))
+const previewDate = ref(localToday())
 const previewTime = ref('09:00')
 const effectiveNow = computed(() => {
   if (!previewMode.value) return now.value
@@ -358,6 +392,7 @@ function goClassroomNav(loc) {
             <div class="tl-sub">
               <span class="tl-audience">👥 {{ e.audience }}</span>
               <span v-if="e.speaker && e.speaker !== '/'" class="tl-speaker">🎤 {{ e.speaker }}</span>
+              <button v-if="e.custom" class="tl-del" @click.stop="openEditEvent(e)" title="编辑该自定义日程">编辑</button>
               <button v-if="e.custom" class="tl-del" @click.stop="removeCustomEvent(e.id)" title="删除该自定义日程">删除</button>
             </div>
           </div>
@@ -457,7 +492,7 @@ function goClassroomNav(loc) {
   <div v-if="showAddEvent" class="overlay" @click.self="showAddEvent = false">
     <div class="overlay-card detail-card">
       <div class="detail-head">
-        <span class="detail-cat" style="background:var(--primary)">📅 添加我的日程</span>
+        <span class="detail-cat" style="background:var(--primary)">📅 {{ editingId ? '编辑我的日程' : '添加我的日程' }}</span>
         <button class="overlay-close" @click="showAddEvent = false">✕</button>
       </div>
       <div class="evt-form">
@@ -475,8 +510,17 @@ function goClassroomNav(loc) {
         <label class="evt-label">地点<input v-model="evtForm.location" class="input" placeholder="例：计网楼 511 / 线上" maxlength="30" /></label>
         <label class="evt-label">备注<textarea v-model="evtForm.desc" class="input" rows="2" placeholder="需要带什么、注意什么…" maxlength="120"></textarea></label>
         <label class="evt-remind"><input v-model="evtForm.remind" type="checkbox" /> 到点提醒（写入提醒中心，页内弹窗+提示音）</label>
+        <label v-if="evtForm.remind" class="evt-label">提前量
+          <select v-model.number="evtForm.leadMin" class="input">
+            <option :value="0">准时提醒</option>
+            <option :value="10">提前 10 分钟</option>
+            <option :value="30">提前 30 分钟</option>
+            <option :value="60">提前 1 小时</option>
+            <option :value="1440">提前 1 天</option>
+          </select>
+        </label>
         <div class="detail-actions">
-          <button class="btn accent" style="width:100%;" :disabled="!evtForm.topic.trim() || !evtForm.date || !evtForm.time" @click="saveCustomEvent">保存日程</button>
+          <button class="btn accent" style="width:100%;" :disabled="!evtForm.topic.trim() || !evtForm.date || !evtForm.time" @click="saveCustomEvent">{{ editingId ? '保存修改' : '保存日程' }}</button>
         </div>
       </div>
     </div>

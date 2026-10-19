@@ -13,6 +13,7 @@ import {
   formatWeekdayType,
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
   getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
+  SEMESTERS, getActiveSemester, nextTermAfter, getSemesterStart,
   loadUserOverrides, saveUserOverride,
   setUserAdjustKey, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, loadUserAdjustments, clearUserAdjustments,
 } from '../data/classSchedule.js'
@@ -44,7 +45,34 @@ const emit = defineEmits(['open', 'back'])
 
 const selectedMajor = ref(localStorage.getItem('fjnu_selected_major') || 'cs-master')
 watch(selectedMajor, v => { try { localStorage.setItem('fjnu_selected_major', v) } catch {} })
-const selectedWeek = ref(getCurrentWeek())
+
+/* 学期选择：'auto' 按当前日期自动匹配注册表；假期学期回退到下一教学学期渲染，
+   并在顶栏提示距开学天数（与独立页/App 同一套 SEMESTERS 数据源） */
+const selectedSemesterId = ref(localStorage.getItem('fjnu_semester') || 'auto')
+watch(selectedSemesterId, v => { try { localStorage.setItem('fjnu_semester', v) } catch {} })
+const activeSemester = computed(() => {
+  if (selectedSemesterId.value !== 'auto') {
+    const s = SEMESTERS.find(x => x.id === selectedSemesterId.value)
+    if (s) return s
+  }
+  return getActiveSemester()
+})
+const currentTerm = computed(() => {
+  const s = activeSemester.value
+  if (s.type === 'term') return s
+  return nextTermAfter(s) || [...SEMESTERS].reverse().find(x => x.type === 'term') || s
+})
+const weeksCap = computed(() => currentTerm.value.weeks || 18)
+const vacationDays = computed(() => {
+  const s = activeSemester.value
+  if (s.type === 'term') return 0
+  return Math.max(0, Math.ceil((getSemesterStart(currentTerm.value).getTime() - Date.now()) / 864e5))
+})
+function onSemesterChange() {
+  selectedWeek.value = getCurrentWeek(new Date(), currentTerm.value)
+}
+
+const selectedWeek = ref(getCurrentWeek(new Date(), currentTerm.value))
 const selectedCourse = ref(null)
 const showDetail = ref(false)
 const viewMode = ref('grid')
@@ -66,7 +94,8 @@ onUnmounted(() => clearInterval(tick))
 
 const weekdayHeaders = computed(() => WEEKDAYS)
 const todayWeekday = computed(() => { const d = now.value.getDay(); return d === 0 ? 7 : d })
-const todayDateStr = computed(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })
+const todayDateStr = computed(() => formatLocalDate(new Date()))
+function formatLocalDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 
 const allCourses = computed(() => {
   scheduleRevision.value // 远程课表数据替换后重算（COURSES 是模块数组，Vue 不追踪其内容变化）
@@ -247,16 +276,16 @@ function isCellMerged(weekday, period) {
   }
   return displayCourses.value.some(c => c.weekday === effectiveWd && period > c.startPeriod && period <= c.endPeriod)
 }
-function isToday(weekday) { if (!highlightToday.value) return false; const date = getDateInWeek(selectedWeek.value, weekday); return date.toISOString().slice(0, 10) === todayDateStr.value }
+function isToday(weekday) { if (!highlightToday.value) return false; const date = getDateInWeek(selectedWeek.value, weekday, currentTerm.value); return formatLocalDate(date) === todayDateStr.value }
 function getCourseColor(course, alpha = 1) { if (!course) return 'transparent'; const hex = course.color || '#1565c0'; return `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${alpha})` }
-function getDateText(weekday) { return formatDateShort(getDateInWeek(selectedWeek.value, weekday)) }
-function getWeekRange() { return getWeekDateRange(selectedWeek.value) }
+function getDateText(weekday) { return formatDateShort(getDateInWeek(selectedWeek.value, weekday, currentTerm.value)) }
+function getWeekRange() { return getWeekDateRange(selectedWeek.value, currentTerm.value) }
 function getWeekTypeInfo(course) { return formatWeekdayType(course.weekdayType) }
 function openCourseDetail(course) { selectedCourse.value = course; showDetail.value = true }
 
 /** 日期字符串 YYYY-MM-DD */
 function dateStrOf(weekday) {
-  const d = getDateInWeek(selectedWeek.value, weekday)
+  const d = getDateInWeek(selectedWeek.value, weekday, currentTerm.value)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 /** 获取某天的节假日信息 */
@@ -403,10 +432,10 @@ function jumpToCourse(course) {
   if (course._incomingAdj) {
     // 调入的课：按目标日期定位周次与列
     const destDate = new Date(course._incomingAdj.destDate.replace(/-/g, '/'))
-    const diffDays = Math.floor((destDate - new Date('2026/08/31')) / 86400000)
-    selectedWeek.value = Math.max(1, Math.min(18, Math.floor(diffDays / 7) + 1))
+    const diffDays = Math.floor((destDate - getSemesterStart(currentTerm.value)) / 86400000)
+    selectedWeek.value = Math.max(1, Math.min(weeksCap.value, Math.floor(diffDays / 7) + 1))
   } else {
-    for (let w = 1; w <= 18; w++) { if (isCourseInWeek(course, w)) { selectedWeek.value = w; break } }
+    for (let w = 1; w <= weeksCap.value; w++) { if (isCourseInWeek(course, w)) { selectedWeek.value = w; break } }
   }
   if (showSemester.value) showSemester.value = false
   showDetail.value = false
@@ -425,9 +454,9 @@ function jumpToOverride(weekday, period) {
   const o = getOverride(weekday, period)
   if (!o) return
   const destDate = new Date(o.destDate + 'T00:00:00')
-  const semesterStart = new Date(2026, 7, 31)
+  const semesterStart = getSemesterStart(currentTerm.value)
   const diffDays = Math.floor((destDate - semesterStart) / 86400000)
-  const destWeek = Math.max(1, Math.min(18, Math.floor(diffDays / 7) + 1))
+  const destWeek = Math.max(1, Math.min(weeksCap.value, Math.floor(diffDays / 7) + 1))
   const destWd = destDate.getDay() === 0 ? 7 : destDate.getDay()
   const destPeriod = o.destPeriods[0]
   selectedWeek.value = destWeek
@@ -467,7 +496,7 @@ async function doSave() {
   } catch (e) { console.error('截图失败:', e) }
 }
 
-const weekShortcuts = computed(() => Array.from({ length: 18 }, (_, i) => ({ value: i + 1, dateRange: getWeekDateRange(i + 1) })))
+const weekShortcuts = computed(() => Array.from({ length: weeksCap.value }, (_, i) => ({ value: i + 1, dateRange: getWeekDateRange(i + 1, currentTerm.value) })))
 const currentMajor = computed(() => MAJORS.find(m => m.key === selectedMajor.value))
 
 // ========== 自定义课程编辑 ==========
@@ -734,7 +763,7 @@ function openAdjustModal(course) {
 function doSaveAdjust() {
   const f = adjustForm.value, c = f.course
   if (!c) return
-  f.destWeek = Math.max(1, Math.min(18, Number(f.destWeek) || selectedWeek.value))
+  f.destWeek = Math.max(1, Math.min(weeksCap.value, Number(f.destWeek) || selectedWeek.value))
   if (f.destEnd < f.destStart) f.destEnd = f.destStart
   const srcDate = dateStrOf(c.weekday)
   // 同一位置先清掉旧的用户调课（避免重复条目叠加）
@@ -817,7 +846,7 @@ function goWhatToEat() {
 }
 
 onMounted(() => {
-  selectedWeek.value = getCurrentWeek()
+  selectedWeek.value = getCurrentWeek(new Date(), currentTerm.value)
   setUserAdjustKey((props.storagePrefix || '') + 'fjnu_adjustments')
   refreshSchedule()
   nextTick(() => { mounted.value = true })
@@ -874,9 +903,16 @@ onMounted(() => {
       <div class="week-nav">
         <button class="week-nav-btn" :disabled="selectedWeek <= 1" @click="selectedWeek--">‹</button>
         <div class="week-current"><span class="week-num">第{{ selectedWeek }}周</span><span class="week-date">{{ getWeekRange() }}</span></div>
-        <button class="week-nav-btn" :disabled="selectedWeek >= 18" @click="selectedWeek++">›</button>
+        <button class="week-nav-btn" :disabled="selectedWeek >= weeksCap" @click="selectedWeek++">›</button>
       </div>
       <div class="week-scroll"><button v-for="w in weekShortcuts" :key="w.value" class="week-chip" :class="{ active: selectedWeek === w.value }" @click="selectedWeek = w.value"><span class="chip-week">{{ w.value }}</span><span class="chip-date">{{ w.dateRange }}</span></button></div>
+      <div class="sem-row">
+        <select class="sem-pick" v-model="selectedSemesterId" @change="onSemesterChange" title="切换学期">
+          <option value="auto">🗓 自动（{{ getActiveSemester().name }}）</option>
+          <option v-for="s in SEMESTERS" :key="s.id" :value="s.id">{{ s.name }}</option>
+        </select>
+        <span v-if="vacationDays" class="vac-chip">🏖 {{ activeSemester.name }}中 · 距开学约 {{ vacationDays }} 天，预览 {{ currentTerm.name }}</span>
+      </div>
     </div>
 
     <!-- 控制行 -->
@@ -1596,4 +1632,5 @@ tr[data-period="9"] .course-cell { border-top: 1px solid var(--border); }
   .add-footer { padding: 12px 16px; }
   .select-btn.sm { padding: 5px 6px; font-size: 11px; min-width: 26px; }
 }
+.sem-row{margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sem-pick{padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text-sub);font-size:12px}.vac-chip{font-size:12px;color:#b45309;background:#fef3c7;border:1px solid #fde68a;padding:3px 10px;border-radius:999px}html[data-theme=dark] .vac-chip{color:#fcd34d;background:#3a2d12;border-color:#78350f}
 </style>

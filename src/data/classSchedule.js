@@ -324,8 +324,8 @@ export function getWeekStartDate(week, sem) {
 /**
  * 获取指定教学周的周日日期
  */
-export function getWeekEndDate(week) {
-  const date = getWeekStartDate(week)
+export function getWeekEndDate(week, sem) {
+  const date = getWeekStartDate(week, sem)
   date.setDate(date.getDate() + 6)
   return date
 }
@@ -333,17 +333,17 @@ export function getWeekEndDate(week) {
 /**
  * 获取指定教学周的日期范围
  */
-export function getWeekDateRange(week) {
-  const start = getWeekStartDate(week)
-  const end = getWeekEndDate(week)
+export function getWeekDateRange(week, sem) {
+  const start = getWeekStartDate(week, sem)
+  const end = getWeekEndDate(week, sem)
   return `${start.getMonth() + 1}.${start.getDate()}-${end.getMonth() + 1}.${end.getDate()}`
 }
 
 /**
  * 获取指定教学周、指定周几的日期
  */
-export function getDateInWeek(week, weekday) {
-  const monday = getWeekStartDate(week)
+export function getDateInWeek(week, weekday, sem) {
+  const monday = getWeekStartDate(week, sem)
   const date = new Date(monday)
   date.setDate(date.getDate() + (weekday - 1))
   return date

@@ -113,6 +113,7 @@ FJNU-Nav/
 
 | 版本 | 说明 |
 | --- | --- |
+| **v1.7.21** | Agent 新工具（patch，与 QDU v1.7.11 同源）：内联计算器（词法白名单安全求值，零 eval）、帮我做决定（A还是B/抛硬币/掷骰子/抽签）、快速提醒（N分钟后/今晚X点→提醒中心，写操作需确认）；Ctrl+K/Alt+A 全局唤起悬浮舱；番茄钟直达意图。 |
 | **v1.7.0** | **Agent 智能升级 + 存储键中立化（minor）**：①复合指令——`splitCompound` 识别「顺便/然后/接着/还有/并且/以及」把一句话拆成 2~3 段，逐段强命中且**全部为只读免确认工作流**时自动连续执行并返回多结果卡（写操作/需澄清一律不复合，转常规澄清）；②时段感知建议——问候空态按当前时段推荐吃饭/空教室/明日课程等 chips；③近似意图召回——`nearIntents` 用 bigram 重合度给「猜你想说」候选；④未命中话术本机记录（`nav_agent_miss`，最多 60 条仅本地）并在 Agent 看板展示 Top5，便于补话术。⑤本地存储键统一改 `nav_*` 中立命名 + `storageMigrate` 启动自动迁移（旧数据不丢）；界面残留的异校文案（演示岗位地点、ICS PRODID、换肤预设、维护页文本等）清理。 |
 | **v1.6.11** | 账单导入修复（patch，与 QDU v1.6.21 同源）：`billImport.js` 原静态引入 `pdfjs-dist` 且 worker 指向 CDN **3.11.174**，而主库为 **v6.3.289**（v6 以 `new Worker(url,{type:'module'})` 加载，版本/协议不匹配），中行 PDF 账单解析不可靠。改为 PDF 分支**按需动态 import**（新增 `src/utils/pdfjsLoader.js`，Vite `?url` 打包同版本本地 worker）。Budget 分包 605KB→120KB。 |
 | **v1.6.10** | **维护知识 skill 化（工程 patch）**：AGENTS.md 操作章节（架构速览/数据链路/维护清单 8 步）+ 从历史日志提炼的课表调课套路、APK 打包签名，拆入项目专属技能 `skills/fjnu-nav-maintainer/`（SKILL.md 路由 + 4 篇 references，随 git 分发、`opencode.jsonc` 指向加载，按需读取省上下文）；AGENTS.md 瘦身为「项目简介 + 红线 + 更新日志」常驻三段并指向技能。 |

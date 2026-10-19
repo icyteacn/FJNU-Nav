@@ -32,6 +32,9 @@ function openFav(f) {
 }
 const { lang, t } = useI18n()
 
+/** 首页网格只放实用功能——「关于」组（换校向导/移植/演示向页面）只进分类面板最底分组 */
+const homeApps = apps.filter((a) => a.group !== '关于')
+
 /** 应用标题/简介：英文模式优先英文（无则回落中文） */
 function appTitle(a) {
   try { return (lang.value === 'en' && a.titleEn) ? a.titleEn : a.title } catch { return a.title }
@@ -240,7 +243,7 @@ function askAgent(text) {
       </div>
       <div v-else-if="!keyword.trim()" class="tile-grid" data-tour="app-grid">
         <button
-          v-for="a in apps"
+          v-for="a in homeApps"
           :key="a.id"
           class="service-tile"
           @click="emit('open', a.id)"

@@ -17,7 +17,52 @@ function openApp(id) { emit('open', id) }
 
 const versionId = ref(SCHEDULE_VERSIONS[0]?.id || '')
 const version = computed(() => SCHEDULE_VERSIONS.find(v => v.id === versionId.value) || SCHEDULE_VERSIONS[0])
-const events = computed(() => version.value?.events || [])
+
+/* 用户自定义日程：与官方日程同构（多一个 custom 标记），存本机 fjnu_schedule_custom，
+   勾选「到点提醒」会同时写入提醒中心（nav_agent_reminders，到点页内弹窗+提示音） */
+const customEvents = ref([])
+const events = computed(() => [...(version.value?.events || []), ...customEvents.value])
+function persistCustom() { try { localStorage.setItem('fjnu_schedule_custom', JSON.stringify(customEvents.value)) } catch {} }
+const showAddEvent = ref(false)
+const evtForm = ref({ topic: '', date: '', time: '', endTime: '', location: '', category: 'other', desc: '', remind: true })
+function openAddEvent() {
+  const t = new Date()
+  evtForm.value = { topic: '', date: t.toISOString().slice(0, 10), time: '09:00', endTime: '', location: '', category: 'other', desc: '', remind: true }
+  showAddEvent.value = true
+}
+function saveCustomEvent() {
+  const f = evtForm.value
+  if (!f.topic.trim() || !f.date || !f.time) return
+  const timeStr = f.endTime && f.endTime !== f.time ? `${f.time}-${f.endTime}` : f.time
+  const ev = {
+    id: 'custom-' + Date.now().toString(36),
+    custom: true,
+    date: f.date,
+    time: timeStr,
+    endTime: f.endTime || f.time,
+    topic: f.topic.trim(),
+    location: f.location.trim() || '待定',
+    audience: '自定义',
+    category: f.category || 'other',
+    importance: 'high',
+    desc: f.desc.trim()
+  }
+  customEvents.value = [...customEvents.value, ev]
+  persistCustom()
+  if (f.remind) {
+    try {
+      const KEY = 'nav_agent_reminders'
+      const list = JSON.parse(localStorage.getItem(KEY) || '[]')
+      list.push({ id: 'sc-' + ev.id, title: '📅 ' + ev.topic, ts: new Date(f.date + 'T' + f.time).getTime(), repeat: 'once', createdAt: Date.now() })
+      localStorage.setItem(KEY, JSON.stringify(list))
+    } catch { /* 提醒写入失败不影响日程保存 */ }
+  }
+  showAddEvent.value = false
+}
+function removeCustomEvent(id) {
+  customEvents.value = customEvents.value.filter(e => e.id !== id)
+  persistCustom()
+}
 
 const catFilter = ref('')
 const selectedMajor = ref('')
@@ -50,6 +95,7 @@ onMounted(() => {
   if (sc) try { checked.value = new Set(JSON.parse(sc)) } catch {}
   const nd = nextEventDate(events.value)
   if (nd) expanded.value = nd
+  try { customEvents.value = JSON.parse(localStorage.getItem('fjnu_schedule_custom') || '[]') } catch { customEvents.value = [] }
 })
 
 function persistChecked() { try { localStorage.setItem('fjnu_schedule_checked', JSON.stringify([...checked.value])) } catch {} }
@@ -163,6 +209,13 @@ function goClassroomNav(loc) {
       <select v-model="versionId" class="ver-select">
         <option v-for="v in SCHEDULE_VERSIONS" :key="v.id" :value="v.id">{{ v.label }}（{{ v.createdAt }}）</option>
       </select>
+      <button class="add-evt-btn" @click="openAddEvent">＋ 我的日程</button>
+    </div>
+  </div>
+  <div v-if="SCHEDULE_VERSIONS.length <= 1" class="panel" style="margin-bottom:12px;">
+    <div class="ver-row">
+      <button class="add-evt-btn" @click="openAddEvent">＋ 添加我的日程</button>
+      <span class="archive-hint" style="margin:0">自定义日程只存本机，可挂提醒</span>
     </div>
   </div>
 
@@ -293,6 +346,7 @@ function goClassroomNav(loc) {
             <div class="tl-topic">
               <span class="tl-imp">{{ impIcon(e.importance) }}</span>
               {{ e.topic }}
+              <span v-if="e.custom" class="tl-custom-badge">我的</span>
               <span v-if="e.pending" class="tl-pending">待定</span>
               <span v-if="getCD(e)" class="tl-cd-badge">⏱ {{ getCD(e) }}</span>
               <span v-if="getImminent(e)" class="tl-alert-badge">⚡即将开始</span>
@@ -304,6 +358,7 @@ function goClassroomNav(loc) {
             <div class="tl-sub">
               <span class="tl-audience">👥 {{ e.audience }}</span>
               <span v-if="e.speaker && e.speaker !== '/'" class="tl-speaker">🎤 {{ e.speaker }}</span>
+              <button v-if="e.custom" class="tl-del" @click.stop="removeCustomEvent(e.id)" title="删除该自定义日程">删除</button>
             </div>
           </div>
           <span class="tl-status" :class="statusCls(e)">{{ statusLabel(e) }}</span>
@@ -397,10 +452,49 @@ function goClassroomNav(loc) {
       </div>
     </div>
   </div>
+
+  <!-- 添加自定义日程 -->
+  <div v-if="showAddEvent" class="overlay" @click.self="showAddEvent = false">
+    <div class="overlay-card detail-card">
+      <div class="detail-head">
+        <span class="detail-cat" style="background:var(--primary)">📅 添加我的日程</span>
+        <button class="overlay-close" @click="showAddEvent = false">✕</button>
+      </div>
+      <div class="evt-form">
+        <label class="evt-label">标题<input v-model="evtForm.topic" class="input" placeholder="例：组会 / 交材料截止 / 复诊" maxlength="40" /></label>
+        <div class="evt-grid">
+          <label class="evt-label">日期<input v-model="evtForm.date" type="date" class="input" /></label>
+          <label class="evt-label">开始<input v-model="evtForm.time" type="time" class="input" /></label>
+          <label class="evt-label">结束（可空）<input v-model="evtForm.endTime" type="time" class="input" /></label>
+          <label class="evt-label">分类
+            <select v-model="evtForm.category" class="input">
+              <option v-for="(c, k) in EVENT_CATEGORIES" :key="k" :value="k">{{ c.icon }} {{ c.label }}</option>
+            </select>
+          </label>
+        </div>
+        <label class="evt-label">地点<input v-model="evtForm.location" class="input" placeholder="例：计网楼 511 / 线上" maxlength="30" /></label>
+        <label class="evt-label">备注<textarea v-model="evtForm.desc" class="input" rows="2" placeholder="需要带什么、注意什么…" maxlength="120"></textarea></label>
+        <label class="evt-remind"><input v-model="evtForm.remind" type="checkbox" /> 到点提醒（写入提醒中心，页内弹窗+提示音）</label>
+        <div class="detail-actions">
+          <button class="btn accent" style="width:100%;" :disabled="!evtForm.topic.trim() || !evtForm.date || !evtForm.time" @click="saveCustomEvent">保存日程</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
 .alert-banner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: var(--radius); margin-bottom: 12px; font-size: 13px; font-weight: 600; color: #92400e; animation: alertPulse 2s ease infinite; }
+.add-evt-btn { margin-left: auto; padding: 6px 14px; border-radius: 999px; border: none; background: var(--primary); color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.tl-custom-badge { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: rgba(21,101,192,.12); color: #1565c0; }
+html[data-theme='dark'] .tl-custom-badge { background: rgba(100,149,237,.18); color: #8ab4f8; }
+.tl-del { margin-left: auto; border: 1px solid var(--border); background: var(--card); color: var(--text-sub); font-size: 11px; padding: 2px 10px; border-radius: 999px; cursor: pointer; }
+.tl-del:hover { color: #dc2626; border-color: #dc2626; }
+.evt-form { display: flex; flex-direction: column; gap: 12px; padding: 14px 4px 0; }
+.evt-label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--text-sub); font-weight: 600; }
+.evt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.evt-remind { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+.evt-form .input:disabled { opacity: .5; }
 @keyframes alertPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,.3); } 50% { box-shadow: 0 0 0 8px rgba(251,191,36,0); } }
 .alert-icon { font-size: 18px; }
 

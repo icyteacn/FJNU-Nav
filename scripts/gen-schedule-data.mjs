@@ -16,7 +16,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
-import { COURSES, HOLIDAY_MAP, MAJORS, WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES, getWeekStartDate } from '../src/data/classSchedule.js'
+import { COURSES, HOLIDAY_MAP, MAJORS, WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES, SEMESTERS, getActiveSemester, nextTermAfter, getSemesterStart, getWeekStartDate } from '../src/data/classSchedule.js'
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DATA_DIR = path.join(ROOT, 'public', 'data')
@@ -49,7 +49,11 @@ function readJsonIfExists(file) {
 
 fs.mkdirSync(DATA_DIR, { recursive: true })
 
-const semesterStart = getWeekStartDate(1)
+const activeSemNow = getActiveSemester()
+// 顶层 legacy 字段（semesterStart/weeks/currentWeek）始终指向最近的教学学期，
+// 旧客户端在假期中也得到可渲染的周课表而非空表
+const termSem = activeSemNow.type === 'term' ? activeSemNow : (nextTermAfter(activeSemNow) || SEMESTERS.find(s => s.type === 'term'))
+const semesterStart = getSemesterStart(termSem)
 const semesterStartStr = `${semesterStart.getFullYear()}-${String(semesterStart.getMonth() + 1).padStart(2, '0')}-${String(semesterStart.getDate()).padStart(2, '0')}`
 
 // 内容哈希：只对会改变课表表现的字段做 hash（时间戳不参与）
@@ -60,17 +64,21 @@ const prevFull = readJsonIfExists(FULL_OUT)
 const prevLegacy = readJsonIfExists(LEGACY_OUT)
 const unchanged = prevFull && prevFull.version === version
 const updatedAt = unchanged ? prevFull.updatedAt : new Date().toISOString()
-const semester = `${semesterStart.getFullYear()}-${semesterStart.getFullYear() + 1}学年第一学期`
+const activeSem = getActiveSemester()
+const semester = activeSem.name
 
 const full = {
   schema: 2,
   version,
   appVersion: readApkVersion(),
   semester,
+  semesterId: activeSem.id,
+  semesterType: activeSem.type,
+  semesters: SEMESTERS,
   semesterStart: semesterStartStr,
-  weeks: 18,
+  weeks: termSem.weeks || 18,
   // 直接用本地零点的 Date 对象（new Date('YYYY-MM-DD') 会走 UTC，周一凌晨会少算一周）
-  currentWeek: Math.max(1, Math.min(18, Math.floor((Date.now() - semesterStart.getTime()) / (7 * 86400000)) + 1)),
+  currentWeek: Math.max(1, Math.min(termSem.weeks || 18, Math.floor((Date.now() - semesterStart.getTime()) / (7 * 86400000)) + 1)),
   updatedAt,
   counts: { courses: COURSES.length, adjustments: Object.values(HOLIDAY_MAP).filter(v => v.overrides).length },
   majors: MAJORS,

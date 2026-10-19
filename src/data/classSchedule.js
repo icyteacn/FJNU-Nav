@@ -258,18 +258,65 @@ export function isCourseInWeek(course, week) {
 // 东八区每周一 00:00-08:00 会把周次少算一周）
 const SEMESTER_START = new Date(2026, 7, 31)
 
-export function getCurrentWeek(now = new Date()) {
+/* ── 学期注册表（通用课表地基）──────────────────────────────
+ * type: 'term' 教学学期（有周课表）| 'winter_break' | 'summer_break'（假期模式）
+ * term 只需 start+weeks（end 推导）；break 用 start+end（窗口由相邻学期推导估算，
+ * estimate:true 表示官方校历公布后需复核修订，不视为权威放假日期） */
+export const SEMESTERS = [
+  { id: '2026-2027-1', name: '2026-2027学年第一学期', type: 'term', start: '2026-08-31', weeks: 18 },
+  { id: '2027-winter', name: '2027年寒假', type: 'winter_break', start: '2027-01-05', end: '2027-02-28', estimate: true },
+  { id: '2026-2027-2', name: '2026-2027学年第二学期', type: 'term', start: '2027-03-01', weeks: 18, estimate: true },
+  { id: '2027-summer', name: '2027年暑假', type: 'summer_break', start: '2027-07-05', end: '2027-08-29', estimate: true },
+]
+
+export function parseLocalDate(s) {
+  const [y, m, d] = String(s).split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1)
+}
+
+/** 学期结束时刻（不含）：term = start + weeks*7d；break = end 次日零点 */
+export function semesterEndDate(s) {
+  if (s.type === 'term') {
+    const d = parseLocalDate(s.start)
+    d.setDate(d.getDate() + (s.weeks || 18) * 7)
+    return d
+  }
+  const d = parseLocalDate(s.end || s.start)
+  d.setDate(d.getDate() + 1)
+  return d
+}
+
+/** 按日期自动选学期；落在区间外时取最近的相邻学期 */
+export function getActiveSemester(now = new Date(), list = SEMESTERS) {
+  const t = now.getTime()
+  for (const s of list) {
+    if (t >= parseLocalDate(s.start).getTime() && t < semesterEndDate(s).getTime()) return s
+  }
+  return t < parseLocalDate(list[0].start).getTime() ? list[0] : list[list.length - 1]
+}
+
+/** 某学期下一教学学期（假期倒计时用） */
+export function nextTermAfter(s, list = SEMESTERS) {
+  const i = list.indexOf(s)
+  for (let k = i + 1; k < list.length; k++) if (list[k].type === 'term') return list[k]
+  return null
+}
+
+export function getSemesterStart(sem) { return sem ? parseLocalDate(sem.start) : new Date(SEMESTER_START) }
+
+export function getCurrentWeek(now = new Date(), sem) {
+  const start = getSemesterStart(sem)
   const day = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const diffDays = Math.floor((day - SEMESTER_START) / 86400000)
+  const diffDays = Math.floor((day - start) / 86400000)
   const week = Math.floor(diffDays / 7) + 1
-  return Math.max(1, Math.min(18, week))
+  return Math.max(1, Math.min(sem?.weeks || 18, week))
 }
 
 /**
  * 获取指定教学周的周一日期
  */
-export function getWeekStartDate(week) {
-  const date = new Date(SEMESTER_START)
+export function getWeekStartDate(week, sem) {
+  const date = getSemesterStart(sem)
   date.setDate(date.getDate() + (week - 1) * 7)
   return date
 }

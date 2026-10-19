@@ -402,6 +402,7 @@
             <button class="view-btn" id="viewToggleBtn" onclick="toggleView()" title="切换 表格 / 单日列表">📋</button>
           </div>
           <div class="week-nav-major" id="majorLabel">计科学硕</div>
+          <select class="sem-select" id="semSelect" onchange="onSemesterChange(this.value)" title="切换学期"></select>
           <div class="sync-tip" id="syncTip"></div>
         </div>
         <button class="week-nav-btn" onclick="nextWeek()">›</button>
@@ -1006,8 +1007,65 @@ let state = {
   selectedMajor:'cs-master',selectedWeek:1,colorMode:'color',fontSize:1,
   filterType:'all',customCourses:[],deletedCourses:[],dayOverrides:{},
   semesterStart:parseLocalDate('2026-08-31'),mode:'native',
-  viewMode:'grid',listDay:1,showNextCard:true
+  viewMode:'grid',listDay:1,showNextCard:true,semesterId:'auto',weeksCap:18
 };
+
+/* 学期注册表（与 src/data/classSchedule.js 同源；远程 schedule-data.json 的
+   semesters 字段会覆盖本表——站点发新学期无需打包 APK）
+   type: 'term' 教学学期 | 'winter_break'/'summer_break' 假期（显示倒计时模式） */
+let SEMESTERS=[
+  {id:'2026-2027-1',name:'2026-2027学年第一学期',type:'term',start:'2026-08-31',weeks:18},
+  {id:'2027-winter',name:'2027年寒假',type:'winter_break',start:'2027-01-05',end:'2027-02-28'},
+  {id:'2026-2027-2',name:'2026-2027学年第二学期',type:'term',start:'2027-03-01',weeks:18},
+  {id:'2027-summer',name:'2027年暑假',type:'summer_break',start:'2027-07-05',end:'2027-08-29'}
+];
+function semEnd(s){
+  if(s.type==='term'){const d=parseLocalDate(s.start);d.setDate(d.getDate()+(s.weeks||18)*7);return d}
+  const d=parseLocalDate(s.end||s.start);d.setDate(d.getDate()+1);return d;
+}
+function autoSemester(now){
+  const t=(now||new Date()).getTime();
+  for(const s of SEMESTERS){if(t>=parseLocalDate(s.start).getTime()&&t<semEnd(s).getTime())return s}
+  return t<parseLocalDate(SEMESTERS[0].start).getTime()?SEMESTERS[0]:SEMESTERS[SEMESTERS.length-1];
+}
+function currentSem(){
+  if(state.semesterId&&state.semesterId!=='auto'){
+    const s=SEMESTERS.find(x=>x.id===state.semesterId);if(s)return s;
+  }
+  return autoSemester();
+}
+/** 应用学期：term → 起点+周数上限切换到该学期；假期 → 预览下一教学学期并显示倒计时条 */
+function applySemester(){
+  const sem=currentSem();
+  let term=sem;
+  if(sem.type!=='term'){
+    const i=SEMESTERS.indexOf(sem);term=null;
+    for(let k=i+1;k<SEMESTERS.length;k++){if(SEMESTERS[k].type==='term'){term=SEMESTERS[k];break}}
+    if(!term)for(let k=SEMESTERS.length-1;k>=0;k--){if(SEMESTERS[k].type==='term'){term=SEMESTERS[k];break}}
+    if(!term)term=sem;
+  }
+  state.semesterStart=parseLocalDate(term.start);
+  state.weeksCap=term.weeks||18;
+  if(state.selectedWeek>state.weeksCap)state.selectedWeek=state.weeksCap;
+  if(state.selectedWeek<1)state.selectedWeek=1;
+  const sel=document.getElementById('semSelect');
+  if(sel)sel.value=state.semesterId;
+}
+function onSemesterChange(id){
+  state.semesterId=id||'auto';
+  try{localStorage.setItem('sche_semester',state.semesterId)}catch(e){}
+  applySemester();
+  const sem=currentSem();
+  if(sem.type==='term')state.selectedWeek=getCurrentWeek();
+  saveState();render();
+}
+function renderSemesterBar(){
+  const sel=document.getElementById('semSelect');
+  if(sel&&!sel.options.length){
+    sel.innerHTML='<option value="auto">🗓 自动（当前学期）</option>'+SEMESTERS.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');
+    sel.value=state.semesterId;
+  }
+}
 
 // ==================== localStorage ====================
 function saveState(){
@@ -1041,6 +1099,7 @@ function loadState(){
   try{state.deletedCourses=JSON.parse(localStorage.getItem('sche_deleted'))||[]}catch(e){state.deletedCourses=[]}
   try{state.dayOverrides=JSON.parse(localStorage.getItem('sche_overrides'))||{}}catch(e){state.dayOverrides={}}
   state.showNextCard=localStorage.getItem('sche_nextcard')!=='0';
+  state.semesterId=localStorage.getItem('sche_semester')||'auto';
 }
 
 // ==================== 工具函数 ====================
@@ -1054,7 +1113,7 @@ function getWeekNumber(date){
   const day=new Date(date.getFullYear(),date.getMonth(),date.getDate());
   return Math.floor((day-state.semesterStart)/(7*864e5))+1
 }
-function getCurrentWeek(){return Math.max(1,Math.min(18,getWeekNumber(new Date())))}
+function getCurrentWeek(){return Math.max(1,Math.min(state.weeksCap||18,getWeekNumber(new Date())))}
 function getDateStr(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')}
 function getWeekDates(week){
   const start=new Date(state.semesterStart);start.setDate(start.getDate()+(week-1)*7);
@@ -1340,6 +1399,12 @@ function renderWeekNav(){
     if(list.length)label+=' · 本周'+list.length+'门/'+secs+'节';
   }catch(e){}
   document.getElementById('majorLabel').textContent=label;
+  renderSemesterBar();
+  const sem=currentSem(),tip=document.getElementById('syncTip');
+  if(tip&&sem.type!=='term'){
+    const days=Math.max(0,Math.ceil((state.semesterStart.getTime()-Date.now())/864e5));
+    tip.textContent='🏖 '+sem.name+'中 · 距开学约 '+days+' 天';
+  }
 }
 function renderTable(){
   const week=state.selectedWeek;
@@ -2116,7 +2181,7 @@ function applyStyles(){
 
 // ==================== 周次导航 ====================
 function prevWeek(){if(state.selectedWeek>1){state.selectedWeek--;saveState();render()}}
-function nextWeek(){if(state.selectedWeek<18){state.selectedWeek++;saveState();render()}}
+function nextWeek(){if(state.selectedWeek<(state.weeksCap||18)){state.selectedWeek++;saveState();render()}}
 function goToday(){state.selectedWeek=getCurrentWeek();saveState();render();showToast('已跳转到本周')}
 let touchStartX=0,touchStartY=0,touchStartTime=0;
 const tableEl=document.getElementById('tableContainer');
@@ -2768,7 +2833,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.14'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.15'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -2782,6 +2847,12 @@ function applyRemoteData(d){
     Object.assign(HOLIDAY_MAP,d.holidayMap);
   }
   if(d&&d.semesterStart){state.semesterStart=parseLocalDate(d.semesterStart)}
+  // 学期注册表远程下发（站点发新学期无需打包），字段齐全才采信
+  if(d&&Array.isArray(d.semesters)&&d.semesters.length&&d.semesters.every(s=>s&&s.id&&s.name&&s.type&&s.start)){
+    SEMESTERS=d.semesters;
+    const sel=document.getElementById('semSelect');if(sel)sel.innerHTML='';
+  }
+  applySemester();
   // 新学期换专业列表时跟着站点走（字段齐全才采信）；原选中专业不存在时回落第一项
   if(d&&Array.isArray(d.majors)&&d.majors.length&&d.majors.every(m=>m&&m.key&&m.short)){
     MAJORS.length=0;
@@ -3034,6 +3105,7 @@ function applyDeepLink(){
 function init(){
   loadState();
   applyTheme();
+  applySemester();
   state.selectedWeek=getCurrentWeek();
   saveState();
   render();
@@ -3061,3 +3133,5 @@ document.addEventListener('DOMContentLoaded',init);
 </div>
 </body>
 </html>
+
+<style>.sem-select{margin-top:4px;width:100%;font-size:11px;padding:3px 6px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text-sub)}</style>

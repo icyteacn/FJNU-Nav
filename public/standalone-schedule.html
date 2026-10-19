@@ -16,12 +16,49 @@
       --page:#f5f5f5;--weekend:#f5f5f5;--weekend-soft:#fafafa;
       --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
     }
-    /* 夜间模式：只覆盖配色变量，全部结构样式复用（data-theme="dark"） */
+    /* 夜间模式：配色变量 + 所有硬编码亮色块的暗色化覆盖（data-theme="dark"） */
     [data-theme="dark"]{
       --primary:#ff6b6b;--primary-soft:rgba(255,107,107,0.16);
       --card:#1d1e22;--border:#34363d;--text:#eceef2;--text-sub:#9aa0ab;
       --soft-fg:#24262b;--page:#121316;--weekend:#191a1e;--weekend-soft:#1a1b20;
     }
+    /* 今日列：亮蓝块 → 暗蓝染色 */
+    [data-theme="dark"] .weekday-col.is-today{background:#16324f}
+    [data-theme="dark"] .course-cell.is-today{background:#152535}
+    /* 节假日列：亮粉 → 暗红 */
+    [data-theme="dark"] .weekday-col.is-holiday{background:linear-gradient(180deg,#3a1d22 0%,#2e151a 100%)}
+    [data-theme="dark"] .weekday-col.is-holiday .weekday-label{color:#f87171}
+    [data-theme="dark"] .course-cell.is-holiday-col{background:#2a151a}
+    [data-theme="dark"] .holiday-empty-cell{background:repeating-linear-gradient(45deg,#2a151a,#2a151a 10px,#231114 10px,#231114 20px);border-left:2px dashed #7f3a44;border-right:2px dashed #7f3a44}
+    [data-theme="dark"] .holiday-empty-text{color:#f87171}
+    [data-theme="dark"] .holiday-empty-sub{color:#9aa0ab}
+    /* 补课列：亮黄 → 暗琥珀 */
+    [data-theme="dark"] .weekday-col.is-makeup{background:linear-gradient(180deg,#3a2d12 0%,#2e2410 100%)}
+    [data-theme="dark"] .weekday-col.is-makeup .weekday-label{color:#fbbf24}
+    [data-theme="dark"] .course-cell.is-makeup-col{background:linear-gradient(135deg,#33270f 0%,#2a2010 100%)}
+    /* 徽标：亮色底深字 → 暗底亮字 */
+    [data-theme="dark"] .holiday-badge.holiday{background:rgba(248,113,113,.22);color:#fca5a5}
+    [data-theme="dark"] .holiday-badge.makeup{background:rgba(251,191,36,.20);color:#fcd34d}
+    [data-theme="dark"] .holiday-badge.adjust{background:rgba(167,139,250,.20);color:#c4b5fd}
+    /* 调课徽标：亮紫 → 暗紫 */
+    [data-theme="dark"] .moved-badge{background:linear-gradient(135deg,#241b33 0%,#2b1f3d 100%);border-left-color:#8b5cf6}
+    [data-theme="dark"] .moved-badge:hover{background:linear-gradient(135deg,#2d2140 0%,#332549 100%)}
+    [data-theme="dark"] .moved-text{color:#c4b5fd}
+    [data-theme="dark"] .moved-loc{color:#c4b5fd;background:#372a52}
+    /* 空格 hover：亮绿 → 暗绿 */
+    [data-theme="dark"] .course-cell:not(.has-course):not(.is-holiday-col):not(.holiday-empty-cell):hover{background:#14281c;outline-color:#2f6b45}
+    /* 选中态红块 → 暗红染 */
+    [data-theme="dark"] .major-item.selected{background:var(--primary-soft)}
+    [data-theme="dark"] .color-option.active{background:var(--primary-soft)}
+    /* 表单控件：暗底亮字（原无底色时浅色文字落在白底上=不可见/刺眼） */
+    [data-theme="dark"] .search-box,[data-theme="dark"] .form-input,[data-theme="dark"] .form-select{background:#16171b;color:var(--text);border-color:var(--border)}
+    [data-theme="dark"] .form-input::placeholder,[data-theme="dark"] .search-box::placeholder{color:var(--text-sub)}
+    /* 更新提示绿字 / 列表注释紫字在暗底上的可读性 */
+    [data-theme="dark"] .upd-new{color:#4ade80}
+    [data-theme="dark"] .li-note{color:#c4b5fd;background:rgba(139,92,246,.16)}
+    [data-theme="dark"] .li-note.in{color:#7dd3fc;background:rgba(56,189,248,.14)}
+    /* 正在上课高亮在暗底上稍提亮 */
+    [data-theme="dark"] .li.live{background:linear-gradient(90deg,rgba(34,197,94,.20),transparent 60%)}
     html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
     body{background:var(--page);color:var(--text);font-size:14px}
     #app{height:100%;display:flex;flex-direction:column}
@@ -1397,7 +1434,9 @@ function renderTable(){
         const span=course.endPeriod-course.startPeriod+1;
         for(let p=course.startPeriod;p<=course.endPeriod;p++)merged.add(wd.key+'-'+p);
         const color=state.colorMode==='color'?(course.color||'#999'):'#666';
-        const bg=state.colorMode==='color'?'rgba('+parseInt(color.slice(1,3),16)+','+parseInt(color.slice(3,5),16)+','+parseInt(color.slice(5,7),16)+',0.15)':'var(--card)';
+        // 课程卡染色：亮色模式 15% 透明、暗色模式提到 26%（深色底上同透明度会发灰看不清）
+        const tintA=document.documentElement.getAttribute('data-theme')==='dark'?0.26:0.15;
+        const bg=state.colorMode==='color'?'rgba('+parseInt(color.slice(1,3),16)+','+parseInt(color.slice(3,5),16)+','+parseInt(color.slice(5,7),16)+','+tintA+')':'var(--card)';
         let cls='course-cell has-course';
         if(wd.key>=6)cls+=' weekend';
         if(isTod)cls+=' is-today';
@@ -2729,7 +2768,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.13'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.14'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){

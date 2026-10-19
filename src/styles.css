@@ -1118,3 +1118,36 @@ html.mourning .bottom-nav {
 .notice-item-title { font-size: 13px; font-weight: 700; display: flex; gap: 8px; align-items: center; }
 .notice-item-date { font-size: 11px; }
 .notice-item-content { margin-top: 6px; font-size: 12px; line-height: 1.9; color: var(--text-sub); white-space: pre-line; }
+
+/* ===== 夜间模式补丁：课表等视图里的亮色硬编码块 =====
+   ClassSchedule / MobileSchedule / OrientationSchedule 的 scoped 样式里
+   有一批写死的浅色（今日列/节假日/调课徽标等），深色主题下会盖住暗底文字或刺眼。
+   全局规则可命中 scoped 元素；html[data-theme] 前缀保证优先级压过 scoped 选择器。 */
+html[data-theme='dark'] .weekday-col.is-today { background: #16324f; }
+html[data-theme='dark'] .weekday-col.is-holiday { background: linear-gradient(180deg, #3a1d22 0%, #2e151a 100%); }
+html[data-theme='dark'] .weekday-col.is-holiday .weekday-label { color: #f87171; }
+html[data-theme='dark'] .weekday-col.is-makeup { background: linear-gradient(180deg, #3a2d12 0%, #2e2410 100%); }
+html[data-theme='dark'] .weekday-col.is-makeup .weekday-label { color: #fbbf24; }
+html[data-theme='dark'] .holiday-badge.holiday { background: rgba(248,113,113,.22); color: #fca5a5; }
+html[data-theme='dark'] .holiday-badge.makeup { background: rgba(251,191,36,.20); color: #fcd34d; }
+html[data-theme='dark'] .holiday-badge.adjust { background: rgba(167,139,250,.20); color: #c4b5fd; }
+html[data-theme='dark'] .holiday-empty-cell { background: repeating-linear-gradient(45deg, #2a151a, #2a151a 10px, #231114 10px, #231114 20px); border-left-color: #7f3a44; border-right-color: #7f3a44; }
+html[data-theme='dark'] .holiday-empty-text { color: #f87171; }
+html[data-theme='dark'] .holiday-empty-sub { color: var(--text-sub); }
+html[data-theme='dark'] .course-cell.is-today { background: #152535; }
+html[data-theme='dark'] .course-cell.is-holiday-col { background: #2a151a; }
+html[data-theme='dark'] .course-cell.is-makeup-col { background: linear-gradient(135deg, #33270f 0%, #2a2010 100%); }
+html[data-theme='dark'] .course-cell:not(.has-course):not(.is-holiday-col):not(.holiday-empty-cell):hover { background: #14281c; outline-color: #2f6b45; }
+html[data-theme='dark'] .moved-badge { background: linear-gradient(135deg, #241b33 0%, #2b1f3d 100%); border-left-color: #8b5cf6; }
+html[data-theme='dark'] .moved-badge:hover { background: linear-gradient(135deg, #2d2140 0%, #332549 100%); }
+html[data-theme='dark'] .moved-text { color: #c4b5fd; }
+html[data-theme='dark'] .moved-loc { color: #c4b5fd; background: #372a52; }
+html[data-theme='dark'] .list-day.is-today { background: #16324f; }
+html[data-theme='dark'] .adjust-btn { background: #2b1f3d; border-color: #8b5cf6; color: #c4b5fd; }
+/* 移动端课表：白底页面与专业 chip */
+html[data-theme='dark'] .app.pure { background: var(--bg); }
+html[data-theme='dark'] .major-chip { background: var(--card); border-color: var(--border); color: var(--text); }
+/* 通用输入控件兜底：个别视图输入框无底色时，暗色下浅字落白底=不可见 */
+html[data-theme='dark'] input:not([type='checkbox']):not([type='radio']):not([type='range']),
+html[data-theme='dark'] textarea,
+html[data-theme='dark'] select { color-scheme: dark; }

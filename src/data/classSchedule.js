@@ -254,9 +254,13 @@ export function isCourseInWeek(course, week) {
 /**
  * 获取当前是第几教学周
  */
+// 学期起点按本地零点构造（'YYYY-MM-DD' 直接喂 new Date 会走 UTC，
+// 东八区每周一 00:00-08:00 会把周次少算一周）
+const SEMESTER_START = new Date(2026, 7, 31)
+
 export function getCurrentWeek(now = new Date()) {
-  const semesterStart = new Date('2026-08-31')
-  const diffDays = Math.floor((now - semesterStart) / 86400000)
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const diffDays = Math.floor((day - SEMESTER_START) / 86400000)
   const week = Math.floor(diffDays / 7) + 1
   return Math.max(1, Math.min(18, week))
 }
@@ -265,7 +269,7 @@ export function getCurrentWeek(now = new Date()) {
  * 获取指定教学周的周一日期
  */
 export function getWeekStartDate(week) {
-  const date = new Date('2026-08-31')
+  const date = new Date(SEMESTER_START)
   date.setDate(date.getDate() + (week - 1) * 7)
   return date
 }

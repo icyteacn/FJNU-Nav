@@ -147,6 +147,7 @@
     .li-meta{font-size:12px;color:var(--text-sub);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .li-note{font-size:11.5px;margin-top:5px;color:#6d28d9;background:rgba(124,58,237,.10);border-radius:6px;padding:3px 6px}
     .li-note.in{color:#0369a1;background:rgba(3,105,161,.10)}
+    .li-gap{text-align:center;font-size:11.5px;color:var(--text-sub);padding:4px 0;letter-spacing:.02em}
     .st-badge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px}
     .st-badge.live{background:#16a34a;color:#fff}
     .st-badge.next{background:#f59e0b;color:#fff}
@@ -967,7 +968,7 @@ const ALL_COURSES = {
 let state = {
   selectedMajor:'cs-master',selectedWeek:1,colorMode:'color',fontSize:1,
   filterType:'all',customCourses:[],deletedCourses:[],dayOverrides:{},
-  semesterStart:new Date('2026-08-31'),mode:'native',
+  semesterStart:parseLocalDate('2026-08-31'),mode:'native',
   viewMode:'grid',listDay:1,showNextCard:true
 };
 
@@ -1006,7 +1007,16 @@ function loadState(){
 }
 
 // ==================== 工具函数 ====================
-function getWeekNumber(date){return Math.floor((date-state.semesterStart)/(7*864e5))+1}
+/** 'YYYY-MM-DD' 一律按本地零点解析——new Date('YYYY-MM-DD') 走 UTC 零点，
+ *  东八区会让每周一 00:00-08:00 把周次少算一周（周界偏移 8 小时）。 */
+function parseLocalDate(s){
+  const m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(s||''));
+  return m?new Date(+m[1],+m[2]-1,+m[3]):new Date(s);
+}
+function getWeekNumber(date){
+  const day=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+  return Math.floor((day-state.semesterStart)/(7*864e5))+1
+}
 function getCurrentWeek(){return Math.max(1,Math.min(18,getWeekNumber(new Date())))}
 function getDateStr(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')}
 function getWeekDates(week){
@@ -1055,7 +1065,7 @@ function userAdjustDayInfo(dateStr){
 }
 function getScheduleWeekday(dateStr,dayType){
   if(dayType&&dayType.type==='makeup')return dayType.scheduleWeekday;
-  const d=new Date(dateStr);const day=d.getDay();return day===0?7:day;
+  const d=parseLocalDate(dateStr);const day=d.getDay();return day===0?7:day;
 }
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
 function rangeOf(a,b){const r=[];for(let i=a;i<=b;i++)r.push(i);return r}
@@ -1283,11 +1293,16 @@ function pushNotifyData(){
   }catch(e){}
 }
 function renderWeekNav(){
-  const s=getWeekDates(state.selectedWeek);
-  const e=getWeekDates(state.selectedWeek);
   document.getElementById('weekLabel').textContent='第'+state.selectedWeek+'周';
   const major=MAJORS.find(m=>m.key===state.selectedMajor);
-  document.getElementById('majorLabel').textContent=major?major.short:'';
+  let label=major?major.short:'';
+  // 本周节数统计：与课表同口径（含自定义/调课/用户调整），让周导航一眼看出本周轻重
+  try{
+    const list=getCoursesForWeek(state.selectedMajor,state.selectedWeek);
+    const secs=list.reduce(function(n,c){return n+((c.periods&&c.periods.length)||1)},0);
+    if(list.length)label+=' · 本周'+list.length+'门/'+secs+'节';
+  }catch(e){}
+  document.getElementById('majorLabel').textContent=label;
 }
 function renderTable(){
   const week=state.selectedWeek;
@@ -1483,6 +1498,7 @@ function renderDayList(){
     }
     html+='<div class="list-wrap">';
     let nowShown=false;
+    let prevEnd=null; // 上一节真实下课时刻（分钟）→ 课间空闲时段卡
     for(const it of res.list){
       const s=PERIOD_START[it.start],e=PERIOD_END[it.end];
       if(showNow&&!nowShown&&nowMin<s){html+=nowLineHtml(nowMin);nowShown=true}
@@ -1505,6 +1521,15 @@ function renderDayList(){
         '<div class="li-time"><b>'+PERIOD_FMT[it.start]+'</b><span>'+PERIOD_FMT_END[it.end]+'</span></div>'+
         '<div class="li-main"><div class="li-name">'+it.course.name+badge+'</div>'+
         '<div class="li-meta">📍'+loc+' · '+(it.course.teacher||'-')+' · 第'+it.start+'-'+it.end+'节</div>'+note+'</div></div>';
+      // 空闲时段：与上一节课之间 ≥40 分钟才值得提示（调走的虚位不计）
+      if(it.kind!=='moved'){
+        if(prevEnd!==null&&s-prevEnd>=40){
+          const gapMin=s-prevEnd;
+          const gh=Math.floor(gapMin/60),gm=gapMin%60;
+          html+='<div class="li-gap">🌿 空闲 '+(gh?gh+'小时':'')+(gm?gm+'分':'')+'（'+fmtMin(prevEnd)+' - '+fmtMin(s)+'）</div>';
+        }
+        prevEnd=e;
+      }
     }
     if(showNow&&!nowShown)html+=nowLineHtml(nowMin);
     html+='</div>';
@@ -2704,7 +2729,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.11'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.12'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -2717,7 +2742,7 @@ function applyRemoteData(d){
     Object.keys(HOLIDAY_MAP).forEach(k=>delete HOLIDAY_MAP[k]);
     Object.assign(HOLIDAY_MAP,d.holidayMap);
   }
-  if(d&&d.semesterStart){state.semesterStart=new Date(d.semesterStart)}
+  if(d&&d.semesterStart){state.semesterStart=parseLocalDate(d.semesterStart)}
   if(d&&d.version)localStorage.setItem('sche_data_version',d.version);
   if(d&&d.updatedAt)localStorage.setItem('sche_last_update',d.updatedAt);
   try{localStorage.setItem('sche_data_cache',JSON.stringify(d))}catch(e){}
@@ -2845,7 +2870,11 @@ function takeScreenshot(){
 // ==================== 夜间模式 ====================
 function applyTheme(){
   let t='light';
-  try{t=localStorage.getItem('sche_theme')||'light'}catch(e){}
+  try{t=localStorage.getItem('sche_theme')||''}catch(e){}
+  if(t!=='dark'&&t!=='light'){
+    // 未手动选过主题时跟随系统深色模式
+    t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
   document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');
   const mi=document.getElementById('themeMenuText');
   if(mi)mi.textContent=t==='dark'?'☀️ 日间模式':'🌙 夜间模式';
@@ -2928,6 +2957,16 @@ function applyDeepLink(){
     if(v==='week'){
       state.viewMode='grid';
       saveState();render();
+      return true;
+    }
+    if(v==='tomorrow'){
+      // 明日课程：跨周日自动切到下一教学周
+      const tm=new Date();tm.setDate(tm.getDate()+1);
+      const twd=tm.getDay()===0?7:tm.getDay();
+      state.selectedWeek=Math.max(1,Math.min(18,getWeekNumber(tm)));
+      state.viewMode='list';state.listDay=twd;
+      saveState();render();
+      showToast('已定位到明日课程');
       return true;
     }
     if(v==='next'){

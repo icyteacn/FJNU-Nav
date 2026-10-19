@@ -424,8 +424,8 @@ function jumpToCourse(course) {
 function jumpToOverride(weekday, period) {
   const o = getOverride(weekday, period)
   if (!o) return
-  const destDate = new Date(o.destDate)
-  const semesterStart = new Date('2026-08-31')
+  const destDate = new Date(o.destDate + 'T00:00:00')
+  const semesterStart = new Date(2026, 7, 31)
   const diffDays = Math.floor((destDate - semesterStart) / 86400000)
   const destWeek = Math.max(1, Math.min(18, Math.floor(diffDays / 7) + 1))
   const destWd = destDate.getDay() === 0 ? 7 : destDate.getDay()

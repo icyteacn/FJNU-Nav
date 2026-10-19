@@ -41,7 +41,7 @@ export const clsSplit = (cls) => {
 /**
  * 从班级名提取「专业」关键字（用于分类浏览）。
  * 支持两种格式：
- * - QDU格式：24临床（5+3）[01-05]班 → 临床
+ * - 数字简写格式：24临床（5+3）[01-05]班 → 临床
  * - NextFStar格式：2024级小学教育6班（公费师范）→ 小学教育
  * @param {string} cls 单个班级名
  * @returns {string} 专业关键字（可能为空串）
@@ -50,14 +50,14 @@ export const profOf = (cls) => {
   // NextFStar格式：2024级小学教育6班（公费师范）
   const m1 = cls.match(/^\d{4}级(.+?)\d+班/)
   if (m1) return m1[1].replace(/（[^）]*）/g, '').trim()
-  // QDU格式：24临床（5+3）[01-05]班
+  // 数字简写格式：24临床（5+3）[01-05]班
   return cls.replace(/^2\d/, '').replace(/（[^）]*）/g, '').replace(/\[[^\]]*\]/g, '').replace(/\d+班$/, '').replace(/班$/, '').trim()
 }
 
 /**
  * 从班级名提取「年级」关键字（用于按年级筛选）。
  * 支持两种格式：
- * - QDU格式：24临床01班 → 24
+ * - 数字简写格式：24临床01班 → 24
  * - NextFStar格式：2024级小学教育6班 → 24
  * @param {string} cls 单个班级名
  * @returns {string} 年级（2位数字，可能为空串）
@@ -66,7 +66,7 @@ export const gradeOf = (cls) => {
   // NextFStar格式：2024级...
   const m1 = cls.match(/^(\d{4})级/)
   if (m1) return m1[1].slice(-2)
-  // QDU格式：24...
+  // 数字简写格式：24...
   const m2 = cls.match(/^(\d{2})/)
   return m2 ? m2[1] : ''
 }

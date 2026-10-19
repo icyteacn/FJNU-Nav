@@ -138,8 +138,7 @@ export const INTENTS = [
   { id: 'app.graduate', kind: 'app', app: 'graduatePlan', title: '研究生培养', patterns: ['研究生', '培养方案', '学分要求', '中期考核'] },
   { id: 'app.quiz', kind: 'app', app: 'quiz', title: '知识问答', patterns: ['答题', '知识竞赛', '校史问答', '来一局'] },
   { id: 'app.tieba', kind: 'app', app: 'tiebaSentiment', title: '贴吧舆情', patterns: ['贴吧', '师大吧', '热帖', '论坛'] },
-  { id: 'app.siteStats', kind: 'app', app: 'contributors', title: '贡献记录', patterns: ['访问统计', '访客', '流量统计'] },
-  { id: 'app.contributors', kind: 'app', app: 'contributors', title: '贡献者', patterns: ['贡献者', '开发者', '更新日志'] },
+  { id: 'app.contributors', kind: 'app', app: 'contributors', title: '贡献者', patterns: ['贡献者', '开发者', '更新日志', '访问统计', '访客', '流量统计'] },
   { id: 'app.categories', kind: 'app', app: 'categories', title: '全部应用', patterns: ['全部应用', '所有应用', '应用列表', '更多应用'] },
   { id: 'app.jobs', kind: 'app', app: 'jobs', title: '招聘求职', patterns: ['招聘', '求职', '岗位', '就业', '双选会', '校招'] },
   { id: 'app.compare', kind: 'app', app: 'compare', title: '为什么选我', patterns: ['为什么选你', '和豆包区别', '对比', '优势', '和官网区别', '小程序区别'] },
@@ -174,6 +173,37 @@ export function matchIntent(text) {
     if (score > bestScore) { bestScore = score; best = it }
   }
   return bestScore >= 40 ? { intent: best, score: bestScore } : null
+}
+
+/**
+ * 「猜你想说」召回：bigram 重合度从意图表找相近话术（兜底建议用）。
+ * 与 matchIntent 的包含式打分不同，这里容忍换说法/错别字，只用来出建议 chips。
+ * @param {string} text
+ * @param {number} limit
+ * @returns {Array} 相近意图（kind !== 'meta'）
+ */
+export function nearIntents(text, limit = 3) {
+  const t = normalize(text)
+  if (t.length < 2) return []
+  const grams = new Set()
+  for (let i = 0; i < t.length - 1; i++) grams.add(t.slice(i, i + 2))
+  if (t.length === 2) grams.add(t)
+  const scored = []
+  for (const it of INTENTS) {
+    if (it.kind === 'meta') continue
+    let best = 0
+    for (const p of it.patterns) {
+      const pl = normalize(p)
+      if (!pl) continue
+      let hit = 0
+      for (const g of grams) if (pl.includes(g)) hit++
+      const ratio = hit / grams.size
+      if (ratio > best) best = ratio
+    }
+    if (best >= 0.4) scored.push({ it, best })
+  }
+  scored.sort((a, b) => b.best - a.best)
+  return scored.slice(0, limit).map((s) => s.it)
 }
 
 /** 三层识别主入口：意图表 → FAQ → 应用检索 */

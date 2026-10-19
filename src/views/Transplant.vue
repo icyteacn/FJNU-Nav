@@ -54,8 +54,8 @@ onMounted(() => {
       <em>{{ p.note }}</em>
     </div>
     <div class="tp-proof">
-      <b>两校验证</b>
-      <span>QDU-Nav（青岛大学）⇄ FJNU-Nav（福建师大）：同一骨架，校本应用各自保留（师大智答/日程助手/研究生服务），回归测试双站全绿。</span>
+      <b>多校验证</b>
+      <span>同一骨架已在异校部署验证：校本应用各自保留（师大智答/日程助手/研究生服务），回归测试全绿。</span>
     </div>
     <div class="tp-go">
       <button class="primary" @click="emit('open', 'rebrand')">🔁 去换校向导试试</button>

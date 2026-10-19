@@ -22,7 +22,7 @@ const emit = defineEmits(['back'])
 /* ── 表单状态（初值来自当前站点 =「在原站上直接改」） ── */
 const form = reactive({
   university: (SITE.tagline || '').split(' · ')[0] || '',
-  shortName: (SITE.name || '').replace(' 校园导航', '').replace('QDU ', '青大'),
+  shortName: (SITE.name || '').replace(' 校园导航', ''),
   brand: SITE.brand || '',
   motto: SITE.motto || '',
   jwUrl: SITE.jwUrl || '',
@@ -46,7 +46,7 @@ const customCss = ref('')
 const liveApplied = ref(false)
 
 const PRESETS = [
-  { name: '青大蓝', p: '#1b66c9', a: '#4f8df0' },
+  { name: '海洋蓝', p: '#1b66c9', a: '#4f8df0' },
   { name: '闽都红', p: '#c62828', a: '#ff5722' },
   { name: '北大红', p: '#8b0000', a: '#cc0000' },
   { name: '清华紫', p: '#6b21a8', a: '#9333ea' },
@@ -192,11 +192,11 @@ function resetFromSite() {
 /* ── 智能体联动 ── */
 function askAgentAboutConfig() {
   const text = `介绍当前站点配置：品牌${form.brand}、学校${form.university}、主题色${primary.value}`
-  try { localStorage.setItem('qdu_agent_inbox', text) } catch { /* noop */ }
+  try { localStorage.setItem('nav_agent_inbox', text) } catch { /* noop */ }
   emit('open', 'assistant')
 }
 function tryThemeInAgent() {
-  try { localStorage.setItem('qdu_agent_inbox', `换校向导 里的主题试穿怎么用`) } catch { /* noop */ }
+  try { localStorage.setItem('nav_agent_inbox', `换校向导 里的主题试穿怎么用`) } catch { /* noop */ }
   emit('open', 'assistant')
 }
 

@@ -32,8 +32,8 @@ function openFav(f) {
 }
 const { lang, t } = useI18n()
 
-/** 首页网格只放实用功能——「关于」组（换校向导/移植/演示向页面）只进分类面板最底分组 */
-const homeApps = apps.filter((a) => a.group !== '关于')
+/** 首页网格只放实用功能——「关于」组（换校向导/移植/演示向页面）只进分类面板最底分组；hideOnHome 项同理只进分类 */
+const homeApps = apps.filter((a) => a.group !== '关于' && !a.hideOnHome)
 
 /** 应用标题/简介：英文模式优先英文（无则回落中文） */
 function appTitle(a) {

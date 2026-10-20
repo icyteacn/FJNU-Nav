@@ -163,6 +163,35 @@
   .tl-item::before{content:'';position:absolute;left:-16px;top:11px;width:8px;height:8px;border-radius:50%;background:var(--primary)}
   .tl-item .tl-d{color:var(--text-sub);font-size:11px}
   .note-box{font-size:11.5px;color:var(--text-sub);line-height:1.7;background:var(--page);border-radius:10px;padding:10px 12px}
+  /* 月度趋势 */
+  .trend{display:flex;align-items:flex-end;gap:8px;height:80px;padding:2px 2px 0}
+  .trend-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+  .trend-bar{width:100%;max-width:30px;height:100%;border-radius:6px 6px 3px 3px;background:var(--primary-soft);position:relative;display:flex;align-items:flex-end}
+  .trend-bar>i{display:block;width:100%;border-radius:inherit;background:var(--primary)}
+  .trend-n{font-size:10px;font-weight:800;color:var(--primary);text-align:center;position:absolute;top:-14px;left:0;right:0}
+  .trend-x{font-size:10px;color:var(--text-sub);margin-top:4px}
+  /* 决议 */
+  .resol{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:8px 10px;background:var(--page);border:1px solid var(--border);border-radius:9px;margin-bottom:6px;line-height:1.5}
+  .resol .rk{cursor:pointer;flex-shrink:0;font-size:14px}
+  .resol.done{opacity:.5}
+  .resol.done .rt{text-decoration:line-through}
+  .resol .rm{margin-left:auto;cursor:pointer;color:var(--text-sub);flex-shrink:0}
+  .resol-add{display:flex;gap:8px}
+  /* 检查清单 */
+  .ck-item{display:flex;gap:9px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--border);font-size:13px}
+  .ck-item:last-child{border-bottom:none}
+  .ck-ico{flex-shrink:0;width:22px;text-align:center;font-size:14px}
+  .ck-sub{font-size:11px;color:var(--text-sub);margin-top:2px;line-height:1.6}
+  /* 团员增强 */
+  .mem-goal{height:5px;background:var(--page);border-radius:3px;overflow:hidden;margin-top:6px}
+  [data-theme="dark"] .mem-goal{background:#2a2c33}
+  .mem-goal>i{display:block;height:100%;background:var(--ok);border-radius:3px}
+  .mem-sub{font-size:11px;color:var(--text-sub);margin-top:5px;line-height:1.7}
+  .int-badge{font-size:10px;padding:1px 6px;border-radius:6px;background:var(--warn);color:#fff;font-weight:700;flex-shrink:0}
+  .tpl-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .tpl-chip{font-size:11px;background:var(--primary-soft);color:var(--primary);border-radius:999px;padding:4px 10px;cursor:pointer;font-weight:700}
+  .search-box{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--text);font-size:13px;margin-bottom:10px}
+  .squad-tag{font-size:10px;background:var(--page);border:1px solid var(--border);border-radius:5px;padding:1px 5px;color:var(--text-sub)}
   /* ============ 打印 ============ */
   #printRoot{display:none}
   @media print{
@@ -242,20 +271,36 @@ const TYPES=[
   {key:'other',name:'其他活动',icon:'📌',color:'#546e7a',cat:'其他'}
 ];
 const typeOf=k=>TYPES.find(t=>t.key===k)||TYPES[9];
-const ROLES=['支部书记','副书记','组织委员','宣传委员','团员','入团积极分子'];
+const ROLES=['支部书记','副书记','组织委员','宣传委员','纪律委员','团员','入团积极分子'];
 const PROJ_CATS=['思想引领','学风建设','志愿服务','文体活动','社会实践','就业创业','其他'];
 const PROJ_STATUS={declared:'申报中',active:'进行中',done:'已结项'};
+// 规范议程模板：套用到小结，保证留痕要素齐全
+const AGENDA_TPL={
+  assembly:'【支部团员大会议程】\n1. 奏唱团歌，清点实到人数（应到＿人，实到＿人，请假＿人）\n2. 传达学习：\n3. 议题讨论：\n4. 表决事项（应到会有表决权团员过半数同意方为有效）：\n5. 支部书记总结部署：',
+  committee:'【支部委员会议程】\n1. 学习领学：\n2. 上月工作复盘：\n3. 本月工作安排与分工：\n4. 讨论事项：\n5. 形成决议：',
+  group:'【团小组会议程】\n1. 组长领学：\n2. 团员思想动态交流：\n3. 活动任务分解到组：\n4. 意见建议收集：',
+  course:'【团课记录】\n主讲人：\n主题：\n内容要点：\n1. \n2. \n3. \n互动/研讨环节：\n团员心得与反响：',
+  review:'【教育评议记录】\n1. 团员自评（逐个发言）：\n2. 团员互评：\n3. 支委评议意见：\n4. 评议等次结果（优秀/合格/基本合格/不合格）：\n5. 整改要求：',
+  register:'【年度团籍注册】\n注册时间：\n应注册＿人，实注册＿人\n未注册及原因：\n特殊情况（缓注册/保留团籍）：',
+  themed:'【主题团日活动】\n主题：\n活动流程：\n1. \n2. \n3. \n亮点与成效：\n不足与改进：',
+  volunteer:'【志愿服务记录】\n服务项目/对象：\n服务内容：\n服务成效（可附受益人数/证明材料）：\n注意事项：志愿时长＝活动小时数×到场团员，记得勾选「计入志愿时长」',
+  project:'【立项推进记录】\n推进内容：\n阶段成果：\n遇到的问题：\n下一步计划：',
+  other:'【活动记录】\n活动内容：\n参与情况：\n成效与反馈：'
+};
+const AGENDA_HINT={assembly:'议程与表决人数是检查重点',committee:'分工与决议是检查重点',course:'书记讲团课、团员心得是检查重点',review:'评议等次结果必须记录',register:'实注册人数与未注册原因是检查重点',volunteer:'服务对象与成效证明是检查重点'};
 
 // ==================== 状态 ====================
 let state={
   tab:'home',
   meta:{branchName:'',secretary:'',counselor:'',theme:'',
     goals:{assembly:1,committee:4,group:4,course:2,review:1,register:1,hoursPer:10,project:1}},
-  members:[],   // {id,name,role,off}
-  records:[],   // {id,type,title,date,start,end,location,host,recorder,attendees:[ids],extra,countsHours,hours,summary,photos:[],projectId}
-  projects:[],  // {id,name,category,leader,startDate,endDate,goal,desc,status}
+  members:[],   // {id,name,role,off,squad,joined,awards}
+  records:[],   // {id,type,title,date,start,end,location,host,recorder,attendees:[ids],extra,countsHours,hours,summary,photos:[],projectId,resolutions:[{id,text,done}]}
+  projects:[],  // {id,name,category,leader,startDate,endDate,goal,desc,status,outcome}
   termSel:'auto',
   recFilter:'all',
+  recSearch:'',
+  squadFilter:'all',
   memExpand:null,
 };
 function save(){
@@ -307,6 +352,99 @@ function memberHoursYear(mid,year){
   return Math.round(h*10)/10;
 }
 function memberAttend(mid){return state.records.filter(r=>(r.attendees||[]).includes(mid)).length}
+// 时长明细：某团员计时长活动列表（倒序）
+function memberHourDetail(mid){
+  return state.records.filter(r=>r.countsHours&&(r.attendees||[]).includes(mid)&&hoursOf(r)>0)
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+}
+// 团小组列表（含未分组）
+function squadList(){
+  const s=new Set();state.members.forEach(m=>{if(m.squad)s.add(m.squad)});
+  return [...s].sort();
+}
+// 月度活动趋势：本学期各月活动数（按学期起止月切片）
+function monthTrend(){
+  const t=curTerm(),rt=recsTerm();
+  const buckets={};rt.forEach(r=>{const m=(r.date||'').slice(0,7);if(m)buckets[m]=(buckets[m]||0)+1});
+  // 学期月份序列：第一学期 9-12+次年1，第二学期 2-7
+  const y=+t.id.split('-')[0],s=t.id.split('-')[1];
+  const months=s==='1'?[y+'-09',y+'-10',y+'-11',y+'-12',(y+1)+'-01']:[y+'-02',y+'-03',y+'-04',y+'-05',y+'-06',y+'-07'];
+  const max=Math.max(1,...months.map(m=>buckets[m]||0));
+  return months.map(m=>({m:m,n:buckets[m]||0,pct:Math.round((buckets[m]||0)/max*100)}));
+}
+// 全部未落实决议（新→旧）
+function pendingResolutions(){
+  const out=[];
+  state.records.forEach(r=>(r.resolutions||[]).forEach(x=>{if(!x.done)out.push({rec:r,res:x})}));
+  return out.sort((a,b)=>(b.rec.date||'').localeCompare(a.rec.date||''));
+}
+// 立项停滞：进行中且最近一次关联留痕距今>21天（或从未有）
+function staleProjects(){
+  const now=Date.now(),D=21*864e5;
+  return state.projects.filter(p=>p.status==='active').filter(p=>{
+    const last=state.records.filter(r=>r.projectId===p.id&&r.date).map(r=>new Date(r.date+'T00:00').getTime()).sort((a,b)=>b-a)[0];
+    return !last||now-last>D;
+  });
+}
+// 本月缺的三会（支委会/团小组会按月考核）
+function missingThisMonth(){
+  const m=todayStr().slice(0,7);
+  const cnt=k=>state.records.filter(r=>r.type===k&&(r.date||'').startsWith(m)).length;
+  const miss=[];
+  if(state.meta.goals.committee>0&&!cnt('committee'))miss.push('本月支部委员会未开展');
+  if(state.meta.goals.group>0&&!cnt('group'))miss.push('本月团小组会未开展');
+  return miss;
+}
+// 留痕完整性：缺小结/缺照片/缺签到
+function integrityStats(){
+  const rt=recsTerm();
+  const noSum=rt.filter(r=>!(r.summary||'').trim()).length;
+  const noPhoto=rt.filter(r=>!(r.photos||[]).length).length;
+  const noAtt=rt.filter(r=>!(r.attendees||[]).length&&!r.extra).length;
+  return{total:rt.length,noSum:noSum,noPhoto:noPhoto,noAtt:noAtt,
+    sumPct:rt.length?Math.round((rt.length-noSum)/rt.length*100):100};
+}
+// 上级检查自查清单
+function auditChecklist(){
+  const sc=scorecard(),t=curTerm(),it=integrityStats(),sp=staleProjects();
+  const cnt=k=>recsTerm().filter(r=>r.type===k).length;
+  const items=[
+    {ok:cnt('assembly')>=state.meta.goals.assembly,t:'支部团员大会 '+cnt('assembly')+'/'+state.meta.goals.assembly+' 次',s:'每学期至少'+state.meta.goals.assembly+'次，需有议程、签到、表决记录'},
+    {ok:cnt('committee')>=state.meta.goals.committee,t:'支部委员会 '+cnt('committee')+'/'+state.meta.goals.committee+' 次',s:'每月一次，需有分工与决议'},
+    {ok:cnt('group')>=state.meta.goals.group,t:'团小组会 '+cnt('group')+'/'+state.meta.goals.group+' 次',s:'每月一次'},
+    {ok:cnt('course')>=state.meta.goals.course,t:'团课 '+cnt('course')+'/'+state.meta.goals.course+' 次',s:'每学期≥'+state.meta.goals.course+'次，书记须讲团课'},
+    {ok:recsYear().filter(r=>r.type==='review').length>=1,t:'教育评议 '+recsYear().filter(r=>r.type==='review').length+'/1 次',s:'每学年一次，需记录评议等次'},
+    {ok:recsYear().filter(r=>r.type==='register').length>=1,t:'团籍注册 '+recsYear().filter(r=>r.type==='register').length+'/1 次',s:'每学年一次'},
+    {ok:it.noSum===0,t:'小结填写率 '+it.sumPct+'%（缺 '+it.noSum+' 条）',s:it.noSum?'有留痕没写内容小结——检查最易被挑的硬伤':'全部留痕都有内容小结'},
+    {ok:it.noAtt===0,t:'签到完整（缺 '+it.noAtt+' 条）',s:it.noAtt?'有留痕未勾选任何到场团员/人数':'每条留痕都有到场记录'},
+    {ok:it.noPhoto<=Math.ceil(it.total*0.3),t:'照片佐证（'+it.noPhoto+' 条无照片）',s:'重要活动尽量附现场照片，无照片比例≤30%为宜'},
+    {ok:sp.length===0,t:'立项推进（'+sp.length+' 个停滞）',s:sp.length?'「'+sp.map(p=>p.name).join('」「')+'」超21天无关联留痕':'进行中立项均有近期推进留痕'},
+    {ok:pendingResolutions().length===0,t:'待落实决议 '+pendingResolutions().length+' 条',s:pendingResolutions().length?'会议形成的决议还有未落实项':'无悬挂决议'}
+  ];
+  const pass=items.filter(i=>i.ok).length;
+  return{items:items,pass:pass,total:items.length};
+}
+// CSV 导出（带 BOM，Excel 直接打开不乱码）
+function downloadCsv(name,rows){
+  const csv='﻿'+rows.map(r=>r.map(c=>{const s=String(c==null?'':c);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);
+  showToast('已导出 '+name+' 📄');
+}
+function exportHoursCsv(){
+  const year=curTerm().year;
+  const rows=[['姓名','团内职务','团小组',year+'学年志愿时长(h)','到场次数','累计总时长(h)']];
+  activeMembers().forEach(m=>rows.push([m.name,m.role||'团员',m.squad||'',memberHoursYear(m.id,year),memberAttend(m.id),memberHours(m.id)]));
+  downloadCsv('志愿时长表-'+year+'学年.csv',rows);
+}
+function exportRecordsCsv(){
+  const t=curTerm();
+  const rows=[['日期','类型','标题','地点','主持人','记录人','实到团员','非团员','时长(h)','关联立项','小结']];
+  recsTerm().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(r=>{const tp=typeOf(r.type);const p=state.projects.find(x=>x.id===r.projectId);
+    rows.push([r.date,tp.name,r.title,r.location||'',r.host||'',r.recorder||'',
+      (r.attendees||[]).length,r.extra||0,r.countsHours?hoursOf(r):'',p?p.name:'',(r.summary||'').replace(/\s+/g,' ')])});
+  downloadCsv('活动留痕-'+t.name+'.csv',rows);
+}
 
 // ==================== 先进性评分 ====================
 function scorecard(){
@@ -399,6 +537,25 @@ function renderHome(){
     +'<div class="stat"><b>'+(Math.round(hourT*10)/10)+'</b><span>学年志愿时长</span></div>'
     +'<div class="stat"><b>'+am.length+'</b><span>在册团员</span></div>'
     +'</div>';
+  // 待办中心：未落实决议 + 本月缺会 + 立项停滞
+  const pendR=pendingResolutions(),miss=missingThisMonth(),stale=staleProjects();
+  if(pendR.length||miss.length||stale.length){
+    h+='<div class="card"><div class="card-title">⏰ 待办中心<span class="right">'+(pendR.length+miss.length+stale.length)+' 项</span></div>';
+    miss.forEach(x=>{h+='<div class="todo"><span class="ti">📅</span><span>'+x+'，点右下角 ＋ 补一条留痕</span></div>'});
+    stale.forEach(p=>{h+='<div class="todo"><span class="ti">🏗️</span><span>立项「'+esc(p.name)+'」超 21 天无推进记录</span></div>'});
+    pendR.slice(0,4).forEach(x=>{
+      h+='<div class="resol"><span class="rk" onclick="toggleResolution(\''+x.rec.id+'\',\''+x.res.id+'\')">☐</span><span class="rt">'+esc(x.res.text)+'<div style="font-size:10px;color:var(--text-sub);margin-top:2px">来自 '+fmtD(x.rec.date)+'「'+esc(x.rec.title)+'」</div></span></div>';
+    });
+    if(pendR.length>4)h+='<div style="font-size:11px;color:var(--text-sub);text-align:center;padding:4px">…还有 '+(pendR.length-4)+' 条未落实决议</div>';
+    h+='</div>';
+  }
+  // 月度趋势
+  if(rt.length){
+    const tr=monthTrend();
+    h+='<div class="card"><div class="card-title">📈 '+t.name+'活动趋势</div><div class="trend">'
+      +tr.map(c=>'<div class="trend-col"><div class="trend-bar"><i style="height:'+Math.max(3,c.pct)+'%">'+(c.n?'<span class="trend-n">'+c.n+'</span>':'')+'</i></div><div class="trend-x">'+c.m.slice(5)+'月</div></div>').join('')
+      +'</div></div>';
+  }
   const recent=[...state.records].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,3);
   if(recent.length){
     h+='<div class="card"><div class="card-title">🕘 最近留痕<span class="right" onclick="goTab(\'records\')">全部 ›</span></div>';
@@ -431,18 +588,32 @@ function copyBrief(){
 function renderRecords(){
   const t=curTerm();
   let h='<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'+termChipHtml()+'</div>';
-  h+='<div class="chip-row"><span class="chip'+(state.recFilter==='all'?' on':'')+'" onclick="state.recFilter=\'all\';render()">全部</span>'
-    +TYPES.map(tp=>'<span class="chip'+(state.recFilter===tp.key?' on':'')+'" onclick="state.recFilter=\''+tp.key+'\';render()">'+tp.icon+' '+tp.name+'</span>').join('')+'</div>';
+  h+='<input class="search-box" placeholder="🔍 搜索标题/地点/小结…" value="'+esc(state.recSearch)+'" oninput="state.recSearch=this.value;renderRecordsList()">';
+  h+='<div class="chip-row"><span class="chip'+(state.recFilter==='all'?' on':'')+'" onclick="state.recFilter=\'all\';renderRecordsList()">全部</span>'
+    +TYPES.map(tp=>'<span class="chip'+(state.recFilter===tp.key?' on':'')+'" onclick="state.recFilter=\''+tp.key+'\';renderRecordsList()">'+tp.icon+' '+tp.name+'</span>').join('')+'</div>';
+  h+='<div id="recList"></div>';
+  setTimeout(renderRecordsList,0);
+  return h;
+}
+function renderRecordsList(){
+  const box=$('recList');if(!box)return;
+  const t=curTerm(),q=(state.recSearch||'').trim().toLowerCase();
   let list=recsTerm().filter(r=>state.recFilter==='all'||r.type===state.recFilter)
     .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(q)list=list.filter(r=>((r.title||'')+(r.location||'')+(r.summary||'')+(r.host||'')).toLowerCase().includes(q));
   if(!list.length){
-    return h+'<div class="empty"><div class="ico">🗂️</div><b>'+t.name+'暂无'+(state.recFilter==='all'?'':'「'+typeOf(state.recFilter).name+'」')+'留痕</b><p>点右下角 ＋ 记录活动：会议/团课/评议/志愿服务…<br>每条留痕含时间地点、签到名单、照片与小结</p></div>';
+    box.innerHTML='<div class="empty"><div class="ico">🗂️</div><b>'+(q?'没有匹配「'+esc(q)+'」的留痕':t.name+'暂无'+(state.recFilter==='all'?'':'「'+typeOf(state.recFilter).name+'」')+'留痕')+'</b><p>点右下角 ＋ 记录活动：会议/团课/评议/志愿服务…<br>每条留痕含时间地点、签到名单、照片与小结</p></div>';
+    return;
   }
+  let h='';
   list.forEach(r=>{
     const tp=typeOf(r.type);
+    const missing=(!(r.summary||'').trim()?'<span class="int-badge">缺小结</span>':'')+(!(r.attendees||[]).length&&!r.extra?'<span class="int-badge">缺签到</span>':'');
+    const pendN=(r.resolutions||[]).filter(x=>!x.done).length;
     h+='<div class="rec" onclick="showRecord(\''+r.id+'\')"><div class="rec-top">'
       +'<span class="rec-type" style="background:'+tp.color+'">'+tp.icon+' '+tp.name+'</span>'
-      +'<span class="rec-title">'+esc(r.title)+'</span>'
+      +'<span class="rec-title">'+esc(r.title)+'</span>'+missing
+      +(pendN?'<span class="rec-photo" style="color:var(--warn)">⏰'+pendN+'</span>':'')
       +(r.photos&&r.photos.length?'<span class="rec-photo">📷'+r.photos.length+'</span>':'')
       +'</div><div class="rec-meta">'
       +'<span>📅 '+fmtD(r.date)+(r.start?' '+r.start:'')+'</span>'
@@ -454,14 +625,15 @@ function renderRecords(){
       +(r.projectId?('<div class="rec-proj">🏗️ 关联立项：'+esc((state.projects.find(p=>p.id===r.projectId)||{}).name||'')+'</div>'):'')
       +'</div>';
   });
-  return h;
+  box.innerHTML=h;
 }
 // —— 新增/编辑留痕 ——
-let editingRec=null,recAttendSel=new Set(),recPhotos=[];
+let editingRec=null,recAttendSel=new Set(),recPhotos=[],recResols=[];
 function openRecordForm(id){
   editingRec=id?state.records.find(r=>r.id===id):null;
   recAttendSel=new Set(editingRec?(editingRec.attendees||[]):[]);
   recPhotos=[...(editingRec&&editingRec.photos||[])];
+  recResols=(editingRec?(editingRec.resolutions||[]):[]).map(x=>({id:x.id,text:x.text,done:x.done}));
   openModal(editingRec?'编辑留痕':'记一笔留痕',recFormHtml(editingRec||{}),recFormFooter(editingRec));
   bindRecForm();
 }
@@ -486,7 +658,12 @@ function recFormHtml(r){
     +'<div class="f-row"><div class="f-group" style="flex:0 0 130px"><label class="f-label">非团员人数</label><input class="f-input" type="number" min="0" id="rfExtra" value="'+(r.extra||0)+'"></div>'
     +'<div class="f-group"><label class="f-label">关联立项</label><select class="f-select" id="rfProj">'+projOpts+'</select></div></div>'
     +'<div class="f-group"><label class="check-line"><input type="checkbox" id="rfHoursOn" '+(r.countsHours?'checked':'')+'> 计入志愿时长（志愿服务/团日/立项活动建议勾选）</label></div>'
-    +'<div class="f-group"><label class="f-label">内容小结（做什么、谁发言、形成什么决议——上级检查最看重这条）</label><textarea class="f-ta" id="rfSum" placeholder="例：传达校团委X月工作部署；讨论通过支部立项方案；张三作主题发言…">'+esc(r.summary||'')+'</textarea></div>'
+    +'<div class="f-group"><label class="f-label">内容小结（做什么、谁发言、形成什么决议——上级检查最看重这条）</label>'
+    +'<div class="tpl-bar" id="rfTplBar"><span class="tpl-chip" onclick="applyAgendaTpl()">📋 套用规范议程</span><span class="tpl-chip" onclick="appendTpl()">＋追加模板</span></div>'
+    +'<textarea class="f-ta" id="rfSum" placeholder="例：传达校团委X月工作部署；讨论通过支部立项方案；张三作主题发言…\n\n点上方「套用规范议程」按当前类型自动填好框架">'+esc(r.summary||'')+'</textarea></div>'
+    +'<div class="f-group"><label class="f-label">形成决议/待办（勾掉即落实，工作台统一跟进）</label>'
+    +'<div id="rfResols"></div>'
+    +'<div class="resol-add"><input class="f-input" id="rfResolNew" placeholder="如：下周六前完成社区结对名单" style="flex:1"><button class="btn btn-ghost" style="flex:0 0 auto;padding:9px 14px" onclick="addResol()">＋</button></div></div>'
     +'<div class="f-group"><label class="f-label">现场照片（最多3张，自动压缩存本机）</label><div class="photo-row" id="rfPhotos"></div></div>';
 }
 function recFormFooter(r){
@@ -506,10 +683,38 @@ function recPickType(el){recTypeSel=el.dataset.t;document.querySelectorAll('#rfT
 }
 function recToggleAtt(el,id){if(recAttendSel.has(id))recAttendSel.delete(id);else recAttendSel.add(id);el.classList.toggle('on');$('rfCnt').textContent=recAttendSel.size}
 function recAllAtt(v){recAttendSel=v?new Set(activeMembers().map(m=>m.id)):new Set();document.querySelectorAll('#rfAtt .att-opt').forEach((el,i)=>el.classList.toggle('on',v));$('rfCnt').textContent=recAttendSel.size}
+// 规范议程模板：覆盖填（小结为空）或追加
+function applyAgendaTpl(){
+  const ta=$('rfSum');const tpl=AGENDA_TPL[recTypeSel]||AGENDA_TPL.other;
+  ta.value=tpl;ta.focus();
+  if(AGENDA_HINT[recTypeSel])showToast('提示：'+AGENDA_HINT[recTypeSel]);
+}
+function appendTpl(){
+  const ta=$('rfSum');const tpl=AGENDA_TPL[recTypeSel]||AGENDA_TPL.other;
+  ta.value=ta.value.trim()?ta.value.trim()+'\n\n'+tpl:tpl;ta.focus();
+}
+// 决议编辑
+function renderResols(){
+  const box=$('rfResols');if(!box)return;
+  box.innerHTML=recResols.map((x,i)=>'<div class="resol'+(x.done?' done':'')+'"><span class="rk" onclick="resolToggleForm('+i+')">'+(x.done?'☑':'☐')+'</span><span class="rt">'+esc(x.text)+'</span><span class="rm" onclick="resolDelForm('+i+')">✕</span></div>').join('')
+    +(recResols.length?'':'<div style="font-size:11px;color:var(--text-sub);padding:2px 0 6px">无</div>');
+}
+function resolToggleForm(i){recResols[i].done=!recResols[i].done;renderResols()}
+function resolDelForm(i){recResols.splice(i,1);renderResols()}
+function addResol(){
+  const v=$('rfResolNew').value.trim();if(!v)return;
+  recResols.push({id:uid('s'),text:v,done:false});$('rfResolNew').value='';renderResols();
+}
+// 从工作台/详情直接勾选决议
+function toggleResolution(recId,resId){
+  const r=state.records.find(x=>x.id===recId);if(!r)return;
+  const s=(r.resolutions||[]).find(x=>x.id===resId);if(!s)return;
+  s.done=!s.done;save();render();
+}
 function bindRecForm(){
   recTypeSel=editingRec?editingRec.type:'assembly';
   if(editingRec)document.querySelectorAll('#rfTypes .type-opt').forEach(x=>x.classList.toggle('sel',x.dataset.t===editingRec.type));
-  renderRecPhotos();
+  renderRecPhotos();renderResols();
   $('photoInput').onchange=onPhotoPicked;
 }
 function renderRecPhotos(){
@@ -545,6 +750,7 @@ function saveRecord(){
     attendees:[...recAttendSel],extra:parseInt($('rfExtra').value)||0,
     countsHours:$('rfHoursOn').checked,hours:hours||0,
     summary:$('rfSum').value.trim(),photos:recPhotos.slice(0,3),
+    resolutions:recResols.filter(x=>x.text.trim()),
     projectId:$('rfProj').value||null,createdAt:editingRec?editingRec.createdAt:Date.now()
   };
   if(editingRec){const i=state.records.findIndex(r=>r.id===editingRec.id);state.records[i]=obj}
@@ -569,6 +775,7 @@ function showRecord(id){
     +(r.countsHours?'<div class="d-row"><span class="d-k">志愿时长</span><span class="d-v">'+hoursOf(r)+' 小时 × 到场人数计入</span></div>':'')
     +(r.projectId?'<div class="d-row"><span class="d-k">关联立项</span><span class="d-v">'+esc((state.projects.find(p=>p.id===r.projectId)||{}).name||'')+'</span></div>':'')
     +(r.summary?'<div style="font-size:13px;line-height:1.7;margin-top:10px;white-space:pre-wrap">'+esc(r.summary)+'</div>':'')
+    +((r.resolutions||[]).length?'<div style="margin-top:10px"><div class="f-label">决议/待办（点 ☐ 标记落实）</div>'+r.resolutions.map(x=>'<div class="resol'+(x.done?' done':'')+'"><span class="rk" onclick="toggleResolution(\''+r.id+'\',\''+x.id+'\');closeModal();setTimeout(()=>showRecord(\''+r.id+'\'),30)">'+(x.done?'☑':'☐')+'</span><span class="rt">'+esc(x.text)+'</span></div>').join('')+'</div>':'')
     +(names.length?'<div style="margin-top:10px"><div class="f-label">到场名单</div><div class="att-list">'+names.map(n=>'<span class="att-tag">'+esc(n)+'</span>').join('')+'</div></div>':'')
     +(r.photos&&r.photos.length?'<div class="photos-big">'+r.photos.map(p=>'<img src="'+p+'">').join('')+'</div>':'');
   openModal(esc(r.title),h,
@@ -579,8 +786,9 @@ function showRecord(id){
 // ==================== 团员 ====================
 function renderMembers(){
   const t=curTerm();
-  const am=activeMembers(),off=state.members.filter(m=>m.off);
+  const all=activeMembers(),off=state.members.filter(m=>m.off);
   const year=t.year;
+  const am=state.squadFilter==='all'?all:all.filter(m=>(m.squad||'')===state.squadFilter);
   const sorted=[...am].sort((a,b)=>memberHoursYear(b.id,year)-memberHoursYear(a.id,year));
   const tot=am.reduce((n,m)=>n+memberHoursYear(m.id,year),0);
   let h='<div style="margin-bottom:12px">'+termChipHtml()+'</div>';
@@ -589,8 +797,15 @@ function renderMembers(){
     +'<div class="stat"><b>'+(Math.round(tot*10)/10)+'</b><span>'+year+'学年总时长</span></div>'
     +'<div class="stat"><b>'+(am.length?Math.round(tot/am.length*10)/10:0)+'</b><span>人均时长</span></div>'
     +'</div>';
-  h+='<div class="card" style="padding:10px 12px;margin-bottom:12px"><div class="card-title" style="margin-bottom:2px">💗 '+year+'学年志愿服务时长榜<span class="right" onclick="printHours()">🖨 打印</span></div><div style="font-size:11px;color:var(--text-sub)">时长=勾选「计入志愿时长」活动的小时 × 到场团员</div></div>';
-  if(!sorted.length)return h+'<div class="empty"><div class="ico">👥</div><b>先建团员名册</b><p>点右下角 ＋ 添加团员<br>之后记留痕时可勾选到场名单，时长自动累计</p></div>';
+  const squads=squadList();
+  if(squads.length){
+    h+='<div class="chip-row"><span class="chip'+(state.squadFilter==='all'?' on':'')+'" onclick="state.squadFilter=\'all\';render()">全部</span>'
+      +squads.map(s=>'<span class="chip'+(state.squadFilter===s?' on':'')+'" onclick="state.squadFilter=\''+esc(s)+'\';render()">'+esc(s)+'</span>').join('')
+      +'<span class="chip'+(state.squadFilter===''?' on':'')+'" onclick="state.squadFilter=\'\';render()">未分组</span></div>';
+  }
+  h+='<div class="card" style="padding:10px 12px;margin-bottom:12px"><div class="card-title" style="margin-bottom:2px">💗 '+year+'学年志愿服务时长榜<span class="right"><span onclick="printHours()">🖨 打印</span> <span onclick="exportHoursCsv()">📄 CSV</span></span></div><div style="font-size:11px;color:var(--text-sub)">时长=勾选「计入志愿时长」活动的小时 × 到场团员</div></div>';
+  if(!sorted.length)return h+'<div class="empty"><div class="ico">👥</div><b>先建团员名册</b><p>点右下角 ＋ 添加团员（支持批量导入）<br>之后记留痕时可勾选到场名单，时长自动累计</p></div>';
+  const goal=state.meta.goals.hoursPer||0;
   sorted.forEach((m,i)=>{
     const hy=memberHoursYear(m.id,year);
     const rank=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
@@ -598,8 +813,8 @@ function renderMembers(){
     h+='<div class="mem" onclick="state.memExpand='+(exp?'null':'\''+m.id+'\'')+';render()">'
       +'<span class="mem-rank">'+rank+'</span>'
       +'<span class="mem-av">'+esc(m.name.slice(0,1))+'</span>'
-      +'<div class="mem-info"><div class="mem-name">'+esc(m.name)+'</div><div class="mem-role">'+esc(m.role||'团员')+' · 到场'+memberAttend(m.id)+'次</div>'
-      +(exp?'<div style="font-size:11px;color:var(--text-sub);margin-top:5px">累计总时长 '+memberHours(m.id)+'h · <span style="color:var(--primary);cursor:pointer" onclick="event.stopPropagation();openMemberForm(\''+m.id+'\')">编辑</span> · <span style="color:var(--bad);cursor:pointer" onclick="event.stopPropagation();delMember(\''+m.id+'\')">'+(m.off?'恢复':'转出')+'</span></div>':'')
+      +'<div class="mem-info"><div class="mem-name">'+esc(m.name)+(m.squad?' <span class="squad-tag">'+esc(m.squad)+'</span>':'')+'</div><div class="mem-role">'+esc(m.role||'团员')+' · 到场'+memberAttend(m.id)+'次'+(m.joined?' · '+m.joined.slice(0,7)+'入团':'')+'</div>'
+      +(exp?memberExpandHtml(m,hy,goal):'')
       +'</div><div class="mem-h"><b>'+hy+'</b><span>小时</span></div></div>';
   });
   if(off.length){
@@ -608,19 +823,58 @@ function renderMembers(){
   }
   return h;
 }
+function memberExpandHtml(m,hy,goal){
+  const detail=memberHourDetail(m.id);
+  const pct=goal>0?Math.min(100,Math.round(hy/goal*100)):0;
+  let h='<div class="mem-goal"><i style="width:'+pct+'%"></i></div>'
+    +'<div class="mem-sub">'+(goal?'学年目标 '+goal+'h · 完成 '+pct+'%':'未设学年目标（去「我的→考核目标」设置）')+' · 累计总时长 '+memberHours(m.id)+'h'
+    +(m.awards?'<br>🏅 '+esc(m.awards):'');
+  if(detail.length){
+    h+='<div style="margin-top:4px">时长明细：</div>';
+    detail.slice(0,4).forEach(r=>{h+='<div style="cursor:pointer;color:var(--primary)" onclick="event.stopPropagation();showRecord(\''+r.id+'\')">· '+fmtD(r.date)+' '+esc(r.title)+' <b>+'+hoursOf(r)+'h</b></div>'});
+    if(detail.length>4)h+='<div>…还有 '+(detail.length-4)+' 次</div>';
+  }
+  h+='<div style="margin-top:5px"><span style="color:var(--primary);cursor:pointer" onclick="event.stopPropagation();openMemberForm(\''+m.id+'\')">编辑</span> · <span style="color:var(--bad);cursor:pointer" onclick="event.stopPropagation();delMember(\''+m.id+'\')">'+(m.off?'恢复':'转出')+'</span></div></div>';
+  return h;
+}
 let editingMem=null;
 function openMemberForm(id){
   editingMem=id?state.members.find(m=>m.id===id):null;
   const m=editingMem||{};
+  const squads=squadList();
   openModal(editingMem?'编辑团员':'添加团员',
-    '<div class="f-group"><label class="f-label">姓名</label><input class="f-input" id="mfName" value="'+esc(m.name||'')+'" placeholder="团员姓名"></div>'
-    +'<div class="f-group"><label class="f-label">团内职务</label><select class="f-select" id="mfRole">'+ROLES.map(r=>'<option'+(m.role===r?' selected':'')+'>'+r+'</option>').join('')+'</select></div>',
+    '<div class="f-row"><div class="f-group" style="flex:1.4"><label class="f-label">姓名</label><input class="f-input" id="mfName" value="'+esc(m.name||'')+'" placeholder="团员姓名"></div>'
+    +'<div class="f-group"><label class="f-label">团内职务</label><select class="f-select" id="mfRole">'+ROLES.map(r=>'<option'+(m.role===r?' selected':'')+'>'+r+'</option>').join('')+'</select></div></div>'
+    +'<div class="f-row"><div class="f-group"><label class="f-label">团小组</label><input class="f-input" id="mfSquad" list="squadList" value="'+esc(m.squad||'')+'" placeholder="如：第一小组"><datalist id="squadList">'+squads.map(s=>'<option value="'+esc(s)+'">').join('')+'</datalist></div>'
+    +'<div class="f-group"><label class="f-label">入团年月</label><input class="f-input" type="month" id="mfJoined" value="'+(m.joined||'')+'"></div></div>'
+    +'<div class="f-group"><label class="f-label">荣誉/奖项（评优材料用，可空）</label><input class="f-input" id="mfAwards" value="'+esc(m.awards||'')+'" placeholder="如：校优秀团员、院三好学生"></div>'
+    +(editingMem?'':'<div class="m-item" onclick="openBatchAdd()" style="margin-top:4px"><span class="mi">📋</span><span class="mt">批量导入名册</span><span class="ms">粘贴名单，一人一行</span><span class="ma">›</span></div>'),
     '<button class="btn btn-primary" onclick="saveMember()">保存</button>');
+}
+function openBatchAdd(){
+  openModal('批量导入团员名册',
+    '<div class="f-group"><label class="f-label">名单（一人一行，可加「，职务」与「，小组」）</label><textarea class="f-ta batch-ta" id="bfNames" placeholder="张三\n李四，组织委员\n王五，团员，第二小组"></textarea></div>'
+    +'<div class="note-box">格式：姓名[，职务][，小组] —— 职务留空默认为「团员」。会跳过与现有名册重名的行。</div>',
+    '<button class="btn btn-primary" onclick="saveBatch()">导入</button>');
+}
+function saveBatch(){
+  const lines=$('bfNames').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  const exist=new Set(state.members.map(m=>m.name));
+  let n=0;
+  lines.forEach(ln=>{
+    const parts=ln.split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+    if(!parts[0]||exist.has(parts[0]))return;
+    state.members.push({id:uid('m'),name:parts[0],role:ROLES.includes(parts[1])?parts[1]:'团员',squad:parts[2]||(ROLES.includes(parts[1])?'':parts[1]||'')});
+    exist.add(parts[0]);n++;
+  });
+  save();closeModal();render();
+  showToast(n?'已导入 '+n+' 名团员 ✓':'没有新姓名（重名已跳过）');
 }
 function saveMember(){
   const name=$('mfName').value.trim();if(!name){showToast('请填姓名');return}
-  if(editingMem){editingMem.name=name;editingMem.role=$('mfRole').value}
-  else state.members.push({id:uid('m'),name:name,role:$('mfRole').value});
+  const obj={name:name,role:$('mfRole').value,squad:$('mfSquad').value.trim(),joined:$('mfJoined').value||'',awards:$('mfAwards').value.trim()};
+  if(editingMem)Object.assign(editingMem,obj);
+  else state.members.push(Object.assign({id:uid('m')},obj));
   save();closeModal();render();showToast('已保存 ✓');
 }
 function delMember(id){
@@ -637,11 +891,12 @@ function renderProjects(){
     +'<div style="font-size:11.5px;color:var(--text-sub);line-height:1.7">立项是支部评优的硬支撑。把每次推进活动「记一笔留痕」并关联到立项，结项时自动汇成证据链：活动次数、覆盖人次、志愿时长、时间线一键打印。</div></div>';
   if(!state.projects.length)return h+'<div class="empty"><div class="ico">🏗️</div><b>还没有立项</b><p>点右下角 ＋ 新建立项<br>建议填写目标与预期成果，便于结项汇报</p></div>';
   const order={active:0,declared:1,done:2};
+  const staleIds=new Set(staleProjects().map(p=>p.id));
   [...state.projects].sort((a,b)=>order[a.status]-order[b.status]).forEach(p=>{
     const linked=state.records.filter(r=>r.projectId===p.id);
     const man=linked.reduce((n,r)=>n+(r.attendees||[]).length+(+r.extra||0),0);
     const hrs=linked.reduce((n,r)=>n+(r.countsHours?hoursOf(r)*(r.attendees||[]).length:0),0);
-    h+='<div class="proj" onclick="showProject(\''+p.id+'\')"><div class="proj-name"><span class="proj-status ps-'+p.status+'">'+PROJ_STATUS[p.status]+'</span><span style="flex:1;min-width:0">'+esc(p.name)+'</span></div>'
+    h+='<div class="proj" onclick="showProject(\''+p.id+'\')"><div class="proj-name"><span class="proj-status ps-'+p.status+'">'+PROJ_STATUS[p.status]+'</span><span style="flex:1;min-width:0">'+esc(p.name)+'</span>'+(staleIds.has(p.id)?'<span class="int-badge">停滞</span>':'')+'</div>'
       +'<div class="proj-meta">'+esc(p.category||'')+' · '+esc(p.leader||'未指定负责人')+' · '+(p.startDate?fmtD(p.startDate):'?')+' ~ '+(p.endDate?fmtD(p.endDate):'?')+'</div>'
       +'<div class="proj-evi">📎 支撑材料：'+linked.length+' 次活动 · '+man+' 人次 · '+Math.round(hrs*10)/10+' 志愿时长</div></div>';
   });
@@ -659,6 +914,7 @@ function openProjectForm(id){
     +'<div class="f-group"><label class="f-label">预计结项</label><input class="f-input" type="date" id="pfEnd" value="'+(p.endDate||'')+'"></div></div>'
     +'<div class="f-group"><label class="f-label">状态</label><select class="f-select" id="pfStatus">'+Object.keys(PROJ_STATUS).map(k=>'<option value="'+k+'"'+(p.status===k?' selected':'')+'>'+PROJ_STATUS[k]+'</option>').join('')+'</select></div>'
     +'<div class="f-group"><label class="f-label">目标 / 预期成果</label><textarea class="f-ta" id="pfGoal" placeholder="如：服务社区 200 人次，形成调研报告 1 份，获校级立项结项">'+esc(p.goal||'')+'</textarea></div>'
+    +'<div class="f-group"><label class="f-label">实际成果 / 结项总结（结项时填）</label><textarea class="f-ta" id="pfOutcome" placeholder="如：累计服务 186 人次，形成案例集 1 份，获社区感谢信">'+esc(p.outcome||'')+'</textarea></div>'
     +'<div class="f-group"><label class="f-label">简介</label><textarea class="f-ta" id="pfDesc" placeholder="立项背景与主要内容">'+esc(p.desc||'')+'</textarea></div>',
     (editingProj?'<button class="btn btn-danger" onclick="delProject(\''+editingProj.id+'\')">删除</button>':'')
     +'<button class="btn btn-primary" onclick="saveProject()">保存立项</button>');
@@ -666,7 +922,7 @@ function openProjectForm(id){
 function saveProject(){
   const name=$('pfName').value.trim();if(!name){showToast('请填立项名称');return}
   const obj={id:editingProj?editingProj.id:uid('p'),name:name,category:$('pfCat').value,leader:$('pfLeader').value.trim(),
-    startDate:$('pfStart').value,endDate:$('pfEnd').value,status:$('pfStatus').value,goal:$('pfGoal').value.trim(),desc:$('pfDesc').value.trim(),createdAt:editingProj?editingProj.createdAt:Date.now()};
+    startDate:$('pfStart').value,endDate:$('pfEnd').value,status:$('pfStatus').value,goal:$('pfGoal').value.trim(),outcome:$('pfOutcome').value.trim(),desc:$('pfDesc').value.trim(),createdAt:editingProj?editingProj.createdAt:Date.now()};
   if(editingProj){const i=state.projects.findIndex(p=>p.id===editingProj.id);state.projects[i]=obj}
   else state.projects.push(obj);
   save();closeModal();render();showToast('已保存 ✓');
@@ -688,6 +944,7 @@ function showProject(id){
     +'<div class="d-row"><span class="d-k">负责人</span><span class="d-v">'+esc(p.leader||'—')+'</span></div>'
     +'<div class="d-row"><span class="d-k">周期</span><span class="d-v">'+(p.startDate||'?')+' ~ '+(p.endDate||'待定')+'</span></div>'
     +(p.goal?'<div class="d-row"><span class="d-k">目标成果</span><span class="d-v" style="text-align:left;white-space:pre-wrap">'+esc(p.goal)+'</span></div>':'')
+    +(p.outcome?'<div class="d-row"><span class="d-k">实际成果</span><span class="d-v" style="text-align:left;white-space:pre-wrap">'+esc(p.outcome)+'</span></div>':'')
     +(p.desc?'<div style="font-size:13px;line-height:1.7;margin-top:8px;white-space:pre-wrap">'+esc(p.desc)+'</div>':'')
     +'<div class="proj-evi" style="margin-top:12px">📎 硬性支撑：'+linked.length+' 次留痕 · 覆盖 '+man+' 人次 · 志愿时长 '+Math.round(hrs*10)/10+'h</div>';
   if(linked.length){
@@ -708,22 +965,43 @@ function renderMore(){
     +'<div class="d-row"><span class="d-k">支部名称</span><span class="d-v">'+esc(state.meta.branchName||'未设置')+'</span></div>'
     +'<div class="d-row"><span class="d-k">支部书记</span><span class="d-v">'+esc(state.meta.secretary||'未设置')+'</span></div>'
     +'<div class="d-row"><span class="d-k">辅导员</span><span class="d-v">'+esc(state.meta.counselor||'未设置')+'</span></div></div>';
+  const ck=auditChecklist();
   h+='<div class="m-item" onclick="openSettings()"><span class="mi">🏷️</span><span class="mt">支部信息与考核目标</span><span class="ma">›</span></div>';
+  h+='<div class="m-item" onclick="openAudit()"><span class="mi">✅</span><span class="mt">上级检查自查清单</span><span class="ms">'+ck.pass+'/'+ck.total+' 项达标</span><span class="ma">›</span></div>';
+  h+='<div style="font-size:12px;font-weight:700;color:var(--text-sub);margin:14px 2px 8px">台账打印（对接上级检查）</div>';
   h+='<div class="m-item" onclick="printLedger()"><span class="mi">🖨</span><span class="mt">打印学期工作台账</span><span class="ms">三会两制一课汇总表</span><span class="ma">›</span></div>';
   h+='<div class="m-item" onclick="printHours()"><span class="mi">🧾</span><span class="mt">打印志愿时长表</span><span class="ms">全员学年时长明细</span><span class="ma">›</span></div>';
-  h+='<div class="m-item" onclick="exportData()"><span class="mi">📤</span><span class="mt">导出备份（JSON）</span><span class="ma">›</span></div>';
+  h+='<div style="font-size:12px;font-weight:700;color:var(--text-sub);margin:14px 2px 8px">数据与备份</div>';
+  h+='<div class="m-item" onclick="exportHoursCsv()"><span class="mi">📄</span><span class="mt">导出时长表 CSV</span><span class="ms">Excel 可直接打开</span><span class="ma">›</span></div>';
+  h+='<div class="m-item" onclick="exportRecordsCsv()"><span class="mi">📄</span><span class="mt">导出留痕明细 CSV</span><span class="ms">本学期全部留痕</span><span class="ma">›</span></div>';
+  h+='<div class="m-item" onclick="exportData()"><span class="mi">📤</span><span class="mt">导出备份（JSON）</span><span class="ms">含照片，换机迁移用</span><span class="ma">›</span></div>';
   h+='<div class="m-item" onclick="$(\'importInput\').click()"><span class="mi">📥</span><span class="mt">导入备份</span><span class="ma">›</span></div>';
   h+='<div class="m-item" onclick="toggleTheme()"><span class="mi">🌙</span><span class="mt">夜间模式</span><span class="ma">›</span></div>';
   if(!state.records.length&&!state.members.length)
     h+='<div class="m-item" onclick="seedDemo()"><span class="mi">🎬</span><span class="mt">填入演示数据</span><span class="ms">体验完整功能后再清空</span><span class="ma">›</span></div>';
   h+='<div class="m-item danger" onclick="clearAll()"><span class="mi">🗑</span><span class="mt">清空全部数据</span><span class="ma">›</span></div>';
-  h+='<div class="card" style="margin-top:14px"><div class="card-title">🔒 隐私说明</div><div class="note-box">所有数据（团员名册 / 留痕 / 照片 / 时长）只保存在本机浏览器，不上传任何服务器。换设备请用「导出备份」迁移；清理浏览器数据前请先备份。</div></div>';
+  h+='<div class="card" style="margin-top:14px"><div class="card-title">🔒 隐私说明</div><div class="note-box">所有数据（团员名册 / 留痕 / 照片 / 时长）只保存在本机浏览器，不上传任何服务器。换设备请用「导出备份」迁移；清理浏览器数据前请先备份。<br>当前数据占用：'+storageUsage()+'</div></div>';
   h+='<div class="card"><div class="card-title">💡 三会两制一课小抄</div><div class="note-box">'
     +'<b>三会</b>：支部团员大会（每学期≥1）、支部委员会（每月）、团小组会（每月）<br>'
     +'<b>两制</b>：团员教育评议制度、团员年度团籍注册制度（每学年各1次）<br>'
     +'<b>一课</b>：团课（每学期≥2，书记须讲团课）<br><br>'
     +'留痕规范：每次活动记录「时间地点+主持人+实到名单+议程小结+现场照片」，上级检查时打印台账即可。</div></div>';
   return h;
+}
+function storageUsage(){
+  try{const s=localStorage.getItem('branch_state')||'';
+    const kb=s.length*2/1024;
+    return kb>1024?(kb/1024).toFixed(1)+' MB':Math.round(kb)+' KB（上限约 5MB，照片多时先导出备份）';
+  }catch(e){return '—'}
+}
+function openAudit(){
+  const ck=auditChecklist();
+  const pct=Math.round(ck.pass/ck.total*100);
+  openModal('上级检查自查清单',
+    '<div class="note-box" style="margin-bottom:10px">按三会两制一课规范 + 留痕完整性自动核查当前数据，达标 <b>'+ck.pass+'/'+ck.total+'</b> 项（'+pct+'%）。未达标项点开就是整改方向。</div>'
+    +ck.items.map(i=>'<div class="ck-item"><span class="ck-ico">'+(i.ok?'✅':'⚠️')+'</span><div style="flex:1"><div>'+esc(i.t)+'</div><div class="ck-sub">'+esc(i.s)+'</div></div></div>').join('')
+    +'<div class="note-box" style="margin-top:10px">检查前建议：① 把缺小结/缺签到的留痕补齐；② 「打印学期工作台账」+「打印志愿时长表」+立项「支撑材料」三件套备齐；③ 演示数据记得先清空。</div>',
+    '<button class="btn btn-primary" onclick="closeModal()">知道了</button>');
 }
 function openSettings(){
   const g=state.meta.goals;
@@ -806,6 +1084,12 @@ function printLedger(){
     state.projects.forEach(p=>{h+='<tr><td>'+esc(p.name)+'</td><td>'+esc(p.category||'')+'</td><td>'+esc(p.leader||'')+'</td><td>'+PROJ_STATUS[p.status]+'</td><td>'+state.records.filter(r=>r.projectId===p.id).length+' 条</td></tr>'});
     h+='</table>';
   }
+  const pend=pendingResolutions();
+  if(pend.length){
+    h+='<h2>四、待落实决议（'+pend.length+' 条）</h2><table><tr><th>形成于</th><th>决议事项</th><th>来源活动</th></tr>';
+    pend.forEach(x=>{h+='<tr><td>'+x.rec.date+'</td><td>'+esc(x.res.text)+'</td><td>'+esc(x.rec.title)+'</td></tr>'});
+    h+='</table>';
+  }
   h+='<p class="pr-p">先进性自评：'+sc.score+' 分（'+sc.lv+'）。本台账由「团支部工作台」自动生成，原始留痕与照片存于支部工作终端备查。</p>'+prSign();
   doPrint(h);
 }
@@ -862,7 +1146,7 @@ function printProject(id){
 // ==================== 演示数据 ====================
 function seedDemo(){
   askConfirm('填入一套演示数据（5名团员、6条留痕、1个立项）？体验后可在「我的」里清空。',()=>{
-    const ms=[['林晓','支部书记'],['陈嘉','组织委员'],['苏杭','宣传委员'],['郑远','团员'],['许诺','团员']].map(x=>({id:uid('m'),name:x[0],role:x[1]}));
+    const ms=[['林晓','支部书记','第一小组','2024-05'],['陈嘉','组织委员','第一小组','2024-05'],['苏杭','宣传委员','第二小组','2024-11'],['郑远','团员','第二小组','2024-11'],['许诺','团员','第二小组','2025-04']].map(x=>({id:uid('m'),name:x[0],role:x[1],squad:x[2],joined:x[3]}));
     state.members=ms;
     const t=curTerm();
     const mk=(i)=>({date:'2026-09-'+pad(10+i*7)});
@@ -871,7 +1155,7 @@ function seedDemo(){
     const all=ms.map(m=>m.id);
     state.records=[
       {id:uid('r'),type:'assembly',title:t.name+'第一次支部团员大会',date:'2026-09-12',start:'19:00',end:'20:30',location:'笃行1-113',host:'林晓',recorder:'苏杭',attendees:all,extra:0,countsHours:false,hours:0,summary:'传达校团委新学期工作部署；选举产生新一届支委分工；讨论本学期立项方向，表决通过社区助老项目立项申报。',photos:[],projectId:null},
-      {id:uid('r'),type:'committee',title:'九月支部委员会：立项推进分工',date:'2026-09-18',start:'12:30',end:'13:10',location:'线上',host:'林晓',recorder:'陈嘉',attendees:all.slice(0,3),extra:0,countsHours:false,hours:0,summary:'分解立项任务：陈嘉负责结对名单，苏杭负责宣传留痕，商定每周六上午进社区。',photos:[],projectId:p1.id},
+      {id:uid('r'),type:'committee',title:'九月支部委员会：立项推进分工',date:'2026-09-18',start:'12:30',end:'13:10',location:'线上',host:'林晓',recorder:'陈嘉',attendees:all.slice(0,3),extra:0,countsHours:false,hours:0,summary:'分解立项任务：陈嘉负责结对名单，苏杭负责宣传留痕，商定每周六上午进社区。',photos:[],projectId:p1.id,resolutions:[{id:uid('s'),text:'陈嘉完成 10 户老人结对名单并公示',done:true},{id:uid('s'),text:'苏杭设计留痕拍照规范并在支委会通报',done:false}]},
       {id:uid('r'),type:'volunteer',title:'社区助老第一次上门服务',date:'2026-09-20',start:'08:30',end:'11:30',location:'仓前街道社区',host:'陈嘉',recorder:'苏杭',attendees:all,extra:2,countsHours:true,hours:3,summary:'完成 10 户老人建档，帮助打扫卫生、代购生活用品，回收需求清单 3 份。',photos:[],projectId:p1.id},
       {id:uid('r'),type:'course',title:'主题团课：学习二十大精神',date:'2026-10-10',start:'19:00',end:'20:00',location:'笃行1-113',host:'林晓',recorder:'陈嘉',attendees:all,extra:0,countsHours:false,hours:0,summary:'支部书记讲团课；分组研讨「新时代团员使命」；撰写心得 5 篇。',photos:[],projectId:null},
       {id:uid('r'),type:'group',title:'团小组会：服务复盘与改进',date:'2026-10-15',start:'21:00',end:'21:40',location:'宿舍活动室',host:'陈嘉',recorder:'郑远',attendees:all,extra:0,countsHours:false,hours:0,summary:'复盘两次上门服务：老人反馈集中在「陪伴聊天」需求，下次增加读报环节。',photos:[],projectId:p1.id},
@@ -893,7 +1177,7 @@ let confirmCb=null;
 function askConfirm(msg,cb){
   confirmCb=cb;
   openModal('确认','<div style="font-size:14px;line-height:1.7">'+esc(msg)+'</div>',
-    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-danger" style="background:var(--bad);color:#fff" onclick="confirmCb&&confirmCb();confirmCb=null">确定</button>');
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-danger" style="background:var(--bad);color:#fff" onclick="closeModal();confirmCb&&confirmCb();confirmCb=null">确定</button>');
 }
 
 // ==================== 主题 ====================

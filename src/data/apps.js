@@ -35,7 +35,7 @@ export const apps = [
   { id: 'officialSites', title: '学校官网', titleEn: 'University Portal', desc: '福建师范大学官方网站与各学院官网大全', descEn: 'Official FJNU website and college portals', icon: '🏯', color: '#c62828', group: '服务', groupEn: 'Services' },
   { id: 'skills', title: '技能市场', titleEn: 'Skill Market', desc: '27 条工作流卡片化：分类搜索、使用统计、一键运行', descEn: 'Workflows as cards: search, stats, run', icon: '🧩', color: '#2563eb', group: '服务', groupEn: 'Services' },
   { id: 'data', title: '数据管家', titleEn: 'Data Manager', desc: '网关地址一键切线上版 + 本机备份恢复 + 存储用量', descEn: 'Gateway switch, backup/restore & storage', icon: '🗄️', color: '#0f766e', group: '服务', groupEn: 'Services' },
-  { id: 'branchWork', title: '团支部工作台', titleEn: 'Branch Desk', desc: '三会两制一课留痕、志愿时长榜、立项证据链一键成册', descEn: 'CYL branch work log, volunteer hours & project evidence', icon: '🚩', color: '#c62828', group: '服务', groupEn: 'Services' },
+  { id: 'branchWork', title: '团支部工作台', titleEn: 'Branch Desk', desc: '三会两制一课留痕、志愿时长榜、立项证据链一键成册', descEn: 'CYL branch work log, volunteer hours & project evidence', icon: '🚩', color: '#c62828', group: '服务', groupEn: 'Services', hideOnHome: true },
   { id: 'foodWheel', title: '美食轮盘', titleEn: 'Food Wheel', desc: '食堂美食转盘，随机抽一个开吃', descEn: "Spin the wheel for today's meal", icon: '🎠', color: '#fb8c00', group: '游戏', groupEn: 'Games' },
   { id: 'quiz', title: '福star知多少', titleEn: 'FJNU Quiz', desc: '福star知识问答小游戏，测测你的校史功底', descEn: 'Test your knowledge of FJNU', icon: '🧠', color: '#5e35b1', group: '游戏', groupEn: 'Games' },
   { id: 'buildingMatch', title: '教学楼速配', titleEn: 'Building Match', desc: '翻牌配对教学楼新旧名称，测测你的记忆', descEn: 'Match old & new building names', icon: '🃏', color: '#00897b', group: '游戏', groupEn: 'Games' },

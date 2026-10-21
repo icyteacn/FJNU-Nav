@@ -156,11 +156,31 @@ try {
       for (const id of ids) {
         await page.goto(BASE + '/#/app/' + id, { waitUntil: 'domcontentloaded', timeout: T_NAV })
         await page.waitForTimeout(700)
-        const over = await page.evaluate(() => {
+        // 不只报「溢出多少」，还要指出**是谁**撑宽的：CI 与本地字体/环境不同，
+        // 只给一个数字会让人反复猜（曾因此多花一轮排查）。
+        const probe = await page.evaluate(() => {
           const d = document.scrollingElement || document.documentElement
-          return d.scrollWidth - d.clientWidth
+          const vw = d.clientWidth
+          const list = []
+          for (const el of document.querySelectorAll('body *')) {
+            const r = el.getBoundingClientRect()
+            if (r.width < 1 || r.height < 1) continue
+            if (r.right > vw + 1) {
+              list.push({
+                t: el.tagName.toLowerCase(),
+                c: (typeof el.className === 'string' ? el.className : '').replace(/\s+/g, '.').slice(0, 40),
+                r: Math.round(r.right),
+                w: Math.round(r.width)
+              })
+            }
+          }
+          list.sort((a, b) => b.r - a.r)
+          return { over: d.scrollWidth - d.clientWidth, vw, top: list.slice(0, 4) }
         })
-        if (over > 2) bad.push(id + ' +' + over + 'px')
+        if (probe.over > 2) {
+          const detail = probe.top.map((x) => `${x.t}.${x.c}@${x.r}/w${x.w}`).join(' | ')
+          bad.push(id + ' +' + probe.over + 'px(vw=' + probe.vw + ') [' + detail + ']')
+        }
       }
       assert(bad.length === 0, '溢出: ' + bad.join(', '))
     })

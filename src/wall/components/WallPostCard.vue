@@ -135,7 +135,7 @@ void hotScore
 </template>
 
 <style scoped>
-.pc { border: 1px solid var(--border, #e5eaf2); background: var(--card, #fff); border-radius: 14px; padding: 14px 16px; transition: box-shadow 0.15s; }
+.pc { border: 1px solid var(--border, #e5eaf2); background: var(--card, #fff); border-radius: 14px; padding: 14px 16px; transition: box-shadow 0.15s; min-width: 0; max-width: 100%; }
 .pc:hover { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06); }
 .pc.compact { padding: 11px 13px; }
 
@@ -151,12 +151,12 @@ void hotScore
 .pc-report { border: none; background: none; cursor: pointer; font-size: 12px; opacity: 0.55; padding: 0; }
 .pc-report:hover { opacity: 1; }
 
-.pc-title { font-size: 15.5px; font-weight: 700; color: var(--text, #24292f); margin-top: 8px; line-height: 1.5; cursor: pointer; }
-.pc-content { font-size: 13.5px; color: var(--text, #24292f); line-height: 1.7; margin-top: 5px; white-space: pre-wrap; word-break: break-word; cursor: pointer; }
+.pc-title { font-size: 15.5px; font-weight: 700; color: var(--text, #24292f); margin-top: 8px; line-height: 1.5; cursor: pointer; overflow-wrap: anywhere; }
+.pc-content { font-size: 13.5px; color: var(--text, #24292f); line-height: 1.7; margin-top: 5px; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; cursor: pointer; }
 .pc-content.clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
 .pc-vote { margin-top: 10px; border: 1px solid var(--border, #e5eaf2); border-radius: 11px; padding: 10px 12px; background: var(--bg, #f7f9fc); }
-.pc-vote-q { font-weight: 700; font-size: 13px; margin-bottom: 8px; color: var(--text, #24292f); }
+.pc-vote-q { font-weight: 700; font-size: 13px; margin-bottom: 8px; color: var(--text, #24292f); overflow-wrap: anywhere; }
 .pc-vote-opt { position: relative; margin-bottom: 6px; }
 .pc-vote-btn { width: 100%; display: flex; justify-content: space-between; border: 1px solid var(--border, #e5eaf2); background: var(--card, #fff); border-radius: 8px; padding: 7px 12px; font-size: 12.5px; font-family: inherit; color: var(--text, #24292f); cursor: pointer; position: relative; z-index: 1; }
 .pc-vote-btn:not(:disabled):hover { border-color: var(--primary, #1b66c9); }

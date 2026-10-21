@@ -348,7 +348,7 @@ async function loadWords() {
 .cw-sort.on { border-color: var(--primary, #1b66c9); color: var(--primary, #1b66c9); font-weight: 700; }
 .cw-hint { font-size: 11.5px; color: var(--muted, #8a94a6); margin-left: auto; }
 
-.cw-grid { display: grid; grid-template-columns: 1fr 300px; gap: 14px; align-items: start; }
+.cw-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
 .cw-feed { display: flex; flex-direction: column; gap: 11px; min-width: 0; }
 .cw-empty { padding: 38px 16px; text-align: center; color: var(--muted, #8a94a6); font-size: 13.5px; }
 .cw-draftnote { font-size: 11.5px; color: #b45309; background: rgba(245, 158, 11, 0.1); border-radius: 9px; padding: 8px 13px; text-align: center; }
@@ -357,6 +357,6 @@ async function loadWords() {
 .cw-toast.err { background: #d1242f; }
 
 @media (max-width: 960px) {
-  .cw-grid { grid-template-columns: 1fr; }
+  .cw-grid { grid-template-columns: minmax(0, 1fr); }
 }
 </style>

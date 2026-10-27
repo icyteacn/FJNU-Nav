@@ -244,6 +244,37 @@ async function main() {
       assert(r.onIdx === r.expect, `深链应选中今天（索引 ${r.expect}），实际 ${r.onIdx}`)
     })
 
+    // ───────── 远程课表下发：改课表不需要发新版 APK ─────────
+    // 拦截线上数据地址，下发一份「删掉当代科技 + 加一门标记课」的课表，
+    // 页面必须采用它（而不是包内内置数据）—— 这直接证明线上改数据即生效。
+    await ok('线上课表优先：远程下发即生效（不更新 App 也能换课表）', async () => {
+      const payload = JSON.parse(fs.readFileSync(path.join(ROOT, 'public/data/schedule-data.json'), 'utf8'))
+      const target = payload.courses.find((c) => c.id === 'TECH-001') || payload.courses[0]
+      const mark = '远程下发验证课'
+      payload.courses = payload.courses
+        .filter((c) => c.id !== 'TECH-001')
+        .concat([{ ...target, id: 'REMOTE-TEST-1', name: mark }])
+
+      const pattern = '**/FJNU-Nav/data/schedule-data.json*'
+      await page.route(pattern, (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json; charset=utf-8',
+        body: JSON.stringify(payload)
+      }))
+      try {
+        await page.goto(BASE + '/standalone-schedule.html', { waitUntil: 'domcontentloaded' })
+        await page.waitForTimeout(2500)
+        const got = await page.evaluate((m) => {
+          const dump = typeof ALL_COURSES !== 'undefined' ? JSON.stringify(ALL_COURSES) : ''
+          return { hasMark: dump.includes(m), hasTech: dump.includes('当代科技') }
+        }, mark)
+        assert(got.hasMark, '页面没有采用线上下发的课表（仍在用包内内置数据）')
+        assert(!got.hasTech, '页面仍在显示已被线上数据删除的「当代科技」')
+      } finally {
+        await page.unroute(pattern)
+      }
+    })
+
     await ok('全程无未捕获 JS 错误', async () => {
       const real = errs.filter((m) => !/favicon|net::ERR/.test(m))
       assert(real.length === 0, real.slice(0, 3).join(' | '))

@@ -87,7 +87,9 @@ export const COURSES = [
   },
   {
     name: '当代科技', id: 'TECH-001', teacher: '黄正华', location: '知明2-202',
-    weeks: '3-10', weekdayType: 'all', startPeriod: 5, endPeriod: 6, weekday: 2,
+    // 第 10 周（11/3 周二 5-6 节）停课，其余周次照常；改这里后 build 会重新生成
+    // public/data/schedule-data.json，APK 打开时从线上拉取即生效（无需发版）
+    weeks: '3-9', weekdayType: 'all', startPeriod: 5, endPeriod: 6, weekday: 2,
     credits: 2, hours: 32, category: '公共选修课', color: '#ad1457', major: 'cs-master',
   },
   {

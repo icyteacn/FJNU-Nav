@@ -158,6 +158,19 @@ const displayCourses = computed(() => {
   return courses
 })
 
+/** 头部统计：同名课程按「名称+专业」去重（分段课程如高等工程数学 3-7 / 8-11 只算一门、一次学分） */
+const courseStats = computed(() => {
+  const seen = new Set()
+  let credits = 0
+  for (const c of displayCourses.value) {
+    const key = (c.name || '') + '|' + (c.major || '')
+    if (seen.has(key)) continue
+    seen.add(key)
+    credits += c.credits || 0
+  }
+  return { count: seen.size, credits }
+})
+
 const coursesByDay = computed(() => {
   const map = new Map()
   for (let wd = 1; wd <= 7; wd++) {
@@ -863,8 +876,8 @@ onMounted(() => {
       </div>
       <div class="header-stats">
         <div class="stat-item"><span class="stat-value">{{ showSemester ? '学期' : '第' + selectedWeek + '周' }}</span><span class="stat-label">{{ showSemester ? '全部课程' : getWeekRange() }}</span></div>
-        <div class="stat-item"><span class="stat-value">{{ displayCourses.length }}门</span><span class="stat-label">课程</span></div>
-        <div class="stat-item"><span class="stat-value">{{ displayCourses.reduce((s, c) => s + c.credits, 0) }}</span><span class="stat-label">学分</span></div>
+        <div class="stat-item"><span class="stat-value">{{ courseStats.count }}门</span><span class="stat-label">课程</span></div>
+        <div class="stat-item"><span class="stat-value">{{ courseStats.credits }}</span><span class="stat-label">学分</span></div>
       </div>
     </div>
 

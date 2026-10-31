@@ -84,6 +84,22 @@
       "name": "高等工程数学",
       "id": "XZB0270812102",
       "teacher": "林劼、胡丽莹",
+      "location": "笃行1-201",
+      "weeks": "3-7",
+      "weekdayType": "all",
+      "startPeriod": 9,
+      "endPeriod": 12,
+      "weekday": 5,
+      "credits": 3,
+      "hours": 48,
+      "category": "专业必修课",
+      "color": "#1565c0",
+      "major": "cs-master"
+    },
+    {
+      "name": "高等工程数学",
+      "id": "XZB0270812102-W8",
+      "teacher": "林劼、胡丽莹",
       "location": "笃行1-209",
       "weeks": "8-11",
       "weekdayType": "all",
@@ -230,6 +246,22 @@
       "name": "高等工程数学",
       "id": "ZSZB027085405402",
       "teacher": "林劼、胡丽莹",
+      "location": "笃行1-201",
+      "weeks": "3-7",
+      "weekdayType": "all",
+      "startPeriod": 9,
+      "endPeriod": 12,
+      "weekday": 5,
+      "credits": 3,
+      "hours": 48,
+      "category": "专业必修课",
+      "color": "#1565c0",
+      "major": "se-master"
+    },
+    {
+      "name": "高等工程数学",
+      "id": "ZSZB027085405402-W8",
+      "teacher": "林劼、胡丽莹",
       "location": "笃行1-209",
       "weeks": "8-11",
       "weekdayType": "all",
@@ -325,6 +357,22 @@
     {
       "name": "高等工程数学",
       "id": "ZSZB027085410002",
+      "teacher": "林劼、胡丽莹",
+      "location": "笃行1-201",
+      "weeks": "3-7",
+      "weekdayType": "all",
+      "startPeriod": 9,
+      "endPeriod": 12,
+      "weekday": 5,
+      "credits": 3,
+      "hours": 48,
+      "category": "专业必修课",
+      "color": "#1565c0",
+      "major": "ai-master"
+    },
+    {
+      "name": "高等工程数学",
+      "id": "ZSZB027085410002-W8",
       "teacher": "林劼、胡丽莹",
       "location": "笃行1-209",
       "weeks": "8-11",
@@ -451,7 +499,7 @@
       "major": "nis-master"
     }
   ],
-  "version": "aad1e38c5d",
+  "version": "7da111e553",
   "semester": "2026-2027学年第一学期",
-  "updatedAt": "2026-10-27T08:33:24.339Z"
+  "updatedAt": "2026-10-31T03:14:21.144Z"
 }

@@ -60,6 +60,20 @@ async function onApkDownload(e) {
     const m = apkManifest.value || await fetchApkManifest()
     apkManifest.value = m
     if (!m || !Array.isArray(m.urls) || !m.urls.length) return // 走默认同域下载
+    // App 内嵌 WebView 无下载能力：有原生桥则直接把最快源推给系统下载器
+    const nativeDl = (window.FeikeNative && typeof window.FeikeNative.downloadApk === 'function') ? window.FeikeNative.downloadApk.bind(window.FeikeNative) : null
+    if (nativeDl) {
+      e.preventDefault()
+      for (const u of m.urls) {
+        try {
+          const abs = new URL(u, location.href).href
+          const r = await fetch(abs, { method: 'HEAD', cache: 'no-store' })
+          if (r.ok && nativeDl(abs, m.file || 'feike-schedule.apk')) return
+        } catch { /* 下一候选 */ }
+      }
+      nativeDl(new URL(m.urls[0], location.href).href, m.file || 'feike-schedule.apk')
+      return
+    }
     const best = await probeApkUrl(m.urls)
     if (best && best !== new URL('downloads/feike-schedule.apk', location.href).href) {
       e.preventDefault()

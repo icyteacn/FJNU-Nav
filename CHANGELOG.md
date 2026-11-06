@@ -2,6 +2,20 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.39 — App 内下载修复：原生下载桥（patch，APK 1.3.18 / versionCode 18）
+
+**根因**：WebView 默认没有 DownloadListener——App 内嵌网页里 `a[download]`/`location.href` 指向 .apk
+完全无反应（用户报"点击下载 APK 没反应"）。
+- `MainActivity.FeikeBridge` 新增 `downloadApk(url,fileName)`：把竞速胜出的源 URL 交给
+  系统 DownloadManager（通知栏可见进度、完成即点安装），WebView 零下载能力依赖；
+  `apkVersion()` 改从 PackageManager 读真实 versionName。
+- `standalone downloadLatestApk` 与首页 `onApkDownload` 双端接入：检测到 `FeikeNative` 桥
+  即候选源逐个 HEAD 探测 → 首个 200 推给原生下载器；无桥环境（浏览器）走原多源竞速+同域兜底。
+- APK 1.3.16→1.3.18 三件套同步（versionCode 18、APP_VERSION、releases/ 二进制 5.9MB），
+  `apk-release.json` 清单指向新版本化文件。
+- 遗留说明：v1.3.16 及更早安装包内嵌的旧版网页无新桥——需经浏览器下载一次 1.3.18，
+  此后版本内更新全程闭环。
+
 ## v1.7.38 — APK 下载多源竞速 + 课表活动提醒归位（patch）
 
 **下载修复（照 LeagueTrace OTA 思路）**：GitHub Releases 的 release-assets 域名国内常不可达。

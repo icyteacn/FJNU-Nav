@@ -2929,7 +2929,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.17'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.18'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -3021,6 +3021,18 @@ async function downloadLatestApk(){
   showToast('正在寻找最快下载源...');
   const m=await fetchApkManifest();
   if(!m){switchToWeb();showToast('请在网页版中下载');return;}
+  // App 内：优先把最快源交给原生桥下载（WebView 无下载能力，location.href 点了没反应）
+  const nativeDl=(window.FeikeNative&&typeof FeikeNative.downloadApk==='function')?FeikeNative.downloadApk:null;
+  if(nativeDl){
+    for(const u of m.urls){
+      try{
+        const abs=new URL(u,'https://icyteacn.github.io/FJNU-Nav/').href;
+        const r=await fetch(abs,{method:'HEAD'});
+        if(r.ok){if(nativeDl(abs,m.file||'feike-schedule.apk'))return;}catch(e){}
+      }catch(e){}
+    }
+    if(m.urls[0]&&nativeDl(new URL(m.urls[0],'https://icyteacn.github.io/FJNU-Nav/').href,m.file||'feike-schedule.apk'))return;
+  }
   for(const u of m.urls){
     try{
       const abs=new URL(u,'https://icyteacn.github.io/FJNU-Nav/').href;

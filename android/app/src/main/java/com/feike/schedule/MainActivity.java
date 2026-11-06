@@ -1,14 +1,17 @@
 package com.feike.schedule;
 
 import android.Manifest;
+import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.widget.Toast;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.util.Log;
@@ -256,7 +259,41 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public String apkVersion() {
-            return "1.3";
+            try {
+                return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            } catch (Throwable t) {
+                return "1.3";
+            }
+        }
+
+        /**
+         * 推安装包：把 APK 下载交给系统 DownloadManager（通知栏可见进度，完成后点击即装）。
+         * 背景：WebView 默认没有 DownloadListener，页面里 a[download]/location.href 指向 .apk
+         * 完全没有反应——用户报的"点击下载没反应"即此原因。前端先竞速出最快源，再把 URL
+         * 交到这里由系统下载器接管，WebView 不需要任何下载能力。
+         * @return true=已交给系统下载器；false=失败（前端应回退网页流程）
+         */
+        @JavascriptInterface
+        public boolean downloadApk(String url, String fileName) {
+            try {
+                if (url == null || !(url.startsWith("https://") || url.startsWith("http://"))) return false;
+                if (fileName == null || fileName.isEmpty()) fileName = "feike-schedule.apk";
+                DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                if (dm == null) return false;
+                DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
+                req.setTitle(fileName);
+                req.setDescription("课表 App 安装包下载中…");
+                req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+                req.setMimeType("application/vnd.android.package-archive");
+                dm.enqueue(req);
+                final String msg = "已开始下载：" + fileName + "（完成后点通知安装）";
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show());
+                return true;
+            } catch (Throwable t) {
+                Log.w(TAG, "downloadApk failed", t);
+                return false;
+            }
         }
     }
 

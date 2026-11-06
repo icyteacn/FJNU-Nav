@@ -11,7 +11,7 @@ import { createFavorites } from '../utils/favorites.js'
 import { useI18n } from '../i18n/index.js'
 import VisitStats from '../components/VisitStats.vue'
 import TodayGlance from '../components/TodayGlance.vue'
-import { cachedRelease, fetchApkRelease, fetchApkManifest, probeApkUrl } from '../utils/apkRelease.js'
+import { cachedRelease, fetchApkRelease, fetchApkManifest, probeApkUrl, launchApkDownload } from '../utils/apkRelease.js'
 
 const emit = defineEmits(['open'])
 
@@ -54,36 +54,24 @@ function appDesc(a) {
    读取失败（限流/断网）静默降级，不阻塞首屏、不影响下载。 */
 const apkInfo = ref(cachedRelease())
 const apkManifest = ref(null)
-/** 主下载点击：manifest 已就绪时直接竞速取最快源（jsDelivr/Pages/raw），探测全挂则放行默认同域文件 */
+/** 主下载点击：统一走 launchApkDownload（原生桥→顶框架逃生→本帧导航），iframe/旧 App 内也能触发 */
 async function onApkDownload(e) {
   try {
     const m = apkManifest.value || await fetchApkManifest()
     apkManifest.value = m
-    if (!m || !Array.isArray(m.urls) || !m.urls.length) return // 走默认同域下载
-    // App 内嵌 WebView 无下载能力：有原生桥则直接把最快源推给系统下载器
-    const nativeDl = (window.FeikeNative && typeof window.FeikeNative.downloadApk === 'function') ? window.FeikeNative.downloadApk.bind(window.FeikeNative) : null
-    if (nativeDl) {
-      e.preventDefault()
-      for (const u of m.urls) {
-        try {
-          const abs = new URL(u, location.href).href
-          const r = await fetch(abs, { method: 'HEAD', cache: 'no-store' })
-          if (r.ok && nativeDl(abs, m.file || 'feike-schedule.apk')) return
-        } catch { /* 下一候选 */ }
+    const inFrame = window.top && window.top !== window.self
+    const hasNative = !!(window.FeikeNative && typeof window.FeikeNative.downloadApk === 'function')
+    if (!m || !Array.isArray(m.urls) || !m.urls.length) {
+      // 浏览器默认锚点本可兜底，但 iframe/WebView 里子帧导航会被吞——此时必须手动发
+      if (inFrame || hasNative) {
+        e.preventDefault()
+        launchApkDownload(new URL('downloads/feike-schedule.apk', location.href).href)
       }
-      nativeDl(new URL(m.urls[0], location.href).href, m.file || 'feike-schedule.apk')
       return
     }
+    e.preventDefault()
     const best = await probeApkUrl(m.urls)
-    if (best && best !== new URL('downloads/feike-schedule.apk', location.href).href) {
-      e.preventDefault()
-      const a = document.createElement('a')
-      a.href = best
-      a.download = m.file || 'feike-schedule.apk'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-    }
+    launchApkDownload(best || new URL(m.urls[0], location.href).href, m.file || 'feike-schedule.apk')
   } catch { /* 静默走默认下载 */ }
 }
 // 预拉清单（后台静默，不占首屏）

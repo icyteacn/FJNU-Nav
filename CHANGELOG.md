@@ -2,6 +2,20 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.40 — 旧版安装包下载链路根治：iframe 顶帧逃生 + 站内更新横幅（patch）
+
+**根因（旧包 ≤1.3.16）**：`switchToWeb()` 把官网装进 iframe（timetable 路由），iframe 内
+子帧导航（`a[download]`/`location.href`）被 WebView 静默吞掉——且 timetable 页根本没有下载入口，
+旧包用户等于无路可下。
+- `apkRelease.js` 新增 `launchApkDownload(url)` 统一出口：原生桥 → `window.top.location.href`
+  主帧导航（Capacitor 拦非应用 URL → 外部 intent → 系统浏览器下载）→ 本帧导航。
+  跨域 iframe 设置 top.location 属标准允许行为，旧包零改动即可获得下载能力。
+- 新增 `ApkFrameBanner.vue`（App.vue 异步挂载）：仅在 `window.top!==window.self`（iframe 内）
+  渲染底部横幅「📲 课表 App 有新版本 vX.Y.Z，点击下载安装包」——旧包切到网页版后
+  任何路由都看得到入口，点击竞速取源后经顶帧逃生触发系统下载。
+- `Home.vue` 下载卡同步改用统一出口；manifest 缺失且处于 iframe/有桥时也手动发兜底同域文件。
+**验证**：build ✓、e2e-integrity 18/18、test_schedule 全绿、ApkFrameBanner 已独立分包。
+
 ## v1.7.39 — App 内下载修复：原生下载桥（patch，APK 1.3.18 / versionCode 18）
 
 **根因**：WebView 默认没有 DownloadListener——App 内嵌网页里 `a[download]`/`location.href` 指向 .apk

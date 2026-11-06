@@ -184,3 +184,26 @@ export async function probeApkUrl(urls, timeoutMs = 8000) {
   })().then(r => (r && (r.ok || r.status === 206) ? u : Promise.reject(u))))
   try { return await Promise.any(racers) } catch { return null }
 }
+
+/**
+ * 把 APK 真正"推"出去下载（三档降级，返回是否已发起）：
+ * ① 新版 App 原生桥 FeikeNative.downloadApk → 系统 DownloadManager（通知栏进度+点击即装）；
+ * ② 旧版 App 的 iframe 场景：子框架导航会被 WebView 静默吞掉（"点了没反应"的根因），
+ *    改用 window.top.location.href 走主框架导航 → Capacitor 拦下非应用 URL → 外部 intent
+ *    → 系统浏览器/下载器接管。跨域 iframe 设置 top.location 是标准允许行为；
+ * ③ 普通浏览器：本帧导航即可。
+ */
+export function launchApkDownload(url, fileName = 'feike-schedule.apk') {
+  if (!url) return false
+  try {
+    const native = window.FeikeNative
+    if (native && typeof native.downloadApk === 'function' && native.downloadApk(url, fileName)) return true
+  } catch { /* 桥不可用走下一档 */ }
+  try {
+    if (window.top && window.top !== window.self) {
+      window.top.location.href = url
+      return true
+    }
+  } catch { /* top 不可写则回退 */ }
+  try { window.location.href = url; return true } catch { return false }
+}

@@ -13,6 +13,8 @@ import TourOverlay from './components/TourOverlay.vue'
 const ChatDock = defineAsyncComponent(() => import('./components/agent/ChatDock.vue'))
 /* 建议按钮组件连带 suggest.js 词库约 101KB，与首屏无关，同样异步+闲时预载 */
 const SuggestButton = defineAsyncComponent(() => import('./components/SuggestButton.vue'))
+/* 旧版课表 App 的 iframe 网页版：无桥时提供可达的 APK 下载横幅（仅 iframe 内渲染） */
+const ApkFrameBanner = defineAsyncComponent(() => import('./components/ApkFrameBanner.vue'))
 import { SITE } from './config/site.js'
 import { useI18n } from './i18n/index.js'
 import { NAV_APPS, useViewState, preloadPopular } from './router.js'
@@ -279,4 +281,5 @@ onMounted(() => {
   <!-- 全站悬浮智能体 -->
   <ChatDock @open="openApp" />
   <SuggestButton />
+  <ApkFrameBanner />
 </template>

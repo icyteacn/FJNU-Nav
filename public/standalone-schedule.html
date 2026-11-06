@@ -2929,7 +2929,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.18'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.19'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -3028,7 +3028,7 @@ async function downloadLatestApk(){
       try{
         const abs=new URL(u,'https://icyteacn.github.io/FJNU-Nav/').href;
         const r=await fetch(abs,{method:'HEAD'});
-        if(r.ok){if(nativeDl(abs,m.file||'feike-schedule.apk'))return;}catch(e){}
+        if(r.ok&&nativeDl(abs,m.file||'feike-schedule.apk'))return;
       }catch(e){}
     }
     if(m.urls[0]&&nativeDl(new URL(m.urls[0],'https://icyteacn.github.io/FJNU-Nav/').href,m.file||'feike-schedule.apk'))return;

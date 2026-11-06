@@ -2,6 +2,18 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.41 — 热修：内嵌课表整页 JS 语法错误致白屏死按钮（patch，APK 1.3.19 / versionCode 19）
+
+**恶性 bug**：`downloadLatestApk` 补丁里 `if(r.ok){...return;}catch(e){}` 多出一个无 try 的
+catch → 整个内嵌 `<script>` 解析失败 → 打开即停第一周白屏、全部按钮失效。
+- 修复语句结构（try/catch 配对），并抽取页面全部 `<script>` 块 `node --check` 通过；
+  e2e-standalone 14/14 验证『全程无未捕获 JS 错误』。
+- APK 升 1.3.19 / versionCode 19（1.3.18 坏包装了更高 code 才能覆盖）；
+  发布包走 build-apk.bat：cover-debug.keystore（2277d065）签名 + trim 后 1.08MB。
+- 删除 releases/feike-schedule-1.3.18.apk（重签但脚本仍坏的版本，不再分发）。
+- **教训沉淀**：内嵌页 JS 改动后必须 `node --check` 抽出的 script 块 + 跑 e2e-standalone；
+  test_schedule 只校验数据一致性，抓不住解析级错误。
+
 ## v1.7.40 — 旧版安装包下载链路根治：iframe 顶帧逃生 + 站内更新横幅（patch）
 
 **根因（旧包 ≤1.3.16）**：`switchToWeb()` 把官网装进 iframe（timetable 路由），iframe 内

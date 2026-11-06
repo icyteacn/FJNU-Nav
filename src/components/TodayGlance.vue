@@ -9,7 +9,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   MAJORS, COURSES, SINGLE_PERIOD_TIMES,
-  getCurrentWeek, isCourseInWeek, getScheduleWeekday, getDateHolidayInfo,
+  getCurrentWeek, isCourseInWeek, getScheduleWeekday, getDateHolidayInfo, getEventSession,
 } from '../data/classSchedule.js'
 import { useI18n } from '../i18n/index.js'
 
@@ -40,6 +40,21 @@ const schedWd = computed(() => {
   return getScheduleWeekday(wd, dateStr.value)
 })
 const holiday = computed(() => getDateHolidayInfo(dateStr.value))
+/** event 类标注：按所选专业精确到场次（无匹配回落 descShort；ai-master 等跨班专业回落通用文案） */
+const eventSession = computed(() => {
+  const h = holiday.value
+  if (!h || h.type !== 'event') return null
+  return getEventSession(h, major.value)
+})
+const badgeText = computed(() => {
+  const h = holiday.value
+  if (!h) return ''
+  if (h.type === 'event' && eventSession.value) {
+    const s = eventSession.value
+    return `${h.descShort || h.desc} · ${s.time} ${s.location}`
+  }
+  return h.descShort || h.desc || h.name
+})
 
 const deleted = computed(() => new Set(loadJSON(DELETED_KEY, [])))
 const todayCourses = computed(() => {
@@ -97,7 +112,7 @@ const summary = computed(() => {
       <div class="today-left">
         <div class="today-date">
           {{ dateLabel }}<span class="today-week">{{ L(' · 第 ', ' · Week ') }}{{ week }}{{ L(' 教学周', '') }}</span>
-          <span v-if="holiday" class="today-badge" :class="'tb-' + (holiday.type || 'info')">{{ holiday.icon || '📌' }} {{ holiday.descShort || holiday.desc || holiday.name }}</span>
+          <span v-if="holiday" class="today-badge" :class="'tb-' + (holiday.type || 'info')" :title="holiday.desc">{{ holiday.icon || '📌' }} {{ badgeText }}</span>
         </div>
         <div class="today-line">{{ summary }}</div>
         <div v-if="!major" class="today-hint">{{ L('点我去课表选专业', 'Tap to pick a major') }}</div>

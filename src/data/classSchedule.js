@@ -459,7 +459,12 @@ export const HOLIDAY_MAP = {
   '2026-11-07': {
     type: 'event', icon: '🎓',
     descShort: '会议参会',
-    desc: '海丝国际产学研用合作会议分会场：2班/5班 08:00 行政楼宏达厅；1班/3班 13:30 科研18号楼1004（向学委签到，勿提前离场）',
+    desc: '2026海上丝绸之路国际产学研用合作会议·网络空间安全数字化应用分会场（找学委签到，勿提前离场）。上午场 08:00 行政楼宏达厅：2班（网络空间安全硕博）、5班（网络与信息安全）；下午场 13:30 科研18号楼1004会议室：1班（计算机科学与技术）、3班（软件工程、人工智能·海西联培）。',
+    // 按专业精确到场次；ai-master 跨 3/4/6 班，校本部与联培班不在名单内，故不映射、回落通用 desc
+    sessions: [
+      { time: '08:00', location: '行政楼宏达厅', classes: '2班/5班', majors: ['cyber-master', 'cyber-phd', 'nis-master'] },
+      { time: '13:30', location: '科研18号楼1004', classes: '1班/3班', majors: ['cs-master', 'se-master'] },
+    ],
   },
 }
 
@@ -579,6 +584,16 @@ export function applyRemoteSchedule(data) {
  * @param {string} dateStr YYYY-MM-DD
  * @returns {number|null} 返回课表周几，null 表示该天停课
  */
+/**
+ * 取某个专业在指定日期标注(event)下匹配的场次
+ * @param {{ sessions?: Array<{time,location,classes,majors}> }} info getDateHolidayInfo 的返回值
+ * @param {string} majorKey 专业 key；未选/不匹配返回 null（调用方回落 info.desc）
+ */
+export function getEventSession(info, majorKey) {
+  if (!info || !Array.isArray(info.sessions) || !majorKey) return null
+  return info.sessions.find(s => Array.isArray(s.majors) && s.majors.includes(majorKey)) || null
+}
+
 export function getScheduleWeekday(originalWeekday, dateStr) {
   const info = HOLIDAY_MAP[dateStr]
   if (!info) return originalWeekday

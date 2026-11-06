@@ -2,6 +2,16 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.36 — 11/7 参会安排按专业精确到场次（patch）
+
+依据「2026级班级↔专业」对照（1班计科/2班网安硕博/3班软工+海西联培AI/5班网安信安）：
+- `HOLIDAY_MAP['2026-11-07']` 增 `sessions` 结构化字段：上午场 08:00 宏达厅（2/5班→cyber-master、cyber-phd、nis-master），
+  下午场 13:30 科研18号楼1004（1/3班→cs-master、se-master）；desc 同步更新为按班写明专业全称。
+- 新增 `getEventSession(info, majorKey)`：按所选专业返回匹配场次；`ai-master` 跨 3/4/6 班（校本部/联培班
+  不在参会名单）不映射、回落通用 desc——避免给无需参会的学生发错误场次。
+- `TodayGlance` 徽标：event 类标注命中场次时显示「会议参会 · 13:30 科研18号楼1004」，未命中回落 descShort，
+  `title` 属性挂完整 desc；三端（源/内置/产物）逐条一致过门禁。
+
 ## v1.7.35 — 课表数据更新（patch）
 
 按研究生院通知落数据，三端（classSchedule.js / standalone-schedule 内置 / schedule-data.json）同步：

@@ -29,6 +29,7 @@
 
 | 日期 | 版本 | 内容 |
 | --- | --- | --- |
+| 2026-11-06 | v1.7.36（patch） | **11/7 参会按专业精确到场次**：班级↔专业对照落地为 `sessions` 字段（上午 2/5班→网安系三专业；下午 1/3班→cs-master+se-master），新增 `getEventSession`；`ai-master` 跨 3/4/6 班不映射防误报；TodayGlance 徽标显示本人场次+title 挂全文。test_schedule 三端一致+全部门禁绿。 |
 | 2026-11-06 | v1.7.35（patch） | **课表数据更新**：①校运会停课 11/12-14 三条 holiday 三端同步（11/11 不停课按通知不标）；②新增 `type:'event'` 日期标注——11/7 海丝会议参会，周六列头 🎓徽标、不改课表；③修 TodayGlance 节日徽标 `name` 兜底漏字段空文本 bug；apkVersion 链 1.3.16→1.3.17。验证：test_schedule 三端一致全绿、build+integrity 18、移动端截图徽标复核。 |
 | 2026-11-06 | v1.7.34（patch） | **首页新增「今日速览」卡**：src/components/TodayGlance.vue，显示日期+教学周+今日课门数+下一节课（名/节次/教室）+30s 实时倒计时；与课表页同一份 classSchedule.js（调休映射/节假日徽章/周次过滤全生效），兼容自定义课与按周删除；未选专业显示引导直达课表；中英双语、移动端自适应。新增 scripts/_audit_all.mjs 全路由审计器（38 路由×桌面/移动：横向溢出/空页/JS错误/HTTP4xx 自动巡检）。验证：build + integrity(18) 全绿，桌面/移动两态截图人工复核。 |
 | 2026-11-05 | v1.7.33（patch） | **首屏瘦身：`SuggestButton` 异步化**。该组件连带 `suggest.js` 建议词库约 101KB，此前随 `App.vue` 静态引入打进急切图，全站首屏都为其付流量。改为 `defineAsyncComponent` 异步组件并挂入既有 `whenIdle`+`isSlowConnection` 闲时预热通道（与 ChatDock 同一跳、弱网跳过）：急切 JS ~265KB→~164KB（-38%），`npm run build` + `e2e-integrity`(18) + 四套单元(24/53/47/51) + `python -m unittest`(17) 全绿；14 页冒烟截图零报错。`schedule-data.json` 周次滚动至第 10 周。 |

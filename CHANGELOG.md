@@ -2,6 +2,19 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.42 — 课表 App 功能扩充：日程下发进单日列表 + 复制本周课表 + 空档统计（patch，APK 1.3.20 / versionCode 20）
+
+- **官方日程同步进 App**：`gen-schedule-data.mjs` 把 `orientationSchedule.js` 未归档事件
+  编译进 `schedule-data.json.events[]`（含受众专业 majors/prep/tip）——APK 联网自动下发，
+  新增活动不用重打包。单日列表课程下方新增「📌 当日活动安排」区：时间+标题+地点+受众，
+  匹配所选专业标「你的场次」，点开详情弹窗（时间/地点/参加/准备/提示）；
+  与 HOLIDAY_MAP event 场次按 时间+地点 去重合并，无课日同样可见，返回键层已注册。
+- **复制本周课表**：菜单一键生成纯文本（逐日 节次+课名+教室，含停课/无课标记），
+  clipboard API + execCommand 双通道。
+- **周统计加「空档 J 节」**：weekMeta 追加 1-12 节满格口径的空闲节次（按日去重）。
+- 门禁：抽块 node --check ✓、e2e-standalone 14/14、test_schedule 全绿；
+  2277d065 签名包 1.08MB。
+
 ## v1.7.41 — 热修：内嵌课表整页 JS 语法错误致白屏死按钮（patch，APK 1.3.19 / versionCode 19）
 
 **恶性 bug**：`downloadLatestApk` 补丁里 `if(r.ok){...return;}catch(e){}` 多出一个无 try 的

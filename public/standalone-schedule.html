@@ -186,7 +186,16 @@
     .li-meta{font-size:12px;color:var(--text-sub);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .li-note{font-size:11.5px;margin-top:5px;color:#6d28d9;background:rgba(124,58,237,.10);border-radius:6px;padding:3px 6px}
     .li-note.in{color:#0369a1;background:rgba(3,105,161,.10)}
-    .li-gap{text-align:center;font-size:11.5px;color:var(--text-sub);padding:4px 0;letter-spacing:.02em}
+    .ev-sec{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px}
+.ev-sec-title{font-size:12px;color:var(--text-sub);margin-bottom:6px}
+.ev-row{display:flex;gap:10px;padding:10px 12px;margin-bottom:6px;border-radius:10px;background:var(--today-bg,#eef4ff);cursor:pointer}
+.ev-row:active{opacity:.75}
+.ev-time{flex-shrink:0;font-weight:700;color:var(--primary);font-size:13px;min-width:44px}
+.ev-body{flex:1;min-width:0}
+.ev-name{font-size:13px;font-weight:600}
+.ev-meta{font-size:12px;color:var(--text-sub);margin-top:2px}
+.ev-tag{display:inline-block;font-size:10px;background:var(--primary);color:#fff;border-radius:8px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.li-gap{text-align:center;font-size:11.5px;color:var(--text-sub);padding:4px 0;letter-spacing:.02em}
     .st-badge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px}
     .st-badge.live{background:#16a34a;color:#fff}
     .st-badge.next{background:#f59e0b;color:#fff}
@@ -575,7 +584,16 @@
     </div>
 
     <!-- 专业选择 -->
-    <div class="modal-overlay" id="majorModal">
+    <div class="modal-overlay" id="eventModal">
+<div class="modal">
+<div class="modal-header">
+<div class="modal-title">活动详情</div>
+<button class="modal-close" onclick="closeEventModal()">×</button>
+</div>
+<div class="modal-body" id="eventBody"></div>
+</div>
+</div>
+<div class="modal-overlay" id="majorModal">
       <div class="modal">
         <div class="modal-header">
           <div class="modal-title">选择专业</div>
@@ -1039,7 +1057,7 @@ const ALL_COURSES = {
 let state = {
   selectedMajor:'cs-master',selectedWeek:1,colorMode:'color',fontSize:1,
   filterType:'all',customCourses:[],deletedCourses:[],dayOverrides:{},
-  semesterStart:parseLocalDate('2026-08-31'),mode:'native',
+  semesterStart:parseLocalDate('2026-08-31'),mode:'native',remoteEvents:[],
   viewMode:'grid',listDay:1,showNextCard:true,semesterId:'auto',weeksCap:18
 };
 
@@ -1458,7 +1476,9 @@ function renderWeekNav(){
         const names=new Set(list.map(c=>c.name));
         const days=new Set(list.map(c=>c.weekday));
         const secs=list.reduce(function(n,c){return n+((c.periods&&c.periods.length)||((c.endPeriod||0)-(c.startPeriod||0)+1)||1)},0);
-        meta.textContent=rng+' · '+names.size+'门课'+list.length+'次'+secs+'节 · '+days.size+'天有课';
+        const perDay={};list.forEach(c=>{const s=c.startPeriod||((c.periods&&c.periods[0])||1),e=c.endPeriod||((c.periods&&c.periods[c.periods.length-1])||s);for(let p=s;p<=e&&p<=12;p++)perDay[c.weekday+':'+p]=1;});
+        const free=Math.max(0,84-Object.keys(perDay).length);
+        meta.textContent=rng+' · '+names.size+'门课'+list.length+'次'+secs+'节 · '+days.size+'天有课 · 空档'+free+'节';
       }else{
         meta.textContent=rng+' · 本周无课';
       }
@@ -1650,7 +1670,7 @@ function renderDayList(){
   if(res.holiday){
     html+='<div class="list-empty"><div class="le-ico">🎉</div><b>'+res.holiday.name+'</b><span>假期停课</span></div>';
   }else if(!res.list.length){
-    html+='<div class="list-empty"><div class="le-ico">☕️</div><b>这一天没有课</b><span>好好休息，或去图书馆坐坐</span></div>';
+    html+='<div class="list-empty"><div class="le-ico">☕️</div><b>这一天没有课</b><span>好好休息，或去图书馆坐坐</span></div>';html+=eventsHtml(res.ds);
   }else{
     const nowDate=new Date();
     const todayWd=nowDate.getDay()===0?7:nowDate.getDay();
@@ -1698,6 +1718,7 @@ function renderDayList(){
       }
     }
     if(showNow&&!nowShown)html+=nowLineHtml(nowMin);
+    html+=eventsHtml(res.ds);
     html+='</div>';
     if(showNow&&!live&&!nextIt)html+='<div class="list-empty" style="padding:14px 0 0"><span>今天的课上完啦 🎉</span></div>';
   }
@@ -2710,6 +2731,93 @@ function removeAdjust(){
 }
 
 // ==================== 数据导入导出 ====================
+/** 复制本周课表为纯文本（发给同学/学委核对用） */
+function copyWeekSchedule(){
+  closeMoreMenu();
+  try{
+    const week=state.selectedWeek;
+    const dates=getWeekDates(week);
+    const m=MAJORS.find(x=>x.key===state.selectedMajor);
+    const WD=['周一','周二','周三','周四','周五','周六','周日'];
+    let out='第'+week+'周课表 · '+(m?m.name:'未选专业')+'\n';
+    for(let i=1;i<=7;i++){
+      const d=dates[i-1];
+      const ds=getDateStr(d);
+      const dt=getDayType(ds);
+      out+='\n'+WD[i-1]+' '+(d.getMonth()+1)+'/'+d.getDate();
+      if(dt&&dt.type==='holiday'){out+=' · '+dt.name+'（停课）\n';continue}
+      out+='\n';
+      const res=getDayCourses(week,i);
+      const list=res.list||[];
+      if(!list.length){out+='  （无课）\n';continue}
+      list.forEach(c=>{
+        const s=c.startPeriod||((c.periods&&c.periods[0])||1);
+        const e=c.endPeriod||((c.periods&&c.periods[c.periods.length-1])||s);
+        out+='  '+s+'-'+e+'节 '+c.name+(c.location?(' @'+c.location):'')+'\n';
+      });
+    }
+    const done=()=>showToast('本周课表已复制，可直接粘贴发送');
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out).then(done).catch(()=>{fallbackCopy(out);done()});
+    }else{fallbackCopy(out);done()}
+  }catch(e){showToast('复制失败：'+e.message)}
+}
+function fallbackCopy(text){
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+  }catch(e){}
+}
+/** 指定日期的官方活动（远程下发 events ∪ HOLIDAY_MAP event 场次），按时间排序去重 */
+function getEventsForDate(ds){
+  const out=[];
+  try{
+    (state.remoteEvents||[]).forEach(e=>{
+      if(e.date!==ds)return;
+      out.push({time:(e.time||'').split('-')[0]||'全天',title:e.title||'活动',location:e.location||'',audience:e.audience||'',majors:e.majors||[],prep:e.prep||[],tip:e.tip||''});
+    });
+  }catch(e){}
+  try{
+    const dt=getDayType(ds);
+    if(dt&&dt.type==='event'&&Array.isArray(dt.sessions)){
+      dt.sessions.forEach(s=>{
+        if(out.some(o=>o.time===s.time&&o.location===s.location))return;
+        out.push({time:s.time||'全天',title:dt.name||'活动',location:s.location||'',audience:s.classes||'',majors:s.majors||[],prep:[],tip:dt.desc||''});
+      });
+    }
+  }catch(e){}
+  out.sort((a,b)=>String(a.time).localeCompare(String(b.time)));
+  return out;
+}
+function eventsHtml(ds){
+  const evs=getEventsForDate(ds);
+  if(!evs.length)return '';
+  let h='<div class="ev-sec"><div class="ev-sec-title">📌 当日活动安排</div>';
+  evs.forEach((e,i)=>{
+    const mine=e.majors.length&&e.majors.includes(state.selectedMajor);
+    h+='<div class="ev-row" onclick="showEventDetail(\''+ds+'\','+i+')">'+
+      '<div class="ev-time">'+e.time+'</div>'+
+      '<div class="ev-body"><div class="ev-name">'+e.title+(mine?'<span class="ev-tag">你的场次</span>':'')+'</div>'+
+      '<div class="ev-meta">📍'+e.location+(e.audience?' · '+e.audience:'')+'</div></div></div>';
+  });
+  return h+'</div>';
+}
+/** 活动详情弹窗 */
+function showEventDetail(ds,idx){
+  const e=getEventsForDate(ds)[idx];if(!e)return;
+  const body=document.getElementById('eventBody');
+  let h='<div class="detail-row"><span class="detail-label">时间</span><span class="detail-value">'+e.time+'</span></div>';
+  h+='<div class="detail-row"><span class="detail-label">活动</span><span class="detail-value">'+e.title+'</span></div>';
+  if(e.location)h+='<div class="detail-row"><span class="detail-label">地点</span><span class="detail-value">'+e.location+'</span></div>';
+  if(e.audience)h+='<div class="detail-row"><span class="detail-label">参加</span><span class="detail-value">'+e.audience+'</span></div>';
+  if(e.prep.length)h+='<div class="detail-row"><span class="detail-label">准备</span><span class="detail-value">'+e.prep.join('；')+'</span></div>';
+  if(e.tip)h+='<div class="li-note" style="margin-top:8px">'+e.tip+'</div>';
+  body.innerHTML=h;
+  document.getElementById('eventModal').classList.add('show');
+}
+function closeEventModal(){document.getElementById('eventModal').classList.remove('show')}
 function exportData(){
   closeMoreMenu();
   const data={customCourses:state.customCourses,deletedCourses:state.deletedCourses,dayOverrides:state.dayOverrides,selectedMajor:state.selectedMajor,exportTime:new Date().toISOString()};
@@ -2929,7 +3037,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.19'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.20'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -2954,6 +3062,7 @@ function applyRemoteData(d){
     d.majors.forEach(m=>MAJORS.push({key:m.key,short:m.short,color:m.color||'#1565c0'}));
     if(!MAJORS.some(m=>m.key===state.selectedMajor))state.selectedMajor=MAJORS[0].key;
   }
+  state.remoteEvents=(d&&Array.isArray(d.events))?d.events:[];
   if(d&&d.version)localStorage.setItem('sche_data_version',d.version);
   if(d&&d.updatedAt)localStorage.setItem('sche_last_update',d.updatedAt);
   try{localStorage.setItem('sche_data_cache',JSON.stringify(d))}catch(e){}
@@ -3163,7 +3272,7 @@ function esc(s){
      2) 处于单日列表视图 → 回到周课表
      3) 都没有 → 返回 false，交给原生退出
    用固定 id 列表而不是 class 选择器：这些弹层全部靠 class 'show' 切换，显式列表更可控也更省性能。 */
-const BACK_LAYERS=['confirmBox','scopeModal','webMode','moreMenu','majorModal','semModal','searchModal','filterModal','colorModal','fontModal','detailModal','addModal','overrideModal','adjustModal','sugModal','petPanel'];
+const BACK_LAYERS=['confirmBox','scopeModal','webMode','moreMenu','majorModal','semModal','searchModal','filterModal','colorModal','fontModal','detailModal','addModal','overrideModal','adjustModal','sugModal','eventModal','petPanel'];
 window.__feikeBack=function(){
   try{
     for(let i=BACK_LAYERS.length-1;i>=0;i--){

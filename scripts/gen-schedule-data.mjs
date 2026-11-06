@@ -17,6 +17,7 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { COURSES, HOLIDAY_MAP, MAJORS, WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES, SEMESTERS, getActiveSemester, nextTermAfter, getSemesterStart, getWeekStartDate } from '../src/data/classSchedule.js'
+import { SCHEDULE_VERSIONS, audienceMajors } from '../src/data/orientationSchedule.js'
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DATA_DIR = path.join(ROOT, 'public', 'data')
@@ -87,6 +88,12 @@ const full = {
   periodTimes: SINGLE_PERIOD_TIMES,
   courses: COURSES,
   holidayMap: HOLIDAY_MAP,
+  // 官方日程下发：网站日程助手同一份数据，APK 联网即同步进单日列表
+  events: SCHEDULE_VERSIONS.flatMap(v => (v.events || []).filter(e => e && !e.archived && e.date).map(e => ({
+    date: e.date, time: e.time || '', endTime: e.endTime || '', title: e.topic || '',
+    location: e.location || '', audience: e.audience || '', majors: audienceMajors(e.audience),
+    prep: Array.isArray(e.preparation) ? e.preparation : [], tip: e.tip || '', category: e.category || '',
+  }))),
 }
 
 // 兼容接口：旧版 1.0 APK 只读 courses / version / updatedAt

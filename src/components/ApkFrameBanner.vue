@@ -36,7 +36,13 @@ async function download() {
 
 <template>
   <button v-if="visible" class="apk-frame-banner" :disabled="busy" @click="download">
-    📲 {{ busy ? '正在准备下载…' : `课表 App 有新版本${ver ? ' v' + ver : ''}，点击下载安装包` }}
+    <span class="afb-glow"></span>
+    <span class="afb-icon">🔥</span>
+    <span class="afb-text">
+      <b>{{ busy ? '正在准备下载…' : `课表 App 新版本${ver ? ' v' + ver : ''} 可下载` }}</b>
+      <small v-if="!busy">点这里 · 自动跳转浏览器下载安装包</small>
+    </span>
+    <span class="afb-arrow">›</span>
   </button>
 </template>
 
@@ -47,16 +53,40 @@ async function download() {
   right: 12px;
   bottom: 12px;
   z-index: 9999;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--brand-1, #b8433f), var(--brand-2, #d4704e));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #c03434, #e0552e 55%, #f0823a);
   color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  font-size: 15px;
+  box-shadow: 0 8px 26px rgba(192, 52, 52, 0.45), 0 0 0 4px rgba(224, 85, 46, 0.18);
   cursor: pointer;
+  overflow: hidden;
+  animation: afb-pulse 2.2s ease-in-out infinite;
 }
-.apk-frame-banner:active { transform: scale(0.98) }
-.apk-frame-banner:disabled { opacity: 0.75 }
+.afb-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.32) 50%, transparent 65%);
+  animation: afb-shine 2.6s linear infinite;
+  pointer-events: none;
+}
+.afb-icon { font-size: 20px; flex-shrink: 0 }
+.afb-text { flex: 1; text-align: left; line-height: 1.3 }
+.afb-text b { display: block; font-size: 15px; font-weight: 800; letter-spacing: 0.2px }
+.afb-text small { display: block; font-size: 11px; opacity: 0.92; margin-top: 2px }
+.afb-arrow { font-size: 22px; font-weight: 700; opacity: 0.9 }
+.apk-frame-banner:active { transform: scale(0.97) }
+.apk-frame-banner:disabled { opacity: 0.8; animation: none }
+@keyframes afb-pulse {
+  0%, 100% { box-shadow: 0 8px 26px rgba(192, 52, 52, 0.45), 0 0 0 4px rgba(224, 85, 46, 0.18) }
+  50% { box-shadow: 0 8px 30px rgba(192, 52, 52, 0.6), 0 0 0 8px rgba(224, 85, 46, 0.06) }
+}
+@keyframes afb-shine {
+  0% { transform: translateX(-100%) }
+  60%, 100% { transform: translateX(100%) }
+}
 </style>

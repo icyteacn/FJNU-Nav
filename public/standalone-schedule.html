@@ -3037,7 +3037,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.20'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.21'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -3112,45 +3112,6 @@ function renderSyncTip(){
   el.textContent=lastSyncResult.source==='cache'?'离线 · 上次缓存课表':'离线 · 内置课表';
 }
 /** 下载清单：多源竞速（jsDelivr/Pages/raw），解决 Releases 域名国内不可达 */
-const APK_MANIFEST_URLS=[
-  'https://cdn.jsdelivr.net/gh/icyteacn/FJNU-Nav@main/public/data/apk-release.json',
-  'https://icyteacn.github.io/FJNU-Nav/data/apk-release.json',
-  'https://raw.githubusercontent.com/icyteacn/FJNU-Nav/main/public/data/apk-release.json',
-];
-async function fetchApkManifest(){
-  for(const u of APK_MANIFEST_URLS){
-    try{
-      const r=await fetch(u+'?t='+Date.now(),{cache:'no-store'});
-      if(r.ok){const d=await r.json();if(d&&Array.isArray(d.urls)&&d.urls.length)return d;}
-    }catch(e){}
-  }
-  return null;
-}
-async function downloadLatestApk(){
-  showToast('正在寻找最快下载源...');
-  const m=await fetchApkManifest();
-  if(!m){switchToWeb();showToast('请在网页版中下载');return;}
-  // App 内：优先把最快源交给原生桥下载（WebView 无下载能力，location.href 点了没反应）
-  const nativeDl=(window.FeikeNative&&typeof FeikeNative.downloadApk==='function')?FeikeNative.downloadApk:null;
-  if(nativeDl){
-    for(const u of m.urls){
-      try{
-        const abs=new URL(u,'https://icyteacn.github.io/FJNU-Nav/').href;
-        const r=await fetch(abs,{method:'HEAD'});
-        if(r.ok&&nativeDl(abs,m.file||'feike-schedule.apk'))return;
-      }catch(e){}
-    }
-    if(m.urls[0]&&nativeDl(new URL(m.urls[0],'https://icyteacn.github.io/FJNU-Nav/').href,m.file||'feike-schedule.apk'))return;
-  }
-  for(const u of m.urls){
-    try{
-      const abs=new URL(u,'https://icyteacn.github.io/FJNU-Nav/').href;
-      const r=await fetch(abs,{method:'HEAD'});
-      if(r.ok){location.href=abs;return;}
-    }catch(e){}
-  }
-  if(m.urls[0])location.href=new URL(m.urls[0],'https://icyteacn.github.io/FJNU-Nav/').href;
-}
 function checkUpdate(){
   closeMoreMenu();
   showToast('正在检查更新...');
@@ -3167,12 +3128,12 @@ function checkUpdate(){
     msg+='\n数据更新时间：'+(((d.updatedAt||'').slice(0,16).replace('T',' '))||'-');
     msg+='\n学期：'+(d.semester||'-');
     msg+='\n本机 APK：v'+APP_VERSION+' · 站点提供：v'+(siteVer||'?');
-    if(apkNew)msg+='\n\n⬆️ 发现新版 APK，点「确定」直接多源下载';
+    if(apkNew)msg+='\n\n⬆️ 发现新版 APK，点「确定」前往网页版下载';
     else if(siteLag)msg+='\n\n✅ 本机已是最新版（站点接口稍后随部署同步）';
     else msg+='\n\n✅ 本机已是最新版';
     showConfirm('🔄 检测更新',msg,()=>{
       render();
-      if(apkNew){downloadLatestApk()}
+      if(apkNew){switchToWeb();showToast('看页面底部的下载横幅，点它自动跳浏览器下载')}
       else showToast('课表已是最新');
     });
   });

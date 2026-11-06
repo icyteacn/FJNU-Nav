@@ -2,6 +2,17 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.43 — 更新流程回归「网页版底部横幅下载」+ 横幅显眼化（patch，APK 1.3.21 / versionCode 21）
+
+- **App 内「检测更新」回退经典链路**：发现新版 → 切网页版（iframe）→ 底部横幅 →
+  点击自动跳系统浏览器下载。移除 App 内 manifest 竞速/原生桥直连路径（WebView 探测
+  实测不稳定），`downloadLatestApk`/`fetchApkManifest`/`APK_MANIFEST_URLS` 死代码清除。
+- **`ApkFrameBanner` 重做视觉**：🔥 图标+红橙渐变+白描边、流光扫过（shine）+ 呼吸光圈
+  （pulse）双动画、主标题 800 字重 + 副行「点这里·自动跳转浏览器下载安装包」、右指箭头。
+  点击仍走 `launchApkDownload`（原生桥→顶帧逃生→本帧导航）——在 iframe 里自动落到
+  系统浏览器下载。
+- 门禁：抽块 node --check ✓、e2e-standalone 14/14；2277d065 签名包 1.08MB。
+
 ## v1.7.42 — 课表 App 功能扩充：日程下发进单日列表 + 复制本周课表 + 空档统计（patch，APK 1.3.20 / versionCode 20）
 
 - **官方日程同步进 App**：`gen-schedule-data.mjs` 把 `orientationSchedule.js` 未归档事件

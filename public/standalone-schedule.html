@@ -155,7 +155,9 @@
       transition:transform .72s cubic-bezier(.17,.67,.38,1),opacity .72s ease}
     .next-left{flex:1;min-width:0}
     .next-badge-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .next-badge{font-size:11px;font-weight:800;background:rgba(255,255,255,.22);padding:2px 9px;border-radius:999px;letter-spacing:.3px}
+    .next-event{margin-top:4px;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.95);line-height:1.5}
+.next-event .ev-line{opacity:.95}
+.next-badge{font-size:11px;font-weight:800;background:rgba(255,255,255,.22);padding:2px 9px;border-radius:999px;letter-spacing:.3px}
     .next-countdown{font-size:13px;font-weight:800;background:rgba(0,0,0,.22);padding:2px 9px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
     .next-name{font-size:15.5px;font-weight:800;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .next-meta{font-size:11.5px;opacity:.92;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -421,6 +423,7 @@
           </div>
           <div class="next-name" id="nextName">—</div>
           <div class="next-meta" id="nextMeta">—</div>
+          <div class="next-event" id="nextEvent" style="display:none"></div>
         </div>
         <div class="next-bar"></div>
       </div>
@@ -1483,7 +1486,7 @@ function renderTable(){
     headHtml+='<th class="'+cls+'" onclick="showOverrideModal(\''+ds+'\')">';
     headHtml+='<div class="weekday-label">'+wd.short+'</div>';
     headHtml+='<div class="weekday-date">'+dateLabel+'</div>';
-    if(dt){
+    if(dt&&dt.type!=='event'){
       const badgeCls=dt.type;
       const text=dt.type==='holiday'?dt.name:(dt.descShort||dt.desc);
       headHtml+='<div class="holiday-badge '+badgeCls+'"><span class="holiday-icon">'+dt.icon+'</span><span class="holiday-text">'+text+'</span></div>';
@@ -1776,6 +1779,7 @@ function fmtCd(ms) {
 function renderNextCard() {
   const card = document.getElementById('nextCard');
   if (!card) return;
+  renderEventTip(card);
   if (!state.showNextCard) {
     nextCourseInfo = null; // 隐藏时无需倒计时；重新显示由 renderNextCard 重算
     card.style.display = 'none';
@@ -1823,6 +1827,30 @@ function renderNextCard() {
     n.weekdayLabel + ' ' + (n.date.getMonth() + 1) + '-' + n.date.getDate() +
     ' · 第' + n.startPeriod + '-' + n.endPeriod + '节 · ' + n.loc;
   document.getElementById('nextCountdown').textContent = fmtCountdown(n.target - new Date());
+}
+
+/** 活动提醒：今/明两天的 event 类日期标注显示在「下一节课」卡底部（按专业精确到场次） */
+function renderEventTip(card){
+  const el=document.getElementById('nextEvent');
+  if(!el)return;
+  const show=card&&state.showNextCard;
+  let html='';
+  if(show){
+    const today=new Date();
+    for(const off of [0,1]){
+      const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+off);
+      const ds=getDateStr(d);
+      const dt=state.dayOverrides[ds]||HOLIDAY_MAP[ds];
+      if(dt&&dt.type==='event'){
+        const s=Array.isArray(dt.sessions)?dt.sessions.find(x=>Array.isArray(x.majors)&&x.majors.includes(state.selectedMajor)):null;
+        const when=off===0?'今日':'明日';
+        const tail=s?(' · '+s.time+' '+s.location):'';
+        html+='<div class="ev-line">'+(dt.icon||'📌')+' '+when+dt.descShort+tail+'</div>';
+      }
+    }
+  }
+  el.innerHTML=html;
+  el.style.display=html?'block':'none';
 }
 function tickNextCountdown() {
   if (!nextCourseInfo) return;
@@ -2974,6 +3002,34 @@ function renderSyncTip(){
   if(!lastSyncResult||lastSyncResult.source==='remote'){el.textContent='';return}
   el.textContent=lastSyncResult.source==='cache'?'离线 · 上次缓存课表':'离线 · 内置课表';
 }
+/** 下载清单：多源竞速（jsDelivr/Pages/raw），解决 Releases 域名国内不可达 */
+const APK_MANIFEST_URLS=[
+  'https://cdn.jsdelivr.net/gh/icyteacn/FJNU-Nav@main/public/data/apk-release.json',
+  'https://icyteacn.github.io/FJNU-Nav/data/apk-release.json',
+  'https://raw.githubusercontent.com/icyteacn/FJNU-Nav/main/public/data/apk-release.json',
+];
+async function fetchApkManifest(){
+  for(const u of APK_MANIFEST_URLS){
+    try{
+      const r=await fetch(u+'?t='+Date.now(),{cache:'no-store'});
+      if(r.ok){const d=await r.json();if(d&&Array.isArray(d.urls)&&d.urls.length)return d;}
+    }catch(e){}
+  }
+  return null;
+}
+async function downloadLatestApk(){
+  showToast('正在寻找最快下载源...');
+  const m=await fetchApkManifest();
+  if(!m){switchToWeb();showToast('请在网页版中下载');return;}
+  for(const u of m.urls){
+    try{
+      const abs=new URL(u,'https://icyteacn.github.io/FJNU-Nav/').href;
+      const r=await fetch(abs,{method:'HEAD'});
+      if(r.ok){location.href=abs;return;}
+    }catch(e){}
+  }
+  if(m.urls[0])location.href=new URL(m.urls[0],'https://icyteacn.github.io/FJNU-Nav/').href;
+}
 function checkUpdate(){
   closeMoreMenu();
   showToast('正在检查更新...');
@@ -2990,12 +3046,12 @@ function checkUpdate(){
     msg+='\n数据更新时间：'+(((d.updatedAt||'').slice(0,16).replace('T',' '))||'-');
     msg+='\n学期：'+(d.semester||'-');
     msg+='\n本机 APK：v'+APP_VERSION+' · 站点提供：v'+(siteVer||'?');
-    if(apkNew)msg+='\n\n⬆️ 发现新版 APK，点「确定」前往下载';
+    if(apkNew)msg+='\n\n⬆️ 发现新版 APK，点「确定」直接多源下载';
     else if(siteLag)msg+='\n\n✅ 本机已是最新版（站点接口稍后随部署同步）';
     else msg+='\n\n✅ 本机已是最新版';
     showConfirm('🔄 检测更新',msg,()=>{
       render();
-      if(apkNew){switchToWeb();showToast('请在网页版中下载并安装新版 APK')}
+      if(apkNew){downloadLatestApk()}
       else showToast('课表已是最新');
     });
   });

@@ -29,6 +29,7 @@
 
 | 日期 | 版本 | 内容 |
 | --- | --- | --- |
+| 2026-11-06 | v1.7.38（patch） | **APK 下载多源竞速**：新增 `data/apk-release.json`（urls=jsDelivr/Pages/raw 三源）+ `fetchApkManifest`/`probeApkUrl`，首页主下载竞速取最快源、App 内检测更新直接多源下载——修 Releases 域名国内不可达导致的下载失败。**课表 event 徽标撤除**改「下一节课」卡下提醒条（今/明 event+按专业场次），三端一致。**发布新 APK 需同时**：tag apk-vX.Y.Z（Release）+ 二进制提交 releases/ + 更新 apk-release.json。 |
 | 2026-11-06 | v1.7.37（patch） | **日程助手补录 11 月官方日程**：11/7 海丝会议上午场（2/5班→cyber/ns 自动命中）+下午场（1/3班，tip 注明 AI 4/6班除外）+11/12-14 校运会停课三条事件，准备清单/受众过滤/倒计时齐备，日程页实测「下一个活动」卡已生效。 |
 | 2026-11-06 | v1.7.36（patch） | **11/7 参会按专业精确到场次**：班级↔专业对照落地为 `sessions` 字段（上午 2/5班→网安系三专业；下午 1/3班→cs-master+se-master），新增 `getEventSession`；`ai-master` 跨 3/4/6 班不映射防误报；TodayGlance 徽标显示本人场次+title 挂全文。test_schedule 三端一致+全部门禁绿。 |
 | 2026-11-06 | v1.7.35（patch） | **课表数据更新**：①校运会停课 11/12-14 三条 holiday 三端同步（11/11 不停课按通知不标）；②新增 `type:'event'` 日期标注——11/7 海丝会议参会，周六列头 🎓徽标、不改课表；③修 TodayGlance 节日徽标 `name` 兜底漏字段空文本 bug；apkVersion 链 1.3.16→1.3.17。验证：test_schedule 三端一致全绿、build+integrity 18、移动端截图徽标复核。 |

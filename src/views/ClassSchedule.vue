@@ -953,7 +953,7 @@ onMounted(() => {
             <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday': isHoliday(wd.key), 'is-makeup': isMakeup(wd.key) }" @click.stop="openDayEdit(wd.key)" style="cursor:pointer;">
               <div class="weekday-label">{{ wd.short }}</div>
               <div class="weekday-date">{{ showSemester ? '' : getDateText(wd.key) }}</div>
-              <div v-if="getHolidayInfo(wd.key)" class="holiday-badge" :class="getHolidayInfo(wd.key).type">
+              <div v-if="getHolidayInfo(wd.key) && getHolidayInfo(wd.key).type !== 'event'" class="holiday-badge" :class="getHolidayInfo(wd.key).type">
                 <span class="holiday-icon">{{ getHolidayInfo(wd.key).icon }}</span>
                 <span class="holiday-text">{{ getHolidayInfo(wd.key).type === 'holiday' ? getHolidayInfo(wd.key).name : getHolidayInfo(wd.key).descShort || getHolidayInfo(wd.key).desc }}</span>
               </div>

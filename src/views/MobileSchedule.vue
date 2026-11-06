@@ -12,7 +12,7 @@ import {
   getDateInWeek, formatDateShort, getWeekDateRange,
   formatWeekdayType,
   getDateHolidayInfo, getScheduleWeekday, getCourseOverride, isPeriodMoved,
-  getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP,
+  getIncomingInfo as getIncomingInfoFromData, HOLIDAY_MAP, getEventSession,
   loadUserOverrides, saveUserOverride,
   setUserAdjustKey, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, loadUserAdjustments, clearUserAdjustments,
 } from '../data/classSchedule.js'
@@ -151,6 +151,22 @@ const futureCourses = computed(() => {
   return result
 })
 const nextCourse = computed(() => futureCourses.value[0] || null)
+/* 今/明两天的 event 类日期标注（如会议参会）：显示在「下一节课」卡下方的提醒条，按专业精确场次 */
+const eventTip = computed(() => {
+  const out = []
+  const today = new Date()
+  for (const off of [0, 1]) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + off)
+    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const info = getDateHolidayInfo(ds)
+    if (info && info.type === 'event') {
+      const s = getEventSession(info, selectedMajor.value)
+      const tail = s ? ` · ${s.time} ${s.location}` : ''
+      out.push(`${info.icon || '📌'} ${off === 0 ? '今日' : '明日'}${info.descShort || info.desc || ''}${tail}`)
+    }
+  }
+  return out
+})
 const nextCountdown = computed(() => {
   if (!nextCourse.value) return null
   const diff = nextCourse.value._date - now.value
@@ -584,6 +600,7 @@ onMounted(() => {
         <div class="next-name">{{ nextInfo.course.name }}</div>
         <div class="next-meta">{{ nextInfo.weekdayLabel }} · 第{{ nextInfo.course.startPeriod }}-{{ nextInfo.course.endPeriod }}节 · {{ nextInfo.course.location }}</div>
       </div>
+      <div v-for="(e, i) in eventTip" :key="i" class="event-tip">{{ e }}</div>
 
       <!-- 今日课程 -->
       <div v-if="hasTodayCourses" class="today-card">
@@ -634,7 +651,7 @@ onMounted(() => {
             <th v-for="wd in weekdayHeaders" :key="wd.key" class="weekday-col" :class="{ weekend: wd.key >= 6, 'is-today': isToday(wd.key), 'is-holiday': isHoliday(wd.key), 'is-makeup': isMakeup(wd.key) }" @click="openDayEdit(wd.key)">
               <div class="weekday-label">{{ wd.short }}</div>
               <div class="weekday-date" v-if="displayMode === 'page'">{{ showSemester ? '' : getDateText(wd.key) }}</div>
-              <div v-if="getHolidayInfo(wd.key)" class="holiday-badge" :class="getHolidayInfo(wd.key).type">
+              <div v-if="getHolidayInfo(wd.key) && getHolidayInfo(wd.key).type !== 'event'" class="holiday-badge" :class="getHolidayInfo(wd.key).type">
                 <span>{{ getHolidayInfo(wd.key).icon }}</span>
                 <span>{{ getHolidayInfo(wd.key).type === 'holiday' ? getHolidayInfo(wd.key).name : getHolidayInfo(wd.key).descShort }}</span>
               </div>
@@ -913,6 +930,8 @@ onMounted(() => {
 
 /* 下一节课 */
 .next-card { margin: 0 12px 8px; padding: 10px 14px; background: linear-gradient(135deg, #c62828, #ad1457); border-radius: 12px; color: #fff; flex-shrink: 0; }
+.event-tip { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding: 8px 12px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: #4338ca; font-size: 13px; font-weight: 600; }
+html[data-theme='dark'] .event-tip { background: rgba(129, 140, 248, 0.14); color: #a5b4fc; }
 .next-badge { font-size: 12px; font-weight: 700; background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 999px; margin-bottom: 4px; }
 .next-name { font-size: 15px; font-weight: 800; margin-bottom: 2px; }
 .next-meta { font-size: 11px; opacity: 0.85; }

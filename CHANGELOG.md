@@ -2,6 +2,17 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.38 — APK 下载多源竞速 + 课表活动提醒归位（patch）
+
+**下载修复（照 LeagueTrace OTA 思路）**：GitHub Releases 的 release-assets 域名国内常不可达。
+- 新增 `public/data/apk-release.json` 清单（version/file/size/urls 三源排序：jsDelivr CDN → Pages 同域 → raw）。
+- `apkRelease.js` 新增 `fetchApkManifest`（三源竞速+本地缓存）与 `probeApkUrl`（HEAD→GET Range 并行竞速）。
+- 首页主下载点击：探测 manifest 候选取最快源直链下载，全挂静默走同域本地文件兜底；
+  App 内「检测更新」发现新版时改为 `downloadLatestApk()` 直接多源下载，不再只甩去网页版。
+**课表 event 归位**：撤掉三端课表表头的「🎓会议参会」徽标（event 类不再渲徽标），
+  改为「下一节课」卡下方提醒条——今/明两天有 event 时显示 `🎓 明日会议参会 · 08:00 行政楼宏达厅`，
+  按所选专业经 getEventSession 精确到场次（standalone 与 MobileSchedule 同步实现，ClassSchedule 徽标同撤）。
+
 ## v1.7.37 — 日程助手补录 11 月官方日程（patch）
 
 `orientationSchedule.js` 新增三条官方事件：

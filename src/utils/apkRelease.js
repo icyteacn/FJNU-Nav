@@ -128,3 +128,59 @@ export async function fetchApkRelease({ force = false } = {}) {
 }
 
 export default { apkAssetName, isCurrentAsset, summarizeReleases, isFresh, cachedRelease, fetchApkRelease }
+
+/**
+ * data/apk-release.json —— 类 LeagueTrace OTA 的下载清单（多源竞速）。
+ * Releases 的 browser_download_url 走 release-assets.githubusercontent.com，国内常不可达；
+ * manifest 的 urls 按可达性排好序（jsDelivr → Pages 同域 → raw），前端逐个探测取首个可用。
+ */
+const MANIFEST_SOURCES = [
+  'data/apk-release.json',
+  'https://raw.githubusercontent.com/icyteacn/FJNU-Nav/main/public/data/apk-release.json',
+  'https://cdn.jsdelivr.net/gh/icyteacn/FJNU-Nav@main/public/data/apk-release.json',
+]
+const MANIFEST_CACHE = 'fjnu_apk_manifest_v1'
+
+function readManifestCache() {
+  try { const d = JSON.parse(localStorage.getItem(MANIFEST_CACHE) || 'null'); return d && Array.isArray(d.urls) ? d : null } catch { return null }
+}
+
+/** 竞速拉取清单：首个返回合法 JSON 的源胜出；失败回落缓存，再失败 null（不抛错） */
+export async function fetchApkManifest({ force = false } = {}) {
+  const cached = readManifestCache()
+  if (!force && cached && Date.now() - (cached._at || 0) < TTL_MS) return cached
+  for (const url of MANIFEST_SOURCES) {
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 6000)
+      const r = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), { signal: ctrl.signal, cache: 'no-store' })
+      clearTimeout(timer)
+      if (!r.ok) continue
+      const d = await r.json()
+      if (d && Array.isArray(d.urls) && d.urls.length) {
+        d._at = Date.now()
+        try { localStorage.setItem(MANIFEST_CACHE, JSON.stringify(d)) } catch { /* noop */ }
+        return d
+      }
+    } catch { /* 下一个源 */ }
+  }
+  return cached
+}
+
+/** 探测候选下载 URL：HEAD/GET(range) 并行竞速，首个 2xx 胜出（失败静默 null） */
+export async function probeApkUrl(urls, timeoutMs = 8000) {
+  if (!Array.isArray(urls) || !urls.length) return null
+  const abs = urls.map(u => {
+    try { return new URL(u, location.href).href } catch { return null }
+  }).filter(Boolean)
+  const racers = abs.map(u => (async () => {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+    try {
+      const r = await fetch(u, { method: 'HEAD', signal: ctrl.signal, cache: 'no-store' })
+      if (!r.ok) return await fetch(u, { method: 'GET', headers: { Range: 'bytes=0-0' }, signal: ctrl.signal, cache: 'no-store' })
+      return r
+    } finally { clearTimeout(timer) }
+  })().then(r => (r && (r.ok || r.status === 206) ? u : Promise.reject(u))))
+  try { return await Promise.any(racers) } catch { return null }
+}

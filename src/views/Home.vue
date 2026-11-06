@@ -11,7 +11,7 @@ import { createFavorites } from '../utils/favorites.js'
 import { useI18n } from '../i18n/index.js'
 import VisitStats from '../components/VisitStats.vue'
 import TodayGlance from '../components/TodayGlance.vue'
-import { cachedRelease, fetchApkRelease } from '../utils/apkRelease.js'
+import { cachedRelease, fetchApkRelease, fetchApkManifest, probeApkUrl } from '../utils/apkRelease.js'
 
 const emit = defineEmits(['open'])
 
@@ -53,6 +53,27 @@ function appDesc(a) {
         download_count 能免费又真实地拿到，所以那里的数字单独标注为「镜像下载」。
    读取失败（限流/断网）静默降级，不阻塞首屏、不影响下载。 */
 const apkInfo = ref(cachedRelease())
+const apkManifest = ref(null)
+/** 主下载点击：manifest 已就绪时直接竞速取最快源（jsDelivr/Pages/raw），探测全挂则放行默认同域文件 */
+async function onApkDownload(e) {
+  try {
+    const m = apkManifest.value || await fetchApkManifest()
+    apkManifest.value = m
+    if (!m || !Array.isArray(m.urls) || !m.urls.length) return // 走默认同域下载
+    const best = await probeApkUrl(m.urls)
+    if (best && best !== new URL('downloads/feike-schedule.apk', location.href).href) {
+      e.preventDefault()
+      const a = document.createElement('a')
+      a.href = best
+      a.download = m.file || 'feike-schedule.apk'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    }
+  } catch { /* 静默走默认下载 */ }
+}
+// 预拉清单（后台静默，不占首屏）
+fetchApkManifest().then(m => { if (m) apkManifest.value = m }).catch(() => {})
 /** GitHub 镜像直链：只有认清「是当前这份包（内容哈希一致）」时才给，否则为 null */
 const apkMirrorUrl = computed(() => {
   const d = apkInfo.value
@@ -169,7 +190,7 @@ function askAgent(text) {
     </section>
 
     <section class="section">
-      <a href="downloads/feike-schedule.apk" class="app-download-card" download>
+      <a href="downloads/feike-schedule.apk" class="app-download-card" download @click="onApkDownload">
         <div class="download-left">
           <span class="download-icon">🐔🩸</span>
           <div>

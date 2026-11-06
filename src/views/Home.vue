@@ -10,6 +10,7 @@ import { SITE } from '../config/site.js'
 import { createFavorites } from '../utils/favorites.js'
 import { useI18n } from '../i18n/index.js'
 import VisitStats from '../components/VisitStats.vue'
+import TodayGlance from '../components/TodayGlance.vue'
 import { cachedRelease, fetchApkRelease } from '../utils/apkRelease.js'
 
 const emit = defineEmits(['open'])
@@ -147,6 +148,8 @@ function askAgent(text) {
         <button v-for="s in AGENT_PROFILE.examples.slice(0, 4)" :key="s" class="hero-chip" @click="askAgent(s)">{{ s }}</button>
       </div>
     </section>
+
+    <TodayGlance @open="(id) => emit('open', id)" />
 
     <section class="section">
       <div class="wiki-card">

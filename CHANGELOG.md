@@ -2,6 +2,16 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.34 — 首页「今日速览」卡（patch）
+
+新增 src/components/TodayGlance.vue，挂载在首页 hero 与 Wiki 卡之间：
+- 显示日期+当前教学周+今日课程门数+下一节课（名/节次/教室）+实时倒计时（30s 刷新）。
+- 与课表页同一份 classSchedule.js 数据：getScheduleWeekday 调休映射、getDateHolidayInfo 节假日徽章
+  （放假/调课/考试周着色）、isCourseInWeek 周次过滤全部生效；
+- 尊重用户自定义课(feike_custom_courses)与按周删除(feike_deleted_courses)；
+- 未选专业时显示引导文案，点击直达课表选专业；今日无课/已放学有独立文案。
+- 中英双语（组件内按 lang 分支，与 Home.vue 既有写法一致），移动端窄屏自适应截断。
+
 ## v1.7.33 (2026-11-05) · 首屏瘦身（patch）
 - ⚡ `SuggestButton` 组件连带 `suggest.js` 词库约 101KB，原本随 `App.vue` 静态打进急切图，所有页面首屏都在为它付流量。改为 `defineAsyncComponent` 异步组件，并挂进既有 `whenIdle + isSlowConnection` 闲时预热通道（与 ChatDock 同一跳），急切 JS 由 ~265KB 降至 ~164KB（-38%）。
 - 📅 `schedule-data.json` 随构建周次滚动至第 10 周。

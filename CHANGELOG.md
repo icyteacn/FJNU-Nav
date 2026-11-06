@@ -2,6 +2,18 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## v1.7.35 — 课表数据更新（patch）
+
+按研究生院通知落数据，三端（classSchedule.js / standalone-schedule 内置 / schedule-data.json）同步：
+- **校运会停课**：2026-11-12/13/14 三条 `holiday`（11/11 正常上课不标），课表页整列放假样式+徽标，
+  今日速览卡到日显示「今日放假无排课」。
+- **会议参会标注**：2026-11-07 新增 `type:'event'` 日期标注类型（语义=有活动但不改课表，
+  getScheduleWeekday 透传原星期）；周六列头显示「🎓 会议参会」徽标，desc 含分班会场安排。
+- **真 bug 修复**：TodayGlance 节日徽标只取 `descShort||desc`，holiday 类条目仅有 `name` 字段
+  → 徽标文本为空；已补 `|| holiday.name` 兜底。
+- apkVersion 链 1.3.16→1.3.17（package.json / standalone APP_VERSION / build.gradle versionCode 16→17），
+  `test_schedule` 三端一致门禁全绿。
+
 ## v1.7.34 — 首页「今日速览」卡（patch）
 
 新增 src/components/TodayGlance.vue，挂载在首页 hero 与 Wiki 卡之间：

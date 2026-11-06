@@ -97,7 +97,7 @@ const summary = computed(() => {
       <div class="today-left">
         <div class="today-date">
           {{ dateLabel }}<span class="today-week">{{ L(' · 第 ', ' · Week ') }}{{ week }}{{ L(' 教学周', '') }}</span>
-          <span v-if="holiday" class="today-badge" :class="'tb-' + (holiday.type || 'info')">{{ holiday.icon || '📌' }} {{ holiday.descShort || holiday.desc }}</span>
+          <span v-if="holiday" class="today-badge" :class="'tb-' + (holiday.type || 'info')">{{ holiday.icon || '📌' }} {{ holiday.descShort || holiday.desc || holiday.name }}</span>
         </div>
         <div class="today-line">{{ summary }}</div>
         <div v-if="!major" class="today-hint">{{ L('点我去课表选专业', 'Tap to pick a major') }}</div>

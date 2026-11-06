@@ -11,7 +11,8 @@ import TourOverlay from './components/TourOverlay.vue'
 /* 智能体悬浮舱改为异步组件：静态引入会把 agent engine + workflows + kb-nav.json(121KB)
  * 一并打进首屏，手机端表现为「首次加载慢 / 打开就卡」。首帧后闲时预载，弱网跳过。 */
 const ChatDock = defineAsyncComponent(() => import('./components/agent/ChatDock.vue'))
-import SuggestButton from './components/SuggestButton.vue'
+/* 建议按钮组件连带 suggest.js 词库约 101KB，与首屏无关，同样异步+闲时预载 */
+const SuggestButton = defineAsyncComponent(() => import('./components/SuggestButton.vue'))
 import { SITE } from './config/site.js'
 import { useI18n } from './i18n/index.js'
 import { NAV_APPS, useViewState, preloadPopular } from './router.js'
@@ -183,7 +184,10 @@ onMounted(loadNotices)
 onMounted(() => {
   setTimeout(preloadPopular, 1000)
   // 首帧后再预热智能体悬浮舱（弱网/省流模式跳过，不与首屏抢带宽）
-  if (!isSlowConnection()) whenIdle(() => { import('./components/agent/ChatDock.vue').catch(() => {}) }, 3000)
+  if (!isSlowConnection()) whenIdle(() => {
+    import('./components/agent/ChatDock.vue').catch(() => {})
+    import('./components/SuggestButton.vue').catch(() => {})
+  }, 3000)
 })
 </script>
 

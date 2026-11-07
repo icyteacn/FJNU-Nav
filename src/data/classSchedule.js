@@ -108,13 +108,23 @@ export const COURSES = [
     credits: 3, hours: 48, category: '专业必修课', color: '#6a1b9a', major: 'cs-master',
   },
   {
-    name: '高等工程数学', id: 'XZB0270812102', teacher: '林劼、胡丽莹', location: '笃行1-201',
+    name: '高等工程数学', id: 'XZB0270812102', teacher: '胡丽莹', location: '笃行1-201',
     weeks: '3-7', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'cs-master',
   },
   {
-    name: '高等工程数学', id: 'XZB0270812102-W8', teacher: '林劼、胡丽莹', location: '笃行1-209',
-    weeks: '8-11', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 6,
+    name: '高等工程数学', id: 'XZB0270812102-W8', teacher: '胡丽莹', location: '笃行1-209',
+    weeks: '8-10', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 6,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'cs-master',
+  },
+  {
+    name: '高等工程数学', id: 'XZB0270812102-W11', teacher: '胡丽莹', location: '待定',
+    weeks: '11', weekdayType: 'all', startPeriod: 5, endPeriod: 8, weekday: 3,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'cs-master',
+  },
+  {
+    name: '高等工程数学', id: 'XZB0270812102-W12', teacher: '林劼', location: '笃行1-201',
+    weeks: '12-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'cs-master',
   },
 
@@ -164,13 +174,23 @@ export const COURSES = [
     credits: 2, hours: 32, category: '专业必修课', color: '#e65100', major: 'se-master',
   },
   {
-    name: '高等工程数学', id: 'ZSZB027085405402', teacher: '林劼、胡丽莹', location: '笃行1-201',
+    name: '高等工程数学', id: 'ZSZB027085405402', teacher: '胡丽莹', location: '笃行1-201',
     weeks: '3-7', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'se-master',
   },
   {
-    name: '高等工程数学', id: 'ZSZB027085405402-W8', teacher: '林劼、胡丽莹', location: '笃行1-209',
-    weeks: '8-11', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 6,
+    name: '高等工程数学', id: 'ZSZB027085405402-W8', teacher: '胡丽莹', location: '笃行1-209',
+    weeks: '8-10', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 6,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'se-master',
+  },
+  {
+    name: '高等工程数学', id: 'ZSZB027085405402-W11', teacher: '胡丽莹', location: '待定',
+    weeks: '11', weekdayType: 'all', startPeriod: 5, endPeriod: 8, weekday: 3,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'se-master',
+  },
+  {
+    name: '高等工程数学', id: 'ZSZB027085405402-W12', teacher: '林劼', location: '笃行1-201',
+    weeks: '12-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'se-master',
   },
   {
@@ -201,13 +221,23 @@ export const COURSES = [
     credits: 3, hours: 48, category: '专业必修课', color: '#00695c', major: 'ai-master',
   },
   {
-    name: '高等工程数学', id: 'ZSZB027085410002', teacher: '林劼、胡丽莹', location: '笃行1-201',
+    name: '高等工程数学', id: 'ZSZB027085410002', teacher: '胡丽莹', location: '笃行1-201',
     weeks: '3-7', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'ai-master',
   },
   {
-    name: '高等工程数学', id: 'ZSZB027085410002-W8', teacher: '林劼、胡丽莹', location: '笃行1-209',
-    weeks: '8-11', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 6,
+    name: '高等工程数学', id: 'ZSZB027085410002-W8', teacher: '胡丽莹', location: '笃行1-209',
+    weeks: '8-10', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 6,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'ai-master',
+  },
+  {
+    name: '高等工程数学', id: 'ZSZB027085410002-W11', teacher: '胡丽莹', location: '待定',
+    weeks: '11', weekdayType: 'all', startPeriod: 5, endPeriod: 8, weekday: 3,
+    credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'ai-master',
+  },
+  {
+    name: '高等工程数学', id: 'ZSZB027085410002-W12', teacher: '林劼', location: '笃行1-201',
+    weeks: '12-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'ai-master',
   },
   {
@@ -259,10 +289,38 @@ export function getCoursesByMajor(majorKey) {
 /**
  * 检查课程在指定周是否上课
  */
+/**
+ * 解析周次写法为 { start, end }
+ * 支持 '3-14' / '11' / '3,5,7'（多段取首段），单值视为仅当周
+ */
+export function parseWeekRange(weeks, fallbackStart = 1, fallbackEnd = 18) {
+  const raw = String(weeks == null ? '' : weeks).trim()
+  if (!raw) return { start: fallbackStart, end: fallbackEnd }
+  const first = raw.split(',')[0].trim()
+  if (first.includes('-')) {
+    const [a, b] = first.split('-').map(Number)
+    return {
+      start: Number.isFinite(a) ? a : fallbackStart,
+      end: Number.isFinite(b) ? b : (Number.isFinite(a) ? a : fallbackEnd),
+    }
+  }
+  const n = Number(first)
+  if (!Number.isFinite(n)) return { start: fallbackStart, end: fallbackEnd }
+  return { start: n, end: n }
+}
+
 export function isCourseInWeek(course, week) {
   if (!course.weeks) return true
-  const [start, end] = course.weeks.split('-').map(Number)
-  if (week < start || week > end) return false
+  // 支持 '3-14' / '11' / '3-7,9' 等写法：逗号分段，单值即仅当周
+  const hit = String(course.weeks).split(',').some((part) => {
+    const p = part.trim()
+    if (p.includes('-')) {
+      const [a, b] = p.split('-').map(Number)
+      return week >= a && week <= b
+    }
+    return Number(p) === week
+  })
+  if (!hit) return false
   if (course.weekdayType === 'odd') return week % 2 === 1
   if (course.weekdayType === 'even') return week % 2 === 0
   return true

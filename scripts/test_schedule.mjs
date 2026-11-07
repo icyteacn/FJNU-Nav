@@ -164,6 +164,53 @@ check('大量课程与专业数据未损坏', () => {
   }
 })
 
+check('isCourseInWeek 支持单周写法（如 weeks:"11"）', () => {
+  const { isCourseInWeek } = mod
+  const single = { weeks: '11', weekdayType: 'all' }
+  assert.equal(isCourseInWeek(single, 10), false, '单周 11 不应在第 10 周出现')
+  assert.equal(isCourseInWeek(single, 11), true, '单周 11 应在第 11 周出现')
+  assert.equal(isCourseInWeek(single, 12), false, '单周 11 不应在第 12 周出现（旧实现的静默错误）')
+  const range = { weeks: '3-7', weekdayType: 'all' }
+  assert.equal(isCourseInWeek(range, 2), false)
+  assert.equal(isCourseInWeek(range, 3), true)
+  assert.equal(isCourseInWeek(range, 7), true)
+  assert.equal(isCourseInWeek(range, 8), false)
+  const multi = { weeks: '3-7,9', weekdayType: 'all' }
+  assert.equal(isCourseInWeek(multi, 8), false)
+  assert.equal(isCourseInWeek(multi, 9), true)
+})
+
+check('高等工程数学分段与学时（3-7 原教师 / 8-10 新教室 / 11 周三补课 / 12-14 林劼老教室）', () => {
+  for (const major of ['cs-master', 'se-master', 'ai-master']) {
+    const segs = COURSES.filter((c) => c.major === major && c.name === '高等工程数学')
+    assert.equal(segs.length, 4, `${major} 高数应为 4 段，实际 ${segs.length}`)
+    const byWeeks = Object.fromEntries(segs.map((c) => [c.weeks, c]))
+    assert.ok(byWeeks['3-7'], `${major} 缺 3-7 段`)
+    assert.ok(byWeeks['8-10'], `${major} 缺 8-10 段`)
+    assert.ok(byWeeks['11'], `${major} 缺第 11 周补课段`)
+    assert.ok(byWeeks['12-14'], `${major} 缺 12-14 段`)
+
+    assert.equal(byWeeks['3-7'].teacher, '胡丽莹')
+    assert.equal(byWeeks['3-7'].weekday, 5)
+    assert.equal(byWeeks['3-7'].location, '笃行1-201')
+    assert.equal(byWeeks['8-10'].teacher, '胡丽莹')
+    assert.equal(byWeeks['8-10'].weekday, 6)
+    assert.equal(byWeeks['8-10'].location, '笃行1-209')
+    assert.equal(byWeeks['11'].weekday, 3, '第 11 周补课应在周三')
+    assert.equal(byWeeks['11'].startPeriod, 5)
+    assert.equal(byWeeks['11'].endPeriod, 8)
+    assert.equal(byWeeks['12-14'].teacher, '林劼', '12 周起应为林劼')
+    assert.equal(byWeeks['12-14'].weekday, 5, '12 周起应回到周五')
+    assert.equal(byWeeks['12-14'].location, '笃行1-201', '12 周起应回到老教室')
+
+    const hours = segs.reduce((sum, c) => {
+      const [a, b] = c.weeks.includes('-') ? c.weeks.split('-').map(Number) : [Number(c.weeks), Number(c.weeks)]
+      return sum + (b - a + 1) * (c.endPeriod - c.startPeriod + 1)
+    }, 0)
+    assert.equal(hours, 48, `${major} 高数学时应为 48，实际 ${hours}`)
+  }
+})
+
 check('用户自定义调课写入/删除走独立键，且不影响站点调课', () => {
   const { setUserAdjustKey, loadUserAdjustments, saveUserAdjustment, removeUserAdjustment, getAllAdjustments, getSiteAdjustments } = mod
   setUserAdjustKey('fjnu_adjustments_test')

@@ -7,7 +7,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import {
   WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES, PERIOD_TIMES,
   COURSES, MAJORS, COURSE_TYPES,
-  getCurrentWeek, isCourseInWeek, getCoursesByMajor,
+  getCurrentWeek, isCourseInWeek, getCoursesByMajor, parseWeekRange,
   getCourseTimeDetail, getCoursePeriodText,
   getDateInWeek, formatDateShort, getWeekDateRange,
   formatWeekdayType,
@@ -529,7 +529,7 @@ function doDeleteCourse() {
     if (deleteScope.value === 'all') {
       customCourses.value = customCourses.value.filter(x => x._id !== c._id)
     } else {
-      const [s, e] = (c.weeks || '1-18').split('-').map(Number)
+      const { start: s, end: e } = parseWeekRange(c.weeks)
       const newWeeks = []
       for (let w = s; w <= e; w++) { if (w !== selectedWeek.value) newWeeks.push(w) }
       if (newWeeks.length) {
@@ -545,7 +545,7 @@ function doDeleteCourse() {
       deletedCourses.value = [...deletedCourses.value, c.id]
     } else {
       const delKey = c.id + '_wk' + selectedWeek.value
-      const [s, e] = (c.weeks || '1-18').split('-').map(Number)
+      const { start: s, end: e } = parseWeekRange(c.weeks)
       const newWeeks = []
       for (let w = s; w <= e; w++) { if (w !== selectedWeek.value) newWeeks.push(w) }
       if (newWeeks.length) {
@@ -579,7 +579,8 @@ function doAddCourse() {
     id: f.id.trim() || 'CUSTOM-' + Date.now(),
     teacher: f.teacher.trim() || '待定',
     location: f.location.trim(),
-    weeks: f.weekStart + '-' + f.weekEnd,
+    // 单周写成 '11'，避免界面显示「第11-11周」
+    weeks: f.weekStart === f.weekEnd ? String(f.weekStart) : f.weekStart + '-' + f.weekEnd,
     weekdayType: f.weekdayType,
     startPeriod: f.startPeriod,
     endPeriod: f.endPeriod,
@@ -606,7 +607,7 @@ const pendingEditData = ref(null)
 function openEditModal(course) {
   if (!course) return
   editTarget.value = course
-  const [ws, we] = (course.weeks || '1-18').split('-').map(Number)
+  const { start: ws, end: we } = parseWeekRange(course.weeks)
   editForm.value = {
     name: course.name,
     location: course.location,
@@ -654,8 +655,10 @@ function doConfirmEdit() {
   if (!updated || !c) { showEditScopeConfirm.value = false; return }
   const weekScope = editScope.value === 'week'
   updated.weeks = weekScope
-    ? selectedWeek.value + '-' + selectedWeek.value
-    : editForm.value.weekStart + '-' + editForm.value.weekEnd
+    ? String(selectedWeek.value)
+    : (editForm.value.weekStart === editForm.value.weekEnd
+        ? String(editForm.value.weekStart)
+        : editForm.value.weekStart + '-' + editForm.value.weekEnd)
   delete updated._weekScope
   if (c._custom) {
     if (weekScope) {

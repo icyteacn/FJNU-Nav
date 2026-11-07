@@ -7,7 +7,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import {
   WEEKDAYS, TABLE_ROWS, SINGLE_PERIOD_TIMES, PERIOD_TIMES,
   COURSES, MAJORS, COURSE_TYPES,
-  getCurrentWeek, isCourseInWeek, getCoursesByMajor,
+  getCurrentWeek, isCourseInWeek, getCoursesByMajor, parseWeekRange,
   getCourseTimeDetail, getCoursePeriodText,
   getDateInWeek, formatDateShort, getWeekDateRange,
   formatWeekdayType,
@@ -307,7 +307,7 @@ const editScope = ref('all')
 function openEditModal(course) {
   if (!course) return
   editTarget.value = course
-  const [ws, we] = (course.weeks || '1-18').split('-').map(Number)
+  const { start: ws, end: we } = parseWeekRange(course.weeks)
   editForm.value = { name: course.name, location: course.location, teacher: course.teacher || '', weekday: course.weekday, startPeriod: course.startPeriod, endPeriod: course.endPeriod, weekStart: ws, weekEnd: we, weekdayType: course.weekdayType || 'all', id: course.id || '', category: course.category || '专业必修课', credits: course.credits || 2, hours: course.hours || 32 }
   showDetail.value = false
   editScope.value = 'all'
@@ -317,8 +317,8 @@ function doEditCourse() {
   const f = editForm.value, c = editTarget.value
   if (!f.name.trim() || !f.location.trim() || !c) return
   const weekScope = editScope.value === 'week'
-  const updated = { ...c, name: f.name.trim(), id: f.id.trim() || c.id, teacher: f.teacher.trim() || '待定', location: f.location.trim(), weekdayType: f.weekdayType, startPeriod: f.startPeriod, endPeriod: f.endPeriod, weekday: f.weekday, credits: f.credits || 2, hours: f.hours || 32, category: f.category || '专业必修课', weeks: f.weekStart + '-' + f.weekEnd }
-  if (weekScope) updated.weeks = selectedWeek.value + '-' + selectedWeek.value
+  const updated = { ...c, name: f.name.trim(), id: f.id.trim() || c.id, teacher: f.teacher.trim() || '待定', location: f.location.trim(), weekdayType: f.weekdayType, startPeriod: f.startPeriod, endPeriod: f.endPeriod, weekday: f.weekday, credits: f.credits || 2, hours: f.hours || 32, category: f.category || '专业必修课', weeks: f.weekStart === f.weekEnd ? String(f.weekStart) : f.weekStart + '-' + f.weekEnd }
+  if (weekScope) updated.weeks = String(selectedWeek.value)
   delete updated._weekScope
   if (weekScope && c._custom) {
     customCourses.value.push({ ...updated, _custom: true, _id: `${c._id}_wk${selectedWeek.value}`, _editId: c.id, _weekScope: selectedWeek.value })

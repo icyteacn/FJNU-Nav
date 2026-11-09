@@ -2,6 +2,13 @@
 
 > 逐条工程日志见 AGENTS.md 更新日志；本文件为版本摘要。
 
+## 2026-11-09 · 客户端基建 — app-uniapp + mp-weixin + backend-options（站点未动）
+
+- **`app-uniapp/`**（HBuilderX 云打包 iOS）：首页 38 应用网格全量镜像站点注册表、课表页、日程页、我的页；课表数据三源容错拉取站点 `schedule-data.json`，单双周 `weekdayType` 全覆盖，iOS 安全区适配。
+- **`mp-weixin/`**（微信原生上架）：同功能独立实现，下拉刷新+分享卡片全套；`type:commonjs` 标记防 ESM 误判。
+- **`backend-options/`**：GitHub文件/CF KV/LeanCloud/PocketBase 四套备选后端，含可部署代码与配置/价格文档，默认关闭不影响现有纯前端。
+- 验证：全量语法+导出引用审计 0 错误；待办见 AGENTS.md 日志（AppID/证书/域名需人工）。
+
 ## v1.7.43 — 更新流程回归「网页版底部横幅下载」+ 横幅显眼化（patch，APK 1.3.21 / versionCode 21）
 
 - **App 内「检测更新」回退经典链路**：发现新版 → 切网页版（iframe）→ 底部横幅 →

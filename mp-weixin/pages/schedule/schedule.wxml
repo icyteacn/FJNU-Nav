@@ -1,0 +1,46 @@
+<!-- 文件路径: /fjnu-nav/mp-weixin/pages/schedule/schedule.wxml -->
+<view class="page safe-bottom">
+  <view class="top">
+    <picker mode="selector" range="{{majors}}" range-key="label" value="{{majorIdx}}" bindchange="onMajor">
+      <view class="major-pick">{{majorLabel}} ▾</view>
+    </picker>
+    <view class="week-pick">
+      <text class="wk-btn" bindtap="prevWeek">‹</text>
+      <text class="wk">第 {{week}} 周</text>
+      <text class="wk-btn" bindtap="nextWeek">›</text>
+    </view>
+  </view>
+  <view class="src mut" wx:if="{{source==='cache'}}">⚠ 离线缓存数据（{{cacheT}} 更新）</view>
+
+  <scroll-view scroll-x class="week-scroll">
+    <view class="week-grid">
+      <view class="col head">
+        <view class="cell-h">节次</view>
+        <view wx:for="{{periods}}" wx:key="*this" class="cell-p">
+          <text class="pn">{{item}}</text>
+          <text class="pt">{{periodTimes[item]}}</text>
+        </view>
+      </view>
+      <view wx:for="{{days}}" wx:key="weekday" class="col">
+        <view class="cell-h {{item.today ? 'today' : ''}}">
+          <text>周{{weekCn[item.weekday - 1]}}</text>
+          <text class="hd">{{item.label}}</text>
+        </view>
+        <view class="day-body">
+          <view wx:for="{{item.courses}}" wx:for-item="c" wx:key="id"
+                class="course" style="top:{{c._top}}rpx;height:{{c._h}}rpx;background:{{c.color || '#1565c0'}}e6"
+                data-c="{{c}}" bindtap="showCourse">
+            <text class="cn">{{c.name}}</text>
+            <text class="cl">{{c.location}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{!loading && !courses.length}}" class="empty">
+    <text>本周没有课程</text>
+    <text class="mut">可切换周次或专业查看</text>
+  </view>
+  <view wx:if="{{loading}}" class="empty"><text>加载中…</text></view>
+</view>

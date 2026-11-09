@@ -1,0 +1,11 @@
+# 文件路径: /fjnu-nav/backend-options/02-cloudflare-kv/wrangler.toml
+name = "fjnu-nav-docs"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# 先执行：npx wrangler kv namespace create NAV_DOCS，把返回的 id 填这里
+[[kv_namespaces]]
+binding = "NAV_DOCS"
+id = "<KV_NAMESPACE_ID>"
+
+# 写口令（别写在这）：npx wrangler secret put WRITE_TOKEN

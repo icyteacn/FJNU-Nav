@@ -1,0 +1,38 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": { "navigationBarTitleText": "福star课表" }
+    },
+    {
+      "path": "pages/schedule/schedule",
+      "style": { "navigationBarTitleText": "课程表" }
+    },
+    {
+      "path": "pages/events/events",
+      "style": { "navigationBarTitleText": "日程活动" }
+    },
+    {
+      "path": "pages/about/about",
+      "style": { "navigationBarTitleText": "我的" }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "福star课表",
+    "navigationBarBackgroundColor": "#1565c0",
+    "backgroundColor": "#f5f6fa"
+  },
+  "tabBar": {
+    "color": "#8a8f99",
+    "selectedColor": "#1565c0",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/schedule/schedule", "text": "课表" },
+      { "pagePath": "pages/events/events", "text": "日程" },
+      { "pagePath": "pages/about/about", "text": "我的" }
+    ]
+  }
+}

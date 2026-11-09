@@ -1,0 +1,21 @@
+<!-- 文件路径: /fjnu-nav/mp-weixin/pages/events/events.wxml -->
+<view class="page safe-bottom">
+  <view wx:if="{{!groups.length && !loading}}" class="empty"><text>近期暂无日程活动</text></view>
+  <view wx:if="{{loading}}" class="empty"><text>加载中…</text></view>
+
+  <view wx:for="{{groups}}" wx:key="date" class="card">
+    <view class="g-date">
+      <text class="d1">{{item.date}}</text>
+      <text class="d2" wx:if="{{item.flag}}">{{item.flag}}</text>
+    </view>
+    <view wx:for="{{item.items}}" wx:for-item="e" wx:key="title" class="ev" data-e="{{e}}" bindtap="show">
+      <view class="ev-time">{{e.time || '全天'}}</view>
+      <view class="ev-body">
+        <text class="ev-title">{{e.title}}</text>
+        <text class="ev-sub" wx:if="{{e.location}}">📍 {{e.location}}</text>
+        <text class="ev-sub" wx:if="{{e.audience}}">👥 {{e.audience}}</text>
+      </view>
+      <text class="ev-arrow">›</text>
+    </view>
+  </view>
+</view>

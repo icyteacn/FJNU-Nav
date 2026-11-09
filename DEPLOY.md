@@ -1,11 +1,11 @@
-# 客户端上架部署清单 · FJNU-Nav
+﻿# 客户端上架部署清单 · FJNU-Nav
 
 > 双端源码已就绪（`app-uniapp/` iOS、`mp-weixin/` 微信小程序）。以下是需要人工完成的项，按序照做即可。
 
 ## 一、微信小程序（约 15 分钟）
 
 1. 打开 [mp.weixin.qq.com](https://mp.weixin.qq.com) →「小程序」注册（免费，需未注册过公众号的邮箱）→ 记录 **AppID**（开发 → 开发管理 → 开发设置）。
-2. `mp-weixin/project.config.json`：把 `"appid"` 换成你的 AppID；**项目名/目录不动**。
+2. `mp-weixin/project.config.json`："appid" 已填 `wx313c28f3fdf79289`（如需换小程序账号再改）；**项目名/目录不动**。
 3. 微信开发者工具 →「导入项目」选 `mp-weixin/` → 预览。
 4. **request 合法域名**（mp 后台 → 开发设置 → 服务器域名），逐条填入：
    - `https://icyteacn.github.io`
@@ -15,7 +15,7 @@
 
 ## 二、iOS App（uni-app，两条路线）
 
-**路线 A · 零成本先用（推荐）**：HBuilderX 发行 → H5，产物传 GitHub Pages/任意静态托管，iOS 用户 Safari「添加到主屏幕」即为类原生体验。无需任何证书。
+**路线 A · 零成本（已选定）**：HBuilderX 发行 → H5，产物传 GitHub Pages/任意静态托管，iOS 用户 Safari「添加到主屏幕」即为类原生体验。无需任何证书。
 
 **路线 B · 正式 ipa**：需要 **Apple 开发者账号（$99/年，个人可注册）**：
 1. [developer.apple.com](https://developer.apple.com) 付费注册 → 后台生成 **iOS 证书（p12）** 和 **描述文件（mobileprovision）**。

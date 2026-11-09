@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "福star课表",
   "appid": "",
   "description": "福建师范大学研究生课表 · 与福star导航网站数据同步",
@@ -41,8 +41,8 @@
   },
   "quickapp": {},
   "mp-weixin": {
-    "appid": "",
+    "appid": "wx313c28f3fdf79289",
     "setting": { "urlCheck": false, "es6": true, "minified": true }
   },
-  "h5": { "title": "福star课表" }
+  "h5": { "title": "福star课表", "router": { "mode": "hash" }, "publicPath": "./" }
 }

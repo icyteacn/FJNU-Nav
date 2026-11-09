@@ -116,7 +116,7 @@
       "name": "高等工程数学",
       "id": "XZB0270812102-W11",
       "teacher": "胡丽莹",
-      "location": "待定",
+      "location": "笃行1-201",
       "weeks": "11",
       "weekdayType": "all",
       "startPeriod": 5,
@@ -310,7 +310,7 @@
       "name": "高等工程数学",
       "id": "ZSZB027085405402-W11",
       "teacher": "胡丽莹",
-      "location": "待定",
+      "location": "笃行1-201",
       "weeks": "11",
       "weekdayType": "all",
       "startPeriod": 5,
@@ -454,7 +454,7 @@
       "name": "高等工程数学",
       "id": "ZSZB027085410002-W11",
       "teacher": "胡丽莹",
-      "location": "待定",
+      "location": "笃行1-201",
       "weeks": "11",
       "weekdayType": "all",
       "startPeriod": 5,
@@ -595,7 +595,7 @@
       "major": "nis-master"
     }
   ],
-  "version": "f2d7584ecc",
+  "version": "5e92d4c026",
   "semester": "2026-2027学年第一学期",
-  "updatedAt": "2026-11-07T03:20:46.657Z"
+  "updatedAt": "2026-11-09T01:28:44.486Z"
 }

@@ -199,6 +199,7 @@ check('高等工程数学分段与学时（3-7 原教师 / 8-10 新教室 / 11 �
     assert.equal(byWeeks['11'].weekday, 3, '第 11 周补课应在周三')
     assert.equal(byWeeks['11'].startPeriod, 5)
     assert.equal(byWeeks['11'].endPeriod, 8)
+    assert.equal(byWeeks['11'].location, '笃行1-201', '第 11 周补课教室应为笃行1-201')
     assert.equal(byWeeks['12-14'].teacher, '林劼', '12 周起应为林劼')
     assert.equal(byWeeks['12-14'].weekday, 5, '12 周起应回到周五')
     assert.equal(byWeeks['12-14'].location, '笃行1-201', '12 周起应回到老教室')

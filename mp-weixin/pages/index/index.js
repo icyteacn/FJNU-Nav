@@ -5,7 +5,16 @@ const { currentWeek } = require('../../utils/schedule.js');
 
 Page({
   data: { groups: APP_GROUPS, week: 0, todayStr: '' },
-  onShow() {
+  onShow() { this.tick(); },
+  onPullDownRefresh() {
+    fetchSchedule(true)
+      .then(({ data }) => { if (data && data.semesterStart) this.setData({ week: currentWeek(data.semesterStart) }); })
+      .catch(() => {})
+      .finally(() => wx.stopPullDownRefresh());
+  },
+  onShareAppMessage() { return { title: '福star导航 · 课表/日程/校园服务', path: '/pages/index/index' }; },
+  onShareTimeline() { return { title: '福star导航 · 课表/日程/校园服务' }; },
+  tick() {
     const d = new Date();
     const cn = ['日', '一', '二', '三', '四', '五', '六'];
     this.setData({ todayStr: `${d.getMonth() + 1}月${d.getDate()}日 周${cn[d.getDay()]}` });

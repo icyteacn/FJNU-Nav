@@ -3,6 +3,7 @@ const { fetchSchedule, SITE_URL, cacheTime } = require('../../utils/api.js');
 
 Page({
   data: { refreshText: '点击同步最新数据' },
+  onShareAppMessage() { return { title: '福star导航 · 课表/日程/校园服务', path: '/pages/index/index' }; },
   onShow() {
     const t = cacheTime();
     if (t) this.setData({ refreshText: `上次 ${t}` });

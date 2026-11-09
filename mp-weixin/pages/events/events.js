@@ -4,9 +4,11 @@ const { fetchSchedule } = require('../../utils/api.js');
 Page({
   data: { groups: [], loading: true },
   onShow() { this.load(); },
-  async load() {
+  onPullDownRefresh() { this.load(true).finally(() => wx.stopPullDownRefresh()); },
+  onShareAppMessage() { return { title: '日程助手 · 官方日程与自定义', path: '/pages/events/events' }; },
+  async load(force) {
     this.setData({ loading: true });
-    const { data } = await fetchSchedule();
+    const { data } = await fetchSchedule(force);
     this.setData({ loading: false });
     if (!data) return;
     const flags = data.holidayMap || {};

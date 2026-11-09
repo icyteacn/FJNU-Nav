@@ -24,7 +24,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
 import { APP_GROUPS } from '../../data/apps.js';
 import { fetchSchedule, SITE_URL } from '../../utils/api.js';
 import { currentWeek, fmtDate } from '../../utils/schedule.js';
@@ -37,12 +37,14 @@ const todayStr = computed(() => {
   return `${d.getMonth() + 1}月${d.getDate()}日 周${cn[d.getDay()]}`;
 });
 
-onShow(async () => {
-  const data = await fetchSchedule();
+async function load(force) {
+  const data = await fetchSchedule(force);
   if (data && data.semesterStart) {
     week.value = currentWeek(data.semesterStart);
   }
-});
+}
+onShow(() => load());
+onPullDownRefresh(async () => { await load(true); uni.stopPullDownRefresh(); });
 
 function open(a) {
   if (a.native && a.tab) {

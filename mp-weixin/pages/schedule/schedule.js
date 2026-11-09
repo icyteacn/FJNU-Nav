@@ -75,4 +75,6 @@ Page({
     });
   },
   onPullDownRefresh() { this.load(true).then(() => wx.stopPullDownRefresh()); },
+  onShareAppMessage() { return { title: '课程表 · 本周课表', path: '/pages/schedule/schedule' }; },
+  onShareTimeline() { return { title: '课程表 · 本周课表' }; },
 });

@@ -26,7 +26,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
 import { fetchSchedule } from '../../utils/api.js';
 
 const items = ref([]);
@@ -44,9 +44,9 @@ function show(e) {
   uni.showModal({ title: e.title, content: parts.join('\n'), showCancel: false });
 }
 
-onShow(async () => {
+async function load(force) {
   loading.value = true;
-  const j = await fetchSchedule();
+  const j = await fetchSchedule(force);
   loading.value = false;
   if (!j) return;
   flags.value = j.holidayMap || {};
@@ -55,7 +55,9 @@ onShow(async () => {
   const g = {};
   evs.forEach(e => { (g[e.date] = g[e.date] || []).push(e); });
   grouped.value = g;
-});
+}
+onShow(() => load());
+onPullDownRefresh(async () => { await load(true); uni.stopPullDownRefresh(); });
 </script>
 
 <style>

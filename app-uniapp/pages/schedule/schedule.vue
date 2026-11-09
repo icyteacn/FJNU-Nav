@@ -51,7 +51,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
 import { fetchSchedule, scheduleSource, cacheTime } from '../../utils/api.js';
 import { weekCourses, currentWeek, mondayOf, addDays, fmtDate, WEEK_CN } from '../../utils/schedule.js';
 
@@ -116,9 +116,9 @@ function showCourse(c) {
   });
 }
 
-onShow(async () => {
+async function boot(force) {
   loading.value = true;
-  const j = await fetchSchedule();
+  const j = await fetchSchedule(force);
   data.value = j;
   if (j) {
     majorIdx.value = uni.getStorageSync('fjnu_major_idx') || 0;
@@ -126,7 +126,9 @@ onShow(async () => {
     load();
   }
   loading.value = false;
-});
+}
+onShow(() => boot());
+onPullDownRefresh(async () => { await boot(true); uni.stopPullDownRefresh(); });
 </script>
 
 <style>

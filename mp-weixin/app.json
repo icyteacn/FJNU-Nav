@@ -1,29 +1,49 @@
-{
-  "pages": [
-    "pages/index/index",
-    "pages/schedule/schedule",
-    "pages/events/events",
-    "pages/about/about"
-  ],
-  "window": {
-    "navigationBarBackgroundColor": "#1565c0",
-    "navigationBarTitleText": "福star课表",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#f5f6fa",
-    "enablePullDownRefresh": true,
-    "backgroundTextStyle": "dark"
-  },
-  "tabBar": {
-    "color": "#8a8f99",
-    "selectedColor": "#1565c0",
-    "backgroundColor": "#ffffff",
-    "list": [
-      { "pagePath": "pages/index/index", "text": "首页" },
-      { "pagePath": "pages/schedule/schedule", "text": "课表" },
-      { "pagePath": "pages/events/events", "text": "日程" },
-      { "pagePath": "pages/about/about", "text": "我的" }
-    ]
-  },
-  "sitemapLocation": "sitemap.json",
-  "style": "v2"
+﻿{
+    "pages":  [
+                  "pages/index/index",
+                  "pages/schedule/schedule",
+                  "pages/events/events",
+                  "pages/about/about"
+              ],
+    "window":  {
+                   "navigationBarBackgroundColor":  "#1565c0",
+                   "navigationBarTitleText":  "福star课表",
+                   "navigationBarTextStyle":  "white",
+                   "backgroundColor":  "#f5f6fa",
+                   "enablePullDownRefresh":  true,
+                   "backgroundTextStyle":  "dark"
+               },
+    "tabBar":  {
+                   "color":  "#8a8f99",
+                   "selectedColor":  "#1565c0",
+                   "backgroundColor":  "#ffffff",
+                   "list":  [
+                                {
+                                    "pagePath":  "pages/index/index",
+                                    "text":  "首页",
+                                    "iconPath":  "images/tab-index.png",
+                                    "selectedIconPath":  "images/tab-index-active.png"
+                                },
+                                {
+                                    "pagePath":  "pages/schedule/schedule",
+                                    "text":  "课表",
+                                    "iconPath":  "images/tab-schedule.png",
+                                    "selectedIconPath":  "images/tab-schedule-active.png"
+                                },
+                                {
+                                    "pagePath":  "pages/events/events",
+                                    "text":  "日程",
+                                    "iconPath":  "images/tab-events.png",
+                                    "selectedIconPath":  "images/tab-events-active.png"
+                                },
+                                {
+                                    "pagePath":  "pages/about/about",
+                                    "text":  "我的",
+                                    "iconPath":  "images/tab-about.png",
+                                    "selectedIconPath":  "images/tab-about-active.png"
+                                }
+                            ]
+               },
+    "sitemapLocation":  "sitemap.json",
+    "style":  "v2"
 }

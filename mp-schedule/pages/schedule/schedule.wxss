@@ -70,3 +70,8 @@
 .day-badge.adjust{color:#0369a1;background:#e0f2fe}
 .cell-h.hol{color:#b71c1c}
 .cell-h.hol .hd{color:#e57373}
+/* 换行与裁切修正 */
+.cc-name,.cc-loc,.cc-meta,.cc-weeks,.cc-in-badge,.cc-mv-badge{display:block;width:100%;word-break:break-all;overflow:hidden}
+.ccard.course{justify-content:flex-start;padding-top:8rpx}
+.ccard{justify-content:flex-start;padding-top:8rpx}
+.cc-in-badge,.cc-mv-badge{width:auto;max-width:100%}

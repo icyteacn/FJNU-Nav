@@ -1,4 +1,4 @@
-// 文件路径: /fjnu-nav/mp-weixin/utils/api.js
+// 文件路径: /fjnu-nav/mp-schedule/utils/api.js
 // 课表数据接口：与福star导航网站同一份 schedule-data.json，多源容错
 const SITE_URL = 'https://icyteacn.github.io/FJNU-Nav';
 const SCHEDULE_URLS = [

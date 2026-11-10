@@ -1,30 +1,60 @@
 <!-- 文件路径: /fjnu-nav/mp-weixin/pages/about/about.wxml -->
 <view class="page safe-bottom">
   <view class="card center">
-    <view class="logo">📚</view>
-    <view class="name">福star课表</view>
-    <view class="mut">v1.0.0 · 数据与福star导航网站同步</view>
+    <view class="logo">🧭</view>
+    <view class="name">福star导航</view>
+    <view class="mut">导航版 · 数据与福star导航网站同步</view>
   </view>
 
   <view class="card">
-    <view class="row-item" bindtap="refresh">
-      <text>🔄 刷新课表数据</text>
-      <text class="mut">{{refreshText}}</text>
+    <view class="sec-title">课表设置</view>
+    <view class="row-item">
+      <text>🎓 默认专业</text>
+      <picker mode="selector" range="{{majors}}" range-key="label" value="{{majorIdx}}" bindchange="onMajor">
+        <text class="mut">{{majorLabel}} ▾</text>
+      </picker>
     </view>
-    <view class="row-item" bindtap="copySite">
-      <text>🌐 打开网页版（复制链接）</text>
-      <text class="mut">icyteacn.github.io/FJNU-Nav</text>
+    <view class="row-item">
+      <text>🎨 课表配色</text>
+      <view class="mut"><switch checked="{{mono}}" bindchange="onMono" color="#c62828" /> {{mono ? '单色' : '彩色'}}</view>
     </view>
-    <view class="row-item" bindtap="clearCache">
-      <text>🗑 清除本地缓存</text>
-      <text class="mut">重新拉取全部数据</text>
+    <view class="row-item">
+      <text>⏰ 下一节课卡</text>
+      <view class="mut"><switch checked="{{showNext}}" bindchange="onShowNext" color="#c62828" /> {{showNext ? '显示' : '隐藏'}}</view>
+    </view>
+    <view class="row-item">
+      <text>⏰ 课前提醒</text>
+      <picker mode="selector" range="{{[15,30,45,60]}}" value="{{remindIdx}}" bindchange="onRemind">
+        <text class="mut">提前 {{[15,30,45,60][remindIdx]}} 分钟 ▾</text>
+      </picker>
     </view>
   </view>
 
   <view class="card">
-    <view class="sec-title">数据说明</view>
-    <view class="mut li">· 课表/日程与福star导航同源：data/schedule-data.json，启动自动同步、离线用缓存</view>
+    <view class="sec-title">联动入口</view>
+    <view class="row-item" bindtap="openNav">
+      <text>🧭 FJNU-Nav 导航网站</text>
+      <text class="mut">课表/日程/校园应用 ›</text>
+    </view>
+    <view class="row-item" bindtap="openLeague">
+      <text>🚩 智团慧建·团工作平台</text>
+      <text class="mut">支部工作 ›</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="sec-title">数据与其他</view>
+    <view class="row-item" bindtap="refresh"><text>🔄 刷新课表数据</text><text class="mut">{{refreshText}}</text></view>
+    <view class="row-item" bindtap="exportData"><text>📤 导出数据</text><text class="mut">复制 JSON</text></view>
+    <view class="row-item" bindtap="importData"><text>📥 导入数据</text><text class="mut">粘贴 JSON 恢复</text></view>
+    <view class="row-item" bindtap="copySite"><text>🌐 打开网页版（复制链接）</text><text class="mut">FJNU-Nav</text></view>
+    <view class="row-item" bindtap="resetAll"><text>♻️ 恢复默认</text><text class="mut">清空设置与缓存</text></view>
+  </view>
+
+  <view class="card">
+    <view class="sec-title">说明</view>
+    <view class="mut li">· 数据源：福star导航 schedule-data.json，启动自动同步、离线用缓存</view>
     <view class="mut li">· 数据仅供参考，以教务处正式通知为准</view>
-    <view class="mut li">· 本应用数据存本机，不上传任何个人信息</view>
+    <view class="mut li">· 全部数据存本机，不上传任何个人信息</view>
   </view>
 </view>

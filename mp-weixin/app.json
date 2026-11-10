@@ -2,6 +2,7 @@
     "pages":  [
                   "pages/index/index",
                   "pages/schedule/schedule",
+                  "pages/search/search",
                   "pages/events/events",
                   "pages/about/about"
               ],

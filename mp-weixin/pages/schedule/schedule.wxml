@@ -1,5 +1,6 @@
-<!-- 文件路径: /fjnu-nav/mp-weixin/pages/schedule/schedule.wxml -->
+<!-- 文件路径: /fjnu-nav/mp-schedule/pages/schedule/schedule.wxml -->
 <view class="page safe-bottom">
+  <!-- 顶栏：专业 + 学期 + 周切换 + 搜索 -->
   <view class="top">
     <picker mode="selector" range="{{majors}}" range-key="label" value="{{majorIdx}}" bindchange="onMajor">
       <view class="major-pick">{{majorLabel}} ▾</view>
@@ -9,38 +10,174 @@
       <text class="wk">第 {{week}} 周</text>
       <text class="wk-btn" bindtap="nextWeek">›</text>
     </view>
+    <view class="search-btn" bindtap="goSearch">🔍</view>
+    <view class="search-btn" bindtap="toggleView">{{viewMode === 'grid' ? '📋' : '📊'}}</view>
+    <view class="search-btn" bindtap="menuActions">☰</view>
   </view>
+  <view class="dirty-bar" wx:if="{{localDirty}}" bindtap="clearLocal">✎ 有本地修改 · 点此还原网站原表</view>
+  <view class="top2" wx:if="{{semesters.length > 1}}">
+    <picker mode="selector" range="{{semesters}}" range-key="name" value="{{semIdx}}" bindchange="onSem">
+      <view class="sem-pick">{{semesters[semIdx].name}} ▾</view>
+    </picker>
+  </view>
+
+  <!-- 下一节课卡（对齐 App：标题+倒计时徽章+开关） -->
+  <view class="next-card" wx:if="{{next && showNext}}">
+    <view class="nc-head">
+      <text class="nc-tag">⏰ 下一节课</text>
+      <text wx:if="{{next.countdown}}" class="nc-cd">{{next.countdown}}</text>
+      <text class="nc-off" catchtap="toggleNext">✕</text>
+    </view>
+    <view class="nc-name">{{next.name}}</view>
+    <view class="nc-time">{{next.time}}</view>
+    <view class="nc-sub" wx:if="{{next.teacher}}">{{next.teacher}} · {{next.remind}}</view>
+  </view>
+  <!-- 关闭后的折叠条：点按恢复 -->
+  <view class="nc-mini" wx:if="{{next && !showNext}}" bindtap="toggleNext">⏰ 下节课：{{next.name}} {{next.countdown}} ▶</view>
+
+  <!-- 周汇总行（对齐 App 顶行） -->
+  <view class="wk-summary" wx:if="{{summary}}">
+    <text>{{summary.range}}</text>
+    <text class="wks-t">{{summary.text}}</text>
+  </view>
+
+  <!-- 近 14 天日程提醒条（对齐 App event 条） -->
+  <view class="ev-bar" wx:for="{{evs}}" wx:key="index">
+    <text class="ev-when">{{item.when}}</text>
+    <text class="ev-title">{{item.title}}</text>
+    <text class="ev-tip" wx:if="{{item.tip}}">{{item.tip}}</text>
+  </view>
+
   <view class="src mut" wx:if="{{source==='cache'}}">⚠ 离线缓存数据（{{cacheT}} 更新）</view>
 
-  <scroll-view scroll-x class="week-scroll">
-    <view class="week-grid">
-      <view class="col head">
-        <view class="cell-h">节次</view>
-        <view wx:for="{{periods}}" wx:key="*this" class="cell-p">
-          <text class="pn">{{item}}</text>
-          <text class="pt">{{periodTimes[item]}}</text>
+  <!-- ===== 列表模式（对齐 App 单日列表） ===== -->
+  <view wx:if="{{viewMode === 'list'}}" class="list-view">
+    <view class="day-chips">
+      <view wx:for="{{days}}" wx:key="weekday"
+            class="day-chip {{item.weekday === listDay ? 'on' : ''}} {{item.today ? 'today' : ''}}"
+            data-d="{{item.weekday}}" bindtap="setListDay">
+        <text class="dc-w">{{item.today ? '今' : weekCn[item.weekday - 1]}}</text>
+        <text class="dc-d">{{item.label}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{listEmpty}}" class="list-empty">
+      <text class="le-ico">{{listEmpty.icon}}</text>
+      <text class="le-name">{{listEmpty.name}}</text>
+      <text class="le-sub">{{listEmpty.sub}}</text>
+    </view>
+
+    <block wx:for="{{listItems}}" wx:key="index">
+      <view wx:if="{{item.isGap}}" class="li-gap">{{item.gap}}</view>
+      <view wx:elif="{{item.isEvent}}" class="li-ev"><text>{{item.icon}} {{item.title}}</text><text wx:if="{{item.desc}}" class="li-ev-d">{{item.desc}}</text></view>
+      <view wx:else class="li {{item.badge}} {{item.kind}}" data-c="{{item}}" bindtap="showCourse">
+        <view class="li-time"><text class="lt-s">{{item.timeStart}}</text><text class="lt-e">{{item.timeEnd}}</text></view>
+        <view class="li-bar" style="background:{{item.color}}"></view>
+        <view class="li-main">
+          <view class="li-name">{{item.name}}
+            <text wx:if="{{item.badge === 'live'}}" class="st-badge live">● 上课中</text>
+            <text wx:elif="{{item.badge === 'next'}}" class="st-badge next">下一节</text>
+            <text wx:elif="{{item.badge === 'done'}}" class="st-badge done">已结束</text>
+          </view>
+          <view class="li-meta">📍{{item.loc}} · {{item.teacher || '-'}} · {{item.periodText}}</view>
+          <view wx:if="{{item.note}}" class="li-note">{{item.note}}</view>
         </view>
       </view>
-      <view wx:for="{{days}}" wx:key="weekday" class="col">
-        <view class="cell-h {{item.today ? 'today' : ''}}">
-          <text>周{{weekCn[item.weekday - 1]}}</text>
-          <text class="hd">{{item.label}}</text>
+    </block>
+  </view>
+
+  <!-- 一屏全显：无滑动，节次高随屏高自适应 -->
+  <view wx:if="{{viewMode === 'grid'}}" class="week-grid">
+    <!-- 节次列 -->
+    <view class="col head" style="width:{{headW}}px">
+      <view class="cell-h">节</view>
+      <view wx:for="{{periods}}" wx:key="*this" class="cell-p" style="height:{{cellH}}px">
+        <text class="pn">{{item}}</text>
+        <text class="pt">{{periodTimes[item]}}</text>
+      </view>
+    </view>
+    <!-- 七天列 -->
+    <view wx:for="{{days}}" wx:key="weekday" wx:for-index="di" class="col" style="width:{{colW}}px">
+      <!-- 列头：周几+日期+调休/调课徽标 -->
+      <view class="cell-h {{item.today ? 'today' : ''}} {{item.holiday ? 'hol' : ''}}">
+        <text class="hd-w">周{{weekCn[item.weekday - 1]}}</text>
+        <text class="hd">{{item.label}}</text>
+        <view wx:if="{{item.dayBadge}}" class="day-badge {{item.dayBadge.type}}">
+          <text>{{item.dayBadge.icon}}{{item.dayBadge.text}}</text>
         </view>
-        <view class="day-body">
-          <view wx:for="{{item.courses}}" wx:for-item="c" wx:key="id"
-                class="course" style="top:{{c._top}}rpx;height:{{c._h}}rpx;background:{{c.color || '#1565c0'}}e6"
-                data-c="{{c}}" bindtap="showCourse">
-            <text class="cn">{{c.name}}</text>
-            <text class="cl">{{c.location}}</text>
-          </view>
+      </view>
+      <!-- 节假日：整列虚线停课卡（App 同款竖排） -->
+      <view wx:if="{{item.holiday}}" class="holiday-cell" style="height:{{item.gridH}}px">
+        <text class="holiday-ico">{{item.holiday.icon || '🎉'}}</text>
+        <text class="holiday-v">{{item.holiday.name || item.holiday.descShort || '假期'}}</text>
+        <text class="holiday-sub">假期停课</text>
+      </view>
+      <!-- 正常日：课程卡 -->
+      <view wx:else class="day-body" style="height:{{item.gridH}}px">
+        <!-- 当前时间轴红线 -->
+        <view wx:if="{{nowLine && di === nowLine.col}}" class="now-line" style="top:{{nowLine.top}}px">
+          <text class="nl-t">{{nowLine.t}}</text>
+        </view>
+        <view wx:for="{{item.cells}}" wx:for-item="c" wx:key="id"
+              class="ccard {{c.kind}} {{c.status}} lv{{c.lv}}"
+              style="top:{{c._top}}px;height:{{c._h}}px;border-left-color:{{c.color}}"
+              data-c="{{c}}" bindtap="showCourse">
+          <!-- 普通课：按节数分级（lv0课名/lv1+教室/lv2+教师/lv3+周次） -->
+          <block wx:if="{{c.kind === 'course'}}">
+            <text class="cc-name" style="color:{{c.color}}">{{c.name}}</text>
+            <text wx:if="{{c.lv >= 1}}" class="cc-loc">@{{c.loc || '待定'}}</text>
+            <text wx:if="{{c.lv >= 2 && c.teacher}}" class="cc-meta">{{c.teacher}}</text>
+            <text wx:if="{{c.lv >= 3}}" class="cc-weeks">{{c.weeks}}</text>
+          </block>
+          <!-- 调入（补课） -->
+          <block wx:elif="{{c.kind === 'incoming'}}">
+            <text class="cc-in-badge">⬅调课</text>
+            <text class="cc-name" style="color:#0369a1">{{c.name}}</text>
+            <text wx:if="{{c.lv >= 1}}" class="cc-loc">@{{c.loc || '待定'}}</text>
+          </block>
+          <!-- 调走（原时段） -->
+          <block wx:else>
+            <text class="cc-mv-badge">↗调走</text>
+            <text wx:if="{{c.lv >= 1}}" class="cc-name mv">{{c.course.name}}</text>
+            <text wx:if="{{c.lv >= 2}}" class="cc-meta mv">{{c.movedNote}}</text>
+          </block>
+          <!-- 今日状态徽标 -->
+          <text wx:if="{{c.status === 'live' && c.lv >= 1}}" class="cc-st live">上课中</text>
+          <text wx:elif="{{c.status === 'done' && c.lv >= 2}}" class="cc-st done">已结束</text>
         </view>
       </view>
     </view>
-  </scroll-view>
+  </view>
 
-  <view wx:if="{{!loading && !courses.length}}" class="empty">
+  <view wx:if="{{!loading && !courseCount}}" class="empty">
     <text>本周没有课程</text>
     <text class="mut">可切换周次或专业查看</text>
   </view>
   <view wx:if="{{loading}}" class="empty"><text>加载中…</text></view>
+
+  <!-- ===== 添加/编辑课程弹层 ===== -->
+  <view wx:if="{{showEdit}}" class="modal-mask" bindtap="closeForm">
+    <view class="modal" catchtap="noop">
+      <view class="m-title">{{editForm.id ? '编辑课程' : '添加课程'}}</view>
+      <view class="m-row"><text class="m-label">课名</text><input class="m-input" value="{{editForm.name}}" data-f="name" bindinput="onFormField" placeholder="如 高等工程数学" /></view>
+      <view class="m-row"><text class="m-label">教师</text><input class="m-input" value="{{editForm.teacher}}" data-f="teacher" bindinput="onFormField" /></view>
+      <view class="m-row"><text class="m-label">教室</text><input class="m-input" value="{{editForm.location}}" data-f="location" bindinput="onFormField" placeholder="如 笃行1-201" /></view>
+      <view class="m-row">
+        <text class="m-label">星期</text>
+        <picker class="m-input" mode="selector" range="{{['周一','周二','周三','周四','周五','周六','周日']}}" value="{{wdIdx}}" data-f="weekday" bindchange="onFormField"><view>{{['周一','周二','周三','周四','周五','周六','周日'][wdIdx]}} ▾</view></picker>
+      </view>
+      <view class="m-row">
+        <text class="m-label">节次</text>
+        <picker class="m-input half" mode="selector" range="{{periods}}" value="{{spIdx}}" data-f="startPeriod" bindchange="onFormField"><view>第{{periods[spIdx]}}节 ▾</view></picker>
+        <text class="m-sep">—</text>
+        <picker class="m-input half" mode="selector" range="{{periods}}" value="{{epIdx}}" data-f="endPeriod" bindchange="onFormField"><view>第{{periods[epIdx]}}节 ▾</view></picker>
+      </view>
+      <view class="m-row"><text class="m-label">周次</text><input class="m-input" value="{{editForm.weeks}}" data-f="weeks" bindinput="onFormField" placeholder="如 3-18 或 3,5,7-9" /></view>
+      <view class="m-btns">
+        <view wx:if="{{editForm.isCustom && editForm.id}}" class="m-btn danger" catchtap="delCustom" data-id="{{editForm.id}}">删除</view>
+        <view class="m-btn" catchtap="closeForm">取消</view>
+        <view class="m-btn primary" catchtap="saveForm">保存</view>
+      </view>
+    </view>
+  </view>
 </view>

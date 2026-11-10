@@ -11,6 +11,7 @@ Page({
     periods: [1,2,3,4,5,6,7,8,9,10,11,12],
     next: null, evs: [], mono: false,
     viewMode: 'grid', listDay: 1, listItems: [], listEmpty: null,
+    nowLine: null, showEdit: false, editForm: null, localDirty: false,
   },
 
   onShow() {
@@ -75,9 +76,29 @@ Page({
     }
   },
 
+  // ===== 本地覆盖层（对齐 App customCourses/deletedCourses/userOverrides）=====
+  // 原则：网站数据只读，本机修改存 storage，合并成 _view 渲染，可随时清空还原
+  _overlay() {
+    const del = wx.getStorageSync('fjnu_delweek') || {};      // {courseId:[weeks]}
+    const cus = wx.getStorageSync('fjnu_custom') || [];       // 自建课程
+    const edt = wx.getStorageSync('fjnu_edits') || {};        // {id:{field:val}}
+    const ovr = wx.getStorageSync('fjnu_ovr') || {};          // {date:{type,...}}
+    const src = this._data || {};
+    const view = { ...src, holidayMap: { ...(src.holidayMap || {}), ...ovr } };
+    view.courses = (src.courses || [])
+      .filter(c => !(del[c.id] && del[c.id].includes('all')))
+      .map(c => edt[c.id] ? { ...c, ...edt[c.id] } : c)
+      .concat(cus);
+    view._delWeek = del;
+    this._view = view;
+    this.setData({ localDirty: !!(cus.length || Object.keys(edt).length || Object.keys(del).length || Object.keys(ovr).length) });
+    return view;
+  },
+
   apply() {
     const { majors, majorIdx, week } = this.data;
     const key = (majors[majorIdx] || {}).key || '';
+    const view = this._view || this._overlay();
     const curWk = S.currentWeek(this.data.semesterStart || S.fmtDate(new Date()));
     const monday = S.addDays(S.mondayOf(), (week - curWk) * 7);
     const today = S.fmtDate(new Date());
@@ -85,7 +106,10 @@ Page({
     const days = [];
     let courseCount = 0;
     for (let d = 1; d <= 7; d++) {
-      const res = S.dayCourses(this._data || {}, key, week, d, monday);
+      const res = S.dayCourses(view, key, week, d, monday);
+      // 按周删除：本机隐藏该周该课
+      const delW = (view._delWeek || {});
+      res.cells = res.cells.filter(x => !((delW[x.course.id] || []).includes(week) || (delW[x.course.id] || []).includes('all')));
       const dt = S.addDays(monday, d - 1);
       const isToday = S.fmtDate(dt) === today && isCurWeek;
       // 逐格卡片：白底+左色条，停课整列放假卡，调入虚线蓝卡，调走灰卡
@@ -126,7 +150,8 @@ Page({
         label: `${dt.getMonth() + 1}/${dt.getDate()}`,
         today: isToday,
         holiday: res.holiday,
-        dayBadge: dtp && dtp.type !== 'holiday' && dtp.type !== 'event'
+        dayType: res.dayType,
+        dayBadge: dtp && dtp.type !== 'holiday'
           ? { icon: dtp.icon || '📅', text: dtp.descShort || dtp.name || '', type: dtp.type }
           : null,
         cells,
@@ -134,6 +159,28 @@ Page({
       });
     }
     const courses = days.reduce((n, d) => n + d.cells.filter(c => c.kind === 'course').length, 0);
+    // ===== 当前时间轴红线（对齐 App updateTimeLine，仅当前周） =====
+    let nowLine = null;
+    const cellH = this._metric ? this._metric.cellH : 40;
+    if (isCurWeek) {
+      const twd = new Date().getDay() === 0 ? 7 : new Date().getDay();
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const starts = [1,2,3,4,5,6,7,8,9,10,11,12].map(p => S.startMin(view, p));
+      const lastEnd = starts[11] + 50;
+      if (nowMin >= starts[0] - 20 && nowMin <= lastEnd && !days[twd - 1].holiday) {
+        let y = 12 * cellH;
+        for (let i = 0; i < 12; i++) {
+          const s = starts[i], e2 = i < 11 ? starts[i + 1] : lastEnd;
+          if (nowMin >= s && nowMin < e2) { y = i * cellH + (nowMin - s) / (e2 - s) * cellH; break; }
+          if (nowMin < s && i === 0) { y = 0; break; }
+        }
+        nowLine = {
+          col: twd - 1, top: Math.round(y),
+          t: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+        };
+      }
+    }
     // ===== 周汇总（对齐 App 顶行：N门课N次N节·N天有课·空档N节） =====
     let sessions = 0, periods = 0; const nameSet = new Set(); let busyDays = 0;
     days.forEach(d => {
@@ -213,7 +260,12 @@ Page({
         });
       });
     }
-    this.setData({ courseCount: courses, days, next, evs, summary, listItems, listEmpty: this._listEmpty });
+    // 当日 event 类型（如讲座/参会）在列表末尾补提示卡
+    const sdt = selRes.dayType;
+    if (sdt && sdt.type === 'event') {
+      listItems.push({ isEvent: true, icon: sdt.icon || '📌', title: sdt.descShort || '日程', desc: sdt.desc || '' });
+    }
+    this.setData({ courseCount: courses, days, next, evs, summary, listItems, listEmpty: this._listEmpty, nowLine });
     if (!next) this._cdTarget = 0;
     this._tick();
   },
@@ -233,6 +285,108 @@ Page({
     this.apply();
   },
   goSearch() { wx.navigateTo({ url: '/pages/search/search' }); },
+  // ===== 编辑/加课/删除/停课（本地覆盖层写入） =====
+  _store(key, val) { wx.setStorageSync(key, val); this._view = this._overlay(); this.apply(); },
+
+  openAdd() { this._openForm(null); },
+  openEdit(course) { this._openForm(course); },
+  _openForm(c) {
+    this.setData({
+      showEdit: true,
+      editForm: c ? {
+        id: c.id, isCustom: !!String(c.id).startsWith('u-'),
+        name: c.name, teacher: c.teacher || '', location: c.location || '',
+        weekday: c.weekday, startPeriod: c.startPeriod, endPeriod: c.endPeriod,
+        weeks: c.weeks, category: c.category || '自定义',
+      } : {
+        id: '', isCustom: true, name: '', teacher: '', location: '',
+        weekday: 1, startPeriod: 1, endPeriod: 2, weeks: '1-16', category: '自定义',
+      },
+      wdIdx: (c ? c.weekday : 1) - 1, spIdx: (c ? c.startPeriod : 1) - 1, epIdx: (c ? c.endPeriod : 2) - 1,
+    });
+  },
+  closeForm() { this.setData({ showEdit: false }); },
+  onFormField(e) {
+    const f = e.currentTarget.dataset.f;
+    const map = { weekday: 'wdIdx', startPeriod: 'spIdx', endPeriod: 'epIdx' };
+    const v = e.detail.value;
+    if (map[f]) {
+      const idx = +v;
+      this.setData({ [`editForm.${f}`]: idx + 1, [map[f]]: idx });
+    } else {
+      this.setData({ [`editForm.${f}`]: v });
+    }
+  },
+  saveForm() {
+    const f = this.data.editForm;
+    if (!f.name || !f.name.trim()) return wx.showToast({ title: '课名必填', icon: 'none' });
+    const majors = this.data.majors;
+    const major = (majors[this.data.majorIdx] || {}).key || '';
+    const obj = {
+      name: f.name.trim(), teacher: f.teacher, location: f.location,
+      weekday: f.weekday, startPeriod: f.startPeriod, endPeriod: f.endPeriod,
+      weeks: f.weeks || '1-16', weekdayType: 'all', category: f.category || '自定义',
+      credits: 0, hours: 0, color: '#c62828', major,
+    };
+    if (f.isCustom) {
+      const cus = wx.getStorageSync('fjnu_custom') || [];
+      const id = f.id && String(f.id).startsWith('u-') ? f.id : 'u-' + Date.now();
+      const i = cus.findIndex(x => x.id === id);
+      const rec = { ...obj, id };
+      if (i >= 0) cus[i] = rec; else cus.push(rec);
+      this._store('fjnu_custom', cus);
+    } else {
+      const edt = wx.getStorageSync('fjnu_edits') || {};
+      edt[f.id] = obj;
+      this._store('fjnu_edits', edt);
+    }
+    this.setData({ showEdit: false });
+    wx.showToast({ title: '已保存' });
+  },
+  noop() {},
+  delCustom(e) {
+    const id = e.currentTarget.dataset.id;
+    const cus = (wx.getStorageSync('fjnu_custom') || []).filter(x => x.id !== id);
+    this._store('fjnu_custom', cus);
+    this.setData({ showEdit: false });
+  },
+  menuActions() {
+    const items = ['添加课程', '设置某天停课', '清空本地修改'];
+    wx.showActionSheet({
+      itemList: items,
+      success: r => {
+        if (r.tapIndex === 0) this.openAdd();
+        else if (r.tapIndex === 1) this.setOffDay();
+        else this.clearLocal();
+      },
+    });
+  },
+  setOffDay() {
+    wx.showModal({
+      title: '设置某天停课', editable: true, placeholderText: '日期 如 2026-11-20',
+      success: r => {
+        if (!r.confirm || !r.content) return;
+        const ds = r.content.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(ds)) return wx.showToast({ title: '格式 YYYY-MM-DD', icon: 'none' });
+        const ovr = wx.getStorageSync('fjnu_ovr') || {};
+        ovr[ds] = { type: 'holiday', name: '停课', icon: '⛔', descShort: '手动停课', user: true };
+        this._store('fjnu_ovr', ovr);
+        wx.showToast({ title: '已设为停课' });
+      },
+    });
+  },
+  clearLocal() {
+    wx.showModal({
+      title: '清空本地修改', content: '将还原为网站原始课表数据，确定？',
+      success: r => {
+        if (!r.confirm) return;
+        ['fjnu_custom', 'fjnu_edits', 'fjnu_delweek', 'fjnu_ovr'].forEach(k => wx.removeStorageSync(k));
+        this._view = this._overlay();
+        this.apply();
+        wx.showToast({ title: '已还原' });
+      },
+    });
+  },
   toggleView() {
     const v = this.data.viewMode === 'grid' ? 'list' : 'grid';
     wx.setStorageSync('fjnu_view', v);
@@ -247,8 +401,7 @@ Page({
     wx.setStorageSync('fjnu_show_next', v);
     this.setData({ showNext: v });
   },
-  showCourse(e) {
-    const it = e.currentTarget.dataset.c;
+  _detail(it) {
     const c = it.course || it;
     if (it.kind === 'moved') {
       const o = it.ov || {};
@@ -272,6 +425,34 @@ Page({
       title: c.name,
       content: `教师：${c.teacher || '-'}\n教室：${c.location || '-'}\n周次：第${c.weeks}周\n节次：${c.startPeriod}-${c.endPeriod}节\n类型：${c.category || '-'}\n学分：${c.credits || '-'}（${c.hours || '-'}学时）`,
       showCancel: false,
+    });
+  },
+  showCourse(e) {
+    const it = e.currentTarget.dataset.c;
+    const c = it.course || it;
+    if (it.kind && it.kind !== 'course') { this._detail(it); return; }
+    wx.showActionSheet({
+      itemList: ['查看详情', '编辑本课', '本周停课（仅此周隐藏）', '删除本课（全部周）'],
+      success: r => {
+        if (r.tapIndex === 0) this._detail(it);
+        else if (r.tapIndex === 1) this.openEdit(c);
+        else if (r.tapIndex === 2) {
+          const del = wx.getStorageSync('fjnu_delweek') || {};
+          del[c.id] = [...new Set([...(del[c.id] || []), this.data.week])];
+          this._store('fjnu_delweek', del);
+          wx.showToast({ title: '本周已隐藏' });
+        } else {
+          wx.showModal({
+            title: '删除本课', content: `「${c.name}」全部周次都隐藏？（清空本地修改可还原）`,
+            success: r2 => {
+              if (!r2.confirm) return;
+              const del = wx.getStorageSync('fjnu_delweek') || {};
+              del[c.id] = ['all'];
+              this._store('fjnu_delweek', del);
+            },
+          });
+        }
+      },
     });
   },
   onPullDownRefresh() { this.load(true).then(() => wx.stopPullDownRefresh()); },

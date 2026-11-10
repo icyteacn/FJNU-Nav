@@ -12,7 +12,9 @@
     </view>
     <view class="search-btn" bindtap="goSearch">🔍</view>
     <view class="search-btn" bindtap="toggleView">{{viewMode === 'grid' ? '📋' : '📊'}}</view>
+    <view class="search-btn" bindtap="menuActions">☰</view>
   </view>
+  <view class="dirty-bar" wx:if="{{localDirty}}" bindtap="clearLocal">✎ 有本地修改 · 点此还原网站原表</view>
   <view class="top2" wx:if="{{semesters.length > 1}}">
     <picker mode="selector" range="{{semesters}}" range-key="name" value="{{semIdx}}" bindchange="onSem">
       <view class="sem-pick">{{semesters[semIdx].name}} ▾</view>
@@ -67,6 +69,7 @@
 
     <block wx:for="{{listItems}}" wx:key="index">
       <view wx:if="{{item.isGap}}" class="li-gap">{{item.gap}}</view>
+      <view wx:elif="{{item.isEvent}}" class="li-ev"><text>{{item.icon}} {{item.title}}</text><text wx:if="{{item.desc}}" class="li-ev-d">{{item.desc}}</text></view>
       <view wx:else class="li {{item.badge}} {{item.kind}}" data-c="{{item}}" bindtap="showCourse">
         <view class="li-time"><text class="lt-s">{{item.timeStart}}</text><text class="lt-e">{{item.timeEnd}}</text></view>
         <view class="li-bar" style="background:{{item.color}}"></view>
@@ -94,7 +97,7 @@
       </view>
     </view>
     <!-- 七天列 -->
-    <view wx:for="{{days}}" wx:key="weekday" class="col" style="width:{{colW}}px">
+    <view wx:for="{{days}}" wx:key="weekday" wx:for-index="di" class="col" style="width:{{colW}}px">
       <!-- 列头：周几+日期+调休/调课徽标 -->
       <view class="cell-h {{item.today ? 'today' : ''}} {{item.holiday ? 'hol' : ''}}">
         <text class="hd-w">周{{weekCn[item.weekday - 1]}}</text>
@@ -111,6 +114,10 @@
       </view>
       <!-- 正常日：课程卡 -->
       <view wx:else class="day-body" style="height:{{item.gridH}}px">
+        <!-- 当前时间轴红线 -->
+        <view wx:if="{{nowLine && di === nowLine.col}}" class="now-line" style="top:{{nowLine.top}}px">
+          <text class="nl-t">{{nowLine.t}}</text>
+        </view>
         <view wx:for="{{item.cells}}" wx:for-item="c" wx:key="id"
               class="ccard {{c.kind}} {{c.status}} lv{{c.lv}}"
               style="top:{{c._top}}px;height:{{c._h}}px;border-left-color:{{c.color}}"
@@ -147,4 +154,30 @@
     <text class="mut">可切换周次或专业查看</text>
   </view>
   <view wx:if="{{loading}}" class="empty"><text>加载中…</text></view>
+
+  <!-- ===== 添加/编辑课程弹层 ===== -->
+  <view wx:if="{{showEdit}}" class="modal-mask" bindtap="closeForm">
+    <view class="modal" catchtap="noop">
+      <view class="m-title">{{editForm.id ? '编辑课程' : '添加课程'}}</view>
+      <view class="m-row"><text class="m-label">课名</text><input class="m-input" value="{{editForm.name}}" data-f="name" bindinput="onFormField" placeholder="如 高等工程数学" /></view>
+      <view class="m-row"><text class="m-label">教师</text><input class="m-input" value="{{editForm.teacher}}" data-f="teacher" bindinput="onFormField" /></view>
+      <view class="m-row"><text class="m-label">教室</text><input class="m-input" value="{{editForm.location}}" data-f="location" bindinput="onFormField" placeholder="如 笃行1-201" /></view>
+      <view class="m-row">
+        <text class="m-label">星期</text>
+        <picker class="m-input" mode="selector" range="{{['周一','周二','周三','周四','周五','周六','周日']}}" value="{{wdIdx}}" data-f="weekday" bindchange="onFormField"><view>{{['周一','周二','周三','周四','周五','周六','周日'][wdIdx]}} ▾</view></picker>
+      </view>
+      <view class="m-row">
+        <text class="m-label">节次</text>
+        <picker class="m-input half" mode="selector" range="{{periods}}" value="{{spIdx}}" data-f="startPeriod" bindchange="onFormField"><view>第{{periods[spIdx]}}节 ▾</view></picker>
+        <text class="m-sep">—</text>
+        <picker class="m-input half" mode="selector" range="{{periods}}" value="{{epIdx}}" data-f="endPeriod" bindchange="onFormField"><view>第{{periods[epIdx]}}节 ▾</view></picker>
+      </view>
+      <view class="m-row"><text class="m-label">周次</text><input class="m-input" value="{{editForm.weeks}}" data-f="weeks" bindinput="onFormField" placeholder="如 3-18 或 3,5,7-9" /></view>
+      <view class="m-btns">
+        <view wx:if="{{editForm.isCustom && editForm.id}}" class="m-btn danger" catchtap="delCustom" data-id="{{editForm.id}}">删除</view>
+        <view class="m-btn" catchtap="closeForm">取消</view>
+        <view class="m-btn primary" catchtap="saveForm">保存</view>
+      </view>
+    </view>
+  </view>
 </view>

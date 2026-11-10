@@ -28,6 +28,20 @@ Page({
       this.setData({ cellH, colW, headW });
     }
     this.load();
+    // 秒级倒计时
+    if (!this._timer) this._timer = setInterval(() => this._tick(), 1000);
+  },
+  onHide() {
+    if (this._timer) { clearInterval(this._timer); this._timer = null; }
+  },
+  _tick() {
+    if (!this._cdTarget) return;
+    const diff = this._cdTarget - Date.now();
+    if (diff <= 0) { this.setData({ 'next.countdown': '上课中' }); return; }
+    const d = Math.floor(diff / 864e5), h = Math.floor(diff % 864e5 / 36e5),
+      m = Math.floor(diff % 36e5 / 6e4), s = Math.floor(diff % 6e4 / 1e3);
+    const hm = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    this.setData({ 'next.countdown': d ? `${d}天${hm}` : hm });
   },
 
   async load(force) {
@@ -46,6 +60,16 @@ Page({
       semesters: (data.semesters || []).map((s, i) => ({ name: s.name || s.title || `学期${i + 1}`, i })),
     });
     this.apply();
+    // 网站更新实时生效：后台静默拉新，版本变了就重渲染
+    if (!force) {
+      fetchSchedule(true).then(r => {
+        if (r.data && r.data.updatedAt !== (this._data || {}).updatedAt) {
+          this._data = r.data;
+          this.setData({ source: r.source, cacheT: cacheTime() });
+          this.apply();
+        }
+      });
+    }
   },
 
   apply() {
@@ -124,15 +148,11 @@ Page({
     if (nxt) {
       const c = nxt.course;
       const when = nxt.inDays === 0 ? '今天' : nxt.inDays === 1 ? '明天' : `${nxt.inDays} 天后`;
-      // 倒计时（对齐 App：N天HH:MM）
-      const cd = (() => {
-        const [h, m] = [Math.floor(nxt.startMin / 60), nxt.startMin % 60];
-        const target = new Date(nxt.date); target.setHours(h, m, 0, 0);
-        const diff = target - Date.now();
-        if (diff <= 0) return '';
-        const dDays = Math.floor(diff / 864e5), hh = Math.floor(diff % 864e5 / 36e5), mm = Math.floor(diff % 36e5 / 6e4);
-        return dDays ? `${dDays}天${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}` : `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-      })();
+      // 倒计时目标时间戳（秒级 ticker 每秒刷新）
+      const [hh, mm] = [Math.floor(nxt.startMin / 60), nxt.startMin % 60];
+      const target = new Date(nxt.date); target.setHours(hh, mm, 0, 0);
+      this._cdTarget = +target;
+      const cd = '';
       next = {
         name: c.name,
         loc: c.location || '待定',
@@ -148,6 +168,8 @@ Page({
       when: e.inDays === 0 ? '今天' : e.inDays === 1 ? '明天' : e.inDays < 0 ? '昨天' : `${e.inDays} 天后`,
     }));
     this.setData({ courseCount: courses, days, next, evs, summary });
+    if (!next) this._cdTarget = 0;
+    this._tick();
   },
 
   onMajor(e) {

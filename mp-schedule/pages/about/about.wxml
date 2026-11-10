@@ -31,6 +31,18 @@
   </view>
 
   <view class="card">
+    <view class="sec-title">联动入口</view>
+    <view class="row-item" bindtap="openNav">
+      <text>🧭 FJNU-Nav 导航网站</text>
+      <text class="mut">课表/日程/校园应用 ›</text>
+    </view>
+    <view class="row-item" bindtap="openLeague">
+      <text>🚩 智团慧建·团工作平台</text>
+      <text class="mut">支部工作 ›</text>
+    </view>
+  </view>
+
+  <view class="card">
     <view class="sec-title">数据与其他</view>
     <view class="row-item" bindtap="refresh"><text>🔄 刷新课表数据</text><text class="mut">{{refreshText}}</text></view>
     <view class="row-item" bindtap="exportData"><text>📤 导出数据</text><text class="mut">复制 JSON</text></view>

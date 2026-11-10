@@ -88,4 +88,13 @@ Page({
     });
   },
   copySite() { wx.setClipboardData({ data: SITE_URL }); },
+  _go(url, name) {
+    wx.showModal({
+      title: name, content: `${url}\n（复制链接到浏览器打开）`,
+      confirmText: '复制链接', showCancel: false,
+      success: () => wx.setClipboardData({ data: url }),
+    });
+  },
+  openNav() { this._go(SITE_URL, 'FJNU-Nav 导航网站'); },
+  openLeague() { this._go('https://icyteacn.github.io/CYSL-26CS', '智团慧建·团工作平台'); },
 });

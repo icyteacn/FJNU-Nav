@@ -114,3 +114,14 @@
 .holiday-sub{writing-mode:vertical-rl;font-size:10px;color:#e57373;letter-spacing:1px}
 .nc-off{margin-left:auto;font-size:15px;color:rgba(255,255,255,.85);padding:0 6px;line-height:1}
 .nc-mini{margin:8px 12px 0;background:#fff;border-radius:8px;padding:6px 12px;font-size:11px;color:#c62828;font-weight:600}
+
+/* 紧凑化 v1.0.7 */
+.next-card{margin:8px 12px 0;padding:10px 14px}
+.nc-tag{font-size:11px}
+.nc-name{font-size:16px;margin-top:2px}
+.nc-time{font-size:12px;margin-top:2px}
+.nc-sub{font-size:10px;margin-top:2px}
+.wk-summary{margin:8px 12px 0;padding:6px 12px;font-size:11px}
+.ev-bar{margin:6px 12px 0;padding:5px 10px}
+.top{padding:10px 12px 6px}
+.top2{margin:0 12px 4px}

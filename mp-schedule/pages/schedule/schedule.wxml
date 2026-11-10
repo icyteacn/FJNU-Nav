@@ -18,12 +18,21 @@
     </picker>
   </view>
 
-  <!-- 下一节课卡（对齐 App「下一节课倒计时」） -->
+  <!-- 下一节课卡（对齐 App：标题+倒计时徽章+一行信息） -->
   <view class="next-card" wx:if="{{next}}">
-    <view class="nc-tag">⏰ 下一节课</view>
+    <view class="nc-head">
+      <text class="nc-tag">⏰ 下一节课</text>
+      <text wx:if="{{next.countdown}}" class="nc-cd">{{next.countdown}}</text>
+    </view>
     <view class="nc-name">{{next.name}}</view>
-    <view class="nc-time">{{next.time}} · {{next.loc}}</view>
+    <view class="nc-time">{{next.time}}</view>
     <view class="nc-sub" wx:if="{{next.teacher}}">{{next.teacher}} · {{next.remind}}</view>
+  </view>
+
+  <!-- 周汇总行（对齐 App 顶行） -->
+  <view class="wk-summary" wx:if="{{summary}}">
+    <text>{{summary.range}}</text>
+    <text class="wks-t">{{summary.text}}</text>
   </view>
 
   <!-- 近 14 天日程提醒条（对齐 App event 条） -->
@@ -55,11 +64,11 @@
             <text>{{item.dayBadge.icon}} {{item.dayBadge.text}}</text>
           </view>
         </view>
-        <!-- 节假日：整列停课卡 -->
+        <!-- 节假日：整列虚线停课卡（App 同款竖排） -->
         <view wx:if="{{item.holiday}}" class="holiday-cell">
           <text class="holiday-ico">{{item.holiday.icon || '🎉'}}</text>
-          <text class="holiday-name">{{item.holiday.name || item.holiday.descShort || '假期'}}</text>
-          <text class="holiday-sub">停课</text>
+          <text class="holiday-v">{{item.holiday.name || item.holiday.descShort || '假期'}}</text>
+          <text class="holiday-sub">假期停课</text>
         </view>
         <!-- 正常日：课程卡 -->
         <view wx:else class="day-body">

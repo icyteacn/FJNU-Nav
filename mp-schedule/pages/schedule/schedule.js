@@ -88,6 +88,17 @@ Page({
       });
     }
     const courses = days.reduce((n, d) => n + d.cells.filter(c => c.kind === 'course').length, 0);
+    // ===== 周汇总（对齐 App 顶行：N门课N次N节·N天有课·空档N节） =====
+    let sessions = 0, periods = 0; const nameSet = new Set(); let busyDays = 0;
+    days.forEach(d => {
+      const real = d.cells.filter(c => c.kind !== 'moved');
+      if (real.length) busyDays++;
+      real.forEach(c => { sessions++; periods += c.end - c.start + 1; nameSet.add(c.course.name); });
+    });
+    const summary = {
+      range: `${days[0].label} - ${days[6].label}`,
+      text: `${nameSet.size}门课${sessions}次${periods}节 · ${busyDays}天有课 · 空档${7 * 12 - periods}节`,
+    };
     // 下节课卡（已跳过停课日；提前提醒分钟取自设置）
     const nxt = S.nextCourse(this._data || {}, key);
     const remindMin = wx.getStorageSync('fjnu_remind') || 30;
@@ -95,11 +106,21 @@ Page({
     if (nxt) {
       const c = nxt.course;
       const when = nxt.inDays === 0 ? '今天' : nxt.inDays === 1 ? '明天' : `${nxt.inDays} 天后`;
+      // 倒计时（对齐 App：N天HH:MM）
+      const cd = (() => {
+        const [h, m] = [Math.floor(nxt.startMin / 60), nxt.startMin % 60];
+        const target = new Date(nxt.date); target.setHours(h, m, 0, 0);
+        const diff = target - Date.now();
+        if (diff <= 0) return '';
+        const dDays = Math.floor(diff / 864e5), hh = Math.floor(diff % 864e5 / 36e5), mm = Math.floor(diff % 36e5 / 6e4);
+        return dDays ? `${dDays}天${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}` : `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+      })();
       next = {
         name: c.name,
         loc: c.location || '待定',
-        time: `${when} ${S.fmtDate(nxt.date).slice(5)} 周${S.WEEK_CN[nxt.weekday - 1]} 第${c.startPeriod}-${c.endPeriod}节`,
+        time: `周${S.WEEK_CN[nxt.weekday - 1]} ${S.fmtDate(nxt.date).slice(5).replace('-', '/')} · 第${c.startPeriod}-${c.endPeriod}节 · ${c.location || '待定'}`,
         teacher: c.teacher || '',
+        countdown: cd,
         remind: `已设课前 ${remindMin} 分钟提醒`,
       };
     }
@@ -108,7 +129,7 @@ Page({
       ...e,
       when: e.inDays === 0 ? '今天' : e.inDays === 1 ? '明天' : e.inDays < 0 ? '昨天' : `${e.inDays} 天后`,
     }));
-    this.setData({ courseCount: courses, days, next, evs });
+    this.setData({ courseCount: courses, days, next, evs, summary });
   },
 
   onMajor(e) {

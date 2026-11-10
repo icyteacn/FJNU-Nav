@@ -13,15 +13,15 @@
    - `https://raw.githubusercontent.com`
 5. 上传 → mp 后台「版本管理」提交审核。类目建议「教育 > 教育信息服务」。
 
-## 二、iOS App（uni-app，两条路线）
+## 二、iOS App —— 已完成（H5 免费路线）
 
-**路线 A · 零成本（已选定）**：HBuilderX 发行 → H5，产物传 GitHub Pages/任意静态托管，iOS 用户 Safari「添加到主屏幕」即为类原生体验。无需任何证书。
+uni-app 工程已补齐 CLI 构建体系（`package.json` + `vite.config.js` + `index.html` + `scripts/`）。
+**H5 产物已构建并铺进 `public/app/`**，随站点 Pages 流水线自动上线：
 
-**路线 B · 正式 ipa**：需要 **Apple 开发者账号（$99/年，个人可注册）**：
-1. [developer.apple.com](https://developer.apple.com) 付费注册 → 后台生成 **iOS 证书（p12）** 和 **描述文件（mobileprovision）**。
-2. `app-uniapp/manifest.json`：填 **DCloud appid**（HBuilderX 登录 dcloud.net.cn 免费获取）+ 应用名称/版本。
-3. HBuilderX → 发行 → 云打包 iOS → 上传 p12 与描述文件 → 得 ipa。
-4. 上架 App Store 走 App Store Connect；或 TestFlight 内测分发（免上架审核）。
+- iOS 使用：Safari 打开 **https://icyteacn.github.io/FJNU-Nav/app/** → 分享 →「添加到主屏幕」即类原生 App（图标、独立窗口、安全区适配）。
+- 重新构建：`cd app-uniapp && npm install && npm run build:h5`（产物 `dist/` 已拷入 `public/app/`）。
+- 本地预览：`npm run dev:h5` → http://localhost:5173
+- 上架 App Store 才需 Apple 开发者 $99/年（路线 B，暂不启用）。
 
 ## 三、后端（可选，默认关闭）
 

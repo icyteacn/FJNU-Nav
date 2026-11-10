@@ -83,6 +83,7 @@ export default {
     downloadDesc: '独立课表应用，离线可用，不到 1MB',
     downloadBtn: '下载 APK ↗',
     downloadMirror: '🐙 GitHub 镜像（同样直接下载）· 镜像通道已下载 {n} 次',
+    downloadIos: '🍎 iPhone / 网页版：打开后「分享 → 添加到主屏幕」即成 App ↗',
     wikiSite: '网站',
     wikiDocs: '腾讯文档',
     matchLabel: '匹配：',

@@ -210,6 +210,8 @@ function askAgent(text) {
         target="_blank"
         rel="noopener"
       >{{ t('home.downloadMirror', { n: apkMirrorDownloads.toLocaleString() }) }}</a>
+      <!-- iOS / 网页版：与 APK 同源的单文件应用，Safari「添加到主屏幕」即成 App -->
+      <a href="standalone-schedule.html" class="download-ios" target="_blank" rel="noopener">{{ t('home.downloadIos') }}</a>
     </section>
 
     <section class="section">
@@ -494,4 +496,6 @@ function askAgent(text) {
 
 .download-mirror { display: block; margin-top: 8px; font-size: 11.5px; color: var(--text-sub, #6b7280); text-decoration: none; }
 .download-mirror:hover { color: var(--primary, #1b66c9); text-decoration: underline; }
+.download-ios { display: inline-block; margin-top: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700; color: #c62828; background: #fff0f0; border: 1px solid #f2c1c1; border-radius: 8px; text-decoration: none; }
+.download-ios:hover { background: #ffe2e2; }
 </style>

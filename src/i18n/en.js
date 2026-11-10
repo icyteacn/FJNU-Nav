@@ -82,6 +82,7 @@ export default {
     downloadDesc: 'Standalone offline schedule app, under 1MB',
     downloadBtn: 'Download APK ↗',
     downloadMirror: '🐙 GitHub mirror (direct download too) · {n} downloads via mirror',
+    downloadIos: '🍎 iPhone / Web: open → Share → Add to Home Screen to install ↗',
     wikiSite: 'Site',
     wikiDocs: 'Tencent Docs',
     matchLabel: 'Match: ',

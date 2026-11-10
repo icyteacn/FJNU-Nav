@@ -44,67 +44,64 @@
 
   <view class="src mut" wx:if="{{source==='cache'}}">⚠ 离线缓存数据（{{cacheT}} 更新）</view>
 
-  <scroll-view scroll-x class="week-scroll">
-    <view class="week-grid">
-      <!-- 节次列 -->
-      <view class="col head">
-        <view class="cell-h">节次</view>
-        <view wx:for="{{periods}}" wx:key="*this" class="cell-p">
-          <text class="pn">{{item}}</text>
-          <text class="pt">{{periodTimes[item]}}</text>
+  <!-- 一屏全显：无滑动，节次高随屏高自适应 -->
+  <view class="week-grid">
+    <!-- 节次列 -->
+    <view class="col head" style="width:{{headW}}px">
+      <view class="cell-h">节</view>
+      <view wx:for="{{periods}}" wx:key="*this" class="cell-p" style="height:{{cellH}}px">
+        <text class="pn">{{item}}</text>
+        <text class="pt">{{periodTimes[item]}}</text>
+      </view>
+    </view>
+    <!-- 七天列 -->
+    <view wx:for="{{days}}" wx:key="weekday" class="col" style="width:{{colW}}px">
+      <!-- 列头：周几+日期+调休/调课徽标 -->
+      <view class="cell-h {{item.today ? 'today' : ''}} {{item.holiday ? 'hol' : ''}}">
+        <text class="hd-w">周{{weekCn[item.weekday - 1]}}</text>
+        <text class="hd">{{item.label}}</text>
+        <view wx:if="{{item.dayBadge}}" class="day-badge {{item.dayBadge.type}}">
+          <text>{{item.dayBadge.icon}}{{item.dayBadge.text}}</text>
         </view>
       </view>
-      <!-- 七天列 -->
-      <view wx:for="{{days}}" wx:key="weekday" class="col">
-        <!-- 列头：周几+日期+调休/调课徽标 -->
-        <view class="cell-h {{item.today ? 'today' : ''}} {{item.holiday ? 'hol' : ''}}">
-          <text>周{{weekCn[item.weekday - 1]}}</text>
-          <text class="hd">{{item.label}}</text>
-          <view wx:if="{{item.dayBadge}}" class="day-badge {{item.dayBadge.type}}">
-            <text>{{item.dayBadge.icon}} {{item.dayBadge.text}}</text>
-          </view>
-        </view>
-        <!-- 节假日：整列虚线停课卡（App 同款竖排） -->
-        <view wx:if="{{item.holiday}}" class="holiday-cell">
-          <text class="holiday-ico">{{item.holiday.icon || '🎉'}}</text>
-          <text class="holiday-v">{{item.holiday.name || item.holiday.descShort || '假期'}}</text>
-          <text class="holiday-sub">假期停课</text>
-        </view>
-        <!-- 正常日：课程卡 -->
-        <view wx:else class="day-body">
-          <view wx:for="{{item.cells}}" wx:for-item="c" wx:key="id"
-                class="ccard {{c.kind}} {{c.status}}"
-                style="top:{{c._top}}rpx;height:{{c._h}}rpx;border-left-color:{{c.color}}"
-                data-c="{{c}}" bindtap="showCourse">
-            <!-- 普通课：矮卡只显课名+教室，高卡全信息 -->
-            <block wx:if="{{c.kind === 'course'}}">
-              <text class="cc-name" style="color:{{c.color}}">{{c.name}}</text>
-              <text class="cc-loc">@{{c.loc || '待定'}}</text>
-              <text wx:if="{{c._h >= 150 && c.teacher}}" class="cc-meta">{{c.teacher}}</text>
-              <text wx:if="{{c._h >= 250}}" class="cc-weeks">{{c.weeks}}</text>
-            </block>
-            <!-- 调入（补课） -->
-            <block wx:elif="{{c.kind === 'incoming'}}">
-              <text class="cc-in-badge">⬅ 调课</text>
-              <text class="cc-name" style="color:#0369a1">{{c.name}}</text>
-              <text class="cc-loc">@{{c.loc || '待定'}}</text>
-              <text wx:if="{{c._h >= 200}}" class="cc-meta in">{{c.inNote}}</text>
-            </block>
-            <!-- 调走（原时段） -->
-            <block wx:else>
-              <text class="cc-mv-badge">↗ 已调走</text>
-              <text class="cc-name mv">{{c.course.name}}</text>
-              <text class="cc-meta mv">{{c.movedNote}}</text>
-              <text wx:if="{{c._h >= 200}}" class="cc-meta mv">{{c.movedSub}}</text>
-            </block>
-            <!-- 今日状态徽标 -->
-            <text wx:if="{{c.status === 'live'}}" class="cc-st live">上课中</text>
-            <text wx:elif="{{c.status === 'done'}}" class="cc-st done">已结束</text>
-          </view>
+      <!-- 节假日：整列虚线停课卡（App 同款竖排） -->
+      <view wx:if="{{item.holiday}}" class="holiday-cell" style="height:{{item.gridH}}px">
+        <text class="holiday-ico">{{item.holiday.icon || '🎉'}}</text>
+        <text class="holiday-v">{{item.holiday.name || item.holiday.descShort || '假期'}}</text>
+        <text class="holiday-sub">假期停课</text>
+      </view>
+      <!-- 正常日：课程卡 -->
+      <view wx:else class="day-body" style="height:{{item.gridH}}px">
+        <view wx:for="{{item.cells}}" wx:for-item="c" wx:key="id"
+              class="ccard {{c.kind}} {{c.status}} lv{{c.lv}}"
+              style="top:{{c._top}}px;height:{{c._h}}px;border-left-color:{{c.color}}"
+              data-c="{{c}}" bindtap="showCourse">
+          <!-- 普通课：按节数分级（lv0课名/lv1+教室/lv2+教师/lv3+周次） -->
+          <block wx:if="{{c.kind === 'course'}}">
+            <text class="cc-name" style="color:{{c.color}}">{{c.name}}</text>
+            <text wx:if="{{c.lv >= 1}}" class="cc-loc">@{{c.loc || '待定'}}</text>
+            <text wx:if="{{c.lv >= 2 && c.teacher}}" class="cc-meta">{{c.teacher}}</text>
+            <text wx:if="{{c.lv >= 3}}" class="cc-weeks">{{c.weeks}}</text>
+          </block>
+          <!-- 调入（补课） -->
+          <block wx:elif="{{c.kind === 'incoming'}}">
+            <text class="cc-in-badge">⬅调课</text>
+            <text class="cc-name" style="color:#0369a1">{{c.name}}</text>
+            <text wx:if="{{c.lv >= 1}}" class="cc-loc">@{{c.loc || '待定'}}</text>
+          </block>
+          <!-- 调走（原时段） -->
+          <block wx:else>
+            <text class="cc-mv-badge">↗调走</text>
+            <text wx:if="{{c.lv >= 1}}" class="cc-name mv">{{c.course.name}}</text>
+            <text wx:if="{{c.lv >= 2}}" class="cc-meta mv">{{c.movedNote}}</text>
+          </block>
+          <!-- 今日状态徽标 -->
+          <text wx:if="{{c.status === 'live' && c.lv >= 1}}" class="cc-st live">上课中</text>
+          <text wx:elif="{{c.status === 'done' && c.lv >= 2}}" class="cc-st done">已结束</text>
         </view>
       </view>
     </view>
-  </scroll-view>
+  </view>
 
   <view wx:if="{{!loading && !courseCount}}" class="empty">
     <text>本周没有课程</text>

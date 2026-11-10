@@ -14,6 +14,16 @@ Page({
 
   onShow() {
     this.setData({ mono: !!wx.getStorageSync('fjnu_mono') });
+    if (!this._metric) {
+      const w = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
+      // 一屏全显：节次高 = (可用高 - 顶栏/下节课卡/汇总/底栏) / 12
+      const reserved = 228; // px：header+选择行+下节课卡+汇总行+tab栏+间距
+      const cellH = Math.min(46, Math.max(28, Math.floor((w.windowHeight - reserved) / 12)));
+      const headW = 40;
+      const colW = Math.floor((w.windowWidth - headW - 10) / 7);
+      this._metric = { cellH, colW, headW };
+      this.setData({ cellH, colW, headW });
+    }
     this.load();
   },
 
@@ -49,13 +59,16 @@ Page({
       const dt = S.addDays(monday, d - 1);
       const isToday = S.fmtDate(dt) === today && isCurWeek;
       // 逐格卡片：白底+左色条，停课整列放假卡，调入虚线蓝卡，调走灰卡
+      const cellH = this._metric.cellH;
       const cells = res.cells.map(cell => {
         const c = cell.course;
         const base = {
           kind: cell.kind, id: c.id + cell.kind,
+          // 信息分级：卡越高显示越多（1节只显课名，2节+教室，3节+教师，5节+周次）
+          lv: cell.end - cell.start + 1 >= 5 ? 3 : cell.end - cell.start + 1 >= 3 ? 2 : cell.end - cell.start + 1 >= 2 ? 1 : 0,
           start: cell.start, end: cell.end,
-          _top: (cell.start - 1) * 88,
-          _h: Math.max(1, cell.end - cell.start + 1) * 88 - 6,
+          _top: (cell.start - 1) * this._metric.cellH,
+          _h: Math.max(1, cell.end - cell.start + 1) * this._metric.cellH - 2,
           color: this.data.mono ? '#c62828' : (c.color || '#c62828'),
           status: isToday ? S.periodStatus(this._data, cell.start, cell.end, true) : '',
         };
@@ -86,6 +99,7 @@ Page({
           ? { icon: dtp.icon || '📅', text: dtp.descShort || dtp.name || '', type: dtp.type }
           : null,
         cells,
+        gridH: 12 * cellH,
       });
     }
     const courses = days.reduce((n, d) => n + d.cells.filter(c => c.kind === 'course').length, 0);

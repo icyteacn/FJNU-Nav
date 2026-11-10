@@ -79,3 +79,36 @@
 .nc-cd{font-size:26rpx;font-weight:800;background:rgba(0,0,0,.22);padding:3rpx 16rpx;border-radius:999rpx;font-variant-numeric:tabular-nums}
 .wk-summary{margin:14rpx 24rpx 4rpx;background:#fff;border-radius:14rpx;padding:14rpx 20rpx;display:flex;justify-content:space-between;align-items:center;font-size:24rpx;color:#333}
 .wks-t{color:#8a8f99;font-size:22rpx}
+/* ===== v1.0.5 一屏全显重构（px 固定布局） ===== */
+.week-grid{display:flex;align-items:flex-start;gap:0;margin:6rpx 6rpx 0;overflow:hidden}
+.col{flex-shrink:0;position:relative;width:auto;min-width:0}
+.col.head{flex-shrink:0}
+.cell-h{height:56rpx;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20rpx;font-weight:600;gap:0}
+.hd-w{font-size:19rpx;font-weight:700;line-height:1.1}
+.cell-h .hd{font-size:16rpx;color:#8a8f99;font-weight:400;line-height:1.1}
+.cell-p{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;padding-top:4rpx;height:auto}
+.pn{font-size:18rpx;font-weight:600;line-height:1.1}
+.pt{font-size:11rpx;color:#8a8f99;line-height:1.1}
+.day-body{position:relative;height:auto}
+.day-badge{font-size:14rpx;border-radius:6rpx;padding:0 4rpx;margin-top:2rpx;white-space:nowrap;transform:scale(.9)}
+/* 课程卡：窄列逐字折行，分级显示 */
+.ccard{position:absolute;left:1px;right:1px;background:#fff;border-radius:3px;border-left:3px solid;padding:3px 2px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:1px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);box-sizing:border-box}
+.cc-name{font-weight:700;font-size:11px;line-height:1.2;color:#333;word-break:break-all;overflow-wrap:break-word}
+.cc-loc{font-size:9px;color:#666;line-height:1.2;word-break:break-all}
+.cc-meta{font-size:9px;color:#8a8f99;line-height:1.2;word-break:break-all}
+.cc-weeks{font-size:9px;color:#c62828;font-weight:600;line-height:1.2}
+.cc-in-badge,.cc-mv-badge{font-size:9px;font-weight:800;padding:0 4px;border-radius:4px;white-space:nowrap}
+.cc-in-badge{color:#0369a1;background:#bae6fd}
+.cc-mv-badge{color:#8a8f99;background:#e8eaf0}
+.ccard.incoming{background:#e0f2fe;border-left:3px dashed #0369a1}
+.ccard.moved{background:#f5f5f5;border-left:3px dashed #b0b7c3}
+.cc-name.mv{color:#9aa0aa;text-decoration:line-through}
+.cc-meta.mv{color:#9aa0aa}
+.cc-st{font-size:8px;font-weight:800;padding:0 4px;border-radius:4px;margin-top:1px}
+.cc-st.live{color:#fff;background:#c62828}
+.cc-st.done{color:#8a8f99;background:#eceff3}
+/* 停课列 */
+.holiday-cell{position:absolute;top:56rpx;left:1px;right:1px;background:rgba(255,235,238,.7);border:1px dashed #ef9a9a;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12rpx;box-sizing:border-box}
+.holiday-ico{font-size:22px}
+.holiday-v{writing-mode:vertical-rl;font-size:13px;font-weight:800;color:#c62828;letter-spacing:2px}
+.holiday-sub{writing-mode:vertical-rl;font-size:10px;color:#e57373;letter-spacing:1px}

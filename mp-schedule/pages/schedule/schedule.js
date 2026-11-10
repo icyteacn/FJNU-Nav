@@ -53,6 +53,7 @@ Page({
         const c = cell.course;
         const base = {
           kind: cell.kind, id: c.id + cell.kind,
+          start: cell.start, end: cell.end,
           _top: (cell.start - 1) * 88,
           _h: Math.max(1, cell.end - cell.start + 1) * 88 - 6,
           color: this.data.mono ? '#c62828' : (c.color || '#c62828'),

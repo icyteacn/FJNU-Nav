@@ -80,22 +80,22 @@
             <block wx:if="{{c.kind === 'course'}}">
               <text class="cc-name" style="color:{{c.color}}">{{c.name}}</text>
               <text class="cc-loc">@{{c.loc || '待定'}}</text>
-              <text wx:if="{{c._h >= 140 && c.teacher}}" class="cc-meta">{{c.teacher}}</text>
-              <text wx:if="{{c._h >= 170}}" class="cc-weeks">{{c.weeks}}</text>
+              <text wx:if="{{c._h >= 150 && c.teacher}}" class="cc-meta">{{c.teacher}}</text>
+              <text wx:if="{{c._h >= 250}}" class="cc-weeks">{{c.weeks}}</text>
             </block>
             <!-- 调入（补课） -->
             <block wx:elif="{{c.kind === 'incoming'}}">
               <text class="cc-in-badge">⬅ 调课</text>
               <text class="cc-name" style="color:#0369a1">{{c.name}}</text>
               <text class="cc-loc">@{{c.loc || '待定'}}</text>
-              <text wx:if="{{c._h >= 140}}" class="cc-meta in">{{c.inNote}}</text>
+              <text wx:if="{{c._h >= 200}}" class="cc-meta in">{{c.inNote}}</text>
             </block>
             <!-- 调走（原时段） -->
             <block wx:else>
               <text class="cc-mv-badge">↗ 已调走</text>
               <text class="cc-name mv">{{c.course.name}}</text>
               <text class="cc-meta mv">{{c.movedNote}}</text>
-              <text wx:if="{{c._h >= 160}}" class="cc-meta mv">{{c.movedSub}}</text>
+              <text wx:if="{{c._h >= 200}}" class="cc-meta mv">{{c.movedSub}}</text>
             </block>
             <!-- 今日状态徽标 -->
             <text wx:if="{{c.status === 'live'}}" class="cc-st live">上课中</text>

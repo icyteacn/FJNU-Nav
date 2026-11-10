@@ -10,12 +10,15 @@ Page({
     loading: true, source: '', cacheT: '', weekCn: S.WEEK_CN, courseCount: 0,
     periods: [1,2,3,4,5,6,7,8,9,10,11,12],
     next: null, evs: [], mono: false,
+    viewMode: 'grid', listDay: 1, listItems: [], listEmpty: null,
   },
 
   onShow() {
     this.setData({
       mono: !!wx.getStorageSync('fjnu_mono'),
       showNext: wx.getStorageSync('fjnu_show_next') !== false,
+      viewMode: wx.getStorageSync('fjnu_view') || 'grid',
+      listDay: new Date().getDay() === 0 ? 7 : new Date().getDay(),
     });
     if (!this._metric) {
       const w = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
@@ -98,6 +101,7 @@ Page({
           _h: Math.max(1, cell.end - cell.start + 1) * this._metric.cellH - 2,
           color: this.data.mono ? '#c62828' : (c.color || '#c62828'),
           status: isToday ? S.periodStatus(this._data, cell.start, cell.end, true) : '',
+          ov: cell.ov, adj: cell.adj,
         };
         if (cell.kind === 'moved') {
           const o = cell.ov;
@@ -167,7 +171,49 @@ Page({
       ...e,
       when: e.inDays === 0 ? '今天' : e.inDays === 1 ? '明天' : e.inDays < 0 ? '昨天' : `${e.inDays} 天后`,
     }));
-    this.setData({ courseCount: courses, days, next, evs, summary });
+    // ===== 列表模式：当前选中日的课表列表（对齐 App renderDayList） =====
+    const sel = this.data.listDay;
+    const selRes = days[sel - 1] || { cells: [] };
+    const listItems = [];
+    if (selRes.holiday) {
+      this._listEmpty = { icon: selRes.holiday.icon || '🎉', name: selRes.holiday.name || '假期', sub: '假期停课' };
+    } else if (!selRes.cells.length) {
+      this._listEmpty = { icon: '☕️', name: '这一天没有课', sub: '好好休息，或去图书馆坐坐' };
+    } else {
+      this._listEmpty = null;
+      const endOf = p => S.startMin(this._data, p) + 45; // 下课≈本节上课+45min
+      let prevEnd = null;
+      let nextMarked = false;
+      const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+      selRes.cells.forEach(cell => {
+        const s = S.startMin(this._data, cell.start), e = endOf(cell.end);
+        // 空闲时段卡（≥40min，调走不计）
+        if (cell.kind !== 'moved' && prevEnd !== null && s - prevEnd >= 40) {
+          const gap = s - prevEnd;
+          listItems.push({ isGap: true, gap: `🌿 空闲 ${Math.floor(gap / 60) ? Math.floor(gap / 60) + '小时' : ''}${gap % 60 ? gap % 60 + '分' : ''}（${Math.floor(prevEnd / 60)}:${String(prevEnd % 60).padStart(2, '0')} - ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}）` });
+        }
+        if (cell.kind !== 'moved') prevEnd = e;
+        // 状态徽标
+        let badge = '';
+        if (selRes.today) {
+          if (nowMin >= s && nowMin < e) badge = 'live';
+          else if (nowMin >= e) badge = 'done';
+          else if (!nextMarked) { badge = 'next'; nextMarked = true; }
+        }
+        const p2 = n => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+        listItems.push({
+          isGap: false, kind: cell.kind, id: cell.id, badge,
+          timeStart: p2(s), timeEnd: p2(e),
+          name: cell.kind === 'moved' ? cell.course.name : cell.name,
+          loc: cell.loc || (cell.course || {}).location || '待定',
+          teacher: (cell.course || {}).teacher || '',
+          periodText: `第${cell.start}-${cell.end}节`,
+          note: cell.kind === 'moved' ? `↗️ 已调至 ${cell.movedNote} ${cell.movedSub}` : cell.kind === 'incoming' ? `⬅️ ${cell.inNote}` : '',
+          color: cell.color, course: cell.course, ov: cell.ov, adj: cell.adj,
+        });
+      });
+    }
+    this.setData({ courseCount: courses, days, next, evs, summary, listItems, listEmpty: this._listEmpty });
     if (!next) this._cdTarget = 0;
     this._tick();
   },
@@ -187,6 +233,15 @@ Page({
     this.apply();
   },
   goSearch() { wx.navigateTo({ url: '/pages/search/search' }); },
+  toggleView() {
+    const v = this.data.viewMode === 'grid' ? 'list' : 'grid';
+    wx.setStorageSync('fjnu_view', v);
+    this.setData({ viewMode: v });
+  },
+  setListDay(e) {
+    this.setData({ listDay: +e.currentTarget.dataset.d });
+    this.apply();
+  },
   toggleNext() {
     const v = !this.data.showNext;
     wx.setStorageSync('fjnu_show_next', v);

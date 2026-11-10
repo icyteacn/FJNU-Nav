@@ -11,6 +11,7 @@
       <text class="wk-btn" bindtap="nextWeek">›</text>
     </view>
     <view class="search-btn" bindtap="goSearch">🔍</view>
+    <view class="search-btn" bindtap="toggleView">{{viewMode === 'grid' ? '📋' : '📊'}}</view>
   </view>
   <view class="top2" wx:if="{{semesters.length > 1}}">
     <picker mode="selector" range="{{semesters}}" range-key="name" value="{{semIdx}}" bindchange="onSem">
@@ -47,8 +48,43 @@
 
   <view class="src mut" wx:if="{{source==='cache'}}">⚠ 离线缓存数据（{{cacheT}} 更新）</view>
 
+  <!-- ===== 列表模式（对齐 App 单日列表） ===== -->
+  <view wx:if="{{viewMode === 'list'}}" class="list-view">
+    <view class="day-chips">
+      <view wx:for="{{days}}" wx:key="weekday"
+            class="day-chip {{item.weekday === listDay ? 'on' : ''}} {{item.today ? 'today' : ''}}"
+            data-d="{{item.weekday}}" bindtap="setListDay">
+        <text class="dc-w">{{item.today ? '今' : weekCn[item.weekday - 1]}}</text>
+        <text class="dc-d">{{item.label}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{listEmpty}}" class="list-empty">
+      <text class="le-ico">{{listEmpty.icon}}</text>
+      <text class="le-name">{{listEmpty.name}}</text>
+      <text class="le-sub">{{listEmpty.sub}}</text>
+    </view>
+
+    <block wx:for="{{listItems}}" wx:key="index">
+      <view wx:if="{{item.isGap}}" class="li-gap">{{item.gap}}</view>
+      <view wx:else class="li {{item.badge}} {{item.kind}}" data-c="{{item}}" bindtap="showCourse">
+        <view class="li-time"><text class="lt-s">{{item.timeStart}}</text><text class="lt-e">{{item.timeEnd}}</text></view>
+        <view class="li-bar" style="background:{{item.color}}"></view>
+        <view class="li-main">
+          <view class="li-name">{{item.name}}
+            <text wx:if="{{item.badge === 'live'}}" class="st-badge live">● 上课中</text>
+            <text wx:elif="{{item.badge === 'next'}}" class="st-badge next">下一节</text>
+            <text wx:elif="{{item.badge === 'done'}}" class="st-badge done">已结束</text>
+          </view>
+          <view class="li-meta">📍{{item.loc}} · {{item.teacher || '-'}} · {{item.periodText}}</view>
+          <view wx:if="{{item.note}}" class="li-note">{{item.note}}</view>
+        </view>
+      </view>
+    </block>
+  </view>
+
   <!-- 一屏全显：无滑动，节次高随屏高自适应 -->
-  <view class="week-grid">
+  <view wx:if="{{viewMode === 'grid'}}" class="week-grid">
     <!-- 节次列 -->
     <view class="col head" style="width:{{headW}}px">
       <view class="cell-h">节</view>

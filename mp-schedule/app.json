@@ -1,0 +1,26 @@
+{
+  "pages": [
+    "pages/schedule/schedule",
+    "pages/search/search",
+    "pages/about/about"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#c62828",
+    "navigationBarTitleText": "福star课表",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f6fa",
+    "enablePullDownRefresh": true,
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8a8f99",
+    "selectedColor": "#c62828",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/schedule/schedule", "text": "课表", "iconPath": "images/tab-schedule.png", "selectedIconPath": "images/tab-schedule-active.png" },
+      { "pagePath": "pages/about/about", "text": "我的", "iconPath": "images/tab-about.png", "selectedIconPath": "images/tab-about-active.png" }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

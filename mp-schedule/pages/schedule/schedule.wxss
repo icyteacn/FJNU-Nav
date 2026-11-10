@@ -1,0 +1,40 @@
+/* 文件路径: /fjnu-nav/mp-weixin/pages/schedule/schedule.wxss */
+.top { display: flex; align-items: center; justify-content: space-between; padding: 20rpx 24rpx; background: #fff; }
+.major-pick { font-size: 28rpx; font-weight: 600; color: #c62828; }
+.week-pick { display: flex; align-items: center; }
+.wk { font-size: 28rpx; font-weight: 600; margin: 0 20rpx; }
+.wk-btn { font-size: 44rpx; color: #c62828; padding: 0 16rpx; }
+.src { padding: 8rpx 24rpx; background: #fff8e1; }
+.week-scroll { white-space: nowrap; }
+.week-grid { display: flex; padding: 8rpx; }
+.col { width: 13%; min-width: 92rpx; flex-shrink: 0; }
+.col.head { width: 9%; min-width: 64rpx; }
+.cell-h { height: 84rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22rpx; font-weight: 600; }
+.cell-h .hd { font-size: 18rpx; color: #8a8f99; font-weight: 400; }
+.cell-h.today { color: #c62828; }
+.cell-h.today .hd { color: #c62828; }
+.cell-p { height: 88rpx; display: flex; flex-direction: column; align-items: center; padding-top: 8rpx; }
+.pn { font-size: 22rpx; font-weight: 600; }
+.pt { font-size: 14rpx; color: #8a8f99; }
+.day-body { position: relative; height: 1056rpx; }
+.course {
+  position: absolute; left: 4rpx; right: 4rpx; border-radius: 10rpx;
+  color: #fff; padding: 8rpx; box-sizing: border-box; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.cn { font-size: 20rpx; font-weight: 600; line-height: 1.25; }
+.cl { font-size: 17rpx; opacity: .9; margin-top: 2rpx; }
+.empty { display: flex; flex-direction: column; align-items: center; padding: 80rpx 0; color: #8a8f99; }
+
+.search-btn{font-size:34rpx;padding:8rpx 16rpx;background:#fff;border-radius:12rpx;box-shadow:0 2rpx 8rpx rgba(0,0,0,.06)}
+.top2{margin:0 24rpx 10rpx}
+.sem-pick{display:inline-block;background:#fff;border-radius:999rpx;padding:8rpx 24rpx;font-size:24rpx;color:#c62828}
+.next-card{margin:14rpx 24rpx 4rpx;background:linear-gradient(135deg,#c03434,#e0552e 55%,#f0823a);border-radius:20rpx;padding:24rpx 28rpx;color:#fff}
+.nc-tag{font-size:22rpx;opacity:.9}
+.nc-name{font-size:36rpx;font-weight:700;margin-top:8rpx}
+.nc-time{font-size:26rpx;margin-top:6rpx}
+.nc-sub{font-size:22rpx;opacity:.85;margin-top:6rpx}
+.ev-bar{margin:12rpx 24rpx 0;background:#fff3e0;border:1rpx solid #ffe0b2;border-radius:14rpx;padding:14rpx 20rpx;display:flex;align-items:center;gap:12rpx}
+.ev-when{background:#f0823a;color:#fff;font-size:20rpx;border-radius:8rpx;padding:2rpx 12rpx;flex-shrink:0}
+.ev-title{font-size:24rpx;color:#5d4037;font-weight:600}
+.ev-tip{font-size:20rpx;color:#a1887f;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

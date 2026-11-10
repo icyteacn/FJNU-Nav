@@ -1,0 +1,69 @@
+<!-- 文件路径: /fjnu-nav/mp-schedule/pages/schedule/schedule.wxml -->
+<view class="page safe-bottom">
+  <!-- 顶栏：专业 + 学期 + 周切换 + 搜索 -->
+  <view class="top">
+    <picker mode="selector" range="{{majors}}" range-key="label" value="{{majorIdx}}" bindchange="onMajor">
+      <view class="major-pick">{{majorLabel}} ▾</view>
+    </picker>
+    <view class="week-pick">
+      <text class="wk-btn" bindtap="prevWeek">‹</text>
+      <text class="wk">第 {{week}} 周</text>
+      <text class="wk-btn" bindtap="nextWeek">›</text>
+    </view>
+    <view class="search-btn" bindtap="goSearch">🔍</view>
+  </view>
+  <view class="top2" wx:if="{{semesters.length > 1}}">
+    <picker mode="selector" range="{{semesters}}" range-key="name" value="{{semIdx}}" bindchange="onSem">
+      <view class="sem-pick">{{semesters[semIdx].name}} ▾</view>
+    </picker>
+  </view>
+
+  <!-- 下一节课卡（对齐 App「下一节课倒计时」） -->
+  <view class="next-card" wx:if="{{next}}">
+    <view class="nc-tag">⏰ 下一节课</view>
+    <view class="nc-name">{{next.name}}</view>
+    <view class="nc-time">{{next.time}} · {{next.loc}}</view>
+    <view class="nc-sub" wx:if="{{next.teacher}}">{{next.teacher}} · {{next.remind}}</view>
+  </view>
+
+  <!-- 近 14 天日程提醒条（对齐 App event 条） -->
+  <view class="ev-bar" wx:for="{{evs}}" wx:key="index">
+    <text class="ev-when">{{item.when}}</text>
+    <text class="ev-title">{{item.title}}</text>
+    <text class="ev-tip" wx:if="{{item.tip}}">{{item.tip}}</text>
+  </view>
+
+  <view class="src mut" wx:if="{{source==='cache'}}">⚠ 离线缓存数据（{{cacheT}} 更新）</view>
+
+  <scroll-view scroll-x class="week-scroll">
+    <view class="week-grid">
+      <view class="col head">
+        <view class="cell-h">节次</view>
+        <view wx:for="{{periods}}" wx:key="*this" class="cell-p">
+          <text class="pn">{{item}}</text>
+          <text class="pt">{{periodTimes[item]}}</text>
+        </view>
+      </view>
+      <view wx:for="{{days}}" wx:key="weekday" class="col">
+        <view class="cell-h {{item.today ? 'today' : ''}}">
+          <text>周{{weekCn[item.weekday - 1]}}</text>
+          <text class="hd">{{item.label}}</text>
+        </view>
+        <view class="day-body">
+          <view wx:for="{{item.courses}}" wx:for-item="c" wx:key="id"
+                class="course" style="top:{{c._top}}rpx;height:{{c._h}}rpx;background:{{mono ? '#c62828' : (c.color || '#c62828')}}e6"
+                data-c="{{c}}" bindtap="showCourse">
+            <text class="cn">{{c.name}}</text>
+            <text class="cl">{{c.location}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{!loading && !courses.length}}" class="empty">
+    <text>本周没有课程</text>
+    <text class="mut">可切换周次或专业查看</text>
+  </view>
+  <view wx:if="{{loading}}" class="empty"><text>加载中…</text></view>
+</view>

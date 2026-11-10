@@ -1,0 +1,26 @@
+<!-- 文件路径: /fjnu-nav/mp-schedule/pages/search/search.wxml -->
+<view class="page">
+  <view class="sbox">
+    <input class="sinput" value="{{kw}}" bindinput="onKw" placeholder="课程名 / 教师 / 教室" confirm-type="search" bindconfirm="doSearch" auto-focus />
+    <view class="sbtn" bindtap="doSearch">搜索</view>
+  </view>
+  <view class="cat-row">
+    <picker mode="selector" range="{{cats}}" value="{{catIdx}}" bindchange="onCat">
+      <view class="cat-pick">类型：{{cats[catIdx]}} ▾</view>
+    </picker>
+  </view>
+
+  <view wx:if="{{searched && !results.length}}" class="empty"><text>没有匹配的课程</text></view>
+  <view wx:for="{{results}}" wx:key="index" class="item" data-c="{{item}}" bindtap="show">
+    <view class="dot" style="background:{{item.color || '#c62828'}}"></view>
+    <view class="i-body">
+      <text class="i-title">{{item.name}}</text>
+      <text class="i-sub">{{item.teacher || ''}} · {{item.location || '待定'}} · {{item.category || ''}}</text>
+    </view>
+    <view class="i-right">
+      <text class="i-wd">{{item.wdS}}</text>
+      <text class="i-wk">{{item.weekS}}</text>
+    </view>
+  </view>
+  <view wx:if="{{!searched}}" class="mut hint">输入关键词回车搜索（当前专业范围内）</view>
+</view>

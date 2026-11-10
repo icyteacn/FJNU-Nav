@@ -1,0 +1,15 @@
+{
+  "description": "福star课表 独立小程序版（对齐可下载App）",
+  "appid": "wx313c28f3fdf79289",
+  "compileType": "miniprogram",
+  "libVersion": "3.5.0",
+  "projectname": "fjnu-schedule-standalone",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "minified": true,
+    "urlCheck": false,
+    "postcss": true
+  },
+  "condition": {}
+}

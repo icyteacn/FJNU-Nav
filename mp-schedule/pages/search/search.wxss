@@ -1,0 +1,18 @@
+/* 文件路径: /fjnu-nav/mp-schedule/pages/search/search.wxss */
+.page { min-height: 100vh; background: #f5f6fa; }
+.sbox { display: flex; gap: 16rpx; padding: 24rpx; background: #c62828; }
+.sinput { flex: 1; background: #fff; border-radius: 999rpx; padding: 16rpx 28rpx; font-size: 28rpx; }
+.sbtn { background: #fff; color: #c62828; font-weight: 700; border-radius: 999rpx; padding: 16rpx 32rpx; font-size: 28rpx; }
+.cat-row { padding: 20rpx 24rpx 4rpx; }
+.cat-pick { display: inline-block; background: #fff; border-radius: 999rpx; padding: 10rpx 28rpx; font-size: 24rpx; color: #c62828; }
+.item { display: flex; align-items: center; gap: 20rpx; background: #fff; margin: 16rpx 24rpx 0; border-radius: 16rpx; padding: 22rpx 24rpx; }
+.dot { width: 16rpx; height: 64rpx; border-radius: 8rpx; flex-shrink: 0; }
+.i-body { flex: 1; display: flex; flex-direction: column; gap: 4rpx; min-width: 0; }
+.i-title { font-size: 30rpx; font-weight: 600; }
+.i-sub { font-size: 22rpx; color: #8a8f99; }
+.i-right { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.i-wd { font-size: 24rpx; color: #c62828; font-weight: 600; }
+.i-wk { font-size: 20rpx; color: #8a8f99; margin-top: 4rpx; }
+.empty { display: flex; justify-content: center; margin-top: 120rpx; color: #8a8f99; }
+.hint { text-align: center; margin-top: 60rpx; font-size: 24rpx; }
+.mut { color: #8a8f99; }

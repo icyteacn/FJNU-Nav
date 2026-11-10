@@ -7,7 +7,7 @@ Page({
     majors: [], majorIdx: 0, majorLabel: '选择专业',
     semesters: [], semIdx: 0,
     week: 1, courses: [], days: [],
-    loading: true, source: '', cacheT: '', weekCn: S.WEEK_CN,
+    loading: true, source: '', cacheT: '', weekCn: S.WEEK_CN, courseCount: 0,
     periods: [1,2,3,4,5,6,7,8,9,10,11,12],
     next: null, evs: [], mono: false,
   },
@@ -38,24 +38,57 @@ Page({
   apply() {
     const { majors, majorIdx, week } = this.data;
     const key = (majors[majorIdx] || {}).key || '';
-    const courses = S.weekCourses(this._data || {}, key, week);
-    const monday = S.addDays(S.mondayOf(), (week - S.currentWeek(this.data.semesterStart || S.fmtDate(new Date()))) * 7);
-    const days = [];
+    const curWk = S.currentWeek(this.data.semesterStart || S.fmtDate(new Date()));
+    const monday = S.addDays(S.mondayOf(), (week - curWk) * 7);
     const today = S.fmtDate(new Date());
+    const isCurWeek = week === curWk;
+    const days = [];
+    let courseCount = 0;
     for (let d = 1; d <= 7; d++) {
+      const res = S.dayCourses(this._data || {}, key, week, d, monday);
       const dt = S.addDays(monday, d - 1);
+      const isToday = S.fmtDate(dt) === today && isCurWeek;
+      // 逐格卡片：白底+左色条，停课整列放假卡，调入虚线蓝卡，调走灰卡
+      const cells = res.cells.map(cell => {
+        const c = cell.course;
+        const base = {
+          kind: cell.kind, id: c.id + cell.kind,
+          _top: (cell.start - 1) * 88,
+          _h: Math.max(1, cell.end - cell.start + 1) * 88 - 6,
+          color: this.data.mono ? '#c62828' : (c.color || '#c62828'),
+          status: isToday ? S.periodStatus(this._data, cell.start, cell.end, true) : '',
+        };
+        if (cell.kind === 'moved') {
+          const o = cell.ov;
+          base.movedNote = `已调至 ${o.destDate.slice(5).replace('-', '/')}`;
+          base.movedSub = `第${o.destPeriods[0]}-${o.destPeriods[o.destPeriods.length - 1]}节${o.destLocation ? ' · ' + o.destLocation : ''}`;
+        } else if (cell.kind === 'incoming') {
+          const a = cell.adj;
+          base.inNote = `自 ${a.srcDate.slice(5).replace('-', '/')} 调入`;
+          base.name = c.name;
+          base.loc = a.destLocation || c.location;
+        } else {
+          base.name = c.name; base.loc = c.location; base.teacher = c.teacher;
+          base.weeks = `第${c.weeks}周`;
+        }
+        base.course = c;
+        return base;
+      });
+      courseCount += cells.length;
+      const dtp = res.dayType;
       days.push({
         weekday: d,
         label: `${dt.getMonth() + 1}/${dt.getDate()}`,
-        today: S.fmtDate(dt) === today,
-        courses: courses.filter(c => c.weekday === d).map(c => ({
-          ...c,
-          _top: (c.startPeriod - 1) * 88,
-          _h: Math.max(1, c.endPeriod - c.startPeriod + 1) * 88 - 6,
-        })),
+        today: isToday,
+        holiday: res.holiday,
+        dayBadge: dtp && dtp.type !== 'holiday' && dtp.type !== 'event'
+          ? { icon: dtp.icon || '📅', text: dtp.descShort || dtp.name || '', type: dtp.type }
+          : null,
+        cells,
       });
     }
-    // 下节课卡（提前提醒分钟取自设置）
+    const courses = days.reduce((n, d) => n + d.cells.filter(c => c.kind === 'course').length, 0);
+    // 下节课卡（已跳过停课日；提前提醒分钟取自设置）
     const nxt = S.nextCourse(this._data || {}, key);
     const remindMin = wx.getStorageSync('fjnu_remind') || 30;
     let next = null;
@@ -75,7 +108,7 @@ Page({
       ...e,
       when: e.inDays === 0 ? '今天' : e.inDays === 1 ? '明天' : e.inDays < 0 ? '昨天' : `${e.inDays} 天后`,
     }));
-    this.setData({ courses, days, next, evs });
+    this.setData({ courseCount: courses, days, next, evs });
   },
 
   onMajor(e) {
@@ -94,7 +127,26 @@ Page({
   },
   goSearch() { wx.navigateTo({ url: '/pages/search/search' }); },
   showCourse(e) {
-    const c = e.currentTarget.dataset.c;
+    const it = e.currentTarget.dataset.c;
+    const c = it.course || it;
+    if (it.kind === 'moved') {
+      const o = it.ov || {};
+      wx.showModal({
+        title: `${c.name} · 已调课`,
+        content: `本节已调至 ${o.destDate} 第${(o.destPeriods || [])[0] || ''}-${(o.destPeriods || []).slice(-1)[0] || ''}节\n新教室：${o.destLocation || '-'}\n（原时段不再上课）`,
+        showCancel: false,
+      });
+      return;
+    }
+    if (it.kind === 'incoming') {
+      const a = it.adj || {};
+      wx.showModal({
+        title: `${c.name} · 调课补入`,
+        content: `自 ${a.srcDate} 调来\n教室：${a.destLocation || c.location || '-'}\n教师：${c.teacher || '-'}`,
+        showCancel: false,
+      });
+      return;
+    }
     wx.showModal({
       title: c.name,
       content: `教师：${c.teacher || '-'}\n教室：${c.location || '-'}\n周次：第${c.weeks}周\n节次：${c.startPeriod}-${c.endPeriod}节\n类型：${c.category || '-'}\n学分：${c.credits || '-'}（${c.hours || '-'}学时）`,

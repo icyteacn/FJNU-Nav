@@ -65,9 +65,13 @@ function nextCourse(data, major, now = new Date()) {
   const curMin = now.getHours() * 60 + now.getMinutes();
   for (let off = 0; off < 8; off++) {
     const wd = ((wd0 - 1 + off) % 7) + 1;
+    const _dd = addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), off);
+    const _dt = dayType(data, fmtDate(_dd));
+    if (_dt && _dt.type === 'holiday') continue; // 节假日停课，跳过整天
+    const _eff = (_dt && _dt.scheduleWeekday) ? _dt.scheduleWeekday : wd;
     const wk = wk0 + Math.floor((wd0 - 1 + off) / 7);
     const list = (data.courses || [])
-      .filter(c => c.major === major && courseOnDay(c, wk, wd))
+      .filter(c => c.major === major && courseOnDay(c, wk, _eff))
       .sort((a, b) => a.startPeriod - b.startPeriod);
     for (const c of list) {
       if (off === 0 && startMin(data, c.startPeriod) <= curMin) continue;
@@ -94,6 +98,65 @@ function upcomingEvents(data, days = 14, now = new Date()) {
 }
 
 // 搜索课程：名称/教师/教室模糊匹配，可选类型筛选
+// ===== 节假日/调休/调课（对齐 App holidayMap 逻辑） =====
+function dayType(data, dateStr) { return (data.holidayMap || {})[dateStr] || null; }
+
+// 收集全部调课调整项：{srcDate, srcWeekday, srcPeriods, destDate, destPeriods, destLocation}
+function allAdjustments(data) {
+  const out = [];
+  const hm = data.holidayMap || {};
+  Object.keys(hm).forEach(ds => {
+    const e = hm[ds];
+    (e.overrides || []).forEach(o => out.push({
+      srcDate: ds, srcWeekday: e.scheduleWeekday,
+      srcPeriods: o.srcPeriods || [], destDate: o.destDate,
+      destPeriods: o.destPeriods || [], destLocation: o.destLocation,
+      courseHint: o.courseHint || '',
+    }));
+  });
+  return out;
+}
+
+/**
+ * 某一天的课程列表（含停课/调休/调入/调走），对齐 App getDayCourses。
+ * 返回 { holiday, dayType, cells:[{kind:'course'|'incoming'|'moved', course, start, end, ov/adj}] }
+ */
+function dayCourses(data, major, week, weekday, monday) {
+  const d = addDays(monday, weekday - 1);
+  const ds = fmtDate(d);
+  const dt = dayType(data, ds);
+  if (dt && dt.type === 'holiday') return { ds, holiday: dt, dayType: dt, cells: [] };
+  const eff = (dt && (dt.type === 'makeup' || dt.type === 'adjust') && dt.scheduleWeekday) ? dt.scheduleWeekday : weekday;
+  const pool = (data.courses || []).filter(c => c.major === major);
+  const weekList = weekCourses(data, major, week);
+  const adjs = allAdjustments(data);
+  const cells = [];
+  weekList.filter(c => c.weekday === eff).forEach(c => {
+    const ov = adjs.find(a => a.srcDate === ds && a.srcPeriods[0] === c.startPeriod);
+    cells.push(ov
+      ? { kind: 'moved', course: c, start: c.startPeriod, end: c.endPeriod, ov }
+      : { kind: 'course', course: c, start: c.startPeriod, end: c.endPeriod });
+  });
+  adjs.filter(a => a.destDate === ds && a.destPeriods.length).forEach(a => {
+    const c = pool.find(x => x.weekday === a.srcWeekday && a.srcPeriods[0] >= x.startPeriod && a.srcPeriods[0] <= x.endPeriod);
+    if (c) cells.push({ kind: 'incoming', course: c, start: a.destPeriods[0], end: a.destPeriods[a.destPeriods.length - 1], adj: a });
+  });
+  cells.sort((x, y) => x.start - y.start);
+  return { ds, holiday: null, dayType: dt, cells };
+}
+
+// 状态徽标：今天这一天某节课是 上课中/下一节/已结束/待上
+function periodStatus(data, start, end, isToday) {
+  if (!isToday) return '';
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const s = startMin(data, start), e = startMin(data, end) + 50; // 近似下课=本节上课+50min
+  const endMin = (() => { const t = (data.periodEndTimes || {})[end]; if (t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; } return e; })();
+  if (nowMin >= s && nowMin < endMin) return 'live';
+  if (nowMin >= endMin) return 'done';
+  return 'later';
+}
+
 function searchCourses(data, major, kw, cat) {
   kw = (kw || '').trim().toLowerCase();
   const out = [];
@@ -117,4 +180,4 @@ function categories(data, major) {
   return ['全部', ...s];
 }
 
-module.exports = { parseWeeks, inWeek, currentWeek, courseOnDay, weekCourses, fmtDate, mondayOf, addDays, WEEK_CN, PERIOD_START, startMin, nextCourse, upcomingEvents, searchCourses, categories };
+module.exports = { parseWeeks, inWeek, currentWeek, courseOnDay, weekCourses, fmtDate, mondayOf, addDays, WEEK_CN, PERIOD_START, startMin, nextCourse, upcomingEvents, searchCourses, categories, dayType, allAdjustments, dayCourses, periodStatus };

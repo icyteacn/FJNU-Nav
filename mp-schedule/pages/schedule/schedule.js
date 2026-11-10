@@ -55,12 +55,19 @@ Page({
     if (!data) return;
     this._data = data;
     const majorIdx = wx.getStorageSync('fjnu_major_idx') || 0;
-    const week = Math.max(1, Math.min(25, data.currentWeek || S.currentWeek(data.semesterStart)));
+    // 学期选择生效（对齐 App：选中学期 → 周次窗口切到该学期 start）
+    const semIdx = wx.getStorageSync('fjnu_sem_idx') || 0;
+    const sem = (data.semesters || [])[semIdx];
+    const semesterStart = sem && sem.type === 'term' ? sem.start : data.semesterStart;
+    // 默认学期用服务端 currentWeek；自选其它学期按其 start 重新计算
+    const week = Math.max(1, Math.min(25,
+      sem && semIdx > 0 ? S.currentWeek(semesterStart) : (data.currentWeek || S.currentWeek(semesterStart))));
+    const mIdx = Math.min(majorIdx, Math.max(0, (data.majors || []).length - 1));
     this.setData({
-      majors: data.majors || [], majorIdx, week,
-      majorLabel: ((data.majors || [])[majorIdx] || {}).short || '选择专业',
+      majors: data.majors || [], majorIdx: mIdx, week, semIdx,
+      majorLabel: ((data.majors || [])[mIdx] || {}).short || '选择专业',
       periodTimes: data.periodTimes || {},
-      semesterStart: data.semesterStart,
+      semesterStart,
       semesters: (data.semesters || []).map((s, i) => ({ name: s.name || s.title || `学期${i + 1}`, i })),
     });
     this.apply();
@@ -276,7 +283,17 @@ Page({
     this.setData({ majorIdx, majorLabel: (this.data.majors[majorIdx] || {}).short || '选择专业' });
     this.apply();
   },
-  onSem(e) { this.setData({ semIdx: +e.detail.value }); },
+  onSem(e) {
+    const semIdx = +e.detail.value;
+    const sem = ((this._data || {}).semesters || [])[semIdx] || {};
+    wx.setStorageSync('fjnu_sem_idx', semIdx);
+    const semesterStart = sem.type === 'term' ? sem.start : (this._data || {}).semesterStart;
+    this.setData({ semIdx, semesterStart });
+    if (sem.type === 'term') {
+      this.setData({ week: Math.max(1, Math.min(25, S.currentWeek(semesterStart))) });
+    }
+    this.apply();
+  },
   prevWeek() { this.shiftWeek(-1); },
   nextWeek() { this.shiftWeek(1); },
   shiftWeek(n) {
@@ -324,7 +341,9 @@ Page({
     const major = (majors[this.data.majorIdx] || {}).key || '';
     const obj = {
       name: f.name.trim(), teacher: f.teacher, location: f.location,
-      weekday: f.weekday, startPeriod: f.startPeriod, endPeriod: f.endPeriod,
+      weekday: f.weekday,
+      startPeriod: Math.min(f.startPeriod, f.endPeriod),
+      endPeriod: Math.max(f.startPeriod, f.endPeriod),
       weeks: f.weeks || '1-16', weekdayType: 'all', category: f.category || '自定义',
       credits: 0, hours: 0, color: '#c62828', major,
     };

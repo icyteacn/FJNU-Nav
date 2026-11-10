@@ -19,6 +19,10 @@
       <view class="mut"><switch checked="{{mono}}" bindchange="onMono" color="#c62828" /> {{mono ? '单色' : '彩色'}}</view>
     </view>
     <view class="row-item">
+      <text>⏰ 下一节课卡</text>
+      <view class="mut"><switch checked="{{showNext}}" bindchange="onShowNext" color="#c62828" /> {{showNext ? '显示' : '隐藏'}}</view>
+    </view>
+    <view class="row-item">
       <text>⏰ 课前提醒</text>
       <picker mode="selector" range="{{[15,30,45,60]}}" value="{{remindIdx}}" bindchange="onRemind">
         <text class="mut">提前 {{[15,30,45,60][remindIdx]}} 分钟 ▾</text>

@@ -6,7 +6,7 @@ const REMINDS = [15, 30, 45, 60];
 Page({
   data: {
     refreshText: '点击同步最新数据',
-    mono: false, remindIdx: 1,
+    mono: false, remindIdx: 1, showNext: true,
     majors: [], majorIdx: 0, majorLabel: '未选择',
   },
   onShareAppMessage() { return { title: '福star课表 · 本周课表', path: '/pages/schedule/schedule' }; },
@@ -20,6 +20,7 @@ Page({
     this.setData({
       refreshText: t ? `上次 ${t}` : '点击同步最新数据',
       mono, remindIdx: Math.max(0, REMINDS.indexOf(rm)),
+      showNext: wx.getStorageSync('fjnu_show_next') !== false,
       majors: (data && data.majors) || [],
       majorIdx: midx,
       majorLabel: (((data && data.majors) || [])[midx] || {}).short || '未选择',
@@ -34,6 +35,11 @@ Page({
     const v = e.detail.value;
     wx.setStorageSync('fjnu_mono', v);
     this.setData({ mono: v });
+  },
+  onShowNext(e) {
+    const v = e.detail.value;
+    wx.setStorageSync('fjnu_show_next', v);
+    this.setData({ showNext: v });
   },
   onRemind(e) {
     const i = +e.detail.value;

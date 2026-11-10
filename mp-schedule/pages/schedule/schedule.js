@@ -13,7 +13,10 @@ Page({
   },
 
   onShow() {
-    this.setData({ mono: !!wx.getStorageSync('fjnu_mono') });
+    this.setData({
+      mono: !!wx.getStorageSync('fjnu_mono'),
+      showNext: wx.getStorageSync('fjnu_show_next') !== false,
+    });
     if (!this._metric) {
       const w = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
       // 一屏全显：节次高 = (可用高 - 顶栏/下节课卡/汇总/底栏) / 12
@@ -162,6 +165,11 @@ Page({
     this.apply();
   },
   goSearch() { wx.navigateTo({ url: '/pages/search/search' }); },
+  toggleNext() {
+    const v = !this.data.showNext;
+    wx.setStorageSync('fjnu_show_next', v);
+    this.setData({ showNext: v });
+  },
   showCourse(e) {
     const it = e.currentTarget.dataset.c;
     const c = it.course || it;

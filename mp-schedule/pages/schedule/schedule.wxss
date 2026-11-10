@@ -112,3 +112,5 @@
 .holiday-ico{font-size:22px}
 .holiday-v{writing-mode:vertical-rl;font-size:13px;font-weight:800;color:#c62828;letter-spacing:2px}
 .holiday-sub{writing-mode:vertical-rl;font-size:10px;color:#e57373;letter-spacing:1px}
+.nc-off{margin-left:auto;font-size:15px;color:rgba(255,255,255,.85);padding:0 6px;line-height:1}
+.nc-mini{margin:8px 12px 0;background:#fff;border-radius:8px;padding:6px 12px;font-size:11px;color:#c62828;font-weight:600}

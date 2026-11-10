@@ -1,9 +1,9 @@
 /* 文件路径: /fjnu-nav/mp-weixin/pages/schedule/schedule.wxss */
 .top { display: flex; align-items: center; justify-content: space-between; padding: 20rpx 24rpx; background: #fff; }
-.major-pick { font-size: 28rpx; font-weight: 600; color: #1565c0; }
+.major-pick { font-size: 28rpx; font-weight: 600; color: #c62828; }
 .week-pick { display: flex; align-items: center; }
 .wk { font-size: 28rpx; font-weight: 600; margin: 0 20rpx; }
-.wk-btn { font-size: 44rpx; color: #1565c0; padding: 0 16rpx; }
+.wk-btn { font-size: 44rpx; color: #c62828; padding: 0 16rpx; }
 .src { padding: 8rpx 24rpx; background: #fff8e1; }
 .week-scroll { white-space: nowrap; }
 .week-grid { display: flex; padding: 8rpx; }
@@ -11,8 +11,8 @@
 .col.head { width: 9%; min-width: 64rpx; }
 .cell-h { height: 84rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22rpx; font-weight: 600; }
 .cell-h .hd { font-size: 18rpx; color: #8a8f99; font-weight: 400; }
-.cell-h.today { color: #1565c0; }
-.cell-h.today .hd { color: #1565c0; }
+.cell-h.today { color: #c62828; }
+.cell-h.today .hd { color: #c62828; }
 .cell-p { height: 88rpx; display: flex; flex-direction: column; align-items: center; padding-top: 8rpx; }
 .pn { font-size: 22rpx; font-weight: 600; }
 .pt { font-size: 14rpx; color: #8a8f99; }

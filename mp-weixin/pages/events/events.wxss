@@ -3,7 +3,7 @@
 .d1 { font-weight: 700; font-size: 30rpx; }
 .d2 { font-size: 22rpx; color: #b45309; background: #fef3c7; padding: 4rpx 14rpx; border-radius: 999rpx; }
 .ev { display: flex; align-items: center; padding: 16rpx 0; border-top: 1rpx solid #f0f1f5; }
-.ev-time { width: 110rpx; color: #1565c0; font-weight: 600; font-size: 26rpx; flex-shrink: 0; }
+.ev-time { width: 110rpx; color: #c62828; font-weight: 600; font-size: 26rpx; flex-shrink: 0; }
 .ev-body { flex: 1; display: flex; flex-direction: column; }
 .ev-title { font-size: 28rpx; font-weight: 500; }
 .ev-sub { font-size: 22rpx; color: #8a8f99; margin-top: 4rpx; }

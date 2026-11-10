@@ -85,7 +85,7 @@ function coursesOf(weekday) {
 function courseStyle(c) {
   const top = (c.startPeriod - 1) * 88;
   const h = Math.max(1, c.endPeriod - c.startPeriod + 1) * 88 - 6;
-  return { top: top + 'rpx', height: h + 'rpx', background: (c.color || '#1565c0') + 'e6' };
+  return { top: top + 'rpx', height: h + 'rpx', background: (c.color || '#c62828') + 'e6' };
 }
 function isToday(d) {
   const t = new Date();
@@ -133,10 +133,10 @@ onPullDownRefresh(async () => { await boot(true); uni.stopPullDownRefresh(); });
 
 <style>
 .top { display: flex; align-items: center; justify-content: space-between; padding: 20rpx 24rpx; background: #fff; }
-.major-pick { font-size: 28rpx; font-weight: 600; color: #1565c0; }
+.major-pick { font-size: 28rpx; font-weight: 600; color: #c62828; }
 .week-pick { display: flex; align-items: center; }
 .wk { font-size: 28rpx; font-weight: 600; margin: 0 20rpx; }
-.wk-btn { font-size: 44rpx; color: #1565c0; padding: 0 16rpx; }
+.wk-btn { font-size: 44rpx; color: #c62828; padding: 0 16rpx; }
 .src { padding: 8rpx 24rpx; background: #fff8e1; }
 .week-scroll { white-space: nowrap; }
 .week-grid { display: flex; padding: 8rpx; min-width: 100%; }
@@ -144,8 +144,8 @@ onPullDownRefresh(async () => { await boot(true); uni.stopPullDownRefresh(); });
 .col.head { width: 9%; min-width: 64rpx; }
 .cell-h { height: 84rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22rpx; font-weight: 600; }
 .cell-h .hd { font-size: 18rpx; color: #8a8f99; font-weight: 400; }
-.cell-h.today { color: #1565c0; }
-.cell-h.today .hd { color: #1565c0; }
+.cell-h.today { color: #c62828; }
+.cell-h.today .hd { color: #c62828; }
 .cell-p { height: 88rpx; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 8rpx; }
 .pn { font-size: 22rpx; font-weight: 600; }
 .pt { font-size: 16rpx; color: #8a8f99; }

@@ -66,7 +66,7 @@ function open(a) {
 <style>
 .page { min-height: 100vh; }
 .hero {
-  background: linear-gradient(135deg, #1565c0, #1e88e5);
+  background: linear-gradient(135deg, #c62828, #f0823a);
   color: #fff; padding: 48rpx 32rpx 36rpx;
 }
 .hero-title { font-size: 44rpx; font-weight: 700; }

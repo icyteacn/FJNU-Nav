@@ -24,7 +24,7 @@
   <!-- 下一节课卡（对齐 App：标题+倒计时徽章+开关） -->
   <view class="next-card" wx:if="{{next && showNext}}">
     <view class="nc-head">
-      <text class="nc-tag">⏰ 下一节课</text>
+      <text class="nc-tag">{{next.tag || '⏰ 下一节课'}}</text>
       <text wx:if="{{next.countdown}}" class="nc-cd">{{next.countdown}}</text>
       <text class="nc-off" catchtap="toggleNext">✕</text>
     </view>
@@ -33,7 +33,7 @@
     <view class="nc-sub" wx:if="{{next.teacher}}">{{next.teacher}} · {{next.remind}}</view>
   </view>
   <!-- 关闭后的折叠条：点按恢复 -->
-  <view class="nc-mini" wx:if="{{next && !showNext}}" bindtap="toggleNext">⏰ 下节课：{{next.name}} {{next.countdown}} ▶</view>
+  <view class="nc-mini" wx:if="{{next && !showNext}}" bindtap="toggleNext">{{next.tag || '⏰ 下节课'}}：{{next.name}} {{next.countdown}} ▶</view>
 
   <!-- 周汇总行（对齐 App 顶行） -->
   <view class="wk-summary" wx:if="{{summary}}">

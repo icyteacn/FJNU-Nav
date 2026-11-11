@@ -41,11 +41,12 @@ Page({
   _tick() {
     if (!this._cdTarget) return;
     const diff = this._cdTarget - Date.now();
-    if (diff <= 0) { this.setData({ 'next.countdown': '上课中' }); return; }
+    if (diff <= 0) { this.apply(); return; } // 到点自动切换（下课→课间/下一节，开课→上课中）
     const d = Math.floor(diff / 864e5), h = Math.floor(diff % 864e5 / 36e5),
       m = Math.floor(diff % 36e5 / 6e4), s = Math.floor(diff % 6e4 / 1e3);
     const hm = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    this.setData({ 'next.countdown': d ? `${d}天${hm}` : hm });
+    const label = this._cdMode === 'live' ? '距下课 ' : this._cdMode === 'break' ? '距上课 ' : '';
+    this.setData({ 'next.countdown': label + (d ? `${d}天${hm}` : hm) });
   },
 
   async load(force) {
@@ -199,26 +200,53 @@ Page({
       range: `${days[0].label} - ${days[6].label}`,
       text: `${nameSet.size}门课${sessions}次${periods}节 · ${busyDays}天有课 · 空档${7 * 12 - periods}节`,
     };
-    // 下节课卡（已跳过停课日；提前提醒分钟取自设置）
-    const nxt = S.nextCourse(this._data || {}, key);
+    // ===== 下节课卡状态机（对齐 App）：上课中→距下课 / 课间→距上课 / 其余→下一节 =====
     const remindMin = wx.getStorageSync('fjnu_remind') || 30;
     let next = null;
-    if (nxt) {
-      const c = nxt.course;
-      const when = nxt.inDays === 0 ? '今天' : nxt.inDays === 1 ? '明天' : `${nxt.inDays} 天后`;
-      // 倒计时目标时间戳（秒级 ticker 每秒刷新）
-      const [hh, mm] = [Math.floor(nxt.startMin / 60), nxt.startMin % 60];
-      const target = new Date(nxt.date); target.setHours(hh, mm, 0, 0);
-      this._cdTarget = +target;
-      const cd = '';
+    this._cdMode = '';
+    const nowD = new Date();
+    const nowMin = nowD.getHours() * 60 + nowD.getMinutes();
+    const todayWd = nowD.getDay() === 0 ? 7 : nowD.getDay();
+    const tRes = S.dayCourses(view, key, curWk, todayWd, S.mondayOf());
+    const endMinOf = p => {
+      const t = (view.periodEndTimes || {})[p];
+      if (t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+      return S.startMin(view, p) + 50;
+    };
+    const realCells = (tRes.holiday ? [] : (tRes.cells || [])).filter(x => x.kind !== 'moved');
+    const live = realCells.find(x => nowMin >= S.startMin(view, x.start) && nowMin < endMinOf(x.end));
+    const mkTarget = min => { const t = new Date(nowD); t.setHours(Math.floor(min / 60), min % 60, 0, 0); return +t; };
+    if (live) {
+      // 上课中：倒计时到下课，附已上课时
+      const c = live.course || {};
+      this._cdMode = 'live';
+      this._cdTarget = mkTarget(endMinOf(live.end));
       next = {
-        name: c.name,
-        loc: c.location || '待定',
-        time: `周${S.WEEK_CN[nxt.weekday - 1]} ${S.fmtDate(nxt.date).slice(5).replace('-', '/')} · 第${c.startPeriod}-${c.endPeriod}节 · ${c.location || '待定'}`,
+        tag: '📖 上课中',
+        name: c.name || live.name,
+        time: `今天 · 第${live.start}-${live.end}节 · ${live.loc || c.location || '待定'}`,
         teacher: c.teacher || '',
-        countdown: cd,
-        remind: `已设课前 ${remindMin} 分钟提醒`,
+        countdown: '',
+        remind: `已上 ${nowMin - S.startMin(view, live.start)} 分钟`,
       };
+    } else {
+      const nxt = S.nextCourse(view, key);
+      if (nxt) {
+        const c = nxt.course;
+        // 课间：今天已有课下课，且下一节仍在今天
+        const onBreak = nxt.inDays === 0 && realCells.some(x => nowMin >= endMinOf(x.end));
+        this._cdMode = onBreak ? 'break' : 'next';
+        const target = new Date(nxt.date); target.setHours(Math.floor(nxt.startMin / 60), nxt.startMin % 60, 0, 0);
+        this._cdTarget = +target;
+        next = {
+          tag: onBreak ? '🌿 课间休息中' : '⏰ 下一节课',
+          name: c.name,
+          time: `周${S.WEEK_CN[nxt.weekday - 1]} ${S.fmtDate(nxt.date).slice(5).replace('-', '/')} · 第${c.startPeriod}-${c.endPeriod}节 · ${c.location || '待定'}`,
+          teacher: c.teacher || '',
+          countdown: '',
+          remind: onBreak ? '下节马上开始，准备一下' : `已设课前 ${remindMin} 分钟提醒`,
+        };
+      }
     }
     // 近 14 天日程提醒条
     const evs = S.upcomingEvents(this._data || {}).map(e => ({

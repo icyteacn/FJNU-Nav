@@ -1825,13 +1825,16 @@ function renderNextCard() {
                        name: it.course.name, startPeriod: it.start, endPeriod: it.end };
     card.className = 'next-card live';
     card.style.display = 'flex';
-    badge.textContent = '📖 正在上的课';
+    badge.textContent = '📖 上课中';
     document.getElementById('nextName').textContent = it.course.name;
+    const _nd = new Date();
+    const elapsed = (_nd.getHours() * 60 + _nd.getMinutes()) - PERIOD_START[it.start];
     document.getElementById('nextMeta').textContent =
       (live.date.getMonth() + 1) + '-' + live.date.getDate() +
-      ' · 第' + it.start + '-' + it.end + '节 · ' + loc;
+      ' · 第' + it.start + '-' + it.end + '节 · ' + loc +
+      ' · 已上 ' + elapsed + ' 分钟';
     const ms = target - new Date();
-    document.getElementById('nextCountdown').textContent = ms > 0 ? ('还剩 ' + fmtCd(ms) + '下课') : '即将下课';
+    document.getElementById('nextCountdown').textContent = ms > 0 ? ('距下课 ' + fmtCd(ms)) : '即将下课';
     return;
   }
   const n = computeNextCourse();
@@ -1845,15 +1848,31 @@ function renderNextCard() {
     document.getElementById('nextCountdown').textContent = '';
     return;
   }
-  nextCourseInfo = Object.assign(n, { kind: 'next' });
-  card.className = 'next-card';
+  // 课间：今天已有课下课，且下一节仍在今天 → 课间休息态
+  let onBreak = false;
+  try {
+    const today = new Date();
+    if (n.date.toDateString() === today.toDateString()) {
+      const wd = today.getDay() === 0 ? 7 : today.getDay();
+      const res = getDayCourses(getCurrentWeek(), wd);
+      if (!res.holiday) {
+        const nowMin = today.getHours() * 60 + today.getMinutes();
+        onBreak = res.list.some(it => it.kind !== 'moved' && nowMin >= PERIOD_END[it.end]);
+      }
+    }
+  } catch (e) {}
+  nextCourseInfo = Object.assign(n, { kind: onBreak ? 'break' : 'next' });
+  card.className = onBreak ? 'next-card live' : 'next-card';
   card.style.display = 'flex';
-  badge.textContent = '⏰ 下一节课';
+  badge.textContent = onBreak ? '🌿 课间休息中' : '⏰ 下一节课';
   document.getElementById('nextName').textContent = n.course.name;
   document.getElementById('nextMeta').textContent =
     n.weekdayLabel + ' ' + (n.date.getMonth() + 1) + '-' + n.date.getDate() +
-    ' · 第' + n.startPeriod + '-' + n.endPeriod + '节 · ' + n.loc;
-  document.getElementById('nextCountdown').textContent = fmtCountdown(n.target - new Date());
+    ' · 第' + n.startPeriod + '-' + n.endPeriod + '节 · ' + n.loc +
+    (onBreak ? ' · 下节马上开始' : '');
+  const ms2 = n.target - new Date();
+  document.getElementById('nextCountdown').textContent =
+    onBreak ? ('距上课 ' + fmtCd(ms2)) : fmtCountdown(ms2);
 }
 
 /** 活动提醒：今/明两天的 event 类日期标注显示在「下一节课」卡底部（按专业精确到场次） */
@@ -1886,8 +1905,10 @@ function tickNextCountdown() {
   const ms = nextCourseInfo.target - new Date();
   if (ms <= 0) { renderNextCard(); return; } // 到点自动切换（下课→找下一节 / 开课→变正在上）
   el.textContent = nextCourseInfo.kind === 'live'
-    ? ('还剩 ' + fmtCd(ms) + '下课')
-    : fmtCountdown(ms);
+    ? ('距下课 ' + fmtCd(ms))
+    : nextCourseInfo.kind === 'break'
+      ? ('距上课 ' + fmtCd(ms))
+      : fmtCountdown(ms);
 }
 function jumpToNextCourse() {
   if (nextCourseInfo) {
@@ -3043,7 +3064,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.21'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.22'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){

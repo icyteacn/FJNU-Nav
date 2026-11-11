@@ -200,7 +200,7 @@ Page({
       range: `${days[0].label} - ${days[6].label}`,
       text: `${nameSet.size}门课${sessions}次${periods}节 · ${busyDays}天有课 · 空档${7 * 12 - periods}节`,
     };
-    // ===== 下节课卡状态机（对齐 App）：上课中→距下课 / 课间→距上课 / 其余→下一节 =====
+    // ===== 下节课卡节级状态机（对齐 App）：上课中→本节距下课 / 课间→距上课 / 跨天→下一节 =====
     const remindMin = wx.getStorageSync('fjnu_remind') || 30;
     let next = null;
     this._cdMode = '';
@@ -213,39 +213,61 @@ Page({
       if (t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
       return S.startMin(view, p) + 50;
     };
-    const realCells = (tRes.holiday ? [] : (tRes.cells || [])).filter(x => x.kind !== 'moved');
-    const live = realCells.find(x => nowMin >= S.startMin(view, x.start) && nowMin < endMinOf(x.end));
     const mkTarget = min => { const t = new Date(nowD); t.setHours(Math.floor(min / 60), min % 60, 0, 0); return +t; };
-    if (live) {
-      // 上课中：倒计时到下课，附已上课时
-      const c = live.course || {};
+    // 节级时间轴：period → cell（调走的不参与）
+    const pmap = {};
+    (tRes.holiday ? [] : (tRes.cells || [])).forEach(x => {
+      if (x.kind === 'moved') return;
+      for (let p = x.start; p <= x.end; p++) pmap[p] = x;
+    });
+    const todayPeriods = Object.keys(pmap).map(Number).sort((a, b) => a - b);
+    const liveP = todayPeriods.find(p => nowMin >= S.startMin(view, p) && nowMin < endMinOf(p));
+    if (liveP) {
+      // 上课中：倒计时到「本节」下课，附已上课时
+      const cell = pmap[liveP], c = cell.course || {};
       this._cdMode = 'live';
-      this._cdTarget = mkTarget(endMinOf(live.end));
+      this._cdTarget = mkTarget(endMinOf(liveP));
       next = {
         tag: '📖 上课中',
-        name: c.name || live.name,
-        time: `今天 · 第${live.start}-${live.end}节 · ${live.loc || c.location || '待定'}`,
+        name: c.name || cell.name,
+        time: `第${liveP}节（本课 ${cell.start}-${cell.end}节）· ${cell.loc || c.location || '待定'}`,
         teacher: c.teacher || '',
         countdown: '',
-        remind: `已上 ${nowMin - S.startMin(view, live.start)} 分钟`,
+        remind: `已上 ${nowMin - S.startMin(view, liveP)} 分钟`,
       };
     } else {
-      const nxt = S.nextCourse(view, key);
-      if (nxt) {
-        const c = nxt.course;
-        // 课间：今天已有课下课，且下一节仍在今天
-        const onBreak = nxt.inDays === 0 && realCells.some(x => nowMin >= endMinOf(x.end));
+      // 课间/下一节：今天下一节上课的节（同一门课节间休息也算课间）
+      const q = todayPeriods.find(p => S.startMin(view, p) > nowMin);
+      if (q) {
+        const cell = pmap[q], c = cell.course || {};
+        const onBreak = todayPeriods.some(p => endMinOf(p) <= nowMin);
         this._cdMode = onBreak ? 'break' : 'next';
-        const target = new Date(nxt.date); target.setHours(Math.floor(nxt.startMin / 60), nxt.startMin % 60, 0, 0);
-        this._cdTarget = +target;
+        this._cdTarget = mkTarget(S.startMin(view, q));
         next = {
           tag: onBreak ? '🌿 课间休息中' : '⏰ 下一节课',
-          name: c.name,
-          time: `周${S.WEEK_CN[nxt.weekday - 1]} ${S.fmtDate(nxt.date).slice(5).replace('-', '/')} · 第${c.startPeriod}-${c.endPeriod}节 · ${c.location || '待定'}`,
+          name: c.name || cell.name,
+          time: `第${q}节上课（${cell.start}-${cell.end}节）· ${cell.loc || c.location || '待定'}`,
           teacher: c.teacher || '',
           countdown: '',
           remind: onBreak ? '下节马上开始，准备一下' : `已设课前 ${remindMin} 分钟提醒`,
         };
+      } else {
+        // 今天没课了：跨天找下一节
+        const nxt = S.nextCourse(view, key);
+        if (nxt) {
+          const c = nxt.course;
+          this._cdMode = 'next';
+          const target = new Date(nxt.date); target.setHours(Math.floor(nxt.startMin / 60), nxt.startMin % 60, 0, 0);
+          this._cdTarget = +target;
+          next = {
+            tag: '⏰ 下一节课',
+            name: c.name,
+            time: `周${S.WEEK_CN[nxt.weekday - 1]} ${S.fmtDate(nxt.date).slice(5).replace('-', '/')} · 第${c.startPeriod}-${c.endPeriod}节 · ${c.location || '待定'}`,
+            teacher: c.teacher || '',
+            countdown: '',
+            remind: `已设课前 ${remindMin} 分钟提醒`,
+          };
+        }
       }
     }
     // 近 14 天日程提醒条

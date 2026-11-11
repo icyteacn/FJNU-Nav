@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
-// versionName 鍗曚竴浜嬪疄鏉ユ簮锛氫粨搴撴牴 package.json 鐨?apkVersion
-// 锛圕I 浼氬厛 rm -rf android锛岃嫢鍦ㄨ繖閲岀‖缂栫爜锛岀嚎涓婂鍑虹殑鎺ュ彛浼氳鍒拌繃鏈熺増鏈級
+// versionName 单一事实来源：仓库根 package.json 的 apkVersion
+// （CI 会先 rm -rf android，若在这里硬编码，线上导出的接口会读到过期版本）
 ext.apkVersionName = '1.1'
 def apkVerFile = new File(project.projectDir, '../../package.json')
 if (apkVerFile.exists()) {
@@ -16,9 +16,13 @@ android {
         applicationId "com.feike.schedule"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // versionCode 涓?package.json 鐨?apkVersion 鏈淇濇寔涓€鑷达紙瑙勫垯锛氫富.娆?鏋勫缓鍙凤級锛?        // 姣忔閲嶆柊鎵撳寘 +1 鈥斺€?鏈?scripts/test_schedule.mjs 鐨勯棬绂佸畧鐫€锛屽繕浜嗗悓姝ヤ細鐩存帴澶辫触銆?        versionCode 22
-        // versionName 鍗曚竴浜嬪疄鏉ユ簮锛氫粨搴撴牴 package.json 鐨?apkVersion锛圕I 浼氬厛 rm -rf android锛?        versionName apkVersionName
-        // 鍙繚鐣欎腑鑻辨枃璧勬簮锛欰pp 鏃犲叾浠栬绉嶆枃妗堬紝閬垮厤鎶?AndroidX 鐨勫嚑鍗佺缈昏瘧鎵撹繘鍖?        resourceConfigurations += ["zh", "en"]
+        // versionCode 与 package.json 的 apkVersion 末段保持一致（规则：主.次.构建号），
+        // 每次重新打包 +1 —— 有 scripts/test_schedule.mjs 的门禁守着，忘了同步会直接失败。
+        versionCode 22
+        // versionName 单一事实来源：仓库根 package.json 的 apkVersion（CI 会先 rm -rf android）
+        versionName apkVersionName
+        // 只保留中英文资源：App 无其他语种文案，避免把 AndroidX 的几十种翻译打进包
+        resourceConfigurations += ["zh", "en"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -28,8 +32,9 @@ android {
     }
     signingConfigs {
         release {
-            // 榛樿鐢ㄤ粨搴撶殑 keystore.jks锛圕N=Feike锛夛紱
-            // 鑻ラ渶瑕嗙洊瀹夎鍘嗗彶涓婄敤鍏跺畠璇佷功鍙戝竷鐨勫寘锛屽彲涓存椂鎸囧畾锛?            //   gradlew assembleRelease -PksPath=/path/to/other.jks -PksAlias=xxx -PksPass=xxx
+            // 默认用仓库的 keystore.jks（CN=Feike）；
+            // 若需覆盖安装历史上用其它证书发布的包，可临时指定：
+            //   gradlew assembleRelease -PksPath=/path/to/other.jks -PksAlias=xxx -PksPass=xxx
             def ksPath = project.hasProperty('ksPath') ? file(project.property('ksPath')) : file('keystore.jks')
             def ksPass = project.hasProperty('ksPass') ? project.property('ksPass') : 'feike123'
             storeFile ksPath

@@ -130,10 +130,10 @@
     },
     {
       "name": "高等工程数学",
-      "id": "XZB0270812102-W12",
+      "id": "XZB0270812102-W13",
       "teacher": "林劼",
-      "location": "笃行1-201",
-      "weeks": "12-14",
+      "location": "待定",
+      "weeks": "13-14",
       "weekdayType": "all",
       "startPeriod": 9,
       "endPeriod": 12,
@@ -324,10 +324,10 @@
     },
     {
       "name": "高等工程数学",
-      "id": "ZSZB027085405402-W12",
+      "id": "ZSZB027085405402-W13",
       "teacher": "林劼",
-      "location": "笃行1-201",
-      "weeks": "12-14",
+      "location": "待定",
+      "weeks": "13-14",
       "weekdayType": "all",
       "startPeriod": 9,
       "endPeriod": 12,
@@ -468,10 +468,10 @@
     },
     {
       "name": "高等工程数学",
-      "id": "ZSZB027085410002-W12",
+      "id": "ZSZB027085410002-W13",
       "teacher": "林劼",
-      "location": "笃行1-201",
-      "weeks": "12-14",
+      "location": "待定",
+      "weeks": "13-14",
       "weekdayType": "all",
       "startPeriod": 9,
       "endPeriod": 12,
@@ -595,7 +595,7 @@
       "major": "nis-master"
     }
   ],
-  "version": "5e92d4c026",
+  "version": "a5d44c2748",
   "semester": "2026-2027学年第一学期",
-  "updatedAt": "2026-11-09T01:28:44.486Z"
+  "updatedAt": "2026-11-19T12:25:47.191Z"
 }

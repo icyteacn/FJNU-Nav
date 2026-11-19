@@ -180,7 +180,7 @@ check('isCourseInWeek 支持单周写法（如 weeks:"11"）', () => {
   assert.equal(isCourseInWeek(multi, 9), true)
 })
 
-check('高等工程数学分段与学时（3-7 原教师 / 8-10 新教室 / 11 周三补课 / 12-14 林劼老教室）', () => {
+check('高等工程数学分段与学时（3-7 原教师 / 8-10 新教室 / 11 周三补课 / 13-14 林劼待定教室，12 周停课）', () => {
   for (const major of ['cs-master', 'se-master', 'ai-master']) {
     const segs = COURSES.filter((c) => c.major === major && c.name === '高等工程数学')
     assert.equal(segs.length, 4, `${major} 高数应为 4 段，实际 ${segs.length}`)
@@ -188,7 +188,8 @@ check('高等工程数学分段与学时（3-7 原教师 / 8-10 新教室 / 11 �
     assert.ok(byWeeks['3-7'], `${major} 缺 3-7 段`)
     assert.ok(byWeeks['8-10'], `${major} 缺 8-10 段`)
     assert.ok(byWeeks['11'], `${major} 缺第 11 周补课段`)
-    assert.ok(byWeeks['12-14'], `${major} 缺 12-14 段`)
+    assert.ok(byWeeks['13-14'], `${major} 缺 13-14 段`)
+    assert.ok(!byWeeks['12-14'] && !byWeeks['12'], `${major} 第 12 周应无课`)
 
     assert.equal(byWeeks['3-7'].teacher, '胡丽莹')
     assert.equal(byWeeks['3-7'].weekday, 5)
@@ -200,15 +201,16 @@ check('高等工程数学分段与学时（3-7 原教师 / 8-10 新教室 / 11 �
     assert.equal(byWeeks['11'].startPeriod, 5)
     assert.equal(byWeeks['11'].endPeriod, 8)
     assert.equal(byWeeks['11'].location, '笃行1-201', '第 11 周补课教室应为笃行1-201')
-    assert.equal(byWeeks['12-14'].teacher, '林劼', '12 周起应为林劼')
-    assert.equal(byWeeks['12-14'].weekday, 5, '12 周起应回到周五')
-    assert.equal(byWeeks['12-14'].location, '笃行1-201', '12 周起应回到老教室')
+    assert.equal(byWeeks['13-14'].teacher, '林劼', '13 周起应为林劼')
+    assert.equal(byWeeks['13-14'].weekday, 5, '13 周起应为周五')
+    assert.equal(byWeeks['13-14'].location, '待定', '13 周起教室尚未确定')
 
     const hours = segs.reduce((sum, c) => {
       const [a, b] = c.weeks.includes('-') ? c.weeks.split('-').map(Number) : [Number(c.weeks), Number(c.weeks)]
       return sum + (b - a + 1) * (c.endPeriod - c.startPeriod + 1)
     }, 0)
-    assert.equal(hours, 48, `${major} 高数学时应为 48，实际 ${hours}`)
+    // 课程登记 48 学时；第 12 周停课未补，实际排课 44 节（5+3+1+2 次 × 4 节）
+    assert.equal(hours, 44, `${major} 已排课应为 44 节（登记 48，第 12 周停课），实际 ${hours}`)
   }
 })
 

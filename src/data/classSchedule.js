@@ -123,8 +123,8 @@ export const COURSES = [
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'cs-master',
   },
   {
-    name: '高等工程数学', id: 'XZB0270812102-W12', teacher: '林劼', location: '笃行1-201',
-    weeks: '12-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
+    name: '高等工程数学', id: 'XZB0270812102-W13', teacher: '林劼', location: '待定',
+    weeks: '13-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'cs-master',
   },
 
@@ -189,8 +189,8 @@ export const COURSES = [
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'se-master',
   },
   {
-    name: '高等工程数学', id: 'ZSZB027085405402-W12', teacher: '林劼', location: '笃行1-201',
-    weeks: '12-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
+    name: '高等工程数学', id: 'ZSZB027085405402-W13', teacher: '林劼', location: '待定',
+    weeks: '13-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'se-master',
   },
   {
@@ -236,8 +236,8 @@ export const COURSES = [
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'ai-master',
   },
   {
-    name: '高等工程数学', id: 'ZSZB027085410002-W12', teacher: '林劼', location: '笃行1-201',
-    weeks: '12-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
+    name: '高等工程数学', id: 'ZSZB027085410002-W13', teacher: '林劼', location: '待定',
+    weeks: '13-14', weekdayType: 'all', startPeriod: 9, endPeriod: 12, weekday: 5,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'ai-master',
   },
   {

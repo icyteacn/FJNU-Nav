@@ -1,0 +1,9 @@
+{
+  "name": "boardWrite",
+  "version": "1.0.0",
+  "description": "建议墙写入：内容安全检测后落库",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

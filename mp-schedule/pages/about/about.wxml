@@ -1,5 +1,5 @@
 <!-- 文件路径: /fjnu-nav/mp-schedule/pages/about/about.wxml -->
-<view class="page safe-bottom">
+<view class="page safe-bottom {{dark ? 'dark' : ''}}">
   <view class="card center">
     <view class="logo">📚</view>
     <view class="name">福star课表</view>
@@ -15,8 +15,14 @@
       </picker>
     </view>
     <view class="row-item">
+      <text>🌙 深色模式</text>
+      <picker mode="selector" range="{{['跟随系统','浅色','深色']}}" value="{{themeIdx}}" bindchange="onTheme">
+        <text class="mut">{{['跟随系统','浅色','深色'][themeIdx]}} ▾</text>
+      </picker>
+    </view>
+    <view class="row-item">
       <text>🎨 课表配色</text>
-      <view class="mut"><switch checked="{{mono}}" bindchange="onMono" color="#c62828" /> {{mono ? '单色' : '彩色'}}</view>
+      <view class="mut"><switch checked="{{mono}}" bindchange="onMono" color="#c62828" /> {{mono ? '单色(黑白)' : '彩色'}}</view>
     </view>
     <view class="row-item">
       <text>⏰ 下一节课卡</text>
@@ -39,6 +45,10 @@
     <view class="row-item" bindtap="openLeague">
       <text>🚩 智团慧建·团工作平台</text>
       <text class="mut">支部工作 ›</text>
+    </view>
+    <view class="row-item" bindtap="goBoard">
+      <text>💬 建议墙</text>
+      <text class="mut">提建议 · 大家一起看 ›</text>
     </view>
   </view>
 

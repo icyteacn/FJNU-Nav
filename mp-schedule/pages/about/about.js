@@ -8,6 +8,7 @@ Page({
     refreshText: '点击同步最新数据',
     mono: false, remindIdx: 1, showNext: true,
     majors: [], majorIdx: 0, majorLabel: '未选择',
+    themeIdx: 0, dark: false,
   },
   onShareAppMessage() { return { title: '福star课表 · 本周课表', path: '/pages/schedule/schedule' }; },
   async onShow() {
@@ -21,6 +22,8 @@ Page({
       refreshText: t ? `上次 ${t}` : '点击同步最新数据',
       mono, remindIdx: Math.max(0, REMINDS.indexOf(rm)),
       showNext: wx.getStorageSync('fjnu_show_next') !== false,
+      themeIdx: ['auto', 'light', 'dark'].indexOf(wx.getStorageSync('fjnu_theme') || 'auto'),
+      dark: getApp().resolveDark ? getApp().resolveDark() : false,
       majors: (data && data.majors) || [],
       majorIdx: midx,
       majorLabel: (((data && data.majors) || [])[midx] || {}).short || '未选择',
@@ -31,6 +34,15 @@ Page({
     wx.setStorageSync('fjnu_major_idx', majorIdx);
     this.setData({ majorIdx, majorLabel: (this.data.majors[majorIdx] || {}).short });
   },
+  onTheme(e) {
+    const i = +e.detail.value;
+    const pref = ['auto', 'light', 'dark'][i];
+    wx.setStorageSync('fjnu_theme', pref);
+    const dark = getApp().resolveDark();
+    this.setData({ themeIdx: i, dark });
+    getApp().applyChrome(dark);
+  },
+  goBoard() { wx.navigateTo({ url: '/pages/board/board' }); },
   onMono(e) {
     const v = e.detail.value;
     wx.setStorageSync('fjnu_mono', v);

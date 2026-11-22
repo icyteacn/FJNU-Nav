@@ -1,7 +1,9 @@
 {
   "pages": [
     "pages/schedule/schedule",
+    "pages/agenda/agenda",
     "pages/search/search",
+    "pages/board/board",
     "pages/about/about"
   ],
   "window": {
@@ -18,6 +20,7 @@
     "backgroundColor": "#ffffff",
     "list": [
       { "pagePath": "pages/schedule/schedule", "text": "课表", "iconPath": "images/tab-schedule.png", "selectedIconPath": "images/tab-schedule-active.png" },
+      { "pagePath": "pages/agenda/agenda", "text": "日程", "iconPath": "images/tab-agenda.png", "selectedIconPath": "images/tab-agenda-active.png" },
       { "pagePath": "pages/about/about", "text": "我的", "iconPath": "images/tab-about.png", "selectedIconPath": "images/tab-about-active.png" }
     ]
   },

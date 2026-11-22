@@ -20,7 +20,23 @@ Page({
       showNext: wx.getStorageSync('fjnu_show_next') !== false,
       viewMode: wx.getStorageSync('fjnu_view') || 'grid',
       listDay: new Date().getDay() === 0 ? 7 : new Date().getDay(),
+      dark: getApp().resolveDark ? getApp().resolveDark() : false,
     });
+    // 页面重新显示时同步主题（关于页改了设置后回来生效）
+    const _dark = getApp().resolveDark ? getApp().resolveDark() : false;
+    if (_dark !== this.data.dark) {
+      this.setData({ dark: _dark });
+      getApp().applyChrome && getApp().applyChrome(_dark);
+    }
+    // 跟随系统主题：auto 模式下系统切深浅色时实时刷新
+    this._onTheme = ({ theme: t }) => {
+      if ((wx.getStorageSync('fjnu_theme') || 'auto') !== 'auto') return;
+      this.setData({ dark: t === 'dark' });
+      getApp().applyChrome && getApp().applyChrome(t === 'dark');
+      this.apply();
+    };
+    if (wx.onThemeChange) wx.onThemeChange(this._onTheme);
+    if (getApp().applyChrome) getApp().applyChrome(this.data.dark);
     if (!this._metric) {
       const w = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
       // 一屏全显：节次高 = (可用高 - 顶栏/下节课卡/汇总/底栏) / 12
@@ -131,7 +147,7 @@ Page({
           start: cell.start, end: cell.end,
           _top: (cell.start - 1) * this._metric.cellH,
           _h: Math.max(1, cell.end - cell.start + 1) * this._metric.cellH - 2,
-          color: this.data.mono ? '#c62828' : (c.color || '#c62828'),
+          color: this.data.mono ? (this.data.dark ? '#e8e8e8' : '#1a1a1a') : (c.color || '#c62828'),
           status: isToday ? S.periodStatus(this._data, cell.start, cell.end, true) : '',
           ov: cell.ov, adj: cell.adj,
         };
@@ -346,6 +362,21 @@ Page({
   },
   prevWeek() { this.shiftWeek(-1); },
   nextWeek() { this.shiftWeek(1); },
+  // ===== 左右滑动切周（对齐 App：横滑>50px 且快于竖滑） =====
+  onTouchStart(e) {
+    const t = e.touches[0];
+    this._ts = { x: t.clientX, y: t.clientY, t: Date.now() };
+  },
+  onTouchEnd(e) {
+    if (!this._ts || !e.changedTouches || !e.changedTouches[0]) return;
+    const dx = e.changedTouches[0].clientX - this._ts.x;
+    const dy = e.changedTouches[0].clientY - this._ts.y;
+    const dt = Date.now() - this._ts.t;
+    this._ts = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 600) {
+      this.shiftWeek(dx < 0 ? 1 : -1);
+    }
+  },
   shiftWeek(n) {
     const week = Math.min(25, Math.max(1, this.data.week + n));
     this.setData({ week });

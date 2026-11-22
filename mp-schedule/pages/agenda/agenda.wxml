@@ -1,0 +1,46 @@
+<!-- 文件路径: /fjnu-nav/mp-schedule/pages/agenda/agenda.wxml -->
+<view class="page safe-bottom {{dark ? 'dark' : ''}}">
+  <view class="ag-head">
+    <view class="ag-title">📅 日程提醒</view>
+    <view class="ag-sub mut">未来 14 天 · {{majorLabel}}</view>
+  </view>
+  <view class="src mut" wx:if="{{source==='cache'}}">⚠ 离线缓存数据</view>
+
+  <block wx:for="{{days}}" wx:key="date">
+    <view class="ag-day {{item.isToday ? 'today' : ''}}">
+      <view class="ag-date">
+        <text class="ad-d">{{item.isToday ? '今天' : item.wd}} {{item.date}}</text>
+        <text class="ad-w mut">{{item.wk}}</text>
+      </view>
+      <!-- 停课日整卡 -->
+      <view wx:if="{{item.holiday}}" class="ag-hol">
+        <text class="ah-ico">{{item.holiday.icon || '🎉'}}</text>
+        <view><text class="ah-name">{{item.holiday.name || item.holiday.descShort || '假期'}}</text><text class="ah-sub">停课</text></view>
+      </view>
+      <!-- 当日条目 -->
+      <block wx:for="{{item.items}}" wx:for-item="it" wx:key="index">
+        <view wx:if="{{it.isGap}}" class="li-gap">{{it.gap}}</view>
+        <view wx:elif="{{it.isEvent}}" class="li-ev"><text>{{it.icon}} {{it.title}}</text><text wx:if="{{it.desc}}" class="li-ev-d">{{it.desc}}</text></view>
+        <view wx:else class="li {{it.badge}} {{it.kind}}" data-c="{{it}}" bindtap="showItem">
+          <view class="li-time"><text class="lt-s">{{it.timeStart}}</text><text class="lt-e">{{it.timeEnd}}</text></view>
+          <view class="li-bar" style="background:{{it.color}}"></view>
+          <view class="li-main">
+            <view class="li-name">{{it.name}}
+              <text wx:if="{{it.badge === 'live'}}" class="st-badge live">● 上课中</text>
+              <text wx:elif="{{it.badge === 'next'}}" class="st-badge next">下一节</text>
+              <text wx:elif="{{it.badge === 'done'}}" class="st-badge done">已结束</text>
+            </view>
+            <view class="li-meta">📍{{it.loc}} · {{it.teacher || '-'}} · {{it.periodText}}</view>
+            <view wx:if="{{it.note}}" class="li-note">{{it.note}}</view>
+          </view>
+        </view>
+      </block>
+    </view>
+  </block>
+
+  <view wx:if="{{!loading && !days.length}}" class="empty">
+    <text>未来 14 天没有日程</text>
+    <text class="mut">调休/停课/活动会出现在这里</text>
+  </view>
+  <view wx:if="{{loading}}" class="empty"><text>加载中…</text></view>
+</view>

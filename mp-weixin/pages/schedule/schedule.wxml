@@ -1,5 +1,5 @@
 <!-- 文件路径: /fjnu-nav/mp-schedule/pages/schedule/schedule.wxml -->
-<view class="page safe-bottom">
+<view class="page safe-bottom {{dark ? 'dark' : ''}}" bindtouchstart="onTouchStart" bindtouchend="onTouchEnd">
   <!-- 顶栏：专业 + 学期 + 周切换 + 搜索 -->
   <view class="top">
     <picker mode="selector" range="{{majors}}" range-key="label" value="{{majorIdx}}" bindchange="onMajor">
@@ -97,7 +97,7 @@
       </view>
     </view>
     <!-- 七天列 -->
-    <view wx:for="{{days}}" wx:key="weekday" wx:for-index="di" class="col" style="width:{{colW}}px">
+    <view wx:for="{{days}}" wx:key="weekday" wx:for-index="di" class="col {{item.today ? 'today-col' : ''}}" style="width:{{colW}}px">
       <!-- 列头：周几+日期+调休/调课徽标 -->
       <view class="cell-h {{item.today ? 'today' : ''}} {{item.holiday ? 'hol' : ''}}">
         <text class="hd-w">周{{weekCn[item.weekday - 1]}}</text>

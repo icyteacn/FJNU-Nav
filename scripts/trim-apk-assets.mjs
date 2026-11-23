@@ -36,13 +36,19 @@ if (!fs.existsSync(PUB)) {
 const before = dirSize(PUB)
 const KB = (n) => (n / 1024).toFixed(1) + ' KB'
 
-// 1) 白名单外一律删除；data/ 目录只留接口文件
+// 1) 白名单外一律删除；data/ 只留接口文件，images/ 只留公告用小程序码
 for (const entry of fs.readdirSync(PUB, { withFileTypes: true })) {
   const full = path.join(PUB, entry.name)
   if (entry.name === 'standalone-schedule.html') continue
   if (entry.isDirectory() && entry.name === 'data') {
     for (const f of fs.readdirSync(full)) {
       if (f !== 'schedule-data.json') fs.rmSync(path.join(full, f), { recursive: true, force: true })
+    }
+    continue
+  }
+  if (entry.isDirectory() && entry.name === 'images') {
+    for (const f of fs.readdirSync(full)) {
+      if (f !== 'mp-qr.png') fs.rmSync(path.join(full, f), { recursive: true, force: true })
     }
     continue
   }

@@ -285,6 +285,20 @@
     /* ========== 弹窗 ========== */
     .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:flex-end;justify-content:center}
     .modal-overlay.show{display:flex}
+    /* 小程序码公告：仅 App 内出现，最多 3 次 */
+    .mpqr-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1200;display:none;align-items:center;justify-content:center;padding:24px}
+    .mpqr-overlay.show{display:flex}
+    .mpqr-card{background:var(--card);border-radius:18px;width:min(88vw,330px);padding:20px 18px 14px;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.32);animation:mpqrIn .22s ease}
+    @keyframes mpqrIn{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+    .mpqr-badge{display:inline-block;font-size:calc(11px*var(--font-scale));font-weight:700;color:var(--primary);background:var(--primary-soft);border-radius:999px;padding:3px 10px;margin-bottom:10px}
+    .mpqr-title{font-size:calc(17px*var(--font-scale));font-weight:800;color:var(--text)}
+    .mpqr-sub{font-size:calc(12px*var(--font-scale));color:var(--text-sub);margin-top:6px;line-height:1.5}
+    .mpqr-img{width:min(52vw,190px);height:auto;display:block;margin:14px auto 8px;border-radius:12px;background:#fff;padding:8px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+    .mpqr-tip{font-size:calc(11px*var(--font-scale));color:var(--text-sub)}
+    .mpqr-actions{display:flex;gap:10px;margin-top:16px}
+    .mpqr-btn{flex:1;border:none;border-radius:11px;padding:11px 0;font-size:calc(14px*var(--font-scale));font-weight:700;cursor:pointer}
+    .mpqr-btn.ghost{background:var(--bg-sub,#f2f3f5);color:var(--text-sub)}
+    .mpqr-btn.primary{background:var(--primary,#c62828);color:#fff}
     .modal{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-height:80vh;overflow:hidden;animation:slideUp .3s ease}
     @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
     .modal-header{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
@@ -3088,7 +3102,7 @@ function copySuggest(){
 function openIssue(){ /* 已移除：改为站内暂存自动补交，不再跳转 GitHub */ }
 
 // ==================== 数据接口：在线 → 包内 → 缓存 → 内置 ====================
-const APP_VERSION='1.3.23'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
+const APP_VERSION='1.3.24'; // 与 package.json 的 apkVersion 保持一致（版本单一事实来源）
 const API_REMOTE='https://icyteacn.github.io/FJNU-Nav/data/schedule-data.json';
 
 function applyRemoteData(d){
@@ -3365,6 +3379,35 @@ function applyDeepLink(){
   return false;
 }
 
+// ==================== 小程序码公告（仅 App 内、最多 3 次） ====================
+const MPQR_KEY='sche_mpqr_notice';
+const MPQR_MAX=3;
+function mpQrCount(){
+  try{
+    const n=parseInt(localStorage.getItem(MPQR_KEY)||'0',10);
+    return Number.isFinite(n)?Math.max(0,Math.min(MPQR_MAX,n)):0;
+  }catch(e){return 0}
+}
+function dismissMpQrNotice(never){
+  // 「不再提示」直接把计数拉满；「知道了」保持已计数，下次打开还会再提示
+  if(never){try{localStorage.setItem(MPQR_KEY,String(MPQR_MAX))}catch(e){}}
+  const el=document.getElementById('mpQrNotice');
+  if(el)el.classList.remove('show');
+}
+function maybeShowMpQrNotice(){
+  try{
+    // 只在 APK 内弹（Capacitor/原生桥），网站版不打扰
+    if(!(window.Capacitor||window.FeikeNative))return;
+    const n=mpQrCount();
+    if(n>=MPQR_MAX)return;
+    localStorage.setItem(MPQR_KEY,String(n+1));
+    setTimeout(()=>{
+      const el=document.getElementById('mpQrNotice');
+      if(el)el.classList.add('show');
+    },1500);
+  }catch(e){}
+}
+
 function init(){
   loadState();
   applyTheme();
@@ -3386,6 +3429,7 @@ function init(){
   setInterval(pushNotifyData,30000); // 上课/下课状态跨边界时及时同步给原生通知（内容没变不写盘）
   petInit(); // 桌宠：首屏渲染 + 打开陪伴奖励 + 上课打卡 + 吃饭提醒
   setInterval(petTick,30000); // 桌宠：吃饭提醒 / 随机说话（页面打开时）
+  maybeShowMpQrNotice(); // 小程序码公告：仅 App 内，最多 3 次
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
@@ -3393,6 +3437,20 @@ document.addEventListener('DOMContentLoaded',init);
   <span>🔔 想让课前提醒更可靠？把本应用加入「电池优化白名单」（国产系统的后台限制常导致提醒不响）</span>
   <button onclick="openBatterySettings()">去设置</button>
   <button class="ghost" onclick="closeBatteryTip()">✕</button>
+</div>
+<!-- 小程序码公告（仅 App 内、最多弹 3 次） -->
+<div class="mpqr-overlay" id="mpQrNotice">
+  <div class="mpqr-card">
+    <span class="mpqr-badge">新</span>
+    <div class="mpqr-title">课表小程序上线了</div>
+    <div class="mpqr-sub">不用装 App，微信扫码直接查课表<br>课表、日程、提醒都在</div>
+    <img class="mpqr-img" id="mpQrImg" src="images/mp-qr.png" alt="课表小程序码" onerror="this.style.display='none'">
+    <div class="mpqr-tip">微信「扫一扫」或长按识别</div>
+    <div class="mpqr-actions">
+      <button class="mpqr-btn ghost" onclick="dismissMpQrNotice(true)">不再提示</button>
+      <button class="mpqr-btn primary" onclick="dismissMpQrNotice(false)">知道了</button>
+    </div>
+  </div>
 </div>
 </body>
 </html>

@@ -1,0 +1,102 @@
+/* 文件路径: /fjnu-nav/mp-schedule/pages/agenda/agenda.wxss */
+/* 日程提醒页：未来 14 天按天分组列表（v1.3.2 补齐，勿再清空） */
+.ag-head { padding: 24rpx 24rpx 8rpx; background: #fff; }
+.ag-title { font-size: 36rpx; font-weight: 700; }
+.ag-sub { margin-top: 4rpx; }
+
+/* 每天一张卡 */
+.ag-day {
+  margin: 12rpx 24rpx;
+  background: #fff;
+  border: 2rpx solid transparent;
+  box-sizing: border-box;
+  border-radius: 16rpx;
+  padding: 16rpx 18rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.04);
+}
+.ag-day.today { border-color: #c62828; }
+.ag-date { display: flex; align-items: baseline; gap: 12rpx; margin-bottom: 6rpx; }
+.ad-d { font-size: 28rpx; font-weight: 700; color: #1f2329; }
+.ag-day.today .ad-d { color: #c62828; }
+.ad-w { font-size: 22rpx; }
+
+/* 停课日 */
+.ag-hol {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  background: #fff5f5;
+  border: 1rpx dashed #ef9a9a;
+  border-radius: 12rpx;
+  padding: 14rpx;
+}
+.ah-ico { font-size: 36rpx; }
+.ah-name { display: block; font-size: 26rpx; font-weight: 700; color: #c62828; }
+.ah-sub { font-size: 20rpx; color: #e57373; }
+
+/* 当日条目：与课表页列表同款 */
+.li {
+  display: flex;
+  gap: 10rpx;
+  background: #fafbfd;
+  border: 1rpx solid #eceef3;
+  border-radius: 10rpx;
+  padding: 10rpx 12rpx;
+  margin-top: 8rpx;
+  align-items: stretch;
+}
+.li-time { display: flex; flex-direction: column; justify-content: center; width: 88rpx; flex-shrink: 0; }
+.lt-s { font-size: 24rpx; font-weight: 800; color: #1f2329; }
+.lt-e { font-size: 18rpx; color: #8a8f99; }
+.li-bar { width: 4rpx; border-radius: 2rpx; flex-shrink: 0; }
+.li-main { flex: 1; min-width: 0; }
+.li-name { font-size: 26rpx; font-weight: 700; color: #1f2329; display: flex; align-items: center; gap: 8rpx; flex-wrap: wrap; }
+.li-meta { font-size: 20rpx; color: #666; margin-top: 4rpx; }
+.li-note { font-size: 18rpx; color: #e65100; margin-top: 4rpx; }
+.li.moved { opacity: 0.7; }
+.li-gap { text-align: center; font-size: 20rpx; color: #4caf50; padding: 8rpx 0; }
+.li-ev {
+  margin-top: 8rpx;
+  background: #e8f4fd;
+  border: 1rpx solid #b6dcfa;
+  border-radius: 10rpx;
+  padding: 10rpx 14rpx;
+  font-size: 24rpx;
+  color: #0b5f9e;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+.li-ev-d { font-size: 20rpx; color: #4a7ba6; }
+.st-badge { font-size: 18rpx; font-weight: 800; padding: 1rpx 10rpx; border-radius: 99rpx; }
+.st-badge.live { color: #fff; background: #c62828; }
+.st-badge.next { color: #fff; background: #f0823a; }
+.st-badge.done { color: #8a8f99; background: #eceff3; }
+
+/* ---------- 深色 ---------- */
+.page.dark .ag-head { background: #1d1e22; }
+.page.dark .ag-title { color: #eceef2; }
+.page.dark .ag-day { background: #1d1e22; box-shadow: none; }
+.page.dark .ag-day.today { border-color: #ef9a9a; }
+.page.dark .ad-d { color: #eceef2; }
+.page.dark .ag-day.today .ad-d { color: #ef9a9a; }
+.page.dark .ag-hol { background: rgba(183, 28, 28, 0.16); border-color: #ef9a9a; }
+.page.dark .ah-name { color: #ef9a9a; }
+.page.dark .ah-sub { color: #e57373; }
+.page.dark .li { background: #232429; border-color: #34363d; }
+.page.dark .lt-s,
+.page.dark .li-name { color: #eceef2; }
+.page.dark .li-meta { color: #9aa0ab; }
+.page.dark .li-note { color: #ffb74d; }
+.page.dark .li-ev { background: #132a3a; border-color: #1d4b6e; color: #90caf9; }
+.page.dark .li-ev-d { color: #64b5f6; }
+.page.dark .li-gap { color: #81c784; }
+.page.dark .st-badge.done { background: #2c2e33; color: #9aa0ab; }
+
+/* ---------- 单色（白底黑字 / 深色黑底白字） ---------- */
+.mono .st-badge.live,
+.mono .st-badge.next { background: #1a1a1a; }
+.mono .li-bar { background: #1a1a1a !important; }
+.page.dark.mono .st-badge.live,
+.page.dark.mono .st-badge.next { background: #e8e8e8; color: #1a1a1a; }
+.page.dark.mono .li-bar { background: #e8e8e8 !important; }

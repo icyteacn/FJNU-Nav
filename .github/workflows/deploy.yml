@@ -48,6 +48,8 @@ jobs:
           node scripts/test_favorites.mjs
           node scripts/test_schedule.mjs
           node scripts/audit-refs.mjs
+      - name: 小程序样式门禁（wxss 非空 + class 有定义）
+        run: node scripts/check-mp-styles.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

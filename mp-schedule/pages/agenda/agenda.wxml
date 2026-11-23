@@ -1,5 +1,5 @@
 <!-- 文件路径: /fjnu-nav/mp-schedule/pages/agenda/agenda.wxml -->
-<view class="page safe-bottom {{dark ? 'dark' : ''}}">
+<view class="page safe-bottom {{dark ? 'dark' : ''}} {{mono ? 'mono' : ''}}">
   <view class="ag-head">
     <view class="ag-title">📅 日程提醒</view>
     <view class="ag-sub mut">未来 14 天 · {{majorLabel}}</view>

@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/gen-schedule-data.mjs && vite build && node scripts/postbuild.mjs",
+    "check:mp": "node scripts/check-mp-styles.mjs",
     "preview": "vite preview",
     "server": "node server/index.mjs",
     "start": "npm run build && node server/index.mjs"

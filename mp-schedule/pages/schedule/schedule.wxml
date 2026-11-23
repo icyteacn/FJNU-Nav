@@ -1,5 +1,5 @@
 <!-- 文件路径: /fjnu-nav/mp-schedule/pages/schedule/schedule.wxml -->
-<view class="page safe-bottom {{dark ? 'dark' : ''}}" bindtouchstart="onTouchStart" bindtouchend="onTouchEnd">
+<view class="page safe-bottom {{dark ? 'dark' : ''}} {{mono ? 'mono' : ''}}" bindtouchstart="onTouchStart" bindtouchend="onTouchEnd">
   <!-- 顶栏：专业 + 学期 + 周切换 + 搜索 -->
   <view class="top">
     <picker mode="selector" range="{{majors}}" range-key="label" value="{{majorIdx}}" bindchange="onMajor">

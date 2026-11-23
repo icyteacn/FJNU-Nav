@@ -5,14 +5,14 @@ const S = require('../../utils/schedule.js');
 
 Page({
   data: {
-    days: [], loading: true, dark: false,
+    days: [], loading: true, dark: false, mono: false,
     source: '', majorLabel: '',
   },
   onShareAppMessage() { return { title: '福star课表 · 日程提醒', path: '/pages/agenda/agenda' }; },
   onPullDownRefresh() { this.load(true).then(() => wx.stopPullDownRefresh()); },
   onShow() {
     const dark = getApp().resolveDark ? getApp().resolveDark() : false;
-    this.setData({ dark });
+    this.setData({ dark, mono: !!wx.getStorageSync('fjnu_mono') });
     if (getApp().applyChrome) getApp().applyChrome(dark);
     this.load(false);
   },

@@ -11,6 +11,17 @@ page {
   margin: 20rpx 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
+/* 页面根容器：铺满一屏（各页 wxml 都用了 class="page"） */
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: #f5f6fa;
+  color: #1f2329;
+}
+.page.dark {
+  background: #161616;
+  color: #eceef2;
+}
 .mut { color: #8a8f99; font-size: 24rpx; }
 .safe-bottom {
   padding-bottom: calc(12rpx + constant(safe-area-inset-bottom));

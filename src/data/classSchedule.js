@@ -127,6 +127,21 @@ export const COURSES = [
     weeks: '13-17', weekdayType: 'all', startPeriod: 1, endPeriod: 4, weekday: 6,
     credits: 3, hours: 48, category: '专业必修课', color: '#1565c0', major: 'cs-master',
   },
+  // 期末考试（以课程形式占位；credits/hours 为 0，不计入课程学分）
+  {
+    name: '【考试】英语B类班', id: 'EXAM-ENGB-20270103-cs', teacher: '',
+    location: '旗山校区笃行楼',
+    weeks: '18', weekdayType: 'all', startPeriod: 1, endPeriod: 3, weekday: 7,
+    credits: 0, hours: 0, category: '公共必修课', color: '#c62828', major: 'cs-master',
+    shared: '考试 8:30-10:30（2026级全日制学术学位硕士生）',
+  },
+  {
+    name: '【考试】当代科技', id: 'EXAM-TECH-20270108-cs', teacher: '',
+    location: '旗山校区立诚楼',
+    weeks: '19', weekdayType: 'all', startPeriod: 5, endPeriod: 7, weekday: 5,
+    credits: 0, hours: 0, category: '公共选修课', color: '#ad1457', major: 'cs-master',
+    shared: '考试 14:00-16:00（2026级理工科全日制学术学位硕士生）',
+  },
 
   // ===== 网络空间安全（学术硕士）=====
   {
@@ -148,6 +163,20 @@ export const COURSES = [
     name: '研究生英语B', id: 'ENG-B-001', teacher: '蒋宏影', location: '笃行1-218',
     weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
     credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'cyber-master',
+  },
+  {
+    name: '【考试】英语B类班', id: 'EXAM-ENGB-20270103-cyber', teacher: '',
+    location: '旗山校区笃行楼',
+    weeks: '18', weekdayType: 'all', startPeriod: 1, endPeriod: 3, weekday: 7,
+    credits: 0, hours: 0, category: '公共必修课', color: '#c62828', major: 'cyber-master',
+    shared: '考试 8:30-10:30（2026级全日制学术学位硕士生）',
+  },
+  {
+    name: '【考试】当代科技', id: 'EXAM-TECH-20270108-cyber', teacher: '',
+    location: '旗山校区立诚楼',
+    weeks: '19', weekdayType: 'all', startPeriod: 5, endPeriod: 7, weekday: 5,
+    credits: 0, hours: 0, category: '公共选修课', color: '#ad1457', major: 'cyber-master',
+    shared: '考试 14:00-16:00（2026级理工科全日制学术学位硕士生）',
   },
 
   // ===== 网络空间安全（博士）=====
@@ -213,6 +242,13 @@ export const COURSES = [
     weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
     credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'se-master',
   },
+  {
+    name: '【考试】英语B类班', id: 'EXAM-ENGB-20270103-se', teacher: '',
+    location: '旗山校区笃行楼',
+    weeks: '18', weekdayType: 'all', startPeriod: 1, endPeriod: 3, weekday: 7,
+    credits: 0, hours: 0, category: '公共必修课', color: '#c62828', major: 'se-master',
+    shared: '考试 8:30-10:30（2026级全日制学术学位硕士生）',
+  },
 
   // ===== 人工智能（专业硕士）=====
   {
@@ -255,6 +291,13 @@ export const COURSES = [
     weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
     credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'ai-master',
   },
+  {
+    name: '【考试】英语B类班', id: 'EXAM-ENGB-20270103-ai', teacher: '',
+    location: '旗山校区笃行楼',
+    weeks: '18', weekdayType: 'all', startPeriod: 1, endPeriod: 3, weekday: 7,
+    credits: 0, hours: 0, category: '公共必修课', color: '#c62828', major: 'ai-master',
+    shared: '考试 8:30-10:30（2026级全日制学术学位硕士生）',
+  },
 
   // ===== 网络与信息安全（专业硕士）=====
   {
@@ -276,6 +319,13 @@ export const COURSES = [
     name: '研究生英语B', id: 'ENG-B-001', teacher: '蒋宏影', location: '笃行1-218',
     weeks: '3-18', weekdayType: 'all', startPeriod: 1, endPeriod: 2, weekday: 1,
     credits: 2, hours: 32, category: '公共必修课', color: '#c62828', major: 'nis-master',
+  },
+  {
+    name: '【考试】英语B类班', id: 'EXAM-ENGB-20270103-nis', teacher: '',
+    location: '旗山校区笃行楼',
+    weeks: '18', weekdayType: 'all', startPeriod: 1, endPeriod: 3, weekday: 7,
+    credits: 0, hours: 0, category: '公共必修课', color: '#c62828', major: 'nis-master',
+    shared: '考试 8:30-10:30（2026级全日制学术学位硕士生）',
   },
 ]
 
@@ -338,8 +388,9 @@ const SEMESTER_START = new Date(2026, 7, 31)
  * term 只需 start+weeks（end 推导）；break 用 start+end（窗口由相邻学期推导估算，
  * estimate:true 表示官方校历公布后需复核修订，不视为权威放假日期） */
 export const SEMESTERS = [
-  { id: '2026-2027-1', name: '2026-2027学年第一学期', type: 'term', start: '2026-08-31', weeks: 18 },
-  { id: '2027-winter', name: '2027年寒假', type: 'winter_break', start: '2027-01-05', end: '2027-02-28', estimate: true },
+  // 19 周 = 18 个教学周 + 1 个考试周（2027-01-04~01-10，1/8 有当代科技考试）
+  { id: '2026-2027-1', name: '2026-2027学年第一学期', type: 'term', start: '2026-08-31', weeks: 19 },
+  { id: '2027-winter', name: '2027年寒假', type: 'winter_break', start: '2027-01-11', end: '2027-02-28', estimate: true },
   { id: '2026-2027-2', name: '2026-2027学年第二学期', type: 'term', start: '2027-03-01', weeks: 18, estimate: true },
   { id: '2027-summer', name: '2027年暑假', type: 'summer_break', start: '2027-07-05', end: '2027-08-29', estimate: true },
 ]

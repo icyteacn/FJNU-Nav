@@ -145,6 +145,40 @@
       "major": "cs-master"
     },
     {
+      "name": "【考试】英语B类班",
+      "id": "EXAM-ENGB-20270103-cs",
+      "teacher": "",
+      "location": "旗山校区笃行楼",
+      "weeks": "18",
+      "weekdayType": "all",
+      "startPeriod": 1,
+      "endPeriod": 3,
+      "weekday": 7,
+      "credits": 0,
+      "hours": 0,
+      "category": "公共必修课",
+      "color": "#c62828",
+      "major": "cs-master",
+      "shared": "考试 8:30-10:30（2026级全日制学术学位硕士生）"
+    },
+    {
+      "name": "【考试】当代科技",
+      "id": "EXAM-TECH-20270108-cs",
+      "teacher": "",
+      "location": "旗山校区立诚楼",
+      "weeks": "19",
+      "weekdayType": "all",
+      "startPeriod": 5,
+      "endPeriod": 7,
+      "weekday": 5,
+      "credits": 0,
+      "hours": 0,
+      "category": "公共选修课",
+      "color": "#ad1457",
+      "major": "cs-master",
+      "shared": "考试 14:00-16:00（2026级理工科全日制学术学位硕士生）"
+    },
+    {
       "name": "学术论文写作",
       "id": "XZB027083900001",
       "teacher": "许胜民、马金花",
@@ -209,6 +243,40 @@
       "category": "公共必修课",
       "color": "#c62828",
       "major": "cyber-master"
+    },
+    {
+      "name": "【考试】英语B类班",
+      "id": "EXAM-ENGB-20270103-cyber",
+      "teacher": "",
+      "location": "旗山校区笃行楼",
+      "weeks": "18",
+      "weekdayType": "all",
+      "startPeriod": 1,
+      "endPeriod": 3,
+      "weekday": 7,
+      "credits": 0,
+      "hours": 0,
+      "category": "公共必修课",
+      "color": "#c62828",
+      "major": "cyber-master",
+      "shared": "考试 8:30-10:30（2026级全日制学术学位硕士生）"
+    },
+    {
+      "name": "【考试】当代科技",
+      "id": "EXAM-TECH-20270108-cyber",
+      "teacher": "",
+      "location": "旗山校区立诚楼",
+      "weeks": "19",
+      "weekdayType": "all",
+      "startPeriod": 5,
+      "endPeriod": 7,
+      "weekday": 5,
+      "credits": 0,
+      "hours": 0,
+      "category": "公共选修课",
+      "color": "#ad1457",
+      "major": "cyber-master",
+      "shared": "考试 14:00-16:00（2026级理工科全日制学术学位硕士生）"
     },
     {
       "name": "学术论文写作",
@@ -403,6 +471,23 @@
       "major": "se-master"
     },
     {
+      "name": "【考试】英语B类班",
+      "id": "EXAM-ENGB-20270103-se",
+      "teacher": "",
+      "location": "旗山校区笃行楼",
+      "weeks": "18",
+      "weekdayType": "all",
+      "startPeriod": 1,
+      "endPeriod": 3,
+      "weekday": 7,
+      "credits": 0,
+      "hours": 0,
+      "category": "公共必修课",
+      "color": "#c62828",
+      "major": "se-master",
+      "shared": "考试 8:30-10:30（2026级全日制学术学位硕士生）"
+    },
+    {
       "name": "机器学习",
       "id": "ZSZB027085410005",
       "teacher": "陈丽萍",
@@ -531,6 +616,23 @@
       "major": "ai-master"
     },
     {
+      "name": "【考试】英语B类班",
+      "id": "EXAM-ENGB-20270103-ai",
+      "teacher": "",
+      "location": "旗山校区笃行楼",
+      "weeks": "18",
+      "weekdayType": "all",
+      "startPeriod": 1,
+      "endPeriod": 3,
+      "weekday": 7,
+      "credits": 0,
+      "hours": 0,
+      "category": "公共必修课",
+      "color": "#c62828",
+      "major": "ai-master",
+      "shared": "考试 8:30-10:30（2026级全日制学术学位硕士生）"
+    },
+    {
       "name": "论文写作指导",
       "id": "ZSZB027085412301",
       "teacher": "许胜民、马金花",
@@ -593,9 +695,26 @@
       "category": "公共必修课",
       "color": "#c62828",
       "major": "nis-master"
+    },
+    {
+      "name": "【考试】英语B类班",
+      "id": "EXAM-ENGB-20270103-nis",
+      "teacher": "",
+      "location": "旗山校区笃行楼",
+      "weeks": "18",
+      "weekdayType": "all",
+      "startPeriod": 1,
+      "endPeriod": 3,
+      "weekday": 7,
+      "credits": 0,
+      "hours": 0,
+      "category": "公共必修课",
+      "color": "#c62828",
+      "major": "nis-master",
+      "shared": "考试 8:30-10:30（2026级全日制学术学位硕士生）"
     }
   ],
-  "version": "686b1b5eed",
+  "version": "61a5c2139d",
   "semester": "2026-2027学年第一学期",
-  "updatedAt": "2026-11-23T06:55:40.266Z"
+  "updatedAt": "2026-11-24T03:48:55.452Z"
 }

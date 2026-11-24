@@ -266,10 +266,10 @@ async function main() {
         await page.waitForTimeout(2500)
         const got = await page.evaluate((m) => {
           const dump = typeof ALL_COURSES !== 'undefined' ? JSON.stringify(ALL_COURSES) : ''
-          return { hasMark: dump.includes(m), hasTech: dump.includes('当代科技') }
+          return { hasMark: dump.includes(m), hasTech: dump.includes('TECH-001') }
         }, mark)
         assert(got.hasMark, '页面没有采用线上下发的课表（仍在用包内内置数据）')
-        assert(!got.hasTech, '页面仍在显示已被线上数据删除的「当代科技」')
+        assert(!got.hasTech, '页面仍在显示已被线上数据删除的 TECH-001（当代科技）')
       } finally {
         await page.unroute(pattern)
       }

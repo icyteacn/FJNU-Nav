@@ -42,7 +42,6 @@ Page({
     this.setData({ themeIdx: i, dark });
     getApp().applyChrome(dark);
   },
-  goBoard() { wx.navigateTo({ url: '/pages/board/board' }); },
   onMono(e) {
     const v = e.detail.value;
     wx.setStorageSync('fjnu_mono', v);

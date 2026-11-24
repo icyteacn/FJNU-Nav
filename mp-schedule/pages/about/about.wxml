@@ -46,10 +46,6 @@
       <text>🚩 智团慧建·团工作平台</text>
       <text class="mut">支部工作 ›</text>
     </view>
-    <view class="row-item" bindtap="goBoard">
-      <text>💬 建议墙</text>
-      <text class="mut">提建议 · 大家一起看 ›</text>
-    </view>
   </view>
 
   <view class="card">
